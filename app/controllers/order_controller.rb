@@ -567,7 +567,7 @@ public
   end
   
   def artwork_add   
-    if params[:artwork] and params[:artwork][:file] != ''
+    if params[:artwork] and params[:artwork][:art] != ''
       Artwork.transaction do
         group_name = "Order #{@order.id}"
 
@@ -590,8 +590,10 @@ public
         group = ArtworkGroup.create(:name => group_name, :customer => @order.customer) unless group
 
         artwork = Artwork.create(params[:artwork].merge(:group => group, :user => @user, :host => request.remote_ip ))
-        artwork.tags.create(:name => 'customer') unless @user
-        task_complete({ :data => { :id => artwork.id } }, ArtReceivedOrderTask, nil, false)
+        if artwork.id
+          artwork.tags.create(:name => 'customer') unless @user
+          task_complete({ :data => { :id => artwork.id } }, ArtReceivedOrderTask, nil, false)
+        end
       end
     end
         

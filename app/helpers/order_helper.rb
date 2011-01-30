@@ -90,10 +90,6 @@ module OrderHelper
     str
   end
   
-  def image_column_field(object, method, options={})
-     ActionView::Helpers::InstanceTag.new(object.dup, method, self).to_input_field_tag("file", options)
-  end
-
   # Lifted and modified from calendariffic plugin
   def calendar_input(text_name, text_value, text_attributes={}, image_attributes={}, id_suffix = '')
     image_name = 'start_cal'+id_suffix

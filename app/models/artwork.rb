@@ -4,15 +4,20 @@ class Artwork < ActiveRecord::Base
   belongs_to :group, :class_name => 'ArtworkGroup'
   def customer; group.customer; end
 
-  image_column :file, :root_dir => DATA_ROOT, :web_root => '', :store_dir => proc { |r| "customer/#{r.customer.uuid}" }, :get_content_type_from_file_exec => true, :manipulator => nil
-#:versions => { :thumb => '160x120' },
+  has_attached_file :art, :url => proc { |r| "/customer/:prefix:uuid/:fullfilename" }, :path => "#{DATA_ROOT}:url", :whiny_thumbnails => false, :styles => { :thumb => { :geometry => "160x100", :format => :png } }, :processors => [:flexThumbnail]
+
+  after_post_process :clean_nil
+  def clean_nil
+    art.queued_for_write.delete(:thumb) if art.queued_for_write[:thumb].nil?
+    true
+  end
     
   def has_tag?(tag)
     tags.to_a.find { |t| t.name == tag }
   end
 
   def can_pdf?
-    %w(ps eps ai).include?(file.extension)
+    %w(ps eps ai).include?(File.extname(art.original_filename))
   end
 
   def can_proof?(order)
@@ -28,13 +33,15 @@ class Artwork < ActiveRecord::Base
     "#{file.basename}.pdf"
   end
   
-#  validates_presence_of :file
-  validates_each :file do |record, attr_name, value|
+  validates_attachment_presence :art
+  validates_each :art do |record, attr_name, value|
     if Artwork.find(:first, :include => :group,
-                    :conditions => ["artwork_groups.customer_id = ? AND artworks.file = ? AND artworks.id != ?",
-                                    record.group.customer_id, value.filename, record.id ])
+                    :conditions =>
+                    ["artwork_groups.customer_id = ? AND artworks.art_file_name = ?",
+                     record.group.customer_id, value.original_filename ])
+      logger.info("NOT UNIQ")
       record.errors.add(attr_name, 'Filename not Unique')
     end
   end
-#  validates_filesize_of :file, :in => 0..20.megabytes
+
 end

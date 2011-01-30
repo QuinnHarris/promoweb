@@ -197,9 +197,9 @@ div.item h3 {
 
 div.thumb {
   text-align: center;
-  max-width: 12em;
-  height: 100%;
   float: left;
+  margin-left: 0.5em;
+  padding: 4px;
 /*  overflow: none;*/
 }
 

@@ -21,12 +21,12 @@
   }
 
 - unless !@user and @order.task_completed?(ArtAcknowledgeOrderTask)
-  - form_for :artwork, @artwork, { :url => { :action => :artwork_add, :order_id => @order, :upload_id => @upload_id }, :html => {:multipart => true, :target => 'upload-target' } }  do |artwork|
+  - form_for :artwork, @artwork, { :url => { :action => :artwork_add, :order_id => @order, :upload_id => @upload_id }, :html => { :multipart => true } }  do |artwork|
     %table.form
       %caption Add Artwork
       %tr
         %th File:
-        %td= image_column_field 'artwork', 'file'
+        %td= artwork.file_field :art
       %tr
         %th Notes:
         %td= artwork.text_area :customer_notes, 'rows' => 3

@@ -28,7 +28,12 @@
       - for artwork in group.artworks
         - next if filter_tag and !artwork.tags.to_a.find { |t| t.name == filter_tag }
         .item{ :id => "artwork=#{artwork.id}" }
-          / .block.thumb
+          .block.thumb
+            - if File.exists?(artwork.art.path(:thumb))
+              %a{ :href => artwork.art.url }
+                = image_tag artwork.art.url(:thumb)
+            - else
+              = image_tag 'nopreview.png'
 
           .block
             %table.form
@@ -37,12 +42,12 @@
                   %tr
                     %th Name:
                     %td{ :colspan => "2" }
-                      %a{ :href => artwork.file.url }= artwork.file.filename
+                      %a{ :href => artwork.art.url }= artwork.art.original_filename
                 - else
                   %tr
                     %th Name:
                     %td
-                      %a{ :href => artwork.file.url }= artwork.file.filename
+                      %a{ :href => artwork.art.url }= artwork.art.original_filename
                     %td{ :rowspan => "4", :style => "vertical-align: top;" }
                       = link_to(image_tag('remove.png') + "Remove", { :action => 'artwork_remove', :id => artwork }, :confirm => "Remove #{artwork['file']}")
                       - if @user and artwork.can_pdf?
@@ -69,11 +74,12 @@
                 %tr
                   %th Source:
                   %td= "#{artwork.user ? artwork.user.name : 'Customer'} (#{artwork.host})"
-                %tr
-                  %th Size:
-                  %td
-                    = artwork.file.size
-                    bytes
+                - if artwork.art.size
+                  %tr
+                    %th Size:
+                    %td
+                      = artwork.art.size
+                      bytes
                 /%tr
                 /  %th URL:
                 /  %td{ :colspan => "2" }
