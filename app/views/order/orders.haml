@@ -1,0 +1,13 @@
+= render :partial => 'menu'
+
+%table
+  %thead
+    %td #
+    %td Created
+    %td Last Modified
+  %tbody
+    - for order in @order.customer.orders
+      %tr
+        %td= link_to order.id, :action => :status, :order_id => order.id
+        %td= format_time(order.created_at, false)
+        %td= format_time(order.updated_at, false)

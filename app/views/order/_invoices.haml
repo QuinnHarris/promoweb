@@ -1,0 +1,122 @@
+%style
+  div#aknowledgement {
+  font-size: 10pt;
+  }
+  
+  h2 { font-size: 14pt; }
+
+  h2, h3, h4 {
+  margin-bottom: 4pt;
+  }
+  
+  h3 { border-bottom: medium solid black; }
+
+#aknowledgement
+  %table
+    %tr
+      %td
+        %h2 Mountain Xpress Promotions, LLC
+        361 S. Camino Del Rio, Ste 160
+        %br
+        Durango, CO 81301
+        %br
+        Phone #: 970.375.1900
+        %br
+        Fax #: 877.790.2011
+        %br
+        Website: www.mountainofpromos.com
+        - if @order.user
+          %h4 Representative
+          Name:
+          = @order.user.name
+          %br
+          Email:
+          = mail_to @order.user.email
+        %h4 Terms
+        Required Date:
+        = @order.delivery_date || "Not Specified"
+        %br
+        Rush Order:
+        = @order.rush ? "YES" : "NO"
+        %br
+        Payment:
+        = valid?(@order, :terms) ? @order.terms : "Pre-Paid"
+        %br
+        Ship Method:
+        = @order.ship_method
+        %br
+        FOB:
+        = @order.fob
+
+      %td{ :style => 'width: 1em;' }
+      %td
+        %h2 Order Acknowledgement
+        - task = @order.task_completed?(AcknowledgeOrderTask)
+        Order #:
+        = @order.id
+        %br
+        Date:
+        = (task ? task.created_at : Time.new).strftime("%b %d, %Y")
+        %div
+          - customer = @order.customer
+          %h3 Ship To
+          - if valid?(customer, :company_name)
+            = customer.company_name
+            %br
+          - if valid?(customer.ship_address, :name)
+            = customer.ship_address.name
+            %br
+          - elsif valid?(customer, :person_name)
+            = customer.person_name
+            %br
+          = render :partial => '/order/address', :locals => { :address => customer.ship_address || customer.default_address }
+        - unless customer.payment_methods.empty?
+          %div
+            %h3 Bill To
+            - payment = customer.payment_methods.find(:first)
+            = payment.name
+            %br
+            = render :partial => '/order/address', :locals => { :address => payment.address, :customer => customer }
+
+  %hr
+- for invoice in (@order.invoices + @order.payment_transactions.find_all { |t| !t.amount.zero? }).sort_by { |i| i.created_at || Time.now }
+  .invoice
+    .date
+      - if invoice.created_at
+        = format_time(invoice.created_at)
+        - if !@static and allowed?('Super') and invoice.is_a?(Invoice)
+          = link_to(image_tag('remove.png'), { :controller => '/admin/orders', :action => :invoice_remove, :id => invoice }, { :confirm => "Remove Invoice" })
+      - else
+        PENDING
+    - if invoice.is_a?(Invoice)
+      %h3
+        - if invoice.quickbooks_ref
+          Invoice
+          - if !static and @user
+            %span= "(QB# #{invoice.quickbooks_ref})"
+        - else
+          Quote
+
+      - total = Money.new(0)
+      - for entry in invoice.entries
+        %div.entry
+          = entry.html_row(self, absolute)
+          - total += entry.total_price
+      - if invoice.entries.length != 1
+        %div.total
+          Total:
+          %span.money= total.to_perty
+      .block
+        - if !static and @user and invoice.new_record?
+          %h3 Notes
+          - form_for :invoice, invoice, :url => { :action => :create_invoice, :order_id => @order } do |inv|
+            = inv.text_area :comment, 'cols' => 50, 'rows' => 5
+            = submit_tag('Create Invoice')
+        - else
+          - if invoice.comment and !invoice.comment.empty?
+            %h3 Notes
+            %p= invoice.comment
+    - else
+      %h3
+        Payment:
+        = invoice.amount.to_perty

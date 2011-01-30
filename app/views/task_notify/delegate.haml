@@ -1,0 +1,26 @@
+%style{ :type => "text/css" }
+  img { border: none; }
+  
+  table th {
+  text-align: right;
+  }
+  
+  h2 {
+  font-size: 1.2em;
+  margin-bottom: 0;
+  border-bottom: thin solid black;
+  clear: both;
+  }
+
+  = File.open("#{RAILS_ROOT}/public/stylesheets/order.css") { |f| f.read }
+  
+%table
+  %tr
+    %th Order:
+    %td= @order.id
+  %tr
+    %th Pending:
+    %td= @tasks.collect { |t| link_to_task(t.waiting_name, t, @order, :only_path => false) }.join('<br/>')
+
+- for task in @tasks
+  = render_partial_null task.class.to_s.underscore, { :task => task }

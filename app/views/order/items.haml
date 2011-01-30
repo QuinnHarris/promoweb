@@ -1,0 +1,32 @@
+= render :partial => 'menu'
+
+- if allowed?('items_edit')
+  = render :partial => 'admin/orders/items_menu'
+
+- form_for :order, @order, { :url => { :order_id => @order } }  do |order|
+  - unless true or @static
+    Enter zipcode for shipping estimate:
+    %input#postalcode{ :name => "postalcode", :size => "5", :onkeypress => "return num_keypress(this, event)", :value => @order.customer.ship_address && @order.customer.ship_address.postalcode, :type => "text" }
+    = observe_field 'postalcode', { :function => 'change_postalcode(value)', :frequency => 0.25 }
+    %hr
+
+  - items = @order.items.to_a.sort_by { |i| [i.product.supplier.name, i.id] }
+  = render :partial => 'order_item', :collection => items, :locals => { :static => @static, :absolute => false, :invoice => false }
+  - unless (entries = @order.po_entries + @order.entries).empty?
+    %table.block
+      %thead
+        %tr
+          %td Description
+          %td Price
+          %td Quantity
+          %td Total
+      %tbody
+        - for entry in entries
+          - next unless entry.price
+          %tr
+            %td= entry.description
+            %td= entry.price.to_perty
+            %td= entry.quantity
+            %td= (entry.price * entry.quantity).to_perty
+
+  = submit_options

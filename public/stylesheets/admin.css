@@ -1,0 +1,39 @@
+div#padded {
+  margin: 1em;
+}
+
+h1 {
+  margin-top: 0;
+  padding: 0.5em 0.5em 0.25em 0.5em;
+  background-color: #FFE0E0;
+}
+
+table#fatlist {
+  margin: 1em;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+table#fatlist thead th {
+  border-right: thin solid grey;
+  border-left: thin solid grey;
+}  
+
+table#fatlist > tbody > tr > td {
+  border-top: medium solid black;
+  border-right: thin solid grey;
+  border-left: thin solid grey;
+  vertical-align: middle;
+  padding: 0 0.5em 0 0.5em;
+}
+
+table#fatlist td table th {
+  text-align: right;
+}
+
+table#fatlist a { display: block; text-align: center; width: 100%; height: 100%; }
+table#fatlist a:hover { background-color: #FFFFE0; }
+
+/*table#fatlist tr.odd { background-color: #F0F0FF; }*/
+
+table#fatlist tr:hover td { background-color: #FFFFF0; }

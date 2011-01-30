@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8"?>
+<definitions xmlns="http://schemas.xmlsoap.org/wsdl/" xmlns:typens="urn:LancoWebService" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" name="LancoWebService" targetNamespace="urn:LancoWebService">
+  <types>
+    <xsd:schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:LancoWebService">
+      <xsd:complexType name="ArrayOfstring">
+        <xsd:complexContent>
+          <xsd:restriction base="soapenc:Array">
+            <xsd:attribute ref="soapenc:arrayType" wsdl:arrayType="xsd:string[]"/>
+          </xsd:restriction>
+        </xsd:complexContent>
+      </xsd:complexType>
+      <xsd:complexType name="ArrayOfPrice">
+        <xsd:complexContent>
+          <xsd:restriction base="soapenc:Array">
+            <xsd:attribute ref="soapenc:arrayType" wsdl:arrayType="typens:Price[]"/>
+          </xsd:restriction>
+        </xsd:complexContent>
+      </xsd:complexType>
+      <xsd:complexType name="ArrayOfProduct">
+        <xsd:complexContent>
+          <xsd:restriction base="soapenc:Array">
+            <xsd:attribute ref="soapenc:arrayType" wsdl:arrayType="typens:Product[]"/>
+          </xsd:restriction>
+        </xsd:complexContent>
+      </xsd:complexType>
+      <xsd:complexType name="Product">
+        <xsd:all>
+          <xsd:element name="INX" type="xsd:int"/>
+          <xsd:element name="Prod_Id" type="xsd:string"/>
+          <xsd:element name="Web_Id" type="xsd:string"/>
+          <xsd:element name="Prod_Name" type="xsd:string"/>
+          <xsd:element name="Alt_Name" type="xsd:string"/>
+          <xsd:element name="ParentItem" type="xsd:string"/>
+          <xsd:element name="Prod_Description" type="xsd:string"/>
+          <xsd:element name="Prod_Image_Small" type="xsd:string"/>
+          <xsd:element name="Prod_Image_Medium" type="xsd:string"/>
+          <xsd:element name="Prod_Image_Large" type="xsd:string"/>
+          <xsd:element name="HiRes" type="xsd:string"/>
+          <xsd:element name="Art_ID" type="xsd:string"/>
+          <xsd:element name="Category" type="xsd:string"/>
+          <xsd:element name="SubCategory" type="xsd:string"/>
+          <xsd:element name="Size_Description" type="xsd:string"/>
+          <xsd:element name="Fragrance" type="xsd:string"/>
+          <xsd:element name="Fill_Id" type="xsd:string"/>
+          <xsd:element name="wt_100" type="xsd:string"/>
+          <xsd:element name="Cost_Code" type="xsd:string"/>
+          <xsd:element name="Lead_Time" type="xsd:string"/>
+          <xsd:element name="Rushservice_Id" type="xsd:string"/>
+          <xsd:element name="Unit" type="xsd:string"/>
+          <xsd:element name="Order_Info" type="xsd:string"/>
+          <xsd:element name="Imprint_Size" type="xsd:string"/>
+          <xsd:element name="Imprint_Size2" type="xsd:string"/>
+          <xsd:element name="Imprint_Type" type="xsd:string"/>
+          <xsd:element name="Imprint_Code" type="xsd:string"/>
+          <xsd:element name="MOQ" type="xsd:int"/>
+          <xsd:element name="Item_size1" type="xsd:string"/>
+          <xsd:element name="Item_size2" type="xsd:string"/>
+          <xsd:element name="Cat_Page" type="xsd:string"/>
+          <xsd:element name="closeout" type="xsd:boolean"/>
+          <xsd:element name="closeoutstart_dt" type="xsd:string"/>
+          <xsd:element name="closeoutend_dt" type="xsd:string"/>
+          <xsd:element name="discount" type="xsd:float"/>
+          <xsd:element name="soldout" type="xsd:boolean"/>
+          <xsd:element name="special" type="xsd:boolean"/>
+          <xsd:element name="specialstart_dt" type="xsd:string"/>
+          <xsd:element name="specialend_dt" type="xsd:string"/>
+          <xsd:element name="MadeInUSA" type="xsd:boolean"/>
+          <xsd:element name="isNew" type="xsd:boolean"/>
+          <xsd:element name="isFeatured" type="xsd:boolean"/>
+          <xsd:element name="isSelfPromo" type="xsd:boolean"/>
+          <xsd:element name="isKosher" type="xsd:boolean"/>
+          <xsd:element name="IntColors" type="typens:ArrayOfstring"/>
+          <xsd:element name="ExtColors" type="typens:ArrayOfstring"/>
+          <xsd:element name="pricing" type="typens:prices"/>
+          <xsd:element name="update_dt" type="xsd:string"/>
+        </xsd:all>
+      </xsd:complexType>
+      <xsd:complexType name="prices">
+        <xsd:all>
+          <xsd:element name="prices" type="typens:ArrayOfPrice"/>
+        </xsd:all>
+      </xsd:complexType>
+      <xsd:complexType name="Price">
+        <xsd:all>
+          <xsd:element name="FromQty" type="xsd:float"/>
+          <xsd:element name="Price" type="xsd:float"/>
+        </xsd:all>
+      </xsd:complexType>
+      <xsd:complexType name="Products">
+        <xsd:all>
+          <xsd:element name="Products" type="typens:ArrayOfProduct"/>
+        </xsd:all>
+      </xsd:complexType>
+    </xsd:schema>
+  </types>
+  <message name="getProductInfo">
+    <part name="web_id" type="xsd:string"/>
+  </message>
+  <message name="getProductInfoResponse">
+    <part name="getProductInfoResponse" type="typens:Product"/>
+  </message>
+  <message name="getCategory">
+    <part name="category_id" type="xsd:int"/>
+  </message>
+  <message name="getCategoryResponse">
+    <part name="getCategoryResponse" type="xsd:string"/>
+  </message>
+  <message name="getSubCategory">
+    <part name="subcategory_id" type="xsd:int"/>
+  </message>
+  <message name="getSubCategoryResponse">
+    <part name="getSubCategoryResponse" type="xsd:string"/>
+  </message>
+  <message name="getAllChangedProducts">
+    <part name="date" type="xsd:string"/>
+  </message>
+  <message name="getAllChangedProductsResponse">
+    <part name="getAllChangedProductsResponse" type="typens:Products"/>
+  </message>
+  <message name="getAllProducts"/>
+  <message name="getAllProductsResponse">
+    <part name="getAllProductsResponse" type="typens:Products"/>
+  </message>
+  <portType name="LancoWebServicePort">
+    <operation name="getProductInfo">
+      <documentation>This function will return the product info for a given web_id.</documentation>
+      <input message="typens:getProductInfo"/>
+      <output message="typens:getProductInfoResponse"/>
+    </operation>
+    <operation name="getCategory">
+      <documentation>This function will return a Given Category given a category_id</documentation>
+      <input message="typens:getCategory"/>
+      <output message="typens:getCategoryResponse"/>
+    </operation>
+    <operation name="getSubCategory">
+      <documentation>This function will return a Given Category given a category_id</documentation>
+      <input message="typens:getSubCategory"/>
+      <output message="typens:getSubCategoryResponse"/>
+    </operation>
+    <operation name="getAllChangedProducts">
+      <documentation>This function will return all active lanco products that have changed since a given date in the format of (yyyy-mm-dd).</documentation>
+      <input message="typens:getAllChangedProducts"/>
+      <output message="typens:getAllChangedProductsResponse"/>
+    </operation>
+    <operation name="getAllProducts">
+      <documentation>This function will return all active lanco products.</documentation>
+      <input message="typens:getAllProducts"/>
+      <output message="typens:getAllProductsResponse"/>
+    </operation>
+  </portType>
+  <binding name="LancoWebServiceBinding" type="typens:LancoWebServicePort">
+    <soap:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <operation name="getProductInfo">
+      <soap:operation soapAction="urn:LancoWebServiceAction"/>
+      <input>
+        <soap:body use="encoded" namespace="urn:http://services.promocatalogonline.com" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+      </input>
+      <output>
+        <soap:body use="encoded" namespace="urn:http://services.promocatalogonline.com" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+      </output>
+    </operation>
+    <operation name="getCategory">
+      <soap:operation soapAction="urn:LancoWebServiceAction"/>
+      <input>
+        <soap:body use="encoded" namespace="urn:http://services.promocatalogonline.com" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+      </input>
+      <output>
+        <soap:body use="encoded" namespace="urn:http://services.promocatalogonline.com" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+      </output>
+    </operation>
+    <operation name="getSubCategory">
+      <soap:operation soapAction="urn:LancoWebServiceAction"/>
+      <input>
+        <soap:body use="encoded" namespace="urn:http://services.promocatalogonline.com" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+      </input>
+      <output>
+        <soap:body use="encoded" namespace="urn:http://services.promocatalogonline.com" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+      </output>
+    </operation>
+    <operation name="getAllChangedProducts">
+      <soap:operation soapAction="urn:LancoWebServiceAction"/>
+      <input>
+        <soap:body use="encoded" namespace="urn:http://services.promocatalogonline.com" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+      </input>
+      <output>
+        <soap:body use="encoded" namespace="urn:http://services.promocatalogonline.com" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+      </output>
+    </operation>
+    <operation name="getAllProducts">
+      <soap:operation soapAction="urn:LancoWebServiceAction"/>
+      <input>
+        <soap:body use="encoded" namespace="urn:http://services.promocatalogonline.com" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+      </input>
+      <output>
+        <soap:body use="encoded" namespace="urn:http://services.promocatalogonline.com" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+      </output>
+    </operation>
+  </binding>
+  <service name="LancoWebService">
+    <port name="LancoWebServicePort" binding="typens:LancoWebServiceBinding">
+      <soap:address location="http://services.promocatalogonline.com/webservice.php"/>
+    </port>
+  </service>
+</definitions>

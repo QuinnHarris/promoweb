@@ -1,0 +1,34 @@
+%style{ :type => "text/css" }
+  img { border: none; }
+  
+  table th {
+  text-align: right;
+  }
+  
+  h2 {
+  font-size: 1.2em;
+  margin-bottom: 0;
+  border-bottom: thin solid black;
+  clear: both;
+  }
+
+  = File.open("#{RAILS_ROOT}/public/stylesheets/order.css") { |f| f.read }
+  
+%table
+  %tr
+    %th Order:
+    %td= @order.id
+  %tr
+    %th Company:
+    %td= @order.customer.company_name
+  %tr
+    %th Person:
+    %td= @order.customer.person_name
+  %tr
+    %th Completed:
+    %td= link_to_task(@task.completed_name, @task, @order, :only_path => false)
+  %tr
+    %th Pending:
+    %td= @order.tasks_ready.collect { |t| link_to_task(t.waiting_name, t, @order, :only_path => false) }.join('<br/>')
+
+= render_partial_null @task.class.to_s.underscore, { :task => @task }

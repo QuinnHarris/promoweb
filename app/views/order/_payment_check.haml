@@ -1,0 +1,14 @@
+- form_for :check, @check, :url => { :action => :payment_check, :order_id => @order } do |check|
+  %table.form
+    %caption Add Check
+    %tr
+      %th Name:
+      %td= check.text_field :name
+    %tr
+      %th Routing #:
+      %td= check.text_field :routing
+    %tr
+      %th Account #:
+      %td= check.text_field :account
+
+  = submit_tag "Add Check"

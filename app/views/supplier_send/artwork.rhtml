@@ -1,0 +1,25 @@
+Artwork for PO-<%= @po.quickbooks_ref %> from Mountain Xpress Promotions
+
+<% for group in @groups -%>
+Group: <%= group.name %>
+<% if group.description and !group.description.empty? -%>
+Desc: <%= group.description %>
+<% end -%>
+<%   for decoration in group.order_item_decorations %>
+ <%= decoration.order_item.product.name %> (<%= decoration.order_item.quantity %>)
+   Imprint: <%= decoration.description %>
+<% if decoration.count -%>
+   Colors: <%= decoration.count %>
+<% end -%>
+<% if decoration.decoration -%>
+   Location: <%= decoration.decoration.location %>
+<% end -%>
+<% if decoration.our_notes and !decoration.our_notes.empty? -%>
+   Notes: <%= decoration.our_notes %>
+<% end -%>
+<%   end %>
+<% artworks = group.artworks.find_all { |a| a.has_tag?('supplier') } -%>
+  File(s):  <%= artworks.collect { |a| a.file.filename }.join(', ') %>
+  URL(s): <%= artworks.collect { |a| "http://www.mountainofpromos.com#{a.file.url}" }.join(', ') %>
+
+<% end -%>

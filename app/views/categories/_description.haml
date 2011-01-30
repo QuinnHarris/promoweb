@@ -1,0 +1,10 @@
+- unless @user
+  - if @category.description && !@category.description.strip.empty?
+    #description= @category.description
+- else
+  #description.admin
+    - form_for :category, @category, { :url => { :controller => '/admin/system', :action => :category_description, :id => @category } } do |cat|
+      = cat.text_area :description, :cols => 100, :rows => 4
+      %br
+      = submit_tag 'Update'
+      = link_to "Promote", { :controller => 'admin/promote', :action => 'category', :id => @category  }

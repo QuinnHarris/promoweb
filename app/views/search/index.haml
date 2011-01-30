@@ -1,0 +1,11 @@
+- unless @categories.empty?
+  %h2 Categories
+  %ul
+    - for cat in @categories
+      %li
+        = link_to((cat.path_name_list[0..-2] + [cat.name_headline]).join('/'), "/categories/#{cat.path.gsub(' ','_')}")
+
+- unless @products.empty?
+  - unless @categories.empty?
+    %h2 Products
+  = render :partial => 'categories/list', :locals => { :products => @products, :columns => @columns, :category => nil, :context => @context }

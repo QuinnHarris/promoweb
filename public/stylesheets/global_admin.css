@@ -1,0 +1,102 @@
+/* ADMIN */
+.admin {
+  background-color: #FFE0E0;
+}
+
+div.admin h2 {
+  background-color: #400000;
+  color: white;
+  margin: 0;
+  margin-bottom: 0.5;
+  padding: 0.25em;
+}
+
+div.admin ul {
+  margin: 0;
+}
+
+div.admin p.instruct {
+  font-size: 0.8em;
+  margin: 0;
+  padding: 0;
+}
+
+table#status td.admin {
+	border: thin solid red;
+}
+
+div#sublist div.tabs {
+  left: 5em;
+}
+
+ul#leftmenu {
+	float: left;
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	margin-right: 0.5em;
+	border-right: thin solid black;
+}
+
+ul#leftmenu li {
+  border: thin solid black;
+  -moz-border-radius: 1em 0 0 1em;
+  background-color: #F0F0F8;
+  padding: 0.1em;
+  margin-left: 0.2em;
+  margin-top: 0.2em;
+  margin-bottom: 0.2em;
+  margin-right: -1px;
+}
+
+ul#leftmenu li.sel {
+	  border-right:thin solid white;
+	  background-color: white;
+}
+
+ul#leftmenu li a {
+  padding: 0 0.25em 0 0.5em;
+  color: black;
+  font-size: 1.2em;
+  white-space:nowrap;
+}
+
+div#custinfo {
+	padding: 0.25em;
+}
+
+div#buttonn {
+	margin-right: 0.25em;
+	float: right;
+}
+
+div#buttonn a {
+	display: block;
+	border: thin solid black;
+	-moz-border-radius: 1em;
+	margin: 0.25em;
+  white-space:nowrap;
+  padding: 0 0.5em 0 0.5em;
+}
+
+div#buttonn a:hover {
+	background-color: #F0F0F8;
+}
+
+div.action {
+  border: thin solid black;
+  margin-top: 0.5em;
+}
+
+div.action div.delegate {
+  padding-left: 0.5em;
+  background-color: #FFF0F0;
+}
+
+div.action a, div.action span {
+	margin-left: 0.5em;
+}
+
+div#header {
+  background-image: none;
+}

@@ -1,0 +1,8 @@
+%h1 Site Map
+%h2 Categories
+= render :partial => 'map', :locals => { :root => Category.root }
+
+%h2 Information
+%ul
+  - StaticController.pages.each do |name, tail|
+    %li= link_to name, { :controller => 'static', :action => tail }

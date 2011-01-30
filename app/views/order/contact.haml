@@ -1,0 +1,74 @@
+- unless @search
+  = render :partial => 'menu'
+  = error_messages_for_many [:customer, :default_address, :ship_address]
+  - if @user and @static and !@reassoc
+    .admin
+      = link_to "Unlock to Modify", :unlock => true
+
+- if @search or @naked
+  :javascript
+    function on_select(field, value) {
+      params = {#{@search ? '' : "'order_id': #{@order.id}"}}
+      params[field.name] = field.value
+      window.location = '/admin/orders/contact_search?' + Object.toQueryString(params)
+    }
+
+- form_for :customer, @customer, :url => { :order_id => @order } do |cust|
+  = hidden_field_tag 'customer_id', @customer.id
+  %table.form
+    %caption
+      Contact Information
+      - if @search
+        Search
+      - elsif @naked
+        Set or Associate
+    - if @similar
+      %thead
+        %tr
+          %td
+          %td Current Customer
+          %td
+            Similar Customer:
+            = link_to "Merge", { :controller => '/admin/orders', :action => :contact_merge, :order_id => @order.id, :keep_customer_id => @order.customer.id, :discard_customer_id => @similar.id }, :confirm => "Merge similar customer into current customer?  This will delete the similar customer and reassociate all its orders with the current customer!!!"
+            ,
+            = link_to "View", :action => :orders, :order_id => @similar.orders.find(:first)
+    %tbody
+      - if @search
+        %tr
+          %th Order #
+          %td= text_field :order, :id, :value => ''
+          %td= submit_tag('Find')
+      %tr
+        %th Company:
+        = customer_field :company_name
+      %tr.required
+        %th Name:
+        = customer_field :person_name
+      %tr.required
+        %th Email:
+        = customer_field :email
+      %tr.required
+        %th Phone Number:
+        = customer_field :phone, { :min_chars => 3 }
+      - unless @search
+        = render :partial => 'address_edit', :locals => { :field_name => :default_address, :disabled => false }
+
+  - unless @search or (@static and !@options.different)
+    %table#shipping.form
+      %caption Shipping Address
+      %tbody
+        - unless @static
+          %tr
+            %th
+            %td
+              = check_box :options, :different, { :onclick => "enable_disable_forum('shipping', this)" }
+              Specify different shipping address
+        %tr
+          %th Name:
+          %td= @static ? @ship_address.name : text_field(:ship_address, :name, :disabled => !@options.different)
+        = render :partial => 'address_edit', :locals => { :field_name => :ship_address, :disabled => !@options.different}
+      
+  - if @reassoc
+    = link_to "Associate with Order #{@order.id}", { :controller => '/admin/orders', :action => :contact_merge, :order_id => @order.id, :keep_customer_id => @customer.id, :discard_customer_id => @order.customer }
+  - elsif !@search
+    = submit_options

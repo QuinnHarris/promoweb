@@ -1,0 +1,5 @@
+/* Yes IE is getting better.
+   If IE 6 goes away, a refactor will be in order that might even eliminate this BS. */
+div#leftbar div li a { height: 1%; }
+div#leftbar div li:hover ul { display: none; }
+div#leftbar div li.sel:hover ul { display: block; }

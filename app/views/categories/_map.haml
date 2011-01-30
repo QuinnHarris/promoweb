@@ -1,0 +1,5 @@
+%ul
+  - root.children.sort { |l, r| l.name <=> r.name }.each do |child|
+    %li= link_to_category(child)
+    - if child.children and !child.children.empty?
+      = render :partial => 'map', :locals => { :root => child }

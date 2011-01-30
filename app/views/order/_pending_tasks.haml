@@ -1,0 +1,47 @@
+- for tasks, deligate, blocked in @tasks
+  - task = tasks.last
+  .admin.action
+    - unless blocked
+      - if task.action_name # Inline Task Execute
+        - title = tasks.collect { |t| t.action_name }.join(' and ')
+        - if order_item = task.object.is_a?(OrderItem) and !task.object.new_record?
+          - title += " (#{task.object.description})"
+        - if inline = render_partial_null("/order/tasks/#{task.class.to_s.underscore}", { :task => task })
+          - form_tag({ :controller => '/admin/orders', :action => :task_execute, :id => task.object, :tasks => tasks.collect { |t| t.class } }) do
+            %h2= title
+            = inline
+            = submit_tag 'Completed'
+            - if task.respond_to?(:email_complete)
+              = submit_tag 'Completed (Without Email)'
+        - else # No template, do link
+          = link_to(title, { :controller => '/admin/orders', :action =>:task_execute, :id => task.object.id, :order_id => @order, :tasks => tasks.collect { |t| t.class } })
+          - if task.respond_to?(:email_complete)
+            (
+            = link_to "WITHOUT EMAIL", { :controller => '/admin/orders', :action => :task_execute, :order_id => @order, :tasks => tasks.collect { |t| t.class }, :without_email => true }
+            )
+
+      - else # Link to task page
+        %span= task.uri ? link_to(task.status_name, task.uri) : task.status_name
+
+      - unless (users = tasks.last.delegatable_users(session[:user_id])).empty?
+        .delegate
+          or delegate to:
+          %ul
+          - for user in users
+            %li= link_to user.name, { :controller => '/admin/orders', :action => :task_execute, :order_id => @order, :delegate_perm => user.delegatables.first.name, :user_id => user.id }, :class => 'action'
+
+      - if deligate and !(users = deligate.delegatable_users(session[:user_id])).empty?
+        .delegate
+          then delegate
+          = deligate.action_name
+          to:
+          %ul
+          - for user in users
+            %li= link_to user.name, { :controller => '/admin/orders', :action => :task_execute, :order_id => @order, :tasks => tasks.collect { |t| t.class }, :delegate_perm => user.delegatables.first.name, :user_id => user.id }, :class => 'action'
+
+    - else # if blocked
+      %span
+        = task.action_name
+        BLOCKED because:
+        = blocked
+

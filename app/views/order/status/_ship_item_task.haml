@@ -1,0 +1,10 @@
+- if task.new_record?
+  - if @user and task.ready?
+    = select(:data, :carrier, %w(UPS FedEx DHL Trucking Other))
+    = text_field(:data, :tracking, :size => 20)
+- else
+  Shipped via
+  = task.carrier
+  %br
+  Tracking #:
+  = task.tracking_url ? link_to("#{task.tracking} (Click to Track)", task.tracking_url) : task.tracking

@@ -1,0 +1,19 @@
+/* They joy that is Internet Explorer */
+
+/* I really mean display: block */
+div#leftbar div li a { height: 1%; }
+div.box { height: 1%; }
+
+/* products.css */
+div#product { height: 1%; }
+div#leftbar div a.head { height: 1%; }
+/*#prod_title h1 { height: 1%; }*/
+dd { height: 1%; }
+
+/* Copied without child selector */
+div#leftbar div li a:hover {
+ border-left: 10px solid #1c64d1;
+ border-right: 10px solid #5ba3e0;
+ background-color: #2586d7;
+ color: #fff;
+}

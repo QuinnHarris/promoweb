@@ -1,0 +1,318 @@
+= path_text
+
+%table.layout
+  %tr
+    - if @link_context
+      %td#prod_nav.layout
+        #order
+          %span Order by:
+          - for sort in Category.order_list.find_all { |o| o != @context[:sort] }
+            %span= link_to sort.capitalize, @context.merge({ :category => @category, :sort => sort })
+        #prod_list
+          - for prod in @products
+            %div{ :class => (prod == @product) && 'current' }
+              = render :partial => 'categories/thumb', :locals => { :product => prod, :category => @category, :context => @context }
+
+    %td.layout
+      #prod
+        #prod_title
+          %span#prod_num
+            %em= link_to_unless(@user.nil?, "#{@product.supplier.name}: #{@product.supplier_num}", @product.supplier_url)
+            %strong= "(M#{@product.id})"
+          - unless @product.tags.empty?
+            %span#tags
+              - for tag in @product.tags
+                = image_tag("tags/#{tag.name.downcase}.png") + "#{tag.name}"
+          %h1= @product.name
+          = path_tail_list
+
+        - setup_main if @user
+        - cache do
+          - setup_main unless @user
+          #prod_img
+            = image_tag(@product.image_path_relative('main'), :alt => @product.name)
+            %br
+            = link_to "Large Image", @product.image_path_relative('large'), :rel => 'external'
+
+          - unless @product.description.nil? or @product.description.empty?
+            .box
+              %h2 Features
+              %ul#description
+                - for desc in @product.description.split("\n")
+                  %li= desc
+
+          - unless @common_properties.empty?
+            .box
+              %h2 Attributes
+              %dl
+                - for prop in @common_properties
+                  %dt= "#{prop.name.capitalize}:"
+                  %dd= prop.is_image? ? image_tag(prop.translate) : prop.translate
+
+          :javascript
+            var prices = [
+            #{@prices.price_sets.collect do |set|
+                props = set.group.variants.collect { |v| v.properties.collect { |p| p.id } }.flatten.uniq
+      
+                "[#{set.group.id},#{set.const.to_i},#{set.exp},[" +
+                set.breaks.collect do |brk|
+                "[#{brk.minimum},#{brk.fixed.to_i},#{brk.marginal.to_i} ]"
+                end.join(',') +
+                "],[" +
+                @properties.collect do |names, properties|
+                "['#{names.join(',')}'," +
+                properties.collect { |p| (p.first && props.index(p.first.id)) ? p.first.id : nil }.compact.join(',') +
+                "]"
+                end.join(',') +
+                "]]"
+                end.join(",\n") }
+                ]
+
+             var decorations = [
+             #{@techniques.collect do |tech|
+                 price_group = @product.supplier.find_decoration_price_group(tech)
+                 
+                 "[#{tech.id},'#{tech.unit_name ? (tech.unit_name.capitalize + ':') : nil}',#{tech.unit_default},[" +
+                 @decorations.collect do |d|
+                 (d.technique == tech and d.location and !d.location.empty?) ? "#{d.id},'#{d.display}',#{d.limit}" : nil
+                 end.compact.join(',') + 
+                 "],[" +
+                 (price_group ? price_group.entries.collect do |entry|
+                 "[" +
+                 %w(minimum
+                   fixed_price_fixed fixed_price_const fixed_price_exp fixed_price_marginal
+                   fixed_divisor fixed_offset marginal_divisor marginal_offset
+                   marginal_price_fixed marginal_price_const marginal_price_exp marginal_price_marginal
+                   ).collect { |a| entry[a] }.join(',') +
+                   "]"
+                   end.join(',') : '') +
+                   "]]"
+                   end.join(",\n") }
+                   ]
+                   
+              var minimums = [#{@minimums.join(',')}]
+
+          - unless @properties.empty?
+            #variants.box
+              .note Click box to select variant.
+              %h2 Variants
+              %dl
+                - index = -1
+                - for names, properties in @properties
+                  %dt
+                    %a{ :href => "#", :onclick => "return clear_opt(this);" }
+                      - reset_cycle
+                      - for name in names
+                        %span{ :class => cycle('odd', 'even') }
+                          = "#{name.capitalize}:"
+                  %dd
+                    %ul{ :id => "group-#{index += 1}" }
+                      - for props in properties
+                        %li{ :id => props.compact.first && "prop-#{props.compact.first.id}" }
+                          %a{ :href => "#", :onclick => "return sel_opt(this);" }
+                            - reset_cycle
+                            - for prop in props
+                              %span{ :class => cycle('odd', 'even') }
+                                = prop ? (prop.is_image? ? image_tag(prop.translate) : prop.translate) : 'NA'
+
+          - unless @locations.empty?
+            #decorations.box
+              .note Click box to select option.
+              %h2 Decorations
+              %dl
+                %dt>
+                  %span Technique:
+                %dd>
+                  %ul#techniques
+                    - for tech in @techniques
+                      %li{ :class => (tech == @techniques.first) && 'sel', :id => "tech-#{tech.id}" }
+                        %a{ :href => "#", :onclick => "return sel_tech(this)" }
+                          %span= tech.name
+
+                - display = @techniques.first.unit_name
+                %dt{ :style => !display && 'display:none;' }>
+                  %span= display && "#{@techniques.first.unit_name.capitalize}:"
+                %dd{ :style => !display && 'display:none;' }>
+                  %input#unit_value{ :name => "unit_value", :onkeypress => "return num_keypress(this, event, change_units)", :type => "text", :value => @techniques.first.unit_default, :size => "6" }
+
+                - display = @techniques.first.name != "None"
+                %dt{ :style => !display && 'display:none;' }>
+                  %span Location:
+                %dd{ :style => !display && 'display:none;' }>
+                  %ul#locations
+                    - for dec in @decorations.find_all { |d| d.technique == @techniques.first }
+                      %li{ :id => "dec-#{dec.id}" }
+                        %a{ :href => '#', :onclick => 'return sel_loc(this)' }
+                          %span= dec.display
+
+          %script{ :type => "text/javascript" } load_tech();
+
+          - if @product.lead_time_normal_min
+            #leadtime.box
+              .note Business days to ship after order and artwork acknowledgement.
+              %h2 Lead Time
+              %dl
+                %dt Normal:
+                %dd
+                  = [@product.lead_time_normal_min, @product.lead_time_normal_max].uniq.join(' to ')
+                  days
+                - if @product.lead_time_rush
+                  %dt Rush:
+                  %dd
+                    = @product.lead_time_rush.to_s + (@product.lead_time_rush == 1 ? ' day' : ' days')
+                    = @product.lead_time_rush_charge ? '(Additional Charges)' : '(No Charge, Some Restrictions)'
+              
+
+          - if true #@category
+            - form_tag({ :controller => :order, :action => :add_item }, {:name => "productform", :onsubmit => 'return order_submit(this, true);' }) do
+              #prices.box
+                .note Enter quantity for exact price.
+                %h2 Prices
+                - if @product.tag_names.include?('Closeout')
+                  %strong Quantities limited on this closeout product!
+                  %hr
+                %p
+                  = hidden_field_tag "product", @product.id
+                  = hidden_field_tag "price_group", @prices.price_sets.first && @prices.price_sets.first.group.id
+                  = hidden_field_tag "properties", ''
+                  = hidden_field_tag "technique", @techniques.first ? @techniques.first.id : ''
+                  = hidden_field_tag "decoration", ''
+                  = hidden_field_tag "unit_count", (@techniques.first and @techniques.first.unit_name) ? @techniques.first.unit_default : ''
+
+                  Quantity:
+                  %input#quantity{ :name => "quantity", :size => "4", :onkeypress => "return num_keypress(this, event, change_quantity)", :type => "text" }
+                - unless @prices.price_sets.empty? or @prices.price_sets.first.breaks.first.marginal.nil?
+                  %table
+                    %thead
+                      %tr#qty_row<
+                        %th>
+                        - for qty in @minimums
+                          %td>= qty
+                    %tbody
+                      %tr#price_row<
+                        %th> Unit Price
+                        - for qty in @minimums
+                          %td>= @prices.price_range(qty).to_perty
+                      %tr#setup_row<
+                        %th> Setup Price
+                        - for qty in @minimums
+                          %td> 0.00
+                      %tr#total_row<
+                        %th> Total Price
+                        - for qty in @minimums
+                          %td>= (@prices.price_range(qty) * qty).to_perty
+
+                  %hr
+                - if @locations.empty?
+                  %p
+                    %strong Additional setup charges WILL apply for any decoration options.
+                - else
+                  %p Additional charges may apply.
+
+              %script{ :type => "text/javascript" } load_quantity(); calc_prices();
+
+              #actions
+                - if @message
+                  %div= @message
+                %span.action= submit_tag "Add to Cart"
+                %p To get a quote or order, enter a quantity above then click "Add to Cart".
+
+
+      - if @user
+        #actions.admin
+          %span.action
+            :javascript
+              var input = document.createElement('input');
+              input.type = 'hidden';
+              input.name = 'dispos';
+              document.productform.appendChild(input);
+            Add to
+            = submit_tag "Current Order", :onclick => "if (order_submit(document.productform, false)) { document.productform.dispos.value = 'exist'; document.productform.submit(); }"
+            or
+            = submit_tag "New Order", :onclick => "if (order_submit(document.productform, false)) { document.productform.dispos.value = 'order'; document.productform.submit(); }"
+            or
+            = submit_tag "New Customer", :onclick => "if (order_submit(document.productform, false)) { document.productform.dispos.value = 'customer'; document.productform.submit(); }"
+
+        .admin
+          %br
+          - unless @sessions.empty?
+            %table#access
+              %thead
+                %tr
+                  %td Time
+                  %td Address
+                  %td Order(s)
+                  %td State
+                  %td City
+                  %td Zipcode
+                  %td Areacode
+              %tbody
+                - for session in @sessions
+                  %tr
+                    %td= format_time(session.pages.last.created_at)
+                    %td= link_to session.pages.last.address, { :controller => '/admin/access', :action => 'paths', :session_id => session.id }
+                    %td= session.orders.collect { |o| link_to o.order_id, { :controller => '/admin/orders', :action => :paths, :order_id => o.order_id } }.join(', ')
+                    - begin
+                      - gi = GEOIP[session.pages.last.address]
+                      %td= gi.region
+                      %td= gi.city
+                      %td= gi.postal_code
+                      %td= gi.area_code
+                    - rescue
+                      %td{ :colspan => 4 } Unkown
+            %hr
+
+          %table
+            %thead
+              %tr
+                %th Quantity
+                - for min in @prices.all_minimums
+                  %td= min
+            %tbody
+              %tr
+                %th Our Price
+                - for min in @prices.all_minimums
+                  %td= @prices.price_range(min)
+
+              - for group in @prices.cost_groups + @prices.supplier_groups + @prices.price_groups
+                - name = (group.source_id ? group.source.name : 'Cost') + ' ' + group.variants.collect { |v| v.supplier_num }.join(', ')
+                %tr
+                  %th= group.uri ? link_to(name, group.uri) : name
+                  - for min in @prices.all_minimums
+                    %td
+                      - e = group.price_entries.to_a.find { |v| v.minimum == min }
+                      = e ? (e.marginal.to_s + ((!e.fixed or e.fixed.zero?) ? '' : " (#{e.fixed})")) : nil
+
+          = link_to 'Price Chart', :controller => '/admin/products', :action => 'chart', :id => @product
+
+          - if @page_products
+            %hr
+            %table
+              %thead
+                %tr
+                  %td Name
+                  %td Score
+                  %td Match
+                  %td URL
+              %tbody
+                - for pp in @page_products
+                  %tr
+                    %td= pp.page.site.url
+                    %td= pp.score
+                    %td= pp.correct
+                    %td= link_to pp.page.request_uri, pp.page.url
+
+        #feature-sel.admin
+          %h2 Set as featured item
+          %p.instruct
+            Click on category to set as featured item.
+            %strong
+              Bold
+            (position) is featured.
+            %em
+              Italics
+            is in queue to be featured.  (Parenthesis) is current category.
+          = treething(@categories)
+          = link_to("Remove", :action => 'set_featured', :id => @product)
+          %hr
+          = link_to "Modify Page", :controller => '/admin/products', :action => :edit, :id => @product

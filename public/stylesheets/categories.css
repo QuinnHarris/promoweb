@@ -1,0 +1,192 @@
+/* On list page */
+div#list { padding: 1em; }
+div#list table { background-color: #EEE; }
+
+/* On all pages */
+table.list { 
+  border-collapse: separate;
+}
+table.list td {
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+  background-color: white;
+  text-align: center;
+  width: 1%; /* Make all columns same width */
+  -moz-border-radius: 1em;
+  border-radius: 1em;
+}
+
+span#order { margin-left: 1em; font-weight: normal; font-size: 0.8em; }
+span#order a { padding: 0.25em 0.5em 0.25em 0.5em; }
+
+div.pagination { text-align: center; overflow: hidden; }
+div.pagination a { 
+  padding: 2px 0.5em 2px 0.5em;
+  line-height: 2em;
+  color: #000040;
+  white-space: nowrap;
+  font-weight: bold;
+  border-left: thin solid #E0E0EF;
+  border-right: thin solid #E0E0EF;
+}
+div.pagination a.sel, div.pages a:hover { background-color: #E0E0EF; }
+
+div.category {
+  margin: 1em;
+  border: none;
+
+  background-color: #816f86;
+  background-image: url('/images/grads/head.png');
+  background-repeat: repeat-x;
+
+  padding: 0 0.2em 0.2em 0.2em;
+
+  -moz-border-radius: 1.2em;
+  border-radius: 1.2em;
+}
+
+div.category tr td { padding: 0; margin: 0; }
+div.category table {
+    border-collapse: collapse;
+}
+div.category table td { border: none; }
+
+div.category a.title {
+  display: block;
+  color: #332735;
+  font-size: 1.3em;
+  font-weight: bold;
+  white-space: nowrap;
+
+  padding: 0.25em;
+  padding-left: 20px;
+
+  background-color: none;
+  background-image: url('/images/grads/head-main.png');
+  background-repeat: repeat-y;
+}
+div.category a.title:hover {
+  background-image: url('/images/grads/head-main-hover.png');
+}
+
+div.category div.tags {
+  float: right;
+  margin-right: 0.5em;
+  margin-top: 0.5em;
+  white-space: nowrap;
+  margin-left: 16em;
+  margin-bottom: 0.5em;
+}
+div.category div.tags a{
+    color: black; padding: 0.25em;   
+    border: thin solid #666;
+    -moz-border-radius: 0.6em;
+    border-radius: 0.6em;
+
+  background-color: #a293a6;
+  background-image: url('/images/grads/head-link.png');
+  background-repeat: repeat-x;
+}
+div.category div.tags a:hover {
+  background-image: url('/images/grads/head-link-hover.png');
+}
+div.category div.tags img { margin: 0 0.25em -3px 0; }
+
+table.breaks { width: 100%; }
+table.breaks tr td { background-color: #F0F0FF; white-space: nowrap; text-align: center; }
+table.breaks tr td a { display: block; color: #000060; padding: 0.25em 0.5em 0.25em 0.5em; }
+table.breaks tr td a:hover { background-color: #E0E0FF; }
+
+
+div#description {
+  margin-left: 1em;
+  margin-right: 1em;
+  border: thin solid #916877;
+  padding: 0.5em 1em 0.5em 1em;
+  border-radius: 1em;
+  -moz-border-radius: 1em;
+  font-size: small;
+}
+
+/* Home Page */
+div#virtues {
+  margin-left: 1em;
+  margin-right: 1em;
+}
+div#virtues div {
+  border-left: medium solid #916877;
+  border-right: medium solid #916877;
+  border-bottom: medium solid #916877;
+  margin: 0;
+  margin-bottom: 0.5em;
+  -moz-border-radius: 0 0 1em 1em;
+  border-bottom-left-radius: 1em;
+  border-bottom-right-radius: 1em;
+}
+div#virtues div h2 {
+  text-align: center;
+  font-size: medium;
+  margin-bottom: 0;
+  padding-left: 0.25em;
+
+  color: white;
+  background-color: #916877;
+  background-image: url('/images/grads/home.png');
+  background-repeat: repeat-y;
+  background-position: center;
+}
+div#virtues div p {
+  font-size: small;
+  margin-top: 0.5em;
+  margin-left: 1.0em;
+  margin-right: 1.0em;
+}
+
+div#reviews {
+  margin-left: 1em;
+  margin-right: 1em;
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+  padding-bottom: 0.5em;
+  background-color: #916877;
+  -moz-border-radius: 0 0 1em 1em;
+  border-bottom-left-radius: 1em;
+  border-bottom-right-radius: 1em;
+}
+div#reviews h2 {
+  text-align: center;
+  font-size: large;
+  margin-bottom: 0;
+  padding-left: 0.25em;
+
+  color: white;
+  background-color: #916877;
+  background-image: url('/images/grads/home.png');
+  background-repeat: repeat-y;
+  background-position: center;
+}
+div#reviews table {
+  background-color: white;
+  border: medium solid #916877;
+  -moz-border-radius: 1em;
+  border-radius: 1em;
+  width: 100%;
+}
+div#reviews table td {
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+}
+div#reviews table td.rating {
+  white-space: nowrap;
+
+}
+div#reviews table td.comment {
+  vertical-align: middle;
+  font-style: italic;
+  width: 100%; 
+}
+div#reviews table td.name {
+  vertical-align: top;
+  text-align: right;
+  font-weight: bold;
+}

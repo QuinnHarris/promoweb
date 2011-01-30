@@ -1,0 +1,309 @@
+h1 {
+  find-size: 1.2em;
+  margin: 0;
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+  border-bottom: medium solid black;
+}
+
+h2 { clear: both; }
+
+div#content {
+  padding: 1em;
+}
+
+table td {
+  vertical-align: top;
+}
+
+table.form th {
+  padding-left: 1em;
+  text-align: right;
+  vertical-align: top;
+  background-color: #EEE;
+  font-weight: normal;
+}
+
+table.form tr.required th {
+  font-weight: bold;
+}
+
+table.form caption {
+  font-size: 1.2em;
+  font-weight: bold;
+  text-align: left;
+  border-bottom: thin solid black;
+  margin-top: 1.0em;
+}
+
+img.right {
+  float: right;
+}
+
+/* Upload Progress */
+div.uploadStatus {
+  margin: 5px;
+}
+
+div.progressBar {
+  margin: 5px;
+}
+
+div.progressBar div.border {
+  background-color: #fff;
+  border: 1px solid grey;
+  width: 100%;
+}
+
+div.progressBar div.background {
+  background-color: #333;
+  height: 18px;
+  width: 0%;
+}
+
+table#status {
+  border-spacing: 0.2em;
+}
+
+table#status td {
+  padding: 0.2em;
+  border: thin solid grey;
+}
+
+table#status td.header {
+	border: none;
+	text-align: center;
+	vertical-align: bottom;
+}
+
+div#key span {
+    padding: 0.5em;
+    border: thin solid black;
+    line-height: 2.5em;
+    white-space: nowrap; 
+}
+
+.pending {
+	background-color: #F0F0FF;
+}
+
+.complete {
+	background-color: #E0FFE0;
+}
+
+.ready {
+	background-color: #FFFFE0;
+}
+
+div.time {
+	font-size: 0.8em;
+	float: right;
+}
+
+table.spacer {
+	width: 100%;
+	padding: 0;
+}
+
+table.spacer td { text-align: center;}
+
+div.invoice { border: thin solid black; padding: 0; margin-bottom: 1em; page-break-inside: avoid; }
+div.invoice h3 { font-family: sans-serif;  background-color: black; color: white; margin: 0; padding-left: 0.5em; }
+div.invoice div.date { float: right; color: white; margin-right: 0.5em; margin-top: 0.25em;}
+div.invoice div.entry { margin: 1em; }
+div.invoice td.total { font-weight: bold; }
+div.invoice div.total { font-weight: bold; font-size: 1.2em; text-align: right; margin-right: 1em; }
+
+
+
+/* Quote */
+.num {
+  text-align: right;
+}
+
+table thead {
+  text-align: center;
+  font-weight: bold;
+}
+
+table thead td {
+  border-bottom: medium solid black;
+}
+
+tr.total td {
+  border-top: thin solid black;
+}
+
+div.item {
+  clear: both;
+  overflow: hidden;
+}
+
+/* Artwork Page */
+div.group {
+  border: medium solid #400000;
+  margin-bottom: 1em;  
+}
+
+div.group table.head {
+  width: 100%;
+  border-bottom: medium solid #400000;
+}
+
+div.group table.head td {
+  vertical-align: top;
+}
+
+div.group > table td:first-child {
+  width: 1%;
+}
+
+div.group table td {
+  position: relative;
+}
+
+div.group table div.decorations {
+  width: 100%;
+  min-height: 4.5em;
+  bottom: 0;
+}
+
+div.group div.items {
+  background-color: #F0FFF0;
+  min-height: 2em;
+  border: thin solid black;
+}
+
+div.group div.item {
+  border: thin solid black;
+  background-color: white;
+  margin: 0.5em;
+}
+
+div.item .block {
+  float: left;
+  margin-right: 1.0em;
+  height: 100%;
+  margin-bottom: 0.5em;
+}
+
+div.item h3 {
+  margin-top: 0.25em;
+  margin-bottom: 0;
+  font-size: 1.0em;
+  text-align: center;
+  border-bottom: medium solid black;
+}
+
+div.thumb {
+  text-align: center;
+  max-width: 12em;
+  height: 100%;
+  float: left;
+/*  overflow: none;*/
+}
+
+div.item dl {
+  margin: 0;
+  margin-top: 0.25em;
+}
+
+div.item dt {
+  float: left;
+  padding-left: 1.0em;
+  padding-right: 0.5em;
+  font-weight: bold;
+}
+
+div.item dd {
+  display: block;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  margin-bottom: 0.25em;
+}
+
+hr {
+  clear: both;
+}
+
+
+div.decorations {
+  min-height: 2em;
+  background-color: #F0F0FF;
+}
+
+div.decoration {
+  width: 1;
+  display: inline-block;
+  border: thin solid black;
+  background-color: white;
+  margin: 0.5em;
+}
+
+div.decoration table td {
+  vertical-align: top;
+}
+
+div.decoration h3 {
+  margin: 0;
+  padding: 0;
+  border-bottom: thin solid black;
+}
+
+
+/* Variants dupes from products.css */
+dl.variants dt {  
+  text-align: right;
+  float: left;
+  font-weight: bold;
+ 
+  margin: 0;
+  padding: 0;
+
+  padding-top: 0.25em;
+ 
+}
+
+dl.variants dd {
+  margin: 0;
+  padding: 0;
+
+  margin-top: 0.25em;
+}
+
+dl.variants ul {
+   list-style: none;
+   margin: 0;
+   padding: 0;
+}
+
+dl.variants ul li {
+  float: left;
+  margin: 0.25em 0 0 0.25em;
+  padding: 0;
+  text-align: center;
+  border: thin outset black;
+}
+
+dl.variants span {
+  display: block;
+  padding: 0em 0.25em 0em 0.25em;
+}
+
+dl.variants span.even { background-color: #F4F4FF; }
+
+div.lowlight {
+  background-color: #F0F0F0;
+}
+div.lowlight h1 {
+  font-family: sans serif;
+  font-size: 1.5em;
+  color: red;
+}
+
+div#ack {
+  text-align:center;
+  background-color: #FCC;
+  padding: 0.5em;
+}

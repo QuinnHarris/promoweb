@@ -1,0 +1,77 @@
+= render :partial => 'menu'
+- unless @user
+  %p
+    Review the
+    = link_to "Artwork Requirements", :controller => :static, :action => :artwork
+    page for information on the type of artwork files to upload.
+
+= error_messages_for :artwork
+
+%style
+  \#status-box {
+  border: thin solid black;
+  width: 100%;
+  }
+  \#status-bar {
+  display: block;
+  background-color: #88F;
+  text-align: center;
+  height: 1em;
+  width: 0;
+  }
+
+- unless !@user and @order.task_completed?(ArtAcknowledgeOrderTask)
+  - form_for :artwork, @artwork, { :url => { :action => :artwork_add, :order_id => @order, :upload_id => @upload_id }, :html => {:multipart => true, :target => 'upload-target' } }  do |artwork|
+    %table.form
+      %caption Add Artwork
+      %tr
+        %th File:
+        %td= image_column_field 'artwork', 'file'
+      %tr
+        %th Notes:
+        %td= artwork.text_area :customer_notes, 'rows' => 3
+    = submit_tag 'Add', :id => 'add-button'
+
+#progress-bar{ :style => "display: none;" }
+  %span#status-text
+  #status-box
+    %span#status-bar
+
+- if @user
+  %div
+    - unless @permited.empty? or !allowed?('Super')
+      - for perm in @permited
+        = link_to "Revoke #{perm.name} from #{perm.user.name}", { :controller => '/admin/orders', :action => :permission_revoke, :name => perm.name, :user_id => perm.user_id, :order_id => perm.order_id }
+      %hr
+    = render :partial => 'pending_tasks'
+    %hr
+
+:javascript
+  function moveItem(draggable, droparea) {
+    var parent = draggable.parentNode;
+    parent.removeChild(draggable);
+    droparea.getElementsByClassName(parent.className)[0].appendChild(draggable);
+    draggable.style.top = 0;
+    draggable.style.left = 0;
+    new Ajax.Request('/admin/orders/artwork_drop_set', {
+      asynchronous:true, evalScripts:true, parameters: droparea.id + '&' + draggable.id
+      #{@order.task_ready?(ArtPrepairedOrderTask) ? ', onComplete: function(transport) { window.location.reload() }' : '' }
+    })
+  }
+
+- form_for :artwork, @artwork, { :url => { :action => :artwork_edit, :order_id => @order } }  do |artwork|
+  - if dragable = allowed?('Orders') && !@order.task_completed?(ArtPrepairedOrderTask)
+    %div{ :id => "artwork-group=" }
+      = render :partial => 'artwork_decoration', :locals => { :group => nil, :item_decorations => @order_item_decorations, :dragable => true }
+    = drop_receiving_element("artwork-group=", { :onDrop => 'moveItem', :accept => 'decoration' } )
+
+  - if allowed?('Art')
+    = link_to image_tag('add.png') + "New Artwork Group", { :controller => 'admin/orders', :action => 'artwork_group_new', :customer_id => @order.customer }, { :class => 'button', :confirm => "Create a new artwork group for #{@order.customer.person_name}" }
+
+  %hr
+
+    = render :partial => 'artwork_items', :locals => { :artwork_groups => @artwork_groups, :static => @static, :dragable => dragable, :absolute => false, :filter_tag => nil }
+    %hr
+    = submit_options
+
+%iframe#upload-target{ :name => "upload-target", :src => "about:blank", :style => "height: 0; border: none;" }

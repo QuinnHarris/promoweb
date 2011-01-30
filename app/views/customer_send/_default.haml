@@ -1,0 +1,65 @@
+%style{ :type => "text/css" }
+  h2 {
+  font-size: 1.2em;
+  margin-bottom: 0;
+  border-bottom: thin solid black;
+  clear: both;
+  }
+
+%h2 Order Items
+= render :partial => '/order/order_item', :collection => @order.items, :locals => { :static => true, :absolute => true, :shipping => true, :invoice => false }
+
+%h2 Order Information
+%table.info
+  %tr
+    %th Delivery Date:
+    %td= @order.delivery_date
+  %tr
+    %th Event Nature:
+    %td= @order.event_nature
+  %tr
+    %th Special Instructions:
+    %td= @order.special
+
+- if @order.customer_notes and !@order.customer_notes.empty?
+  %h2 Notes
+  %p= @order.customer_notes
+
+- customer = @order.customer
+- unless customer.artwork_groups.empty?
+  %h2 Customer Artwork
+  = render :partial => '/order/artwork_items', :locals => { :artwork_groups => customer.artwork_groups, :static => true, :absolute => true, :filter_tag => nil }
+
+%h2 Contact Information
+%table.info
+  %tr
+    %th Company Name:
+    %td= customer.company_name
+  %tr
+    %th Contact Name:
+    %td= customer.person_name
+  %tr
+    %th Phone Number:
+    %td= customer.phone
+  %tr
+    %th Email:
+    %td= customer.email
+  - if address = (customer.ship_address || customer.default_address)
+    - if valid?(address, :name)
+      %tr
+        %th Address Name:
+        %td= address.name
+    %tr
+      %th{ :rowspan => "2" } Address:
+      %td= address.address_1
+    %tr
+      %td= address.address_2
+    %tr
+      %th City:
+      %td= address.city
+    %tr
+      %th State:
+      %td= address.state
+    %tr
+      %th Zipcode:
+      %td= address.postalcode

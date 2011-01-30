@@ -1,0 +1,2 @@
+- artwork_groups = ArtworkGroup.find(:all, :conditions => { 'order_items.order_id' => @order.id, 'artwork_tags.name' => 'proof' }, :include => [{ :order_item_decorations => :order_item }, { :artworks => :tags }])
+= render :partial => '/order/artwork_items', :locals => { :artwork_groups => artwork_groups, :static => static, :absolute => static, :filter_tag => 'proof' }

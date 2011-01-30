@@ -1,0 +1,99 @@
+= render :partial => 'menu'
+
+- if flash[:notice]
+  .notice= flash[:notice]
+
+- if @user
+  = render :partial => 'pending_tasks'
+
+- if @payment_methods.empty?
+  - if @order.task_completed?(AcknowledgeOrderTask)
+    #ack.nav
+      %p You have acknowledged this order but must provide payment to proceed with the order.
+  - elsif !@order.task_completed?(RequestOrderTask)
+    %p
+      Enter payment information below to place the order.  Otherwise click "Submit Quote" to request a quote.
+      %br
+      A future acknowledgment will be required before the order is put in production.
+
+  = render :partial => 'payment_creditcard'
+  %hr
+  = link_to("Send a check for payment.", { :action => :payment_sendcheck, :order_id => @order }, { :confirm => "Aknowledge that you will mail a check as payment for this order." })
+
+- else
+  - if chargeable = (@user and @order.task_ready_completed?(FirstPaymentOrderTask, [PaymentInfoOrderTask]) and ((total_billable = @transaction ? @transaction.amount : @order.total_billable) > Money.new(0)))
+    :javascript
+      function charge_check(form)
+      {
+        var amount = parseMoney(form.getElementsByClassName('money')[0].value);
+        if (!amount ||
+            (amount > #{total_billable.to_i}) ||
+            (amount < 0)) {
+          alert('Amount must be less than #{total_billable}');
+          return false;
+        }
+
+        return confirm('#{@transaction ? 'Credit' : 'Charge'} Payment Source ' + displayMoney(amount) + '!');
+      }
+
+  - split_by_common(@payment_methods.sort_by { |m| (m.chargeable? ? 0 : 10000000) - m.id }) { |method| method.chargeable? }.each do |current, methods|
+    %div{ :class => !current && 'lowlight' }
+      - unless current
+        %h1 Previous Payments
+        %p Credit cards or checks listed below can not be charged.  We do not retain credit card information for more than 30 days after a customers order is closed.
+      - for method in methods
+        .item.info_block
+          .block
+            %h3= method.type_name
+            - if method.has_name?
+              %strong Name:
+              = method.name
+              %br
+            - if method.has_number?
+              %strong Number:
+              = method.display_number
+              %br
+            %strong Date Added:
+            = method.created_at.strftime("%Y-%m-%d")
+            %br
+            - if current and method.type_notes
+              %p= method.type_notes
+            - if method.billing_id or method.transactions.empty?
+              = link_to(image_tag('remove.png') + (method.transactions.empty? ? 'Remove' : 'Revoke'), { :action => :payment_remove, :id => method }, :confirm => "Remove #{method.type_name} for #{method.name}")
+            - if method.billing_id and !@order.task_completed?(PaymentInfoOrderTask)
+              = link_to(image_tag('add.png') + 'Use as Payment', { :action => :payment_use, :id => method }, :confirm => "Use #{method.type_name} for #{method.name} as payment information")
+
+          .block
+            - form_remote_tag :update => "method-#{method.id}", :html => { :onsubmit => "return charge_check(this)" }, :url => { :order_id => @order, :controller => '/admin/orders', :action => :payment_charge, :id => method.id, :txn_id => params[:txn_id] } do
+              %table
+                %thead
+                  %tr
+                    %td Date
+                    %td Order
+                    %td Charge
+                    %td Comment
+                %tbody
+                  - if chargeable and method.chargeable? and (!@transaction or @transaction.method_id == method.id)
+                    %tr{ :id => "method-#{method.id}" }
+                      %td TODAY
+                      %td= link_to session[:order_id], :action => :status, :order_id => session[:order_id]
+                      %td
+                        = params[:txn_id] && '-'
+                        = text_field :transaction, :amount, :value => total_billable, :size => 8, :class => 'money negative', :onkeypress => 'input_press(event)'
+                      %td
+                        = text_field :transaction, :comment
+                      %td
+                        = submit_tag @transaction ? "Credit" : "Charge"
+                  - for trans in method.transactions
+                    %tr
+                      = render :partial => 'payment_transaction', :locals => { :transaction => trans }
+
+  %hr
+  %div
+    = link_to "Add Credit Card", :action => :payment_creditcard, :order_id => @order
+    %br
+    = link_to "Send a check for payment.", { :action => :payment_sendcheck, :order_id => @order }, { :confirm => "Aknowledge that you will mail a check as payment for this order." }
+
+  %hr
+  - form_for :payment, @payment, :url => { :order_id => @order } do
+    = submit_options

@@ -1,0 +1,73 @@
+!!! Strict
+%html{ "xml:lang" => "en-US", :lang => "en-US", :xmlns => "http://www.w3.org/1999/xhtml" }
+  %head{ :profile => "http://www.w3.org/2005/10/profile" }
+    %base{ :href => url_for(:only_path => false, :controller => :categories, :action => :home) }
+  %body
+    %style{ :type => "text/css" }
+      img { border: none; }
+      
+      table.info th {
+      text-align: right;
+      }
+      
+      a#logo { float: right; background-color: white; padding: 1em; }
+      div#login { margin-bottom: 0.5em;
+      background-color: #6d5771;
+      background-image: url('http://www.mountainofpromos.com/images/grads/title.png');
+      background-repeat: repeat-y;
+      padding: 0.5em;
+      }
+      div#login { font-weight: bold; }
+      div#login a { border: thin solid black; margin: 0.25em; padding: 0.25em 0.5em 0.25em 0.5em; background-color: #d4cad6; }
+      div#login a:hover { background-color: #e0dae1; }
+      
+      div#note { background-color: #eee; padding: 0.5em; margin-top: 0.5em; }
+      div#note p { margin: 0; margin-bottom: 0.5em; }
+      
+      = File.open("#{RAILS_ROOT}/public/stylesheets/order.css") { |f| f.read }
+
+    %a#logo{ :href => 'http://www.mountainofpromos.com/' }
+      %img{ :src => 'http://www.mountainofpromos.com/images/logo.png' }
+
+    - uri_param = { :only_path => false, :controller => 'order', :auth => @order.customer.uuid, :order_id => @order.id }
+    #login
+      Links: 
+      -# = link_to "Login", uri_param.merge(:action => 'login')
+      = link_to 'Status', uri_param.merge(:action => 'status')
+      - for task in @waiting_tasks
+        = link_to task.waiting_name, task.uri.merge(uri_param)
+
+    #note
+      - main_waiting_task = @waiting_tasks.find { |t| t.depends_on.include?(@task) }
+      - main_waiting_task = @waiting_tasks.first unless main_waiting_task
+      - @header_text.split("\n").each do |line|
+        - line = auto_link(line)
+        - line.gsub!(/\{((?:\w+\:)?[^\}]*)\}/) { |s| link_to($1, uri_param.merge(main_waiting_task.uri)) } if main_waiting_task
+        %p= line
+        
+      - if @order.user
+        %hr
+        = mail_to "#{@order.user.name} <#{@order.user.email}>", @order.user.name, :subject => "Order #{@order.id}"
+        - if @order.user.phone
+          %br
+          = @order.user.phone
+
+    = render_partial_null("/customer_send/#{@task.class.to_s.underscore}") || render(:partial => '/customer_send/default')
+
+    %hr
+
+    %p
+      Thank you,
+      %br
+      Sales Team
+      %br
+      %a{ :href => "http://www.mountainofpromos.com/" }
+      MountainofPromos.com
+      %br
+      877-MTN-LOGO (877-686-5646)
+      %br
+      FAX: 877-790-2011
+      %br
+      %a{ :href => "http://www.mountainofpromos.com/" }
+        Mountainofpromos.com
+      is owned and operated by Mountain Xpress Promotions, LLC.

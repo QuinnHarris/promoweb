@@ -1,0 +1,44 @@
+= render :partial => 'menu'
+
+= error_messages_for :order
+
+- if @user and @static
+  .admin
+    = link_to "Unlock to Modify", :unlock => true
+
+- form_for :order, @order, :url => { :order_id => @order } do |order|
+  %table.form
+    %caption Order/Quote Information
+    - if @user
+      %tr.admin
+        %th Urgent Note:
+        %td= order.text_field(:urgent_note)
+      %tr.admin
+        %th Our Notes:
+        %td= order.text_area :our_notes
+      %tr.admin
+        %th Order Terms:
+        %td= @static ? @order.terms : order.text_field(:terms)
+      %tr.admin
+        %th Rush Order:
+        %td= @static ? @order.rush : order.check_box(:rush)
+      %tr.admin
+        %th Shipping Method:
+        %td= @static ? @order.ship_method : order.text_field(:ship_method)
+      %tr.admin
+        %th FOB:
+        %td= @static ? @order.fob : order.text_field(:fob)
+    %tr.required
+      %th Delivery Date:
+      %td= @static ? @order.delivery_date : order.date_select(:delivery_date, { :order => [:month, :day, :year], :start_year => Time.now.year, :end_year => Time.now.year+1, :include_blank => false } )
+    %tr
+      %th Event Nature:
+      %td= @static ? @order.event_nature : order.text_field(:event_nature)
+    %tr
+      %th Special Instruction:
+      %td= @static ? @order.special : order.text_field(:special)
+    %tr
+      %th Optional Notes:
+      %td= @static ? @order.customer_notes : order.text_area(:customer_notes)
+
+  = submit_options

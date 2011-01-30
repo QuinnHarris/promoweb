@@ -1,0 +1,52 @@
+= render :partial => 'menu'
+
+%p Complete as much of the following review as you wish.
+
+- form_for :order_task, @order_task, :url => { :order_id => @order } do |task|
+  %h2 Order Experience Review
+  %p
+    This review may appear on our home page.
+
+  %h3 Rating
+  %table
+    %thead
+      %tr
+        %td
+        - for n in (1..5)
+          %th= n
+        %th NA
+    %tbody
+      - for name, method in ReviewOrderTask.aspect_names.zip(ReviewOrderTask.aspect_methods)
+        %tr
+          %td= name
+          - for n in (1..5)
+            %td= task.radio_button method, n
+          %td= task.radio_button method, nil
+
+  %h3 Comments
+  = task.text_area :comment, :rows => 3, :cols => 80
+
+  %hr
+  = task.check_box(:show_company)
+  Publish Company Name
+
+  %br
+  = task.check_box(:show_person)
+  Publish Person Name
+
+  %br
+  = task.check_box(:show_products)
+  Publish Purchased Products
+
+  - if @user
+    %hr
+    .admin
+      = task.radio_button(:publish, true)
+      Force Publish - 
+      = task.radio_button(:publish, nil)
+      Default Publish
+      = task.radio_button(:publish, false)
+      Force Not Publish
+
+  %hr
+  = submit_tag 'Submit'

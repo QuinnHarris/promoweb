@@ -1,0 +1,103 @@
+- if @order
+  = render :partial => 'menu'
+  - if @user
+    - if @order.closed
+      .admin= link_to "Open Order", { :controller => '/admin/orders', :action => 'restore', :id => @order }, { :confirm => "Unclose order #{@order.id}" }
+    - else
+      %h3 Availible Tasks
+      = render :partial => 'pending_tasks'
+  %hr
+
+%h2 Order Status Overview
+%div{ :style => "float: right; font-size: 1.2em;" }
+  %span
+    = image_tag "there_task.png"
+    Customer Task
+  %span
+    = image_tag "our_task.png"
+    Mountain Xpress Promotions Task
+%div#key{ :style => "" }
+  %span.complete Completed
+  %span.ready Ready
+  %span.pending Waiting
+%hr
+
+%table#status
+  - for tr in @display
+    %tr{ :style => " height: 2em;" }
+      - for td in tr
+        - class_name = (!td.new_record? && 'complete') || (td.ready? && 'ready') || (td.is_a?(HeaderItemTask) && 'header') || 'pending'
+        - class_name += " admin" if td.admin
+        %td{ :class => class_name, :rowspan => td.rows, :colspan => (td.cols * @cols_mult).to_i }
+          - if td.is_a?(HeaderItemTask)
+            = link_to td.item.product.name + '<br/>' + image_tag(td.item.product.image_path_relative('thumb'), :alt => "#{td.item.product.name} Thumbnail"), { :controller => '/products', :action => 'main', :id => td.item.product }
+            %br
+            Qty:
+            = td.item.quantity
+            - if @user and td.item.purchase
+              %br
+              PO:
+              = td.item.purchase.purchase_order.quickbooks_ref
+          - else
+            .time
+              - if td.respond_to?(:email_complete)
+                = image_tag "email.png"
+              - if td.new_record?
+                - if td.complete_at
+                  ETA:
+                  = format_time_course(td.complete_at)
+              - else
+                = format_time(td.complete_at)
+
+              - if allowed?('Super') and td.revokable?
+                = link_to image_tag('remove.png'), { :controller => '/admin/orders', :action => :task_revoke, :id => td, :class => td.class, :order_id => @order }, { :confirm => "Revoke #{td.status_name} task?" }
+            .name
+              = image_tag td.customer ? 'there_task.png' : 'our_task.png'
+              - if td.uri and (@user ? td.allowed?(@permissions) : (td.ready? or !td.new_record?))
+                = link_to td.status_name, td.uri
+              - else
+                = td.status_name
+            - if td.respond_to?(:apply)
+              %div
+                - text = render_partial_null("/order/status/#{td.class.to_s.underscore}", { :task => td })
+                - if @user and td.ready?
+                  - form_tag({ :controller => '/admin/orders', :action => :task_execute, :id => td.object, :tasks => [td.class] }) do
+                    = text
+                    = submit_tag 'Completed'
+                    - if td.respond_to?(:email_complete)
+                      = submit_tag 'Completed (Without Email)'
+                - else
+                  = text
+
+
+%p
+  Estimated completion times are usually worst case and will not be accurate until the order is ready to be produced.
+  Many orders can be completed much sooner than the initial estimates.
+
+- if @order and allowed?(%w(Super Orders))
+  %table
+    %thead
+      %tr
+        %td Time
+        %td User
+        %td Host
+        %td Active
+        %td Description
+        %td Data
+    %tbody
+      - for task in @order.tasks_all.reverse
+        %tr
+          %td= format_time(task.created_at)
+          %td= task.user ? task.user.name : "Customer"
+          %td= link_to(task.host, "http://www.maxmind.com/app/locate_ip?ips=#{task.host}") if task.host
+          %td= (allowed?('Super') and task.active and task.revokable?) ? link_to(image_tag('remove.png'), { :controller => '/admin/orders', :action => :task_revoke, :id => task, :class => task.class, :order_id => @order }, { :confirm => "Revoke #{task.status_name} task?" }) : (task.active ? 'X' : '-')
+          %td= link_to_task(task.completed_name, task, @order)
+          %td= task.data.inspect
+
+%hr
+%p
+  Customer ID:
+  = @order.customer.id
+  (UUID:
+  = @order.customer.uuid
+  )

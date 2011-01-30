@@ -1,0 +1,242 @@
+td#prod_nav {
+  border-right: thin solid black;
+  text-align: center;
+  height: 100%;
+  z-index: 0;
+  width: 15%;
+}
+
+div#prod_list div {
+  padding: 0.5em;
+  padding-left: 0.5em;
+  margin-left: 0.5em;
+}
+
+div#prod_list div.current {
+  border-top: thin solid black;
+  border-left: thin solid black;
+  border-right: thin solid white;
+  border-bottom: thin solid black;
+  padding-left: 0.5em;
+  padding-right: 0;
+  z-index: 100;
+  margin-right: -1px;
+  -moz-border-radius: 2em 0 0 2em;
+  border-top-left-radius: 2em;
+  border-bottom-left-radius: 2em;
+}
+
+div#prod {
+  border-top: thin solid black;
+  z-index: 0;
+  width: 100%;
+}
+
+#prod_title h1 {
+  font-size: 2em;
+  margin: 0;
+  padding-left: 0.5em;
+  background-color: #F0F0F8;
+}
+
+#prod_title #prod_num {
+  float: right;
+  font-size: 1.2em;
+  padding: 0.1em 0.5em 0.1em 0.5em;
+  margin: 0.2em;
+  background-color: #FFFFE0;
+  -moz-border-radius: 1em;
+  border-radius: 1em;
+}
+
+#prod_title ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+#prod_title ul li {
+  display: inline;
+  margin-left: 1em;
+  margin-right: 1em;
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+}
+
+#prod_title #tags {
+  float: right;
+  margin-right: 0.5em;
+  margin-top: -0.25em;
+  background-color: #FFE0E0;
+  padding: 0.25em 0.5em 0.25em 0.5em;
+  clear: both;
+  -moz-border-radius: 1em;
+  border-radius: 1em;
+}
+
+#prod_title #tags img {
+    margin-bottom: -3px;
+    margin-right: 0.25em;
+}
+
+
+div.box {
+  margin-left: 1em;
+  margin-top: 1em;
+  margin-right: 1em;
+  padding: 0.25em;  
+}
+
+div.box h2 {
+  display: block;
+  font-size: 1.2em;
+  border-bottom: thin solid black;
+  margin: 0;
+  margin-bottom: 0.25em;
+  min-width: 10em;
+  padding-right: 10em;
+}
+
+div.box div.note {
+  float: right;
+  font-size: 0.8em;
+  text-align: right;
+  margin-top: 0.5em;
+}
+
+div.box p {
+  margin: 0;
+  margin-left: 1em;
+}
+
+div.box ul {
+  list-style-position: outside;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+div.box ul li {
+  margin-left: 1.5em;
+}
+
+div.box dl {
+  margin: 0;
+  padding: 0;
+}
+
+div.box dl dt {
+  float: left;
+  text-align: right;
+  margin: 0;
+  padding: 0;
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+  font-weight: bold;
+}
+
+div.box dl dt a {
+  color: black;
+}
+
+div.box dl dd {
+  display: block;
+  overflow: hidden;
+  margin: 0;
+  margin-bottom: 0.5em;
+  padding: 0;
+}
+
+div.box dl dd ul {
+   list-style: none;
+}
+
+div.box dl dd ul li {
+  float: left;
+  margin: 0 0.25em 0 0.25em;
+  padding: 0;
+  text-align: center;
+  border: thin outset black;
+}
+
+div.box dl span {
+  display: block;
+  padding: 0.25em 0.5em 0.25em 0.5em;
+}
+
+div.box span.even { background-color: #F4F4FF; }
+
+div.box dl dd ul li:hover { background-color: #FFFFF0; }
+div.box dl dd ul li:hover span.even { background-color: #F4F4F0; }
+
+div.box dl dd ul li.sel { background-color: #FFFFE0; border: thin inset black; }
+div.box dl dd ul li.sel span.even { background-color: #F4F4E0; }
+
+
+div#prod_img {
+  float: left;
+  background-color: white;
+  margin-top: 1em;
+  padding-right: 1em;
+  text-align: center;
+  margin-left: 1em;
+  margin-bottom: 0.5em;
+}
+
+
+div.box table {
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 0.5em;
+  border-collapse: collapse;
+  font-size: 1em;
+  text-align: center;
+}
+
+div.box table thead tr {
+  border-bottom: 1px solid black;
+  font-weight: bold;
+}
+
+div.box table thead tr td {
+  border-left: 1px solid #808080;
+  padding: 0.25em 0.5em 0.25em 0.5em;
+}
+
+div.box table th {
+  border-right: 1px solid black;
+  padding: 0.25em 0.5em 0.25em 0.5em;
+  text-align: left;
+}
+
+div.box table tbody td {
+  border-left: 1px solid #808080;
+  text-align: center;
+  vertical-align: middle;
+  padding: 0 0.5em 0 0.5em;
+}
+
+
+#prices { text-align: center; }
+#prices h2 { text-align: left; }
+
+div#actions {
+  margin-top: 1em;
+  margin-bottom: 1em;
+  text-align: center;
+}
+
+span.action a {
+  color: white;
+  background-color: #2175bc;
+  padding: 0.5em;
+  border-left: 10px solid #1958b7;
+  border-right: 10px solid #508fc4;
+  font-weight: bold;
+}
+
+span.action a:hover {
+ border-left: 10px solid #1c64d1;
+ border-right: 10px solid #5ba3e0;
+ background-color: #2586d7;
+}

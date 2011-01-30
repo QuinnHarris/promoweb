@@ -1,0 +1,13 @@
+= product_count
+%h1#path
+  = path_name
+  %span#order
+    %span
+      Sort by:
+    - for order in Category.order_list
+      = link_to(order.capitalize, { :path => (@path_web + [@context[:tag], order, @page]).compact }, { :class => (@context[:sort] == order) ? 'sel' : nil })
+
+- unless @exclusive
+  = render(:partial => 'description')
+
+= render :partial => 'list', :locals => { :products => @products, :columns => @columns, :category => @category, :context => @context }

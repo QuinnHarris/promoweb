@@ -1,0 +1,31 @@
+!!! Strict
+%html{ "xml:lang" => "en-US", :lang => "en-US", :xmlns => "http://www.w3.org/1999/xhtml" }
+  %head{ :profile => "http://www.w3.org/2005/10/profile" }
+    %title= @title
+    %meta{ :content => "text/html; charset=UTF-8", "http-equiv" => "Content-Type" }
+    - if @description
+      %meta{ :name => "description", :content => @description }
+    - if @keywords
+      %meta{ :name => "keywords", :content => @keywords }
+    %link{ :href => "/images/icon.png", :rel => "icon", :type => "image/png" }
+    = stylesheet_link_tag "global", :media => 'all'
+    - if @user
+      = stylesheet_link_tag "global_admin"
+    = stylesheet_link_tag controller.controller_name, :media => 'all'
+    - for sheet in @stylesheets || []
+      = stylesheet_link_tag sheet, :media => 'all'
+    = stylesheet_link_tag 'print', :media => 'print'
+    = javascript_include_tag 'prototype'
+    - for script in @javascripts || []
+      = javascript_include_tag script
+    /
+      [if lte IE 6]>
+      <link href="/stylesheets/iehacks.css" rel="Stylesheet" type="text/css"  />
+      <![endif]
+    /
+      [if IE 7]>
+      <link href="/stylesheets/ie7hacks.css" rel="Stylesheet" type="text/css"  />
+      <![endif]
+  %body
+    #content
+      = @content_for_layout

@@ -1,0 +1,44 @@
+<%= @header_text.gsub(/<[^>]+>/,'') %>
+<% if @order.user -%>
+<%= @order.user.name %> <<%= @order.user.email %>>"
+<% end -%>
+
+<% customer = @order.customer -%>
+Login URL: <%= url_for( :only_path => false, :controller => 'order', :action => 'login', :auth => @order.customer.uuid, :order_id => @order.id ) %>
+
+The HTML version of this email contains more information.
+
+
+Order Information:
+       Delivery Date: <%= @order.delivery_date %>
+        Event Nature: <%= @order.event_nature %>
+Special Instructions: <%= @order.special %>
+
+<% if @order.customer_notes and !@order.customer_notes.empty? -%>
+Notes:
+<%= @order.customer_notes %>
+<% end -%>
+
+Contact Information:
+  Company Name: <%= customer.company_name %>
+  Contact Name: <%= customer.person_name %>
+  Phone Number: <%= customer.phone %>
+         Email: <%= customer.email %>
+<% if address = customer.ship_address -%>
+<%   if valid?(address, :name) -%>
+  Address Name: <%= address.name %>
+<% end -%>
+       Address: <%= address.address_1 %>
+                <%= address.address_2 %>
+          City: <%= address.city %>
+         State: <%= address.state %>
+       Zipcode: <%= address.postalcode %>
+<% end -%>
+
+
+Thank you,
+Sales Team
+MountainofPromos.com
+877-MTN-LOGO (877-686-5646)
+FAX: 877-765-3617
+Mountainofpromos.com is owned and operated by Mountain Xpress Promotions, LLC.

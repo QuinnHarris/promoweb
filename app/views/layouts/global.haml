@@ -1,0 +1,159 @@
+!!! Strict
+%html{ "xml:lang" => "en-US", :lang => "en-US", :xmlns => "http://www.w3.org/1999/xhtml" }
+  %head{ :profile => "http://www.w3.org/2005/10/profile" }
+    %title= @title
+    %meta{ :content => "text/html; charset=UTF-8", "http-equiv" => "Content-Type" }
+    - if @description
+      %meta{ :name => "description", :content => @description }
+    - if @keywords
+      %meta{ :name => "keywords", :content => @keywords }
+    %link{ :href => "/images/icon.png", :rel => "icon", :type => "image/png" }
+    = stylesheet_link_tag "global", :media => 'all'
+    - if @user
+      = stylesheet_link_tag "global_admin"
+    = stylesheet_link_tag controller.controller_name, :media => 'all'
+    - for sheet in @stylesheets || []
+      = stylesheet_link_tag sheet, :media => 'all'
+    = stylesheet_link_tag 'print', :media => 'print'
+    = javascript_include_tag 'prototype'
+    - for script in @javascripts || []
+      = javascript_include_tag script
+    /[if lte IE 6]
+      %link{ :href => "/stylesheets/iehacks.css", :rel => "stylesheet", :type => "text/css" } 
+    /[if IE 7]
+      %link{ :href => "/stylesheets/ie7hacks.css", :rel => "stylesheet", :type => "text/css" } 
+  %body
+    %table.layout
+      %tr
+        %td#lefttd.layout.nav
+          #leftbar
+            = link_to(image_tag('logo.png', :alt => "Mountain of Promos Logo"), '/')
+            - if @user
+              %div
+                %span.head
+                  Search
+                - form_tag({:controller => '/search'}, {:method => 'get'}) do
+                  = text_field_tag 'terms', params[:terms]
+                  %input{ :value => "go", :type => "submit" }
+            %div
+              = link_to "Product Categories", '/categories', { :class => 'head', :rel => 'nofollow' }
+              = get_rendered_categories
+            #information
+              = link_to "Information", '/static/order', { :class => 'head', :rel => 'nofollow' }
+              %ul
+                - for page in StaticController.pages
+                  = content_tag('li', link_to(page.first, { :controller => '/static', :action => page.last }, :rel => 'nofollow'), :class => (params[:controller] == 'static' and params[:action] == page.last) ? 'sel' : nil)
+          #badges
+            %div
+              = image_tag('credit_cards.png')
+            %div
+              = image_tag('asi.png', :alt => 'ASI: Promotion Products Resource Professional')
+              %br
+              ASI: 277966
+          - if @user
+            = link_to "Logout", { :controller => '/admin/login', :action => 'logout' }
+        %td.layout
+          #header.nav
+            - if @user
+              - if allowed?(%w(Super Order))
+                #buttonn.nav
+                  = link_to image_tag('find.png') + "Find Customer", { :controller => '/admin/orders', :action => :contact_find }, :class => 'button'
+                  = link_to image_tag('add.png') + "New Customer", { :controller => '/admin/orders', :action => :new_order }, { :class => 'button', :confirm => 'Create a new customer and order?' }
+              %ul#leftmenu.nav
+                = li_to 'Orders', {:controller => '/admin/orders', :action => 'index' } do params[:controller].index('order') or !params[:controller].index('admin') end
+                = li_to 'Admin', {:controller => '/admin/access', :action => 'paths' } do  !params[:controller].index('order') and params[:controller].index('admin') end
+
+              #sublist.nav
+                - if !params[:controller].index('order') and params[:controller].index('admin')
+                  .tabs{ :style => "padding-top: 2.5em;" }
+                    %ul
+                      - if allowed?('Orders')
+                        = li_to 'Commission', { :controller => '/admin/employee', :action => 'commission' }
+                      - if allowed?(%w(Super Orders))
+                        = li_to 'Access', {:controller => '/admin/access', :action => 'paths' }
+                      - if allowed?('Super')
+                        = li_to 'Suppliers', {:controller => '/admin/suppliers', :action => 'index' }
+                        = li_to 'Users', {:controller => '/admin/login', :action => 'index'}
+                        = li_to 'Quickbooks', {:controller => '/admin/system/quickbooks_blocked', :action => 'index'}
+                      = li_to 'Password', {:controller => '/admin/login', :action => :password }
+                - elsif @order
+                  #custinfo
+                    - link_to({ :controller => '/order', :action => 'status', :order_id => @order }) do
+                      %strong
+                        = @order.customer.company_name
+                      \:
+                      = @order.customer.person_name
+                      \:
+                      = @order.customer.phone
+                      \:
+                    = mail_to "#{@order.customer.person_name} <#{@order.customer.email}>", @order.customer.email
+                  %div
+                    \-
+                    = @order.user ? @order.user.name : '?'
+                    - if @order.user_id.nil? or (@order.user_id != @user.id and allowed?('Super'))
+                      = link_to "Own", { :controller => '/admin/orders', :action => :order_own }, (@order.user_id ? { :class => 'admin', :confirm => "Take ownership of order from #{@order.user.name}" } : nil)
+                    - elsif allowed?('Super')
+                      = link_to "UnOwn", { :controller => '/admin/orders', :action => :order_own, :unown => true }, { :class => 'admin', :confirm => "UnOwn order from #{@order.user.name}" }
+                    \-
+                    - if @customer_zone
+                      = @customer_zone.name
+                      \=>
+                      %strong
+                        = @customer_zone.now.strftime("%I:%M %p")
+                    = link_to("(Deliver: #{@order.delivery_date ? @order.delivery_date.strftime("%A %b %d") : 'unknown'})", { :controller => '/order', :action => 'info', :order_id => @order })
+            - else
+              %table
+                %tr
+                  %td{ :rowspan => '2', :id => 'person' }
+                    = image_tag('person.jpg')
+                  %td{ :rowspan => '2', :id => 'crafty' }
+
+                  %td#phone
+                    1-877-MTN-Logo
+                    %div
+                      686-5646                  
+                  %td#email
+                    - if @real_user
+                      - unless @order and @order.user
+                        %a{ :href => "mailto:maps@mountainofpromos.com", :style => "display: none;" }
+                          maps@mountainofpromos.com
+                        = mail_to MAIN_EMAIL, nil, :subject => @email_subject, :encode => 'javascript'
+                      - else
+                        = mail_to "#{@order.user.name} <#{@order.user.email}>", nil, :subject => "Order #{@order.id}"
+
+                  %td#message
+                    Your source for custom imprinted products!
+
+                %tr#topmenu
+                  %td{ :colspan => '3' }
+                    %table
+                      %tr
+                        %td
+                          #search
+                            - form_tag({:controller => '/search'}, {:method => 'get'}) do
+                              %div.head
+                                Search
+                              = text_field_tag 'terms', params[:terms]
+                              %input{ :value => "go", :type => "submit" }
+                        %td
+                          - if @order                
+                            %div#customer
+                              = link_to((image_tag('check.png') + "Cart (#{@order.items.count} Items)"), { :controller => '/order', :action => :items })
+
+
+          #content
+            = @content_for_layout
+      %tr
+        %td.layout{ :colspan => "2" }
+          #footer
+            %span
+              = link_to "Sitemap", { :controller => '/categories', :action => 'map' }
+            |
+            %span#copyright
+              = link_to "&#169;#{Time.now.year}, Mountain Xpress Promotions", { :controller => 'static', :action => 'copyright' }, :rel => 'nofollow'
+
+    - unless @user
+      %script{ :src => "http#{(request.protocol == 'https://') ? 's://ssl' : '://www'}.google-analytics.com/ga.js", :type => "text/javascript" }
+      %script{ :type => "text/javascript" }
+        var pageTracker = _gat._getTracker("UA-497959-1");
+        pageTracker._trackPageview();

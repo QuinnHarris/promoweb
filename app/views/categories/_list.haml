@@ -1,0 +1,12 @@
+= will_paginate @products, @paginate_options
+
+#list
+  %table.list
+    %tbody
+      - @products.in_groups_of(@columns) do |row|
+        %tr
+          - for prod in row.compact
+            %td
+              = render :partial => 'categories/thumb', :locals => { :product => prod, :category => @category, :context => context }
+
+= will_paginate @products, @paginate_options

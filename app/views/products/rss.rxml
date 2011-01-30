@@ -1,0 +1,89 @@
+xml.instruct! :xml, :version=> '1.0', :encoding => 'UTF-8'
+xml.rss :version => '2.0', 'xmlns:g' => 'http://base.google.com/ns/1.0' do
+  xml.channel do
+    xml.title "Mountain of Promos Products"
+    xml.link "http://www.mountainofpromos.com/"
+    xml.description "Promotional Products"
+    
+    @products.each do |product|
+      next if product.price_max_cache.nil?
+      xml.item do
+        xml.tag!('guid', product.id)
+
+	description = ''
+
+	# Product name with price
+	suffix = " (#{product.price_shortstring_cache})"
+	midfix = []
+	name = product.name
+	max_length = 48
+	if name.length + suffix.length > max_length
+	  description += "#{name} - Custom Printed\n"
+	  name = name[0...(max_length - suffix.length)]
+        else
+	  [' - Custom', 'Printed'].each do |word|
+  	    if name.length + suffix.length + midfix.join(' ').length + word.length <= max_length
+	       midfix << word
+            end
+          end
+        end
+        xml.title name.strip + midfix.join(' ') + suffix
+
+        xml.link "http://www.mountainofpromos.com/products/main/#{product.web_id}"
+
+
+	# Description
+	description += "(#{product.price_fullstring_cache})\n"
+
+	imprints = product.decorations.collect { |d| d.technique.name }.uniq.find_all { |n| n != 'None' }
+	description += "Custom #{imprints.join(', ')}\n" unless imprints.empty?
+
+	description += product.description.gsub("\n",".\n")
+	xml.description description.gsub(/[\x80-\xff]/, "")
+        
+        prop = product.properties_get
+        %w(color material).each do |name|
+          xml.tag!("g:#{name}", prop[name].join(',')) if prop[name]
+        end
+        if prop['dimension']
+          dim = prop['dimension'].split(',').inject({}) do |hash, str|
+            name, value = str.split(':')
+            hash[name] = value
+            hash
+          end
+          %w(height width length).each do |name|
+            xml.tag!("g:#{name}", dim[name]) if dim[name]
+          end
+        end
+        
+#        xml.tag!('g:expiration_date', @expiration_date)
+        
+        xml.tag!('g:condition', 'new')
+        xml.tag!('g:image_link', "http://www.mountainofpromos.com/data/product/#{product.id}/#{product.id}_large_1.jpg")
+        
+        xml.tag!('g:brand', product.supplier.name)
+#        xml.tag!('g:manufacturer', product.supplier.name)
+        xml.tag!('g:mpn', product.supplier_num)
+        
+        xml.tag!('g:price', product.price_comp_cache)
+
+        for category_name in product.categories.collect { |c| cat = Category.find_by_id(c.id); cat ? cat.path_name_list.join(' > ') : '' }
+          xml.tag!('g:product_type', category_name)
+	end
+
+	xml.tag!('online_only', 'y')
+        
+        # color
+        # apparel_type
+        # brand
+        # expiration_date
+        # memory
+        # model_number
+        # price_type
+        # quantity
+        # shipping
+        # size
+      end
+    end
+  end
+end

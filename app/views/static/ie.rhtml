@@ -1,0 +1,90 @@
+<p>This site has been designed to conform to and extensively utilize web standards in order to maximize accessibility, browser compatibility and functionality.
+Accordingly this site is best viewed with a browser that properly supports and extensively implements web standards.
+This includes most modern web browsers with the exception of Internet Explorer before version 8.</p>
+
+<p>In consideration of the large number of Internet Explorer users, this site has been kludged to provide basic functionality with Internet Explorer 6.</p>
+ 
+<h2>Alternative Browsers</h2>
+<p>The following browsers have relativly good web standards support and accordingly work well with this web site in addition to providing many compelling user features over Internet Explorer.</p>
+<table>
+ <thead>
+  <tr><td>Name</td><td>Summary</td><td>Some Compelling Features</td><td>License</td><td>Platforms</td>
+ </thead>
+ <tbody>
+  <tr><td><a href="http://www.mozilla.com/firefox/">Firefox</a></td>
+  <td>Relatively slow, bloated and simple but has many <a href="https://addons.mozilla.org/extensions/">feature expanding extentions</a> available.</td>
+  <td>Decent security, popup and ad blocking, integrated search, tabbed browsing, SVG support, good CSS 2.1 and XHTML support</td>
+  <td><a href="http://www.opensource.org/">Open Source</a></td>
+  <td>Windows, Mac OS X, Linux and UNIX</td></tr>
+  
+  <tr><td><a href="http://www.opera.com/">Opera</a></td>
+  <td>Fast and feature laden. Includes mail, news and IRC client.</td>
+  <td>Decent security, popup blocking, integrated search, tabbed browsing, mouse gestures, integrated BitTorrent, SVG support, good CSS 2.1 and XHTML support</td>
+  <td>Free proprietary license</td>
+  <td>Windows, Mac OS X, Linux, BSD and UNIX</td></tr>
+
+  <tr><td><a href="http://www.google.com/chrome">Chrome</a></td>
+  <td>Fast and simple.</td>
+  <td>Good security, integrated search, tabbed browsing, good CSS 2.1 and XHTML support</td>
+  <td>Rendering component <a href="http://en.wikipedia.org/wiki/WebKit">WebKit</a> is <a href="http://www.opensource.org/">Open Source</a> and derived from KHTML.</td>
+  <td>Windows</td></tr>
+  
+  <tr><td><a href="http://www.apple.com/safari/">Safari</a></td>
+  <td>Fast and simple.  Default browser for Mac OS X.</td>
+  <td>Decent security, RSS, integrated search, tabbed browsing, good CSS 2.1 and XHTML support</td>
+  <td>Rendering component <a href="http://en.wikipedia.org/wiki/WebKit">WebKit</a> is <a href="http://www.opensource.org/">Open Source</a> and derived from KHTML.  Browser proprietary.</td>
+  <td>Mac OS X and now Windows</td></tr>
+  
+  <tr><td><a href="http://www.konqueror.org/">Konqueror</a> (<a href="http://en.wikipedia.org/wiki/KHTML">KHTML</a>)</td>
+  <td>Fast and simple.  Default browser for <a href="http://www.kde.org/">KDE</a>.</td>
+  <td>Decent security, popup and ad blocking, integrated search, tabbed browsing, good CSS 2.1 and XHTML support</td>
+  <td><a href="http://www.opensource.org/">Open Source</a> (<a href="http://www.gnu.org/copyleft/gpl.html">GPL</a>)</td>
+  <td>Linux, BSD and other UNIX</td></tr>
+
+  <tr><td><a href="http://www.microsoft.com/windows/internet-explorer/beta/default.aspx">Internet Explorer 8</a></td>
+  <td>Currenty in Beta, release early 2009</td>
+  <td>First version of Internet Explorer to provide a correct CSS 2.1 implementation years behind the competition.  Expected to still be behind all others for CSS 3 and SVG support.</td>
+  <td>Proprietary but availible for free with Windows XP or Vista</td>
+  <td>Windows Only</td></tr>
+ </tbody>
+</table>
+
+<h2>What Internet Explorer 6 and lower are Missing</h2>
+<p>The following features are used on this site and supported by all the above browser but not Internet Explorer.</p>
+<ul>
+ <li>Proper Layout:  This site has been kludged to work with Internet Explorer where necessary to provide basic functionality.
+ Accordingly, there are many aspects of this site that are rendered slightly incorrectly by Internet Explorer.
+ Absolutely no browser specific kludges where necessary to get this site to render properly with all of the above browsers.</li>
+ <li>Translucent PNG's: Many of the images (not product images) use PNG transparency to smoothly blend with the background.  (Fixed in Internet Explorer 7 Beta)</li>
+ <li>Ancestor hover selector:  The items in product categories list will show sub categories when the cursor is positioned over them.</li>
+</ul>
+
+<h2>What Internet Explorer 7 is Missing</h2>
+<p>A majority of the major problems have been addressed in Internet Explorer 7.  But it still has the following problems.</p>
+<ul>
+ <li>Proper table layout override allowing table layout without table based markup.  Properly adapting content to alternative media like print is made more difficult without this.</li>
+ <li>A z-index bug causing improper display of dropdown menues with table layout.  
+ <li>SVG support.</li>
+</ul>
+ 
+<h2>Why Web Standards are Important</h2>
+
+<p>The internet is a communication tool and like all forms of communication it requires convention.
+Much like the meaning of the words we use, every aspect of the internet requires conventions allowing different software and devices to properly interpret the communications.
+The <%= link_to "W3C", "http://www.w3c.org/" %> has established recommendations for the interpretation of HTML, the core language of a web browser.
+Ideally a web site written to these standards can be viewed properly by any browser and today this is essentially true with the exception of Internet Explorer.
+Internet Explorer follows its own conventions similar but not completely consistent with established HTML recommendation unlike all all its competitors.
+Accordingly, developers must spend time working around problems in Internet Explorer, taking away from time improving the site.</p>
+
+<p>Most web pages are written in a way that intermingles semantic information with presentation information.
+W3C recommendations strive to provide a clean separation between the meaning of a web page and the specifics of how it is presented.
+In doing so, the presentation of a web site can be more easily adapted to different formats like a computer screen, a cell phone, or for the blind.
+In addition, this separation can drastically reduce the size of a web site.
+In fact, the pages on this site are less than 1/10th the size of some of <a href="http://www.4imprint.com/">our</a> <a href="http://www.branders.com/">competitors</a> without a substantial difference in useful content per page, resulting in faster browsing for you and lower hosting costs for us.
+</p>
+
+<h3>Why not just write for Internet Explorer?</h3>
+<p>Internet Explorer does not support compelling features like Scalable Vector Graphics, most of the CSS 3 specification and many aspects of CSS 2.1.
+In other words, one can not build as sophisticated a site if you are constrained to support Internet Explorer vs. ALL of the browsers listed above.
+W3C web recommendations are available today for features that will take years for any of these browsers to fully implement, but all of them are ahead of Internet Explorer.
+If the past is an indicator, without strong completive pressure (like from Netscape years ago) Microsoft will not improve Internet Explorer.</p>

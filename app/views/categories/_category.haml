@@ -1,0 +1,31 @@
+.category
+  - unless context[:tag]
+    .tags
+      - for tag in category.products_tags(context)
+        - if tag.count.to_i > 5
+          = link_to image_tag("tags/#{tag.name.downcase}.png", :alt => "#{tag.name} Icon") + "#{tag.name} (#{tag.count})", :action => 'main', :path => (path + [tag.name, 'price', '1']).compact
+        - else
+          - product = category.find_products({:children => context[:children], :tag => tag.name, :order => 'price', :limit => 1 }).first
+          = link_to image_tag("tags/#{tag.name.downcase}.png", :alt => "#{tag.name} Icon") + "#{tag.name} (#{tag.count})", url_for_product(product, category, { :tag => tag.name, :order => 'price', :children => context[:children] })
+
+  - count = category.count_products(context)
+  %a{ :href => url_for(:action => 'main', :path => (path + (to_list ? [context[:tag], 'price', '1'] : [nil])).compact), :class => 'title' }
+    - if context[:tag]
+      = image_tag("tags/#{context[:tag].downcase}.png", :alt => "#{context[:tag]} Icon")
+      = context[:tag] + " "
+    = display_name + " (#{count})"
+
+  %table.breaks
+    %tr
+      - for brk in category.calculate_products_price_breaks(context.merge(:per_page => @per_page, :window => 4))
+        %td
+          = brk ? link_to("#{brk['min'].to_perty} to #{brk['max'].to_perty}", :action => 'main', :path => (path + [context[:tag], 'price', brk['page']]).compact) : '. . .'
+
+  - products = category.select_products(context.merge(:limit => CategoriesController.featured_items)) unless products
+  - unless products.empty?
+    %table.list
+      - products.in_groups_of(4) do |row|
+        %tr
+          - for prod in row.compact
+            %td
+              = render :partial => 'thumb', :locals => { :product => prod, :category => category, :context => context }

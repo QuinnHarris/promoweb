@@ -1,0 +1,10 @@
+%table
+  %thead
+    %tr
+      %td Shipping Service
+      %td Estimated Price
+  %tbody
+    - for shipment in shipments
+      %tr{ :class => cycle('odd', 'even') }
+        %td= shipment.service
+        %td.num= shipment.total_price * 1.20

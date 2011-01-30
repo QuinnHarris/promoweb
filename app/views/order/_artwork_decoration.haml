@@ -1,0 +1,47 @@
+%div.decorations
+  - for item_decoration in item_decorations
+    .decoration{ :id => "decoration=#{item_decoration.id}" }
+      - product = item_decoration.order_item.product
+      %table
+        %tr
+          %td{ :rowspan => '2' }
+            .thumb
+              = image_tag(product.image_path_relative('thumb'), :alt => "#{product.name} Thumbnail")
+          %td
+            %h3= "#{item_decoration.order_item.product.name} (#{item_decoration.order_item.quantity})"
+            %div= item_decoration.description
+
+            - decorations = product.decorations.find(:all, :conditions => { :technique_id => item_decoration.technique })
+            - if dragable
+              - fields_for "decoration[#{item_decoration.id}]", item_decoration do |dec|
+                - unless decorations.empty?
+                  = dec.collection_select(:decoration_id, decorations, :id, :display, :include_blank => true)
+                - if allowed?('Orders')
+                  = dec.text_area(:our_notes, :rows => 2)
+            - else
+              - unless decorations.empty?
+                %div= item_decoration.decoration.display
+                %div= item_decoration.our_notes
+
+            - if allowed?('Orders')
+              %div.admin
+                - if item_decoration.order_item.purchase
+                  %div= mail_to item_decoration.order_item.purchase.supplier.artwork_email
+
+                - if item_decoration.order_item.task_ready?(ArtSentItemTask)
+                  - if purchase = item_decoration.order_item.purchase
+                    - if !purchase.artwork_has_tag?('supplier')
+                      %strong Must mark artwork as Supplier
+                    - elsif !purchase.purchase_order.quickbooks_ref
+                      %strong Update Quickbooks for PO number
+                    - else
+                      = submit_tag("Send Art for #{purchase.purchase_order.quickbooks_ref}")
+                    - if allowed?('Super')
+                      = submit_tag("Mark as Sent for #{purchase.purchase_order.quickbooks_ref}")
+                  - else
+                    = link_to "Create PO to send artwork", { :controller => '/admin/orders', :action => :items_edit }
+                - elsif item_decoration.order_item.task_completed?(ArtSentItemTask)
+                  %strong Artwork sent to supplier
+
+    - if dragable
+      = draggable_element("decoration=#{item_decoration.id}", :revert => "'failure'", :scroll => 'window')

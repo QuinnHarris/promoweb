@@ -1,0 +1,38 @@
+div#content {
+  padding-left: 1em;
+  padding-right: 1em;
+}
+
+/*
+table {
+  border: thin solid black;
+}
+*/
+
+table thead {
+  font-weight: bold;
+}
+
+table thead tr td {
+  border-bottom: medium solid black;
+}
+
+table td {
+  vertical-align: top;
+}
+
+h2 {
+  border-bottom: thin solid black;
+}
+
+h3 {
+  margin-left: 1em;
+}
+
+p, h4, ul {
+  margin-left: 1.5em;
+}
+
+p.head {
+  margin-left: 0;
+}
