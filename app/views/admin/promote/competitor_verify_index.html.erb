@@ -1,0 +1,43 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+ <title>Competitor Verify List</title>
+</head>
+<script>
+function setPanes() {
+<% if !@prev_pp or @prev_pp.product_id != @pp.product_id %>
+  parent.frames[1].location.href = '/products/main/<%= @pp.product_id %>?layout=false';
+<% end %>
+
+<% if !@prev_pp or @prev_pp.page.url != @pp.page.url %>
+  parent.frames[2].location.href = '<%= @pp.page.url %>';
+<% end %>
+  return true;
+}
+
+window.onload = setPanes;
+</script>
+<body>
+<a href="#" onClick="return setPanes();">Reoad</a>
+
+Same Product:
+<%= link_to "Yes", { :id => @pp, :correct => 't' } %>
+<%= link_to "No", { :id => @pp, :correct => 'f' } %>
+
+Score: <%= @pp.score %>
+
+Remaining: <%= @remain %>
+Matched: <%= @match %>
+
+<% pps = @pp.page.page_products.find(:all, :conditions => "correct IS NULL") %>
+<% if pps.length > 1 %>
+<br/>
+<%= pps.length %> :
+<% for pp in pps %>
+<%= link_to pp.product_id, { :controller => '/products', :action => 'main', :id => pp.product_id }, { :target => 'our' } %>
+<% end %>
+<% end %>
+
+</body>
+</html>
+

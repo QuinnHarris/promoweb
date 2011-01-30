@@ -1,0 +1,21 @@
+- for klass, list in @list
+  - next if list.empty?
+  %h2= klass
+
+  %table
+    %thead
+      %tr
+        %th
+        %th ID
+        - for column in klass.content_columns
+          %th= column.human_name
+
+    %tbody
+      - for row in list
+        %tr
+          %td
+            = link_to(image_tag('reload.png'), { :action => :quickbooks_set, :mode => 'reload', :class => klass, :id => row.id }, { :confirm => "Reload #{klass} #{row.id}" })
+            = link_to(image_tag('remove.png'), { :action => :quickbooks_set, :mode => 'ignore', :class => klass, :id => row.id }, { :confirm => "Remove #{klass} #{row.id}" })
+          %td= row.id
+          - for column in klass.content_columns
+            %td= row.send(column.name)

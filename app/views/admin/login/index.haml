@@ -1,0 +1,19 @@
+%h1 Users
+
+= link_to "Add User", :action => :add
+
+%table
+  %thead
+    %tr
+      %td Action
+      %td Login
+      %td Name
+      %td Email
+  %tbody
+    - for user in @users
+      %tr
+        %td= link_to 'Edit', :action => :edit, :id => user
+        %td= user.login
+        %td= user.name
+        %td= user.email
+

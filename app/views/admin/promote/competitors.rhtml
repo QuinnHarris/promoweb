@@ -1,0 +1,29 @@
+<table>
+ <thead><tr>
+  <td>competitor</td>
+  <td>url</td>
+  <td>score</td>
+  <td>id</td>
+  <td>name</td>
+  <td>supplier</td>
+
+ </tr></thead>
+ <tbody>
+<% for page in @pages %>
+<%   page.page_products.each_with_index do |prod, i| %>
+  <tr>
+<% if i == 0 %>
+   <td><%= page.site.class %></td>
+   <td><%= link_to page.title || page.request_uri, page.url %></td>
+<% else %>
+   <td colspan='2'></td>
+<% end %>
+   <td><%= "%0.2f" % prod.score  %></td>
+   <td><%= link_to prod.product_id, :controller => '/products', :action => :main, :id => prod.product_id %></td>
+   <td><%= prod.product.name %></td>
+   <td><%= prod.product.supplier.name %></td>
+  </tr>
+<%   end %>
+<% end %>
+ </tbody>
+</table>

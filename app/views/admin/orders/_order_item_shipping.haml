@@ -1,0 +1,7 @@
+- if item.shipping_rates.first == false
+  Unable to Determing Shipping AJAX
+- else
+  - fields_for "OrderItem[#{item.id}]", item do |i|
+    = i.collection_select(:shipping_id, item.shipping_rates, :id, :description_price, { :include_blank => true }, { :onchange => 'shipping_change(this);' })
+  - if @script
+    %script= "merge_listing(#{item.normal_h.to_json}); calculate_all();"

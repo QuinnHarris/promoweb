@@ -1,0 +1,73 @@
+- if @employees
+  - for employee in @employees
+    %ul
+      %li= link_to "#{employee.name} : #{'%0.0f%' % (employee.commission * 100.0)}", :id => employee.id
+
+%h1= "Commissions for #{@user.name}"
+
+%h2 Commission Payments
+- form_for :commission, @commission, :url => { :action => :apply_commission } do |comm|
+  %table
+    %thead
+      %td Date
+      %td Settled
+      %td Commission
+      %td Payed
+      %td Comment
+    %tbody
+      %tr
+        %td
+          %strong Pending
+        %td.money= @pending_settle.to_perty
+        %td= "%0.0f%" % (@user.commission * 100.0)
+        %td.money= @pending_pay.to_perty
+        %td= comm.text_field :comment
+        %td
+          = comm.hidden_field :settled, :value => @pending_settle.to_i
+          = comm.hidden_field :payed, :value => @pending_pay.to_i
+          = submit_tag 'Apply'
+      - for comm in @commissions
+        %tr
+          %td= format_time(comm.created_at, false)
+          %td.money= comm.settled.to_perty
+          %td= "%0.0f%" % comm.percent
+          %td.money= comm.payed.to_perty
+          %td= comm.comment
+
+- for name, orders in [['Closed Orders (Payable)', @closed_orders], ['Acknowledged Orders (Likely to Pay)', @acknowledged_orders]]
+  - unless orders.empty?
+    %h2= name
+    %table
+      %thead
+        %td Order
+        %td Date
+        %td Price
+        %td Cost
+        %td Profit
+        %td Commission
+        %td Payable
+      %tbody
+        - total_price = Money.new(0)
+        - total_cost = Money.new(0)
+        - total_profit = Money.new(0)
+        - for order in orders
+          %tr
+            %td= link_to order.id, { :controller => '/order', :action => 'status', :order_id => order.id }
+            %td= format_time(order.tasks_active.first.created_at, false)
+            %td.money= order.total_price_cache.to_perty
+            %td.money= order.total_cost_cache.to_perty
+            - profit = order.total_price_cache - order.total_cost_cache
+            - total_price += order.total_price_cache
+            - total_cost += order.total_cost_cache
+            - total_profit += profit
+            %td.money= profit.to_perty
+            %td= "%0.0f%" % (@user.commission * 100.0)
+            %td.money= (profit * @user.commission).round_cents.to_perty
+      %tfoot
+        %td
+        %td Total
+        %td= total_price.to_perty
+        %td= total_cost.to_perty
+        %td= total_profit.to_perty
+        %td
+        %td.money= (total_profit * @user.commission).round_cents.to_perty

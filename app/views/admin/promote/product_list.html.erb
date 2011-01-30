@@ -1,0 +1,32 @@
+<table>
+ <thead><tr>
+  <td>ID</td>
+  <td>Name</td>
+  <td>Supplier</td>
+  <td>Competitor</td>
+  <td>Score</td>
+  <td>name</td>
+
+ </tr></thead>
+ <tbody>
+<% for product in @products %>
+  <tr>
+   <td><%= product.id %></td>
+   <td rowspan="<%= product.page_products.length %>"><%= link_to product.name, {:controller => '/products', :action => 'main', :id => product } %></td>
+   <td><%= product.supplier.name %></td>
+<%   product.page_products.each_with_index do |pp, i| %>
+<% if i != 0 %>
+  <tr>
+  	<td colspan='3'></td>
+<% end %>
+    <td><%= pp.page.site.class %></td>
+	<td><%= pp.score %></td>
+    <td><%= link_to pp.page.title || pp.page.request_uri, pp.page.url %></td>
+  </tr>
+<%   end %>
+<% if product.page_products.empty? %>
+  </tr>
+<% end %>
+<% end %>
+ </tbody>
+</table>

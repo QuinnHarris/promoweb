@@ -1,0 +1,14 @@
+%td
+  - unless @invoiced and false
+    = link_to_remote image_tag("remove.png"), :complete => "entry_remove(request, '#{entry.class}-#{entry.id}-price')", :confirm => "Remove item?", :url => { :action => :order_item_remove, :id => entry.id, :klass => entry.class.to_s }
+  = text_field_tag "#{entry.class}-#{entry.id}-description", entry.description, :size => 32, :readonly => (@invoiced and @locked)
+  .auto_complete>
+%td.num= text_field_tag "#{entry.class}-#{entry.id}-price", entry.price.to_s, :class => 'money negative null', :readonly => (@invoiced and @locked)
+%td.num.admin= text_field_tag "#{entry.class}-#{entry.id}-cost", entry.cost.to_s, :class => 'money negative', :readonly => (@invoiced and @locked)
+%td.num
+  x
+  = text_field_tag "#{entry.class}-#{entry.id}-quantity", entry.quantity, :class => 'num', :readonly => (@invoiced and @locked)
+%td.num ???
+%td.num.admin ???
+%td.num.admin ???
+%td.num.admin ???

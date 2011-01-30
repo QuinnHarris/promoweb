@@ -1,0 +1,7 @@
+<h1><%= @category.path_web.join('/') %> List (<%= @phrases.size %>)</h1>
+
+<ul>
+<% for phrase in @phrases -%>
+ <li><%= phrase %></li>
+<% end -%>
+</ul>

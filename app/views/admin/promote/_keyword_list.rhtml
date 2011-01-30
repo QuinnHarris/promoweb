@@ -1,0 +1,6 @@
+    <ul>
+<%   for keyword in keywords -%>
+     <li><%= keyword.phrase %> <%= link_to_remote '-', :update => "#{type}_list",
+               :url => { :action => :category_keyword_delete, :id => @category, :type => type, :keyword => keyword } %></li>
+<%   end -%>
+    </ul>

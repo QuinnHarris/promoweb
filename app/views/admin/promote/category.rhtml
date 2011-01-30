@@ -1,0 +1,47 @@
+<h1><%= @category.path_web.join('/') %> Promote</h1>
+
+<h2>Keywords (<%= link_to "List", :action => 'categories_phrases', :id => @category %>)</h2>
+<table>
+ <thead>
+  <tr>
+<% for type in @keyword_types -%>
+   <td><%= type %></td>
+<% end -%>
+  </tr>
+  <tr>
+<% for type in @keyword_types -%>
+   <td>
+    <%= form_remote_tag :update => "#{type}_list",
+         :url => { :action => :category_keyword_add, :id => @category, :type => type }%>
+     <%= text_field_tag "keyword" %><%= submit_tag " | " %>
+    </form></td>
+<% end -%>
+  </tr>  
+ </thead>
+ <tbody>
+  <tr>
+<% for type in @keyword_types -%>
+   <td id='<%= "#{type}_list" %>'>
+<%= render :partial => 'keyword_list', :locals => { :type => type, :keywords => @keywords[type] } %>
+   </td>
+<% end -%>
+  </tr>
+ </tbody>
+ <tfoot>
+  <tr>
+   <th colspan='2'></th>
+   <th>Phrase</th>
+   <th>Count</th>
+  </tr>
+<% for phrase, count in @list -%>
+  <tr>
+<%   for type in @keyword_types[0..1] -%> 
+   <td><%= link_to_remote '+', :update => "#{type}_list",
+             :url => { :action => :category_keyword_add, :id => @category, :type => type, :keyword => phrase } %></td>
+<%   end -%>
+   <td><%= phrase %></td>
+   <td><%= count %></td>
+  </tr>
+<% end -%> 
+ </tfoot>
+</table>

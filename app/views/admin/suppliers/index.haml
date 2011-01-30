@@ -1,0 +1,18 @@
+%h1 Suppliers
+= link_to "New Supplier", { :action => 'detail' }
+%table
+  %thead
+    %tr
+      %td Name
+      %td Description
+      %td Products
+      %td ID
+  %tbody
+    - for first in @suppliers[nil]
+      - for supplier in ([first] + (@suppliers[first.id] || []))
+        %tr
+          %td= ((supplier != first) ? '&nbsp;|- ' : '') + supplier['name']
+          %td= supplier.description
+          %td= supplier.products.count
+          %td
+            = link_to "Edit", { :action => 'detail', :id => supplier }

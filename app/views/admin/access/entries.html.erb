@@ -1,0 +1,20 @@
+<table>
+<% for task in @tasks
+     entries = @entries.find_all { |e| e.order_id.to_i == task.order_id }
+     entries = [nil] if entries.empty?
+     for entry in entries %>
+<tr>
+<% if !entry or (entry == entries.first) %>
+ <td><%= link_to task.order_id, { :action => :access_list, :order_id => task.order_id } %></td>
+<% else %>
+ <td></td>
+<% end %>
+<% if entry %>
+ <td><%= format_time(entry.created_at) %></td>
+ <td><%= entry.ppc %></td>
+ <td><%= entry.referer %></td>
+<% end %>
+</tr>
+<%   end
+   end %>
+</table>

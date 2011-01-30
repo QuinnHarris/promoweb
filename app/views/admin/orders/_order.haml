@@ -1,0 +1,35 @@
+.general
+  %table.block{ :id => "#{order.class}-#{order.id}" }
+    %thead
+      %tr
+        %td Description
+        %td Price
+        %td.admin Cost
+        %td Units
+        %td Total Price
+        %td.admin Total Cost
+        %td.admin Profit
+        %td.admin Margin
+    %tbody
+      - for entry in order.entries
+        %tr
+          = render :partial => 'order_entry', :locals => { :entry => entry }
+    %tfoot
+      %tr.total
+        %td{ :rowspan => "2" }
+          %div
+            = link_to_remote image_tag("add.png")+" Add General Entry to #{order.class}", :complete => "entry_insert(request, '#{order.class}-#{order.id}', false)", :url => { :action => :order_entry_insert, :id => order.id, :klass => order.class.to_s}
+        %td.money.num{ :colspan => "3" }
+          Total:
+          %td.money.num ???
+          %td.money.num.admin ???
+          %td.money.num.admin ???
+          %td.num.admin ???
+      %tr.money.num
+        %th{ :colspan => "3" }
+          = order.class
+          Total:
+        %td ???
+        %td.admin ???
+        %td.admin ???
+        %td.admin ???

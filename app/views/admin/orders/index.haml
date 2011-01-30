@@ -1,0 +1,69 @@
+%h1
+  Order Requests (
+  = @orders.length
+  of
+  = @count
+  )
+= link_to((params[:closed] ? "Exclude" : "Include") + " Closed", { :closed => !params[:closed] })
+%table#fatlist
+  %thead
+    %tr
+      %th= link_to 'ID', :sort => 'id'
+      %th 
+      %th Customer
+      - if allowed?('CustomerInformationTask')
+        %th Contact
+      %th= link_to 'Tasks Pending', :sort => 'task'
+      %th Dates
+  %tbody
+    - for name, orders in @groups
+      - if name
+        %tr
+          %td{ :colspan => '4' }
+            %h2= "#{name} (#{orders.length})"
+      - for order in orders
+        %tr{ :class => cycle('even', 'odd') }
+          %td
+            = link_to((order.id.to_s + (order.special == 'SAMPLES' ? '<strong>S</strong>' : '')), { :controller => '/order', :action => 'status', :order_id => order })
+            - unless (pos = order.items.collect { |i| i.purchase && i.purchase.purchase_order }.compact.uniq).empty?
+              = '(' + pos.collect { |po| po.quickbooks_ref }.join(', ') + ')'
+            %br
+            = order.user ? order.user.name : "Unassigned"
+            - if order.urgent_note and !order.urgent_note.strip.empty?
+              %br
+              %strong= link_to order.urgent_note, :controller => '/order', :action => :info, :order_id => order.id
+          %td
+            - for product in order.items.collect { |i| i.product }.uniq[0..1]
+              = link_to(image_tag(product.image_path_relative('thumb')), { :controller => '/products', :action => 'main', :id => product })
+          %td
+            = link_to_unless !allowed?('CustomerInformationTask'), "#{order.customer.company_name}<br/>#{order.customer.person_name}", :controller => '/order', :action => :contact, :order_id => order
+          - if allowed?('CustomerInformationTask')
+            %td
+              = mail_to "#{order.customer.person_name} <#{order.customer.email}>", order.customer.email
+              %br
+              = order.customer.phone
+          %td
+            - now = Time.now.utc
+            - included = []
+            - for task in order.tasks_allowed(@permissions)
+            -   next unless task.waiting_name
+            -   next if included.include?(task.waiting_name)
+            -   included << task.waiting_name
+              %div
+                = image_tag task.customer ? 'there_task.png' : 'our_task.png'
+                = link_to_task(task.waiting_name, task, order, {}, :class => task.late ? "late" : nil)
+          %td
+            - last_task = order.task_recent
+            %div
+              Initial Contact:
+              = format_time(order.created_at)
+            %div
+              = last_task.completed_name
+              \:
+              = format_time(last_task.updated_at)
+            - if order.delivery_date
+              %div
+                In Hands:
+                = order.delivery_date.strftime("%A %b %d")
+
+= will_paginate @orders

@@ -1,0 +1,40 @@
+= error_messages_for 'user'
+
+%br
+
+- form_for :user, @user do |u|
+  %table.form
+    %caption Add User
+    %tr
+      %th Full Name:
+      %td= u.text_field :name, :size => 30
+    %tr
+      %th Desired login:
+      %td= u.text_field :login, :size => 30
+    %tr
+      %th Email:
+      %td= u.text_field :email, :size => 30
+    %tr
+      %th Commission:
+      %td= u.text_field :commission, :size => 4
+    %tr
+      %th Extension:
+      %td= u.text_field :extension, :size => 4
+    %tr
+      %th{ :rowspan => "2" } Choose password:
+      %td= u.password_field :password, :size => 30
+    %tr
+      %td= u.password_field :password_confirmation, :size => 30
+    %tr
+      %th Role:
+      %td
+        = radio_button :user, :role, :super
+        Super User
+        %br
+        = radio_button :user, :role, :orders
+        Process Orders
+        %br
+        = radio_button :user, :role, :artwork
+        Process Artwork
+
+  = submit_tag @user.new_record? ? 'Add User' : 'Update User'

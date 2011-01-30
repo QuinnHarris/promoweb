@@ -1,0 +1,11 @@
+- [['price', @invoiced], ['cost', poed]].each do |type, readonly|
+  - klass = 'num ' + ((type == 'cost') && 'admin').to_s
+  - %w(marginal fixed).each do |comp|
+    %td{ :class => klass }
+      = text_field_tag "#{object.class}-#{object.id}-#{type}-#{comp}", object.send(type).send(comp).to_s, :class => (null ? 'money null' : 'money'), :readonly => (readonly and @locked)
+  %td{ :class => klass } ???
+%td.num.admin
+  = text_field_tag "profit-#{object.id}", "???", :class => 'money null profit', :readonly => (@invoiced and @locked)
+%td.num.admin
+  = text_field_tag "margin-#{object.id}", "???", :class => 'money null margin', :readonly => (@invoiced and @locked)
+  \%

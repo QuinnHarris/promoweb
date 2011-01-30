@@ -1,0 +1,109 @@
+%style
+  table#head {
+  width: 100%;
+  }
+  table#head td { padding-right: 1em; }
+
+  h2, h3, h4 {
+  margin-bottom: 4pt;
+  }
+  
+  h3 { border-bottom: medium solid black; }
+
+
+%table#head
+  %tr
+    %td
+      %h3 Mountain Xpress Promotions, LLC
+      954 E. 2nd Ave, Ste 206
+      %br
+      Durango, CO 81301
+      %br
+      %strong Phone:
+      970-375-1900
+      %br
+      %strong Fax:
+      877-765-3617
+      %br
+      %strong ASI:
+      277966
+      - unless @purchase.supplier.account_number.blank?
+        %br
+        %strong= "#{(@purchase.supplier.parent ? @purchase.supplier.parent : @purchase.supplier).name} Account:"
+        = @purchase.supplier.account_number
+      
+    %td
+      %h2 Purchase Order
+      %strong PO #:
+      = @purchase.purchase_order.quickbooks_ref
+      %br
+      %strong Date:
+      = format_time_abs(@purchase.created_at, false)
+      - if @purchase.order.rush
+        %br
+        %strong RUSH ORDER
+      - if @purchase.order.delivery_date
+        %br
+        %strong In-Hands Date:
+        = format_time_abs(@purchase.order.delivery_date, false)
+      - if @purchase.order.user
+        %br
+        %strong Representative:
+        = @purchase.order.user.name
+        %br
+        %strong Email:
+        = mail_to @purchase.order.user.email
+        %br
+        %strong Direct Phone:
+        = @purchase.order.user.phone
+  %tr
+    %td
+      %h3 Vendor
+      %strong= @purchase.supplier.name
+      %br
+      = render :partial => '/order/address', :locals => { :address => @purchase.supplier.address }
+      %br
+      %strong Phone:
+      = @purchase.supplier.phone
+      %br
+      %strong Fax:
+      = @purchase.supplier.fax
+    %td
+      %h3 Ship To
+      - if valid?(@purchase.order.customer, :company_name)
+        %div
+          %strong= @purchase.order.customer.company_name
+      - if valid?(@purchase.order.customer.ship_address, :name)
+        %div
+          %strong= @purchase.order.customer.ship_address.name
+      - elsif valid?(@purchase.order.customer, :person_name)
+        %div
+          %strong= @purchase.order.customer.person_name
+      = render :partial => '/order/address', :locals => { :address => @purchase.order.customer.ship_address || @purchase.order.customer.default_address }
+
+%hr
+
+= render :partial => '/order/order_item', :collection => @purchase.items, :locals => { :static => true, :absolute => true, :invoice => true, :aspect => :cost }
+- unless (entries = @purchase.entries).empty?
+  %table.block
+    %thead
+      %tr
+        %td Description
+        %td Price
+        %td Quantity
+        %td Total
+    %tbody
+      - for entry in entries
+        - next unless entry.cost
+        %tr
+          %td= entry.description
+          %td= entry.cost.to_perty
+          %td= entry.quantity
+          %td= (entry.cost * entry.quantity).to_perty
+
+- if @purchase.comment and !@purchase.comment.empty?
+  %h3 Notes
+  %p= @purchase.comment
+
+%hr
+%p If in-hands date cannot be met we must be notified immediately. If order is shipped late without our approval, it will be rejected!

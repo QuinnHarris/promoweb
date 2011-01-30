@@ -1,0 +1,15 @@
+<% form_for :product, @product, :url => { :action => @supplier ? :update : :create, :order_id => @order, :id => @product } do |p| %>
+  <%= p.error_messages %>
+  
+<table class="form">
+ <caption><%= @supplier ? 'Update' : 'Create' %> Product</caption>
+ <tr><th>Supplier Name:</th><td><%= @supplier ? @supplier.name : text_field_with_auto_complete(:supplier, :name) %></td></tr>
+ <tr><th>Product Number:</th><td><%= p.text_field :supplier_num %></td></tr>
+ <tr><th>Product Name:</th><td><%= p.text_field :name %></td></tr>
+ <tr><th>Description:</th><td><%= p.text_area :description %></td></tr>
+</table>
+
+  <p>
+    <%= p.submit @supplier ? 'Update' : 'Create' %>
+  </p>
+<% end %>
