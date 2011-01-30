@@ -4,9 +4,6 @@
 [submodule "vendor/plugins/acts_as_tsearch"]
 	path = vendor/plugins/acts_as_tsearch
 	url = https://github.com/pka/acts_as_tsearch.git
-[submodule "vendor/plugins/action_web_services"]
-	path = vendor/plugins/action_web_services
-	url = https://github.com/datanoise/actionwebservice.git
 [submodule "vendor/plugins/acts_as_tree"]
 	path = vendor/plugins/acts_as_tree
 	url = https://github.com/rails/acts_as_tree.git

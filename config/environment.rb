@@ -54,7 +54,7 @@ Rails::Initializer.run do |config|
   # no regular words or you'll be exposed to dictionary attacks.
   secrets = YAML.load_file(RAILS_ROOT + '/config/secrets')
   config.action_controller.session = {
-    :session_key => "_promoweb_session",
+    :key => "_promoweb_session",
     :secret      => secrets['session']['secret'],
     :cookie_only => true
   }
