@@ -1,7 +1,7 @@
 # This controller implements the seven web callback methods for QBWC
 # Check qbwc_api.rb file for descriptions of parameters and return values
 class QbwcController < ActionController::Base
-  include ExceptionNotifiable
+  include ExceptionNotification::Notifiable
   web_service_api QbwcApi
   
   # Fallthrough for non soap request (needed to validate certificate)
