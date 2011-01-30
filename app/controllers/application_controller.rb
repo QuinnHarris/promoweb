@@ -7,32 +7,7 @@ class ApplicationController < ActionController::Base
   include ExceptionNotification::Notifiable
   include LoginSystem
   
-  # Override determiniation of exception to log
-private
-  def rescue_action_in_public(exception)
-    ignore = false
-    if self.class.exceptions_to_treat_as_404.include?(exception.class)
-        render_404
-        ignore = true unless request.env["HTTP_REFERER"] and
-                             request.env["HTTP_REFERER"].index('mountainofpromos.com')
-    else
-        render_500
-    end
-    
-    unless ignore
-      deliverer = self.class.exception_data
-      data = case deliverer
-        when nil then {}
-        when Symbol then send(deliverer)
-        when Proc then deliverer.call(self)
-      end
-
-      ExceptionNotifier.deliver_exception_notification(exception, self,
-        request, data)
-    end
-  end
 public
-  
   def self.caches_page(*actions)
     return unless perform_caching
     actions.each do |action|
