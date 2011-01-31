@@ -52,7 +52,7 @@
                       = link_to(image_tag('remove.png') + "Remove", { :action => 'artwork_remove', :id => artwork }, :confirm => "Remove #{artwork['file']}")
                       - if @user and artwork.can_pdf?
                         %br
-                        - if group.artworks.to_a.find { |a| a.file.filename == artwork.filename_pdf }
+                        - if group.artworks.to_a.find { |a| a.art.original_filename == artwork.filename_pdf }
                           PDF Generated
                         - else
                           - if artwork.can_proof?(@order)

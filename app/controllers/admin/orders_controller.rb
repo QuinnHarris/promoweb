@@ -387,15 +387,15 @@ class Admin::OrdersController < Admin::BaseController
   end
 
   def artwork_generate_proof
-    art = Artwork.find(params[:id])
-    raise "Wrong file type or unassociated decoration" unless art.can_proof?(@order)
+    artwork = Artwork.find(params[:id])
+    raise "Wrong file type or unassociated decoration" unless artwork.can_proof?(@order)
 
     # Setup variables for order
-    company_name = art.customer.company_name.strip.empty? ? art.customer.person_name : art.customer.company_name
+    company_name = artwork.customer.company_name.strip.empty? ? artwork.customer.person_name : artwork.customer.company_name
 
-    imprint_file = art.file.path
+    imprint_file = artwork.art.path
 
-    oid = art.group.order_item_decorations.first
+    oid = artwork.group.order_item_decorations.first
     imprint_width = oid.width * 72
     imprint_height = oid.height * 72
 
@@ -558,27 +558,29 @@ class Admin::OrdersController < Admin::BaseController
 
     
     # Write File
-    dst_name = art.filename_pdf
-    dst_path = File.dirname(art.file.path) + "/" + dst_name
+    dst_name = artwork.filename_pdf
+    dst_path = File.dirname(artwork.art.path) + "/" + dst_name
+
+    logger.info("Conf: #{imprint_file.inspect} => #{dst_path.inspect}")
 
     doc.render :pdf, :filename => dst_path
 
     # Generate Artwork
     Artwork.transaction do
-      proof_art = Artwork.find(:first, :include => :group, :conditions => ["artwork_groups.customer_id = ? AND artworks.file = ?", art.customer.id, dst_name])
+      proof_art = Artwork.find(:first, :include => :group, :conditions => ["artwork_groups.customer_id = ? AND artworks.art_file_name = ?", artwork.customer.id, dst_name])
       if proof_art
         proof_art.customer_notes += "Updated"
         proof_art.save!
       else
-        proof_art = Artwork.new({:group => art.group, :user => @user, :host => request.remote_ip,
-                                  :customer_notes => "Proof generated from #{art.file.filename}" })
-        proof_art['file'] = dst_name
+        proof_art = Artwork.new({:group => artwork.group, :user => @user, :host => request.remote_ip,
+                                  :customer_notes => "Proof generated from #{artwork.art.original_filename}" })
+        proof_art['art_file_name'] = dst_name
         proof_art.save!
         proof_art.tags.create(:name => 'proof')
       end
 
-      unless art.tags.find_by_name('supplier')
-        art.tags.create(:name => 'supplier')
+      unless artwork.tags.find_by_name('supplier')
+        artwork.tags.create(:name => 'supplier')
       end
     end
    

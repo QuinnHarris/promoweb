@@ -17,11 +17,11 @@ class Artwork < ActiveRecord::Base
   end
 
   def can_pdf?
-    %w(ps eps ai).include?(File.extname(art.original_filename))
+    %w(.ps .eps .ai).include?(File.extname(art.original_filename))
   end
 
   def can_proof?(order)
-    return false unless %w(eps).include?(file.extension)
+    return false unless %w(.eps).include?(File.extname(art.original_filename))
 
     decorations = group.decorations_for_order(order)
     return false if decorations.empty?
@@ -30,15 +30,15 @@ class Artwork < ActiveRecord::Base
   end
 
   def filename_pdf
-    "#{file.basename}.pdf"
+    "#{art.send('interpolate', ':basename')}.pdf"
   end
   
   validates_attachment_presence :art
   validates_each :art do |record, attr_name, value|
     if Artwork.find(:first, :include => :group,
                     :conditions =>
-                    ["artwork_groups.customer_id = ? AND artworks.art_file_name = ?",
-                     record.group.customer_id, value.original_filename ])
+                    ["artwork_groups.customer_id = ? AND artworks.art_file_name = ?" + (record.id && " AND artworks.id != ?").to_s,
+                     record.group.customer_id, value.original_filename ] + [record.id].compact)
       logger.info("NOT UNIQ")
       record.errors.add(attr_name, 'Filename not Unique')
     end
