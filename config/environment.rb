@@ -93,6 +93,9 @@ MAIN_EMAIL = 'sales@mountainofpromos.com'
 
 #CGI::Session.expire_after 1.month
 
+# Hack from https://rails.lighthouseapp.com/projects/8995/tickets/85-exception_notification-2330-fails-with-rails-235
+ExceptionNotification::Notifier.view_paths = ActionView::Base.process_view_paths(ExceptionNotification::Notifier.view_paths)
+
 # Active Record extention used in order controller (Remove sometime)
 class ActiveRecord::Base
   def update_attributes?(attributes)

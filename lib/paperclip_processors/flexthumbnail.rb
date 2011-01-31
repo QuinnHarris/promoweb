@@ -75,6 +75,7 @@ module Paperclip
         parameters << ":source"
         parameters << transformation_command
         parameters << convert_options
+        parameters << "-strip"
         parameters << ":dest"
 
         parameters = parameters.flatten.compact.join(" ").strip.squeeze(" ")
