@@ -363,29 +363,6 @@ class Admin::OrdersController < Admin::BaseController
     redirect_to :back
   end
 
-  def artwork_generate_pdf
-    Artwork.transaction do
-      art = Artwork.find(params[:id])
-      if art.can_pdf?
-        src_path = art.file.path
-        dst_name = art.filename_pdf
-        dst_path = File.dirname(art.file.path) + "/" + dst_name
-
-        # Generate Artwork
-        newart = Artwork.new({:group => art.group, :user => @user, :host => request.remote_ip,
-                               :customer_notes => "PDF generated from #{art.file.filename}" })
-        newart['file'] = dst_name
-        newart.save!
-
-        cmd = "ps2pdf -dEmbedAllFonts=true \"#{src_path}\" \"#{dst_path}\""
-        logger.info("GeneratePDF CMD: #{cmd}")
-        raise "Generation failed" unless system cmd
-      end
-    end
-
-    redirect_to :controller => '/order', :action => :artwork, :order_id => @order
-  end
-
   def artwork_generate_proof
     artwork = Artwork.find(params[:id])
     raise "Wrong file type or unassociated decoration" unless artwork.can_proof?(@order)
@@ -533,8 +510,6 @@ class Admin::OrdersController < Admin::BaseController
     
     doc.moveto :x => center_x + imprint_width / 2 + tick_offset + tick_length / 2, :y => center_y - 4
     doc.show "#{imprint_height / 72.0} in", :with => :label_font
-
-    # Insert eps
     
     # Scale
     offset_x = offset_y = 0
@@ -554,30 +529,27 @@ class Admin::OrdersController < Admin::BaseController
       doc.scale(scale, scale)
     end
 
+    # Insert eps
     doc.image imprint_file, :x => (center_x - imprint_width/2 + offset_x)/scale, :y => (center_y - imprint_height/2 + offset_y)/scale
 
     
     # Write File
     dst_name = artwork.filename_pdf
-    dst_path = File.dirname(artwork.art.path) + "/" + dst_name
-
-    logger.info("Conf: #{imprint_file.inspect} => #{dst_path.inspect}")
+    dst_path = "/tmp/#{dst_name}"
 
     doc.render :pdf, :filename => dst_path
+
 
     # Generate Artwork
     Artwork.transaction do
       proof_art = Artwork.find(:first, :include => :group, :conditions => ["artwork_groups.customer_id = ? AND artworks.art_file_name = ?", artwork.customer.id, dst_name])
-      if proof_art
-        proof_art.customer_notes += "Updated"
-        proof_art.save!
-      else
-        proof_art = Artwork.new({:group => artwork.group, :user => @user, :host => request.remote_ip,
-                                  :customer_notes => "Proof generated from #{artwork.art.original_filename}" })
-        proof_art['art_file_name'] = dst_name
-        proof_art.save!
-        proof_art.tags.create(:name => 'proof')
-      end
+      raise "File already exists" if proof_art
+
+      proof_art = Artwork.create({ :group => artwork.group,
+                                   :user => @user, :host => request.remote_ip,
+                                   :customer_notes => "Proof generated from #{artwork.art.original_filename}",
+                                   :art => File.open(dst_path) })
+      proof_art.tags.create(:name => 'proof')
 
       unless artwork.tags.find_by_name('supplier')
         artwork.tags.create(:name => 'supplier')

@@ -56,8 +56,7 @@
                           PDF Generated
                         - else
                           - if artwork.can_proof?(@order)
-                            = link_to "(Generate Proof)", { :controller => '/admin/orders', :action => 'artwork_generate_proof', :id => artwork }, :confirm => "Generate Proof and mark this file as supplier and the proof as proof?"                            
-                          = link_to "(Generate PDF)", { :controller => '/admin/orders', :action => 'artwork_generate_pdf', :id => artwork }, :confirm => "Really Generate PDF.  CAN BE SLOW and BREAK SERVER!!!"
+                            = link_to "(Generate Proof)", { :controller => '/admin/orders', :action => 'artwork_generate_proof', :id => artwork }, :confirm => "Generate Proof and mark this file as supplier and the proof as proof?"
                       %hr
                       - complete = @order.tasks_dep.collect { |t| !t.new_record? and t.class }.compact
                       - tags = artwork.tags.collect { |t| t.name }

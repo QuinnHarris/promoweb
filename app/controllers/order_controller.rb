@@ -493,7 +493,7 @@ public
           end
         else
           if @customer.changed?
-            @customer.save_with_validation(false) unless @customer.task_completed?(CustomerInformationTask)
+            @customer.save_with_validation(false) #unless @customer.task_completed?(CustomerInformationTask)
             #@order.task_revoke([CustomerInformationTask, RequestOrderTask, RevisedOrderTask])
           end
           @static = false
