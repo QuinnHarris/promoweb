@@ -535,10 +535,12 @@ class Admin::OrdersController < Admin::BaseController
     
     # Write File
     dst_name = artwork.filename_pdf
-    dst_path = "/tmp/#{dst_name}"
+    dst_path = "/tmp/rghost-#{Process.pid}.pdf"
 
     doc.render :pdf, :filename => dst_path
 
+    art_file = File.open(dst_path)
+    eval "def art_file.original_filename; #{dst_name.inspect}; end"
 
     # Generate Artwork
     Artwork.transaction do
@@ -548,7 +550,7 @@ class Admin::OrdersController < Admin::BaseController
       proof_art = Artwork.create({ :group => artwork.group,
                                    :user => @user, :host => request.remote_ip,
                                    :customer_notes => "Proof generated from #{artwork.art.original_filename}",
-                                   :art => File.open(dst_path) })
+                                   :art => art_file })
       proof_art.tags.create(:name => 'proof')
 
       unless artwork.tags.find_by_name('supplier')
