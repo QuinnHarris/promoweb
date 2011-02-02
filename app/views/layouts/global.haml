@@ -133,8 +133,9 @@
                             - form_tag({:controller => '/search'}, {:method => 'get'}) do
                               %div.head
                                 Search
-                              = text_field_tag 'terms', params[:terms]
-                              %input{ :value => "go", :type => "submit" }
+                              %div.span
+                                = text_field_tag 'terms', params[:terms]
+                                %input{ :value => "go", :type => "submit" }
                         %td
                           - if @order                
                             %div#customer

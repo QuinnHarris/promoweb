@@ -42,6 +42,10 @@ div#leftbar div .head {
   margin-bottom: 0.5em;
 }
 
+.span {
+  display: inline;
+}
+
 div#leftbar div a.head:hover {
   background-color: #a79fa9;
   background-image: url('/images/grads/top-hover.png');
