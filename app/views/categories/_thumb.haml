@@ -2,7 +2,7 @@
   = image_tag product.image_path_relative('thumb'), :alt => "#{product.name} Thumbnail"
   %br
   %span.name
-    = product.respond_to?(:name_headline) ? product.name_headline : product.name
+    &= product.respond_to?(:name_headline) ? product.name_headline : product.name
   - if product.price_min_cache and product.price_max_cache
     %span.price
       = product.price_min_cache.to_perty
