@@ -106,8 +106,6 @@
                 %tr
                   %td{ :rowspan => '2', :id => 'person' }
                     = image_tag('person.jpg')
-                  %td{ :rowspan => '2', :id => 'crafty' }
-
                   %td#phone
                     1-877-MTN-Logo
                     %div
@@ -120,9 +118,14 @@
                         = mail_to MAIN_EMAIL, nil, :subject => @email_subject, :encode => 'javascript'
                       - else
                         = mail_to "#{@order.user.name} <#{@order.user.email}>", nil, :subject => "Order #{@order.id}"
+                        Rep Phone: 970-375-1900 x#{@order.user.extension}
 
-                  %td#message
-                    Your source for custom imprinted products!
+                  %td#certs
+                    %a{ :href => "http://secure.trust-guard.com/certificates/www.mountainofpromos.com",
+                        :name => 'trustlink', :target => '_blank',
+                        :onclick => "var nonwin=navigator.appName!='Microsoft Internet Explorer'?'yes':'no'; window.open(this.href.replace('http', 'https'),'welcome','location='+nonwin+',scrollbars=yes,width=517,height='+screen.availHeight+',menubar=no,toolbar=no'); return false;",
+                        :oncontextmenu => "var d = new Date(); alert('Copying Prohibited by Law - This image and all included logos are copyrighted by trust-guard \251 '+d.getFullYear()+'.'); return false;"}
+                      %img{ :name => 'trustseal', :alt => 'Security Seal', :src => "https://secure.trust-guard.com/seals/5356/scanned/mini/gray" }
 
                 %tr#topmenu
                   %td{ :colspan => '3' }
@@ -136,10 +139,12 @@
                               %div.span
                                 = text_field_tag 'terms', params[:terms]
                                 %input{ :value => "go", :type => "submit" }
+                        %td#message
+                          
                         %td
-                          - if @order                
+                          - if @order
                             %div#customer
-                              = link_to((image_tag('check.png') + "Cart (#{@order.items.count} Items)"), { :controller => '/order', :action => :items })
+                              = link_to((image_tag('cart.png') + "Cart (#{@order.items.count})"), { :controller => '/order', :action => :items })
 
 
           #content
