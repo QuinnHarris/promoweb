@@ -35,9 +35,7 @@ class Order < ActiveRecord::Base
 
     days = (delivery_date - Date.today).to_i
     current = Date.today
-    logger.info("Calc: #{current.inspect}, #{Date.today.inspect}")
     while current < delivery_date
-      logger.info("Current: #{current.inspect}")
       if current.wday == 0
         days -= 1
         current += 6
