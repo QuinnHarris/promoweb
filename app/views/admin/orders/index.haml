@@ -29,6 +29,9 @@
               = '(' + pos.collect { |po| po.quickbooks_ref }.join(', ') + ')'
             %br
             = order.user ? order.user.name : "Unassigned"
+            - if days = order.days_to_deliver
+              %br
+              = link_to(days < 0 ? 'PAST DUE' : "#{order.days_to_deliver} Days", { :controller => '/order', :action => :info, :order_id => order })
             - if order.urgent_note and !order.urgent_note.strip.empty?
               %br
               %strong= link_to order.urgent_note, :controller => '/order', :action => :info, :order_id => order.id

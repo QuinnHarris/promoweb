@@ -28,6 +28,28 @@ class Order < ActiveRecord::Base
     end
   end
 
+  def days_to_deliver
+    return nil unless delivery_date
+
+    return -1 if delivery_date < Date.today
+
+    days = (delivery_date - Date.today).to_i
+    current = Date.today
+    logger.info("Calc: #{current.inspect}, #{Date.today.inspect}")
+    while current < delivery_date
+      logger.info("Current: #{current.inspect}")
+      if current.wday == 0
+        days -= 1
+        current += 6
+        next
+      end
+      days -= 1 if current.wday == 6
+      current += 1
+    end
+
+    days
+  end
+
   def suppliers
     return @suppliers if @suppliers
 

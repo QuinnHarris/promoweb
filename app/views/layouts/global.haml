@@ -100,7 +100,7 @@
                       \=>
                       %strong
                         = @customer_zone.now.strftime("%I:%M %p")
-                    = link_to("(Deliver: #{@order.delivery_date ? @order.delivery_date.strftime("%A %b %d") : 'unknown'})", { :controller => '/order', :action => 'info', :order_id => @order })
+                    = link_to("(Deliver: #{@order.delivery_date ? @order.delivery_date.strftime("%A %b %d") + " : #{@order.days_to_deliver} days" : 'unknown'})", { :controller => '/order', :action => 'info', :order_id => @order })
             - else
               %table
                 %tr
