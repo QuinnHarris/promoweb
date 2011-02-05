@@ -1,6 +1,6 @@
 %h1 About Mountain Xpress Promotions
 
-/%p We believe we provide the best value of any 
+%p Mountain Xpress Promotions strives to provide the best possible value for its customers.  We do this in part with the following guarantees and policies.
 
 %h2 Guarantees
 %h3 Lowest Price
@@ -12,15 +12,43 @@
 %h3 On Time
 %p If your order isn't delieverd on time for your event, we will refund all your money.
 
-/%h2 Trust
-/%h3 Privacy
-/%p We consider our customers privacy very important.  Accordingly we will never sell any information you provide us.  We will only send you emails not directly related to your order(s) if you specifically opt in to recieve product promotions emails.  To back this up, compliance with our full privacy policy is certified by truste.
+%h2 Trust
+%h3 Privacy
+%p
+  We consider our customers privacy very important.  Accordingly we will never sell any information you provide us.  We will not contact you in any way not related to an order unless you specifically opt in to recieving product promotion emails.
+  /To back this up, compliance with our 
+  /= link_to 'privacy policy', :action => :privacy
+  /is certified by truste.
 
-/%h3 Security
-/%p Our secure site uses an Extended Validation SSL certificate
+%h3 Security
+/%p
+/  Our website utilizes an
+/  %a{ :href => 'http://en.wikipedia.org/wiki/Extended_Validation_Certificate' } Extended Validation Certificate
+/  indicated by the green address bar.  This provids our customers with an assurance the site is operated by an established business with an verified owner and physical presence.
+
+%a{:style=>'float: right;',
+   :href => "http://secure.trust-guard.com/certificates/www.mountainofpromos.com",
+   :name => 'trustlink', :target => '_blank',
+   :onclick => "var nonwin=navigator.appName!='Microsoft Internet Explorer'?'yes':'no'; window.open(this.href.replace('http', 'https'),'welcome','location='+nonwin+',scrollbars=yes,width=517,height='+screen.availHeight+',menubar=no,toolbar=no'); return false;",
+   :oncontextmenu => "var d = new Date(); alert('Copying Prohibited by Law - This image and all included logos are copyrighted by trust-guard \251 '+d.getFullYear()+'.'); return false;"}
+  %img{ :name => 'trustseal', :alt => 'Security Seal', :src => "https://secure.trust-guard.com/seals/5356/certified/large/gray" }
+  %img{ :name => 'trustseal', :alt => 'Security Seal', :src => "https://secure.trust-guard.com/seals/5356/scanned/large/gray" }
+
+%p To help ensure the data accessible through our website remains secure, the site is scanned daily by Trust Gaurd for known security vulnerabilities.
+
+%p
+  All credit card information is immediately sent encrypted and stored exclusively by CISP/PCI Compliant
+  %a{:href => 'http://www.trustcommerce.com/', :target => 'other'} TrustCommerce.
+  Our site stores a TrustCommerce billing id that allows charging and crediting cards entered but the card details can not be retrieved.  Accordingly, your credit card information is safe from security compromises to our web site or from any other person who gains full access to our web server.  If a customer enters their own credit card information on our site, that card information is more secure than most other times credit cards are used.
+
+%p
+  If you have any questions about the security on our Web site, you can contact us at
+  = mail_to 'security@mountainofpromos.com', nil, :encode => 'javascript'
+
+
 
 %h2 Contact Information
-%p
+%div
   = link_to "MountainOfPromos.com", "http://www.mountainofpromos.com/"
   is owned and operated by:
   %br
@@ -29,7 +57,8 @@
   954 E. 2nd Ave, Suite 206
   %br
   Durango, CO. 81301
-  %br
+
+%br
 
 %table
   %tr
