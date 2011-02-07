@@ -115,10 +115,11 @@ class UPSShippingRate < ShippingRate
     end
     
 
+    ship_address = customer.ship_address || customer.default_address
     shipment = UPS::Shipping::Shipment.new
     shipment.shipper_addr = supplier.address.UPSAddress
     shipment.from_addr = shipment.shipper_addr
-    shipment.to_addr = customer.ship_address.UPSAddress
+    shipment.to_addr = ship_address.UPSAddress
     
     dim = UPS::Shipping::Dimension.new
     dim = nil unless %w(length width height).find_all do |f|
