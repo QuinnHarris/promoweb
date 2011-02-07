@@ -61,7 +61,7 @@
           - if item.shipping_rates
             %td.shipping= render :partial => 'order_item_shipping', :locals => { :item => item }
           - else
-            %td.shipping.pending Unkown Shipping
+            %td.shipping.pending Shipping Pending
           %td.num
           %td.num= text_field_tag "OrderItem-#{item.id}-shipping_price", item.shipping_price.to_s, :class => 'money null', :readonly => (@invoiced and @locked)
           %td.num ???

@@ -1,7 +1,8 @@
-- if item.shipping_rates.first == false
-  Unable to Determing Shipping AJAX
+- rates = item.shipping_rates
+- if rates.nil? or rates.is_a?(String)
+  Error: #{rates || 'No Fetch'}
 - else
   - fields_for "OrderItem[#{item.id}]", item do |i|
-    = i.collection_select(:shipping_id, item.shipping_rates, :id, :description_price, { :include_blank => true }, { :onchange => 'shipping_change(this);' })
+    = i.collection_select(:shipping_id, rates, :id, :description_price, { :include_blank => true }, { :onchange => 'shipping_change(this);' })
   - if @script
     %script= "merge_listing(#{item.normal_h.to_json}); calculate_all();"

@@ -3,7 +3,7 @@ class ShippingRate < ActiveRecord::Base
   belongs_to :product
   def supplier; product.supplier; end
 
-  serialize :data, Array
+  serialize :data
   # data is list of [code, description, days, price]
 
   def self.get(qty, prod, cust, fetch = false)
@@ -11,13 +11,20 @@ class ShippingRate < ActiveRecord::Base
            :product_id => prod.id,
            :customer_id => cust.id,
            :quantity => qty })
-    if fetch and !sr
-      sr = new(:product => prod,
-               :customer => cust,
-               :quantity => qty)
-      #return nil unless sr.set_rates
-      sr.save!
+    return sr if sr
+
+    sr = new(:product => prod,
+             :customer => cust,
+             :quantity => qty)
+    if msg = sr.invalid?
+      sr.data = msg
+      return sr
     end
+
+    return nil unless fetch
+    sr.set_rates
+    sr.save!
+
     sr
   end
 end
@@ -64,27 +71,41 @@ class UPSService < ShipService
 end
 
 class UPSShippingRate < ShippingRate
-  serialize :data, Array
+  def invalid?
+    return "No supplier address" unless supplier.address
+    return "Invalid supplier zipcode: #{supplier.address.postalcode}" unless supplier.address.postalcode.length == 5
 
-  def set_rates
-    unless (package_units = product.package_units) and (package_units > 0)
-      logger.error("No Package Units")
-      return nil
-    end
+    return "No customer address" unless ship_address = customer.ship_address || customer.default_address
+    return "Invalid customer zipcode: #{ship_address.postalcode.length}" unless ship_address.postalcode.length == 5
 
+    return "No Package Units" unless (package_units = product.package_units) and (package_units > 0)
+    
     package_count = (quantity.to_f / package_units).ceil
     if package_count > 50
-      logger.error("More than 50 packages: #{package_count}")
-      return nil
+      return "More than 50 packages: #{package_count}"
     end
 
+    unless product.package_weight || product.package_unit_weight
+      return "No Package Weight"
+    end
+
+    nil
+  end
+
+  def set_rates
+    data = get_rates
+    write_attribute(:data, data)
+    data
+  end
+
+  def get_rates
+    c = invalid?
+    return c if c
+
+    package_units = product.package_units
     package_full_count = (quantity.to_f / package_units).floor
     package_tail_units = quantity - (package_units*package_full_count)
 
-    unless product.package_weight || product.package_unit_weight
-      logger.error("No Package Weight")
-      return nil 
-    end
     if product.package_weight
       package_weight = product.package_weight
       units_weight = package_weight / package_units
@@ -93,19 +114,11 @@ class UPSShippingRate < ShippingRate
       package_weight = units_weight * package_units
     end
     
-    unless supplier.address
-      logger.error("No supplier address")
-      return nil 
-    end
 
-    unless ship_address = customer.ship_address || customer.default_address
-      logger.error("No customer address")
-      return nil 
-    end
     shipment = UPS::Shipping::Shipment.new
     shipment.shipper_addr = supplier.address.UPSAddress
     shipment.from_addr = shipment.shipper_addr
-    shipment.to_addr = ship_address.UPSAddress
+    shipment.to_addr = customer.ship_address.UPSAddress
     
     dim = UPS::Shipping::Dimension.new
     dim = nil unless %w(length width height).find_all do |f|
@@ -139,8 +152,7 @@ class UPSShippingRate < ShippingRate
       ups = UPS::Base.new('4BF2D1D4C2E28409', 'QuinnHarris', 'Hitachi')
       shipments, tits = ups.queries([ratereq, titreq])
     rescue
-      logger.error("Shipping fail")
-      return nil
+      return "Shipping fail"
     end
 
     data = shipments.collect do |shipment|
@@ -150,21 +162,25 @@ class UPSShippingRate < ShippingRate
       end
       [shipment.service_code, shipment.total_price.to_f, days, shipment.time]
     end.sort_by { |c, p, d, t| p }
-    write_attribute(:data, data)
+
+    return data
   end
 
   def rates
+    return data if data.is_a?(String)
     data && data.collect { |s| UPSService.new(s) }
   end
 end
 
 class ShippingRate
   def self.rates(qty, prod, cust, fetch = false)
+    logger.info("RATES")
     rates = [UPSShippingRate].collect do |klass|
       sr = klass.get(qty, prod, cust, fetch)
-      sr.rates || false if sr
+      sr.rates if sr
     end.flatten.compact
     return nil if rates.empty?
+    return rates.first if rates.length == 1 and rates.first.is_a?(String)
     rates + [ShipService.new]
   end
 end
