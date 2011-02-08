@@ -123,9 +123,8 @@ class HighCaliberLine < GenericImport
       price_list = []
       cost_list = []
       
-      min_days = 5
-      max_days = 7
-      rush_days = nil
+
+      lead_times = []
 
       # factory
       %w(stock).each do |price_type|
@@ -175,33 +174,51 @@ class HighCaliberLine < GenericImport
             end
           end
 
-          days = case type
-                 when /(\d{1,2})-(\d{1,2}) Day/
-                   min_days, max_days = Integer($1), Integer($2)
-                   nil
-                 when /(\d+) Day/i
-                   days = Integer($1)
-                   min_days = max_days = days if days > min_days
-                   days
-                 when /24\s*H(ou)?r/i, /23\s*hr/i
-                   1
-                 when /48\s*H(ou)?r/i
-                   2
-                 else
-                   puts "Unknown: #{type}"
-                 end
-          rush_days = [rush_days || 1000, days].min if days
+          case type
+          when /^(\d{1,2})-(\d{1,2}) Day/
+            lead_times << [Integer($1), Integer($2)]
+          when /^(\d+) Day/i
+            days = Integer($1)
+            lead_times << [days, days]
+          when /^24\s*H(ou)?r/i, /23\s*hr/i
+            lead_times << [1, 1]
+          when /^48\s*H(ou)?r/i
+            lead_times << [2, 2]
+          when /^(\d{1,2})-(\d{1,2}) Week/
+            lead_times << [Integer($1)*5, Integer($2)*5]
+          when /^(\d{1,2}) Week/
+            days = Integer($1)*5
+            lead_times << [days, days]
+          else
+            puts "Unknown: #{type}"
+          end
         end
 
-        # Set Lead Times
-        product_data['lead_time_normal_min'] = min_days
-        product_data['lead_time_normal_max'] = max_days
-
-        if rush_days and rush_days < 5
-          product_data['lead_time_rush'] = rush_days
+        lead_times.uniq!
+        raise "Too many leeds: #{lead_times.inspect}" if lead_times.length > 3
+        lead_times.sort!
+        puts "Leeds: #{lead_times.inspect}"
+        la = lb = 0
+        lead_times.each do |ca, cb| 
+          raise "non sequential" if la > ca || lb > cb
+          la, lb = ca, cb
+        end
+        if lead_times.length > 1
+          product_data['lead_time_rush'] = lead_times.first.last
           product_data['lead_time_rush_charge'] = 1.0
         end
 
+        # Set Lead Times
+        unless lead_times.empty?
+          if lead_times.length == 1 && lead_times.first.first <= 2
+            product_data['lead_time_rush'] = lead_times.first.first
+            product_data['lead_time_normal_min'] = 5
+            product_data['lead_time_normal_max'] = 7
+          else
+            product_data['lead_time_normal_min'] = lead_times.last.first
+            product_data['lead_time_normal_max'] = lead_times.last.last
+          end
+        end
 
         price_breaks.delete_if { |b| b[:marginal].nil? or b[:fixed].nil? }
         #        price_breaks.delete_if { |b| b[:minimum] <= price_list.last[:minimum] or b[:marginal] >= price_list.last[:marginal] } if price_list.last
