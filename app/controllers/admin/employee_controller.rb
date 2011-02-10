@@ -1,31 +1,6 @@
 class Admin::EmployeeController <  Admin::BaseController
 private
   def calculate
-    @year = Time.now.year
-
-    @orders = @user.orders.find(:all, :order => 'orders.id DESC',
-                                :include => :tasks_active,
-                                :conditions => "order_tasks.created_at > '#{@year}-01-01' AND order_tasks.type = 'CompleteOrderTask'")
-
-#    @orders.delete_if { |o| o.task_completed?(CancelOrderTask) }
-
-    @closed_orders = @orders.find_all { |o| o.closed }
-
-    @total_profit = @closed_orders.inject(Money.new(0)) do |m, o|
-      m += o.total_price_cache - o.total_cost_cache
-      m
-    end
-
-    @commissions = @user.commissions
-    @total_settled = @commissions.inject(Money.new(0)) { |m, c| m += c.settled; m }
-    @total_payed = @commissions.inject(Money.new(0)) { |m, c| m += c.payed; m }
-
-    @pending_settle = @total_profit - @total_settled
-    @pending_pay = (@pending_settle * (@user.commission || 0)).round_cents
-  end
-
-public
-  def commission
     if params[:id] and params[:id] != @user.id
       @user = User.find(params[:id])
     end
@@ -36,25 +11,57 @@ public
         @user = @employees.first
       end
     end
-      
+
+    @closed_orders = @user.orders.find(:all, :order => 'orders.id DESC',
+                                :include => :tasks_active,
+                                :conditions => "closed AND NOT orders.settled AND order_tasks.type = 'CompleteOrderTask'")
+
+    @total_profit = @closed_orders.inject(Money.new(0)) do |m, o|
+      m += o.total_price_cache - o.total_cost_cache
+      m
+    end
+
+    @commissions = @user.commissions
+#    @total_settled = @commissions.inject(Money.new(0)) { |m, c| m += c.settled; m }
+    @total_payed = @commissions.inject(Money.new(0)) { |m, c| m += c.payed; m }
+
+#    @pending_settle = @total_profit - @total_settled
+#    @pending_pay = (@pending_settle * (@user.commission || 0)).round_cents
+  end
+
+public
+  def commission      
     calculate
     @acknowledged_orders = @user.orders.find(:all, :order => 'orders.id DESC',
                                 :include => :tasks_active,
-                                :conditions => "NOT orders.closed AND orders.updated_at > '#{@year}-01-01' AND order_tasks.type = 'AcknowledgeOrderTask'")
-    @acknowledged_orders -= @orders
+                                :conditions => "NOT orders.closed AND order_tasks.type = 'AcknowledgeOrderTask'")
+    @acknowledged_orders -= @closed_orders
+
+    @payed_orders = @user.orders.find(:all, :order => 'orders.id DESC',
+                                     :conditions => "settled AND orders.updated_at > NOW() - '3 months'::interval")
   end
 
-  def make_payment
+  def apply_commission
     calculate
-    pay = Money.new(Float(params[:amount]))
-    raise "Overpaying" if pay.units > @pending_pay.units
+    pay = Money.new(Float(params[:commission][:payed]))
 
-    settle = pay / @user.commission    
+    Commission.transaction do
+      @user.commissions.create(:payed => pay,
+                               :comment => params[:commission][:comment] || '')
 
-    @user.commissions.create(:payed => pay,
-                             :settled => settle,
-                             :comment => params[:comment] || '')
+      @closed_orders.reverse.each do |order|
+        p = [order.payable - order.payed, pay].min
+        pay -= p
+        order.payed += p
+        order.settled = (order.payed == order.payable)
+        order.commission = order.commission
+        order.save!
+        break if pay.zero?
+      end
 
-    redirect :action => :commission
+      raise "Overpaying" unless pay.zero?
+    end
+
+    redirect_to :action => :commission
   end
 end

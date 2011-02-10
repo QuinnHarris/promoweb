@@ -182,11 +182,24 @@ class Order < ActiveRecord::Base
   %w(price cost).each do |type|
     composed_of "total_#{type}_cache".to_sym, :class_name => 'Money', :mapping => ["total_#{type}_cache", 'units']
   end
+  composed_of :payed, :class_name => 'Money', :mapping => ["payed", 'units']
 
   before_save :update_cache
   def update_cache
     self['total_price_cache'] = price = total_item_price.min.round_cents
     self['total_cost_cache'] = cost = total_item_cost.min.round_cents
     true
+  end
+
+  def total_profit_cache
+    total_price_cache - total_cost_cache
+  end
+
+  def commission
+    attributes['commission'] || user.commission
+  end
+
+  def payable
+    (total_profit_cache * commission).round_cents
   end
 end
