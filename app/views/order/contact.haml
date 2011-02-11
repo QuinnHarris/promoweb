@@ -13,6 +13,15 @@
       window.location = '/admin/orders/contact_search?' + Object.toQueryString(params)
     }
 
+%a{ :href => "//privacy-policy.truste.com/click-to-verify/www.mountainofpromos.com",
+    :title => "Privacy Policy by TRUSTe", :target => '_blank',
+    :style => "float: right; " }
+  %img{ :alt => "Privacy Policy by TRUSTe",
+        :src => "//privacy-policy.truste.com/verified-seal/www.mountainofpromos.com/green/h.png" }
+%p
+  We will not contact you or send you an email for any reason not directly related to an order unless you select to be added to our email list.  More information on how we use your information can be found on our TRUSTe verified
+  = link_to 'privacy policy.', :controller => :static, :action => :privacy
+
 - form_for :customer, @customer, :url => { :order_id => @order } do |cust|
   = hidden_field_tag 'customer_id', @customer.id
   %table.form
@@ -47,11 +56,16 @@
       %tr.required
         %th Email:
         = customer_field :email
+        %td
+          = check_box :customer, :solicit
+          Put me on the email list.
       %tr.required
         %th Phone Number:
         = customer_field :phone, { :min_chars => 3 }
       - unless @search
         = render :partial => 'address_edit', :locals => { :field_name => :default_address, :disabled => false }
+
+
 
   - unless @search or (@static and !@options.different)
     %table#shipping.form

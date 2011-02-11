@@ -424,6 +424,8 @@ public
   end
 
   def_tasked_action :contact, CustomerInformationTask do
+    @no_truste = true
+
     if @user and params[:customer_id]
       # Reassociate order with customer
       @customer = Customer.find(params[:customer_id], :include => [:ship_address, :default_address])

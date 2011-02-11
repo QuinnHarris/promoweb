@@ -121,6 +121,12 @@
                         Rep Phone: 970-375-1900 x#{@order.user.extension}
 
                   %td#certs
+                    - unless @no_truste
+                      %a{ :href => "//privacy-policy.truste.com/click-to-verify/www.mountainofpromos.com",
+                          :title => "Privacy Policy by TRUSTe", :target => '_blank' }
+                        %img{ :alt => "Privacy Policy by TRUSTe",
+                              :src => "//privacy-policy.truste.com/verified-seal/www.mountainofpromos.com/green/h.png" }
+                    
                     %a{ :href => "http://secure.trust-guard.com/certificates/www.mountainofpromos.com",
                         :name => 'trustlink', :target => '_blank',
                         :onclick => "var nonwin=navigator.appName!='Microsoft Internet Explorer'?'yes':'no'; window.open(this.href.replace('http', 'https'),'welcome','location='+nonwin+',scrollbars=yes,width=517,height='+screen.availHeight+',menubar=no,toolbar=no'); return false;",
