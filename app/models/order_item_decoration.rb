@@ -17,7 +17,7 @@ class OrderItemDecoration < ActiveRecord::Base
   end
   
   # Dimention proxy
-  @@dim_reg = /(\d+\.\d{1,3})x(\d+\.\d{1,3})/
+  @@dim_reg = /(\d+\.\d{1,4})x(\d+\.\d{1,4})/
   def has_dimension?
     return true if decoration_id
     @@dim_reg === our_notes

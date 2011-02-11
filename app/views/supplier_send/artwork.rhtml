@@ -19,7 +19,7 @@ Desc: <%= group.description %>
 <% end -%>
 <%   end %>
 <% artworks = group.artworks.find_all { |a| a.has_tag?('supplier') } -%>
-  File(s):  <%= artworks.collect { |a| a.file.filename }.join(', ') %>
-  URL(s): <%= artworks.collect { |a| "http://www.mountainofpromos.com#{a.file.url}" }.join(', ') %>
+  File(s):  <%= artworks.collect { |a| a.art.original_filename }.join(', ') %>
+  URL(s): <%= artworks.collect { |a| "http://www.mountainofpromos.com#{a.art.url}" }.join(', ') %>
 
 <% end -%>

@@ -33,9 +33,12 @@
           - if page.referer
             %span.referer
               %span
-                - domain = Sitealizer::Parser::Keyword.get_domain(page.referer.gsub(' ', '%20').gsub(/\{|\}|\"/,''))
-                - if icon = Admin::AccessController.domain_icons[domain]
-                  = link_to image_tag("access/#{icon}.png"), "http://#{domain}/"
-                - else
-                  = domain
+                - begin
+                  - domain = Sitealizer::Parser::Keyword.get_domain(page.referer.gsub(' ', '%20').gsub(/\{|\}|\"/,''))
+                  - if icon = Admin::AccessController.domain_icons[domain]
+                    = link_to image_tag("access/#{icon}.png"), "http://#{domain}/"
+                  - else
+                    = domain
+                - rescue
+                  Unknown
               = link_to Sitealizer::Parser::Keyword.get_terms(page.referer), page.referer

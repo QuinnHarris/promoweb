@@ -14,9 +14,9 @@ helper OrderHelper
     if attachments
       @groups.collect { |g| g.artworks }.flatten.each do |artwork|
         next unless artwork.has_tag?('supplier')
-        attachment({ :filename => artwork.file.filename,
-                     :content_type => artwork.file.content_type,
-                     :body => File.read(artwork.file.path) })
+        attachment({ :filename => artwork.art.original_filename,
+                     :content_type => artwork.art.content_type,
+                     :body => File.read(artwork.art.path) })
       end
     end
 

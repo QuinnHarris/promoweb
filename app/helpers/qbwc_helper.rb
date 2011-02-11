@@ -94,7 +94,7 @@ module QbwcHelper
             string << " - " + vp.collect { |name, value| "#{name.capitalize}: #{value}" }.join(', ') unless vp.empty?
             xml.Other1 string[0..24] # Item Color
           end
-          xml.Other2 oiv.imprint_colors if oiv.respond_to?(:imprint_colors)	# Imprint Color
+          xml.Other2 oiv.imprint_colors[0..28] if oiv.respond_to?(:imprint_colors)	# Imprint Color
         end
         #xml.LinkToTxn do
         #xml.DataExtList do          
