@@ -82,8 +82,15 @@ class ArtSentItemTask < OrderItemTask
   # email_complete performed by outside code in supplier_send
   def email_complete; end
   
-  def self.blocked(order)
-    super || (order.artwork_tags.find_by_name('supplier') ? nil : "An image must be marked as a Supplier before it can be sent to the supplier!")
+  def self.blocked(item)
+    ret = super
+    return ret if ret
+
+    if item.decorations.collect { |d| d.artwork_group }.flatten.compact.collect { |g| g.artworks }.flatten.collect { |a| a.tags }.flatten.include?('supplier')
+      return "An image must be marked as a Supplier before it can be sent to the supplier!"
+    end
+
+    nil
   end
 
 #  def admin
