@@ -12,12 +12,12 @@
       params[field.name] = field.value
       window.location = '/admin/orders/contact_search?' + Object.toQueryString(params)
     }
-
-%a{ :href => "//privacy-policy.truste.com/click-to-verify/www.mountainofpromos.com",
-    :title => "Privacy Policy by TRUSTe", :target => '_blank',
-    :style => "float: right; " }
-  %img{ :alt => "Privacy Policy by TRUSTe",
-        :src => "//privacy-policy.truste.com/verified-seal/www.mountainofpromos.com/green/h.png" }
+- if RAILS_ENV == "production"
+  %a{ :href => "//privacy-policy.truste.com/click-to-verify/www.mountainofpromos.com",
+      :title => "Privacy Policy by TRUSTe", :target => '_blank',
+      :style => "float: right; " }
+    %img{ :alt => "Privacy Policy by TRUSTe",
+          :src => "//privacy-policy.truste.com/verified-seal/www.mountainofpromos.com/green/h.png" }
 %p
   We will not contact you or send you an email for any reason not directly related to an order unless you select to be added to our email list.  More information on how we use your information can be found on our TRUSTe verified
   = link_to 'privacy policy.', :controller => :static, :action => :privacy

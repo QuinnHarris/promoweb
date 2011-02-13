@@ -212,10 +212,11 @@
               %script{ :type => "text/javascript" } load_quantity(); calc_prices();
 
               #actions
-                - if @message
-                  %div= @message
                 %span.action= submit_tag "Add to Cart"
                 %p To get a quote or order, enter a quantity above then click "Add to Cart".
+
+      - if @message
+        %div= @message
 
 
       - if @user
@@ -227,7 +228,10 @@
               input.name = 'dispos';
               document.productform.appendChild(input);
             Add to
-            = submit_tag "Current Order", :onclick => "if (order_submit(document.productform, false)) { document.productform.dispos.value = 'exist'; document.productform.submit(); }"
+            - if @order.task_completed?(AcknowledgeOrderTask)
+              (Not Current Order: Acknowledged)
+            - else
+              = submit_tag "Current Order", :onclick => "if (order_submit(document.productform, false)) { document.productform.dispos.value = 'exist'; document.productform.submit(); }"
             or
             = submit_tag "New Order", :onclick => "if (order_submit(document.productform, false)) { document.productform.dispos.value = 'order'; document.productform.submit(); }"
             or

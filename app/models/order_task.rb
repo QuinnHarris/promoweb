@@ -73,6 +73,9 @@ class VisitArtworkOrderTask < OrderTask
   self.roles = %w(Customer Orders Art)
 end
 
+class QuoteOrderTask < OrderTask; end
+class RevisedOrderTask < OrderTask; end
+
 class RequestOrderTask < OrderTask
   set_depends_on AddItemOrderTask, InformationOrderTask, CustomerInformationTask
   self.status_name = 'Order Request'
@@ -80,6 +83,8 @@ class RequestOrderTask < OrderTask
   self.completed_name = 'Order Requested'
   self.customer = true
   self.roles = %w(Customer Orders)
+  self.action_name = 'Assume order request'
+  self.auto_complete = true #[RevisedOrderTask, QuoteOrderTask]
   
   def email_complete
     if object.task_completed?(PaymentInfoOrderTask)
@@ -108,31 +113,17 @@ We look forward to working with you for your promotional needs.)
   end
 end
 
-class RevisedOrderTask < OrderTask
+class QuoteOrderTask
   set_depends_on RequestOrderTask
-  self.status_name = 'Order Revision'
-  self.waiting_name = 'Revise Order'
-  self.completed_name = 'Order Revised'
+  self.status_name = 'Order Quote'
+  self.waiting_name = 'Quote Order'
+  self.completed_name = 'Order Quoted'
+  self.action_name = 'Quote Order'
   self.roles = %w(Orders)
     
   def email_complete
-    subject = if active
-      if object.task_completed?(PaymentInfoOrderTask)
-        "Order Reviewed, Ready for Acknowledgment"
-      else
-        "Quote Reviewed, Ready for Acknowledgment and Payment"
-      end      
-    else
-      "Order Rejected"
-    end
-    header = if active
-      (object.our_comments && !object.our_comments.empty?) ? object.our_comments : ''     
-    else
-%q(This order has been rejected.  We will make the appropriate revisions and contact you.
-
-Customer Comments:
-) + data[:customer_comment] 
-    end
+    subject = "Quote"
+    header = data[:our_comment]
     CustomerSend.dual_send(self, subject, header)
   end
   
@@ -140,10 +131,58 @@ Customer Comments:
     string = (data && data[:our_comment])
     return string if string
 
-    string =  "Hi #{object.order.customer.person_name.split(' ').first},\n"
+    string =  "Hi #{object.customer.person_name.split(' ').first},\n"
     string += "Thank you for contacting Mountain Xpress promotions.\n"
     string += "Please review the revised quote below.\n"
-    unless object.order.task_completed?(PaymentInfoOrderTask)
+    string += "Please let me know if I can answer any questions.\n"
+    string
+  end
+  
+  def status
+    not new_record?
+  end
+  
+  def complete_estimate
+    # 24 hours after Order Request
+    time_add_weekday(depend_max_at, 1)
+  end
+end
+
+class RevisedOrderTask < OrderTask
+  set_depends_on [RequestOrderTask, QuoteOrderTask]
+  self.status_name = 'Order Revision'
+  self.waiting_name = 'Revise Order'
+  self.completed_name = 'Order Revised'
+  self.action_name = 'Revise Order'
+  self.roles = %w(Orders)
+    
+  def email_complete
+    subject = if active
+                "Order Reviewed, Ready for Acknowledgment" + 
+                  (object.task_completed?(PaymentInfoOrderTask) && " and Payment").to_s
+    else
+      "Order Rejected"
+    end
+    header = if active
+               data[:our_comment]
+             else
+%q(This order has been rejected.  We will make the appropriate revisions and contact you.
+
+Customer Comments:
+) + data[:customer_comment] 
+    end
+
+    CustomerSend.dual_send(self, subject, header)
+  end
+  
+  def our_comment
+    string = (data && data[:our_comment])
+    return string if string
+
+    string =  "Hi #{object.customer.person_name.split(' ').first},\n"
+    string += "Thank you for contacting Mountain Xpress promotions.\n"
+    string += "Please review the revised order below.\n"
+    unless object.task_completed?(PaymentInfoOrderTask)
       string += "You will be required to provide payment before the order can proceed and your artwork can be processed.\n"
     end
     string += "If everything is to your satisfaction, {click here to login and acknowledge the order}.\n"
@@ -155,7 +194,25 @@ Customer Comments:
   def status
     true
   end
-  
+
+  def self.blocked(order)
+    ret = super
+    return ret if ret
+    
+    address = order.customer.default_address
+    unless address and (list = address.incomplete?).empty?
+      return "Customer Address not complete: #{list.join(', ')}"
+    end
+
+    return "No in hands date" if order.delivery_date.nil?
+    if order.delivery_date <= Date.today+2
+      return "In hands date too soon: #{order.delivery_date.inspect}"
+    end
+
+    # CHECK SHIPPING !!!
+
+  end
+
   def complete_estimate
     # 24 hours after Order Request
     time_add_weekday(depend_max_at, 1)
@@ -261,10 +318,10 @@ class ArtReceivedOrderTask < OrderTask
   self.status_name = 'Artwork Upload'
   self.waiting_name = 'Customer Artwork'
   self.completed_name = 'Customer Artwork Received'
-  self.action_name = 'accept existing  artwork for this order'
+  self.action_name = 'accept existing artwork for this order'
   self.customer = true
   self.roles = %w(Customer Orders)
-  self.auto_complete = [ArtDepartmentOrderTask]
+  self.auto_complete = true #[ArtDepartmentOrderTask]
   self.notify = true
 
   def self.blocked(object)
@@ -281,7 +338,7 @@ class ArtOverrideOrderTask < OrderTask
   self.status_name = 'Art Department Payment Override'
   self.completed_name = 'Sent to Art Department without Payment'
   self.action_name = 'ignore <strong>no customer payment and proceed with artwork</strong>'
-  self.auto_complete = [ArtReceivedOrderTask, ArtDepartmentOrderTask]
+  self.auto_complete = true #[ArtReceivedOrderTask, ArtDepartmentOrderTask]
   self.roles = %w(Super)
   
   def admin
@@ -392,7 +449,7 @@ class FinalPaymentOrderTask < OrderTask
   self.waiting_name = 'Charge Final Payment'
   self.completed_name = 'Final Payment Charged'
   self.action_name = 'mark final payment received'
-  self.auto_complete = [CompleteOrderTask]
+  self.auto_complete = true #[CompleteOrderTask]
 #  self.roles = %w(Orders)
   
   def self.blocked(order)
@@ -514,7 +571,7 @@ end
 
 # Never Created in DB
 class ClosedOrderTask < OrderTask
-  set_depends_on [CompleteOrderTask, CancelOrderTask], AcceptedItemTask, ReviewOrderTask
+  set_depends_on [CompleteOrderTask, CancelOrderTask], AcceptedItemTask, ReviewOrderTask, QuoteOrderTask
 end
 
 class OwnershipOrderTask < OrderTask

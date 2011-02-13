@@ -83,21 +83,9 @@ private
           unless @user and @order.task_completed?(RequestOrderTask)
             task_request({:data => { :email_sent => session[:user_id] ? false : true }})
           end
-          
-          if @user
-            unless @order.user_id
-              @order.user = @user
-              @order.save!
-            end
-            task_complete(task_params, RevisedOrderTask, [RevisedOrderTask])
-          end
         end
         
-        if @user
-          redirect_to :controller => '/admin/orders', :action => :index, :order_id => @order
-        else
-          redirect_to :action => :status, :order_id => @order, :task => 'RequestOrder'
-        end
+        redirect_to :action => :status, :order_id => @order, :task => 'RequestOrder'
       else
         redirect_to_next(inject)
       end
@@ -105,26 +93,46 @@ private
   end
   
   def determine_pending_tasks
+    return unless @user
+
     tasks_ready_all = @order.tasks_allowed(@permissions)
 
-    availible = tasks_ready_all.find_all do |task|
-      yield task
+    param_name = "#{params[:action]}_tasks"
+    if self.class.respond_to?(param_name)
+      tasks = self.class.send(param_name)
+      availible = tasks_ready_all.find_all do |task|
+        tasks.include?(task.class) and task.action_name
+      end
+
+      @revokable = @order.tasks_dep.find_all do |task|
+        next false unless task.revokable?
+#        next false unless task.status
+        tasks.include?(task.class)
+      end
+    else
+      availible = tasks_ready_all
+    end
+
+    def process_task(task, complete)
+      result = []
+      blocked = task.class.blocked(task.object)
+      if blocked.nil? and task.auto_complete       
+        task.dependants.each do |dep|
+          if dep.ready?(complete.collect { |t| t.class })
+            result << process_task(dep, complete+[dep])
+          end
+        end
+      end
+      return result unless result.empty?
+      { :complete => complete,
+        :blocked => blocked }
     end
 
     @tasks = availible.collect do |task|
-      complete = [task]
-      blocked = task.class.blocked(task.object)
-      if task.auto_complete
-        tasks_ready = tasks_ready_all.dup
-        canidates = complete
-        while !canidates.empty?
-          tasks_ready -= canidates
-          tasks_ready += canidates.collect { |t| t.dependants }.flatten.find_all { |t| t.ready?(complete) }
-          complete += (canidates = tasks_ready.find_all { |t| task.auto_complete.include?(t.class) })
-        end
-      end
-      delegate = (complete.last.dependants || []).find_all { |t| self.class.artwork_tasks.include?(t.class) }.first
-      [complete, delegate, blocked]
+      process_task(task, [task])
+    end.flatten.collect do |hash|
+      delegate = (hash[:complete].last.dependants || []).find_all { |t| t.ready?(hash[:complete].collect { |t| t.class }) }
+      hash.merge(:delegate => delegate.first)
     end
   end
 end
@@ -284,7 +292,7 @@ public
       # Don't change task if item added to existing order even if order acknowledged
       unless @order.task_completed?(AcknowledgeOrderTask) and (params[:dispos] == 'exist') and @permissions.include?('Super')
         task_complete({ :data => { :product_id => product.id, :item_id => item.id }},
-                      AddItemOrderTask, [AddItemOrderTask, RequestOrderTask, RevisedOrderTask])
+                      AddItemOrderTask, [AddItemOrderTask, RequestOrderTask, RevisedOrderTask, QuoteOrderTask])
       end
     end
 
@@ -537,7 +545,7 @@ public
   end
   
   # Artwork
-  def_tasked_action :artwork, VisitArtworkOrderTask, ArtReceivedOrderTask, ArtOverrideOrderTask, ArtDepartmentOrderTask, ArtPrepairedOrderTask, ArtSentItemTask, ArtExcludeItemTask do    
+  def_tasked_action :artwork, VisitArtworkOrderTask, ArtOverrideOrderTask, ArtReceivedOrderTask, ArtDepartmentOrderTask, ArtPrepairedOrderTask, ArtSentItemTask, ArtExcludeItemTask do    
     groups = @order.customer.artwork_groups
     @artwork_groups = groups.find_all { |g| !g.decorations_for_order(@order).empty? }
     groups -= @artwork_groups
@@ -560,9 +568,7 @@ public
     
     next unless session[:user_id]
     
-    determine_pending_tasks do |task|
-      self.class.artwork_tasks.include?(task.class) and task.action_name
-    end
+    determine_pending_tasks
     
     @permited = @order.permissions.find_all_by_name(self.class.artwork_tasks.collect { |t| t.roles }.flatten.uniq,
       :include => :user)
@@ -589,9 +595,9 @@ public
           end
         end
         group = @order.customer.artwork_groups.find_by_name(group_name) unless group
-        group = ArtworkGroup.create(:name => group_name, :customer => @order.customer) unless group
+        group = @order.customer.artwork_groups.create(:name => group_name) unless group
 
-        artwork = Artwork.create(params[:artwork].merge(:group => group, :user => @user, :host => request.remote_ip ))
+        group.artworks.create(params[:artwork].merge(:user => @user, :host => request.remote_ip))
         if artwork.id
           artwork.tags.create(:name => 'customer') unless @user
           task_complete({ :data => { :id => artwork.id } }, ArtReceivedOrderTask, nil, false)
@@ -683,9 +689,7 @@ public
       @order.items.target = [order_item]
     end
 
-    determine_pending_tasks do |task|
-      true
-    end
+    determine_pending_tasks
            
     current = []
     done = []
@@ -766,9 +770,7 @@ public
     
     apply_calendar_header
     
-    determine_pending_tasks do |task|
-      self.class.payment_tasks.include?(task.class) and task.action_name
-    end
+    determine_pending_tasks
 
     @payment_methods = @customer.payment_methods
     if @payment_methods.empty?

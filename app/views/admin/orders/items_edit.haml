@@ -1,13 +1,11 @@
 = render :partial => 'order/menu'
 = render :partial => 'items_menu'
 = link_to("Create Product", :controller => :products, :action => :new)
-- if no_address = (@order.customer.default_address.nil? or @order.customer.default_address.address_1.blank?)
-  .admin CUSTOMER ADDRESS NOT ENTERED
-- else
-  |
-  = link_to "Sample Order", { :action => :order_duplicate, :samples => true }, { :confirm => "Create new order with samples of current items" }
-  |
-  = link_to "FREE Sample Order", { :action => :order_duplicate, :samples => true, :free => true }, { :confirm => "Create new order with FREE samples of current items" }
+
+= link_to "Sample Order", { :action => :order_duplicate, :samples => true }, { :confirm => "Create new order with samples of current items" }
+|
+= link_to "FREE Sample Order", { :action => :order_duplicate, :samples => true, :free => true }, { :confirm => "Create new order with FREE samples of current items" }
+- if acknowledged = @order.task_completed?(AcknowledgeOrderTask)
   |
   = link_to "ReOrder", { :action => :order_duplicate }, { :confirm => "Create new reorder current items" }
 - if @locked
@@ -23,13 +21,9 @@
           - form_for :order, @order, { :url => { :action => (purchase.new_record? ? :purchase_create : :purchase_mark), :id => (purchase.new_record? ? supplier.id : purchase.id), :order_id => @order } } do |order|
             - if purchase.new_record?
               %h2
-                Purchase Order - 
-                - if no_address
-                  Can't create PO without Address
-                - else
-                  Create as
-                  - for sub in [supplier] + supplier.children
-                    = submit_tag("#{sub['name']}", :onclick => "return confirm('Are you sure you want to create a PO ?')")                 
+                Purchase Order - Create as
+                - for sub in [supplier] + supplier.children
+                  = submit_tag("#{sub['name']}", :onclick => "return confirm('Are you sure you want to create a PO ?')")                 
             - else
               %h2
                 Purchase for
@@ -68,10 +62,7 @@
               = render :partial => 'order', :locals => { :order => purchase }
   = render :partial => 'order', :locals => { :order => @order }
 
-- form_for :order, @order, { :url => { :action => :items_submit, :order_id => @order } } do |order|
-  - unless @invoiced
-    %hr
-    = order.text_area :our_comments, 'cols' => 80, 'rows' => 10
-    %br
-    %hr
-  = submit_options
+- unless @tasks.empty? and @revokable.empty?
+  %hr
+  = render :partial => 'order/pending_tasks'
+

@@ -6,13 +6,11 @@ module OrderHelper
     inject = [controller.class.send("#{params[:action]}_tasks").first]
     inject << RequestOrderTask if @user
 
-    target_task = @user ? RevisedOrderTask : RequestOrderTask
-    if @order.task_ready?(target_task, inject.uniq)
+    if @order.task_ready?(RequestOrderTask, inject.uniq)
       text = @user ? "Submit Revised" : "Submit"
       text += (@order.task_completed?(PaymentInfoOrderTask) ? ' Order' : ' Quote Request')
-      text += ' Again' if @order.task_performed?(target_task)
+      text += ' Again' if @order.task_performed?(RequestOrderTask)
       output << submit_tag(text)
-      output << submit_tag("#{text} (Without Email)") if @user
     end
     
     if task = @order.task_next(@permissions, inject) { |t| t.uri }

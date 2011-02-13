@@ -121,17 +121,18 @@
                         Rep Phone: 970-375-1900 x#{@order.user.extension}
 
                   %td#certs
-                    - unless @no_truste
-                      %a{ :href => "//privacy-policy.truste.com/click-to-verify/www.mountainofpromos.com",
-                          :title => "Privacy Policy by TRUSTe", :target => '_blank' }
-                        %img{ :alt => "Privacy Policy by TRUSTe",
-                              :src => "//privacy-policy.truste.com/verified-seal/www.mountainofpromos.com/green/h.png" }
+                    - if RAILS_ENV == "production"
+                      - unless @no_truste
+                        %a{ :href => "//privacy-policy.truste.com/click-to-verify/www.mountainofpromos.com",
+                            :title => "Privacy Policy by TRUSTe", :target => '_blank' }
+                          %img{ :alt => "Privacy Policy by TRUSTe",
+                                :src => "//privacy-policy.truste.com/verified-seal/www.mountainofpromos.com/green/h.png" }
                     
-                    %a{ :href => "http://secure.trust-guard.com/certificates/www.mountainofpromos.com",
-                        :name => 'trustlink', :target => '_blank',
-                        :onclick => "var nonwin=navigator.appName!='Microsoft Internet Explorer'?'yes':'no'; window.open(this.href.replace('http', 'https'),'welcome','location='+nonwin+',scrollbars=yes,width=517,height='+screen.availHeight+',menubar=no,toolbar=no'); return false;",
-                        :oncontextmenu => "var d = new Date(); alert('Copying Prohibited by Law - This image and all included logos are copyrighted by trust-guard \251 '+d.getFullYear()+'.'); return false;"}
-                      %img{ :name => 'trustseal', :alt => 'Security Seal', :src => "https://secure.trust-guard.com/seals/5356/scanned/mini/gray" }
+                        %a{ :href => "http://secure.trust-guard.com/certificates/www.mountainofpromos.com",
+                            :name => 'trustlink', :target => '_blank',
+                            :onclick => "var nonwin=navigator.appName!='Microsoft Internet Explorer'?'yes':'no'; window.open(this.href.replace('http', 'https'),'welcome','location='+nonwin+',scrollbars=yes,width=517,height='+screen.availHeight+',menubar=no,toolbar=no'); return false;",
+                            :oncontextmenu => "var d = new Date(); alert('Copying Prohibited by Law - This image and all included logos are copyrighted by trust-guard \251 '+d.getFullYear()+'.'); return false;"}
+                          %img{ :name => 'trustseal', :alt => 'Security Seal', :src => "https://secure.trust-guard.com/seals/5356/scanned/mini/gray" }
 
                 %tr#topmenu
                   %td{ :colspan => '3' }

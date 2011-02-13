@@ -34,6 +34,7 @@
       Links: 
       -# = link_to "Login", uri_param.merge(:action => 'login')
       = link_to 'Status', uri_param.merge(:action => 'status')
+      - logger.info("Wait: #{@waiting_tasks.inspect}")
       - for task in @waiting_tasks
         = link_to task.waiting_name, task.uri.merge(uri_param)
 

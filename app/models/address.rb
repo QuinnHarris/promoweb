@@ -1,6 +1,12 @@
 class Address < ActiveRecord::Base
 #  validates_presence_of :postalcode
 
+  def incomplete?
+    %w(address_1 city state postalcode).find_all do |name|
+      send(name).blank?
+    end
+  end
+
   def UPSAddress
     address = UPS::Shipping::Address.new
     address.city = city if city

@@ -99,6 +99,10 @@ module ObjectTaskMixin
   def task_complete(params, task_class, revokable = [], revoke = true)
     task = nil
     OrderTask.transaction do
+      if reason = task_class.blocked(self)
+        raise "Task Blocked #{task_class}: #{reason}"
+      end
+
       if revoke
         task_revoke([task_class] + revokable)
       else
@@ -140,6 +144,30 @@ module ObjectTaskMixin
         TaskNotify.deliver_notify(order, task, notify_users.collect { |u| u.email_string }) unless notify_users.empty?
       end
     end
+    task
+  end
+
+  def task_save(params, task_class)
+    OrderTask.transaction do
+      attributes = {
+        task_class.reflections[:object].primary_key_name => id,
+        :active => false
+      }
+      if task = task_class.find(:first, :conditions => attributes)
+        task.update_attributes!(params)
+      else
+        task_class.create(attributes.merge(params)) 
+      end
+    end
+  end
+
+  def task_get(task_class)
+    attributes = {
+      task_class.reflections[:object].primary_key_name => id,
+      :active => false
+    }
+    task = task_class.find(:first, :conditions => attributes)
+    task = task_class.new(attributes) unless task
     task
   end
 end

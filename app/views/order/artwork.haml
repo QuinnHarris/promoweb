@@ -38,10 +38,12 @@
     %span#status-bar
 
 - if @user
+  %hr
   %div
     - unless @permited.empty? or !allowed?('Super')
       - for perm in @permited
-        = link_to "Revoke #{perm.name} from #{perm.user.name}", { :controller => '/admin/orders', :action => :permission_revoke, :name => perm.name, :user_id => perm.user_id, :order_id => perm.order_id }
+        .admin.action
+          = link_to "Revoke #{perm.name} from #{perm.user.name}", { :controller => '/admin/orders', :action => :permission_revoke, :name => perm.name, :user_id => perm.user_id, :order_id => perm.order_id }
       %hr
     = render :partial => 'pending_tasks'
     %hr

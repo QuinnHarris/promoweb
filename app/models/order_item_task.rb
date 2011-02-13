@@ -76,15 +76,15 @@ class ArtSentItemTask < OrderItemTask
   self.status_name = 'Artwork to Supplier'
   self.waiting_name = 'Send Artwork to Supplier'
   self.completed_name = 'Artwork Sent to Supplier'
-#  self.action_name = 'Send artwork to supplier'
+  self.action_name = 'Send artwork to supplier'
   self.roles = %w(Orders)
 
   # email_complete performed by outside code in supplier_send
   def email_complete; end
   
-#  def self.blocked(order)
-#    super || (order.artwork_tags.find_by_name('supplier') ? nil : "An image must be marked as a Supplier before it can be sent to the supplier!")
-#  end
+  def self.blocked(order)
+    super || (order.artwork_tags.find_by_name('supplier') ? nil : "An image must be marked as a Supplier before it can be sent to the supplier!")
+  end
 
 #  def admin
 #    true

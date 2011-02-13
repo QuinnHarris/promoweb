@@ -238,11 +238,17 @@ class Admin::OrdersController < Admin::BaseController
           :host => request.remote_ip,
           :data => (params[:data] || {}).symbolize_keys}
           
-        if (params[:commit] && params[:commit].index('Without Email')) || params[:without_email]
-          task_params[:data].merge!(:email_sent => false)
+        if (params[:commit] && params[:commit].index('Without Email')) || params[:without_email] || (params[:tasks].last != task_name)
+          if task_class.instance_methods.include?('email_complete')
+            task_params[:data].merge!(:email_sent => false)
+          end
         end
-        
-        object.task_complete(task_params, task_class)
+
+        if params[:commit] && params[:commit].index('Save')
+          object.task_save(task_params, task_class)
+        else
+          object.task_complete(task_params, task_class)
+        end
       end if params[:tasks]
 
       if params[:delegate_perm]
@@ -251,13 +257,14 @@ class Admin::OrdersController < Admin::BaseController
         TaskNotify.deliver_delegate(@order, @user, user)
       end
     end
-    
-    redirect_to :back
-#    unless params[:tasks] and (params[:tasks] && %w(CancelOrderTask CompleteOrderTask)).empty?
-#      redirect_to :controller => '/admin/orders', :action => :index
-#    else
-#      redirect_to_next
-#    end
+
+    if task = @order.task_next(@permissions) { |t| 
+        t.uri && ![AcknowledgeOrderTask, ArtAcknowledgeOrderTask].include?(t.class)}
+      redirect_to task.uri
+    else
+      redirect_to :controller => '/admin/orders', :action => :index
+#      redirect_to :back
+    end
   end
   
   def task_revoke
@@ -268,7 +275,7 @@ class Admin::OrdersController < Admin::BaseController
       task.active = nil
       task.save!
     end
-    redirect_to :controller => '/order', :action => :status, :order_id => params[:order_id]
+    redirect_to :back
   end
 
   def restore
@@ -755,7 +762,7 @@ class Admin::OrdersController < Admin::BaseController
     end
   end
   
-  def_tasked_action :items_edit, RequestOrderTask, RevisedOrderTask do       
+  def_tasked_action :items_edit, RequestOrderTask, RevisedOrderTask, QuoteOrderTask do       
     @stylesheets = ['order']
     @javascripts = ['autosubmit.js', 'admin_orders', 'effects', 'controls']
     
@@ -794,19 +801,10 @@ class Admin::OrdersController < Admin::BaseController
     
 #    @locked = !params[:unlock]
     @invoiced = @order.task_completed?(AcknowledgeOrderTask)
+
+    determine_pending_tasks
   end
   
-  def items_submit
-    if params[:order] and params[:order][:our_comments]
-      @order.our_comments = params[:order][:our_comments]
-      @order.save!
-      render_edit({ :data => { :our_comment => params[:order][:our_comments], :email_sent => !params[:commit].include?('Without Email') } },
-                  [RequestOrderTask, RevisedOrderTask])
-    else
-      redirect_to_next([RequestOrderTask, RevisedOrderTask])
-    end    
-  end
-
   @@set_classes = %w(Order OrderEntry OrderItem OrderItemDecoration OrderItemEntry OrderItemVariant Purchase PurchaseEntry Bill OrderItemVariantMeta)
   def get_klass(klass_name)
     raise "Unkown Class" unless @@set_classes.include?(klass_name)

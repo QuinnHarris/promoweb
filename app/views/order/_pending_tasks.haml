@@ -1,4 +1,5 @@
-- for tasks, deligate, blocked in @tasks
+- for hash in @tasks
+  - tasks, deligate, blocked = [:complete, :delegate, :blocked].collect { |v| hash[v] }
   - task = tasks.last
   .admin.action
     - unless blocked
@@ -6,13 +7,15 @@
         - title = tasks.collect { |t| t.action_name }.join(' and ')
         - if order_item = task.object.is_a?(OrderItem) and !task.object.new_record?
           - title += " (#{task.object.description})"
-        - if inline = render_partial_null("/order/tasks/#{task.class.to_s.underscore}", { :task => task })
+        - if task.respond_to?(:our_comment)
           - form_tag({ :controller => '/admin/orders', :action => :task_execute, :id => task.object, :tasks => tasks.collect { |t| t.class } }) do
             %h2= title
-            = inline
+            = text_area :data, :our_comment, 'cols' => 120, 'rows' => 10, :value => task.object.task_get(task.class).our_comment
+            %br
             = submit_tag 'Completed'
             - if task.respond_to?(:email_complete)
               = submit_tag 'Completed (Without Email)'
+            = submit_tag 'Save'
         - else # No template, do link
           = link_to(title, { :controller => '/admin/orders', :action =>:task_execute, :id => task.object.id, :order_id => @order, :tasks => tasks.collect { |t| t.class } })
           - if task.respond_to?(:email_complete)
@@ -22,14 +25,6 @@
 
       - else # Link to task page
         %span= task.uri ? link_to(task.status_name, task.uri) : task.status_name
-
-      - unless (users = tasks.last.delegatable_users(session[:user_id])).empty?
-        .delegate
-          or delegate to:
-          %ul
-          - for user in users
-            %li= link_to user.name, { :controller => '/admin/orders', :action => :task_execute, :order_id => @order, :delegate_perm => user.delegatables.first.name, :user_id => user.id }, :class => 'action'
-
       - if deligate and !(users = deligate.delegatable_users(session[:user_id])).empty?
         .delegate
           then delegate
@@ -45,3 +40,17 @@
         BLOCKED because:
         = blocked
 
+    - unless (users = tasks.last.delegatable_users(session[:user_id])).empty?
+      .delegate
+        or delegate to:
+        %ul
+        - for user in users
+          %li= link_to user.name, { :controller => '/admin/orders', :action => :task_execute, :order_id => @order, :delegate_perm => user.delegatables.first.name, :user_id => user.id }, :class => 'action'
+
+
+- if @revokable and !@revokable.empty?
+  .admin.action
+    %span
+      %strong Revoke: 
+    - for task in @revokable
+      = link_to "#{image_tag('remove.png')} #{task.status_name}", { :controller => '/admin/orders', :action => :task_revoke, :id => task, :class => task.class, :order_id => @order }, { :confirm => "Revoke #{task.status_name} task?" }

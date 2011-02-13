@@ -197,7 +197,6 @@ class HighCaliberLine < GenericImport
         lead_times.uniq!
         raise "Too many leeds: #{lead_times.inspect}" if lead_times.length > 3
         lead_times.sort!
-        puts "Leeds: #{lead_times.inspect}"
         la = lb = 0
         lead_times.each do |ca, cb| 
           raise "non sequential" if la > ca || lb > cb

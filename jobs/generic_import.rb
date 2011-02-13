@@ -203,7 +203,7 @@ class HiResImageFetch < GenericImageFetch
 end
 
 class GenericImport
-  @@properties = %w(material color dimension fill container pieces shape size)
+  @@properties = %w(material color dimension fill container pieces shape size memory)
 
   @@cache_dir = File.join(RAILS_ROOT, "jobs/cache")
   
