@@ -17,11 +17,10 @@
               = submit_tag 'Completed (Without Email)'
             = submit_tag 'Save'
         - else # No template, do link
-          = link_to(title, { :controller => '/admin/orders', :action =>:task_execute, :id => task.object.id, :order_id => @order, :tasks => tasks.collect { |t| t.class } })
+          - uri = { :controller => '/admin/orders', :action =>:task_execute, :id => task.object.id, :order_id => @order, :tasks => tasks.collect { |t| t.class } }
+          = link_to(title, uri)
           - if task.respond_to?(:email_complete)
-            (
-            = link_to "WITHOUT EMAIL", { :controller => '/admin/orders', :action => :task_execute, :order_id => @order, :tasks => tasks.collect { |t| t.class }, :without_email => true }
-            )
+            = link_to "(WITHOUT EMAIL)", uri.merge(:without_email => true)
 
       - else # Link to task page
         %span= task.uri ? link_to(task.status_name, task.uri) : task.status_name

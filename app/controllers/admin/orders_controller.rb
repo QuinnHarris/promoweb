@@ -231,8 +231,14 @@ class Admin::OrdersController < Admin::BaseController
       params[:tasks].collect do |task_name|
         task_class = Kernel.const_get(task_name)
         raise "Permission Denied" if (task_class.roles & @permissions).empty?
-        object = @order
-        object = task_class.reflections[:object].klass.find(params[:id]) if params[:id]
+        if params[:id]
+          object = task_class.reflections[:object].klass.find(params[:id]) 
+          raise "Object not found" unless object
+        else
+          raise "Not Order" unless task_class == task_class.reflections[:object].klass
+          object = @order
+        end
+
         task_params = {
           :user_id => session[:user_id],
           :host => request.remote_ip,
