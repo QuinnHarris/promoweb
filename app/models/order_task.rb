@@ -141,6 +141,10 @@ class QuoteOrderTask
   def status
     not new_record?
   end
+
+  def self.blocked(order)
+    super || (order.task_completed?(RevisedOrderTask) && "Order Revised")
+  end
   
   def complete_estimate
     # 24 hours after Order Request
