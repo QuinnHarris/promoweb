@@ -258,13 +258,13 @@ class Admin::OrdersController < Admin::BaseController
       end
     end
 
-    if task = @order.task_next(@permissions) { |t| 
-        t.uri && ![AcknowledgeOrderTask, ArtAcknowledgeOrderTask].include?(t.class)}
-      redirect_to task.uri
-    else
-      redirect_to :controller => '/admin/orders', :action => :index
-#      redirect_to :back
-    end
+    redirect_to :back
+#    if task = @order.task_next(@permissions) { |t| 
+#        t.uri && ![AcknowledgeOrderTask, ArtAcknowledgeOrderTask].include?(t.class)}
+#      redirect_to task.uri
+#    else
+#      redirect_to :controller => '/admin/orders', :action => :index
+#    end
   end
   
   def task_revoke

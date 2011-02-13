@@ -175,7 +175,6 @@ end
 
 class ShippingRate
   def self.rates(qty, prod, cust, fetch = false)
-    logger.info("RATES")
     rates = [UPSShippingRate].collect do |klass|
       sr = klass.get(qty, prod, cust, fetch)
       sr.rates if sr

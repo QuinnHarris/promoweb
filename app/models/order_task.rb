@@ -73,9 +73,6 @@ class VisitArtworkOrderTask < OrderTask
   self.roles = %w(Customer Orders Art)
 end
 
-class QuoteOrderTask < OrderTask; end
-class RevisedOrderTask < OrderTask; end
-
 class RequestOrderTask < OrderTask
   set_depends_on AddItemOrderTask, InformationOrderTask, CustomerInformationTask
   self.status_name = 'Order Request'
@@ -113,7 +110,7 @@ We look forward to working with you for your promotional needs.)
   end
 end
 
-class QuoteOrderTask
+class QuoteOrderTask < OrderTask
   set_depends_on RequestOrderTask
   self.status_name = 'Order Quote'
   self.waiting_name = 'Quote Order'
@@ -575,7 +572,7 @@ end
 
 # Never Created in DB
 class ClosedOrderTask < OrderTask
-  set_depends_on [CompleteOrderTask, CancelOrderTask], AcceptedItemTask, ReviewOrderTask, QuoteOrderTask
+  set_depends_on [CompleteOrderTask, CancelOrderTask], AcceptedItemTask, ReviewOrderTask
 end
 
 class OwnershipOrderTask < OrderTask

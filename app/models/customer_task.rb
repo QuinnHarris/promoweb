@@ -243,41 +243,59 @@ module TaskMixin
     # All context objects have only one of type per object
     # Target is task for object
     def assemble_deps(context, object, target_class)
-      target_task = object.task_find_all(target_class)
-      object.tasks_new << target_task = target_class.new(:object => object) unless target_task
+      if target_task = object.task_find_all(target_class)
+        return [target_task, []] if target_task.depends_on
+      else
+        object.tasks_new << target_task = target_class.new(:object => object)
+      end
       
-      return [target_task, []] if target_task.depends_on
       task_list = [target_task]
       target_task.depends_on = []
       target_class.depends_on.each do |task_class_list|
-        task_class_list = [task_class_list] unless task_class_list.is_a?(Array)
-        
-        # Find completed task in current context
-        task_context_list = []
+        task_class_list = [task_class_list].flatten
+
+        # Find active dependant task
+        task_context = nil
         task_class = task_class_list.reverse.find do |task_class|
           task_context = (context + [object]).find do |obj|
             obj.task_find(task_class)
           end
-          task_context_list << task_context if task_context
         end
-        task_class_list = [task_class] if task_class
-        
-        # Find task_context for pending task
-        unless task_class
-          task_context_list = task_class_list.collect do |task_class|
-            context_class = Kernel.const_get(task_class.reflections[:object].class_name)
-            task_context = (context + [object]).find { |c| c.is_a?(context_class) }
+
+        if task_class and !target_task.new_record?
+          # If current and dependant are active
+          # use single active dependant
+          task_class_list = [task_class]
+          task_context_list = [task_context]
+        else
+          # Enumerate all dependants
+          task_context_list = task_class_list.collect do |t_class|
+            context_class = t_class.reflections[:object].klass
+            (context + [object]).find do |obj|
+              obj.is_a?(context_class)
+            end
+          end
+          
+          if task_class
+            # If active dependant but current not active
+            # Enumerate all prior incomplete tasks
+            index = task_class_list.index(task_class)
+            task_class_list = task_class_list[index..-1]
+            task_context_list = task_context_list[index..-1]
+          else
+            task_class = task_class_list.first
           end
         end
         
         unless task_context_list.compact.empty?
-          task_class_list.zip(task_context_list).each do |task_class, task_context|
-            tt, list = assemble_deps(context, task_context, task_class)
+          task_class_list.zip(task_context_list).each do |t_class, task_context|
+            tt, list = assemble_deps(context, task_context, t_class)
             task_list += list
-            # Don't include secondary or tasks as depends_on but mark target as dependant
-            if task_class == task_class_list.first
+            if t_class == task_class
+              # Only include single task_class
               target_task.depends_on << tt
             else
+              # Add dependant here as its not in depends_on below
               tt.add_dependant(target_task)
             end
           end
