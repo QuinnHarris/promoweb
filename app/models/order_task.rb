@@ -199,19 +199,31 @@ Customer Comments:
   def self.blocked(order)
     ret = super
     return ret if ret
+
+    problems = []
     
     address = order.customer.default_address
     unless address and (list = address.incomplete?).empty?
-      return "Customer Address not complete: #{list.join(', ')}"
+      problems << "Customer Address not complete: #{list.join(', ')}"
     end
 
     return "No in hands date" if order.delivery_date.nil?
     if order.delivery_date <= Date.today+2
-      return "In hands date too soon: #{order.delivery_date.inspect}"
+      problems << "In hands date too soon: #{order.delivery_date.inspect}"
     end
 
-    # CHECK SHIPPING !!!
+    order.items.each do |item|
+      item.order_item_variants.to_a.find do |oiv|
+        if oiv.quantity > 0 and oiv.variant_id.nil?
+          problems << "Quantity in Not Specified variant"
+        end
+      end
+    end
 
+    return problems.join(' and ') unless problems.empty?
+
+    # CHECK SHIPPING !!!
+    nil
   end
 
   def complete_estimate
