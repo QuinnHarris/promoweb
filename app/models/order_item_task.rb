@@ -146,8 +146,9 @@ class EstimatedItemTask < OrderItemTask
   end
   
   def ship_days
-    return 5 unless data
-    data[:ship_days]
+    return data[:ship_days] if data
+
+    (object.shipping && object.shipping.days) || 5
   end
   
   def ship_saturday
@@ -170,10 +171,6 @@ Please let me know if you have any questions.)
   
   def complete_estimate
     time_add_weekday(depend_max_at, 1)
-  end
-  
-  def delivery_estimate
-    time_add_weekday((data ? data[:ship_date].to_time : complete_at), ship_days, 7)
   end
 end
 
@@ -223,13 +220,13 @@ Please let me know when this arrives.)
   
   def complete_estimate
     return depends_on.first.ship_date unless depends_on.first.new_record?
-    time_add_weekday(depend_max_at, 4)
+    lead_time = object.order.rush ? object.product.lead_time_rush : object.product.lead_time_normal_max
+    time_add_weekday(depend_max_at, lead_time || 15)
   end
 
   def delivery_estimate
     # Get estimate from carrier!!!
-    return depends_on.first.delivery_estimate if new_record?
-    time_add_weekday(created_at, depends_on.first.ship_days)
+    time_add_weekday(complete_estimate, depends_on.first.ship_days)
   end
 end
 
@@ -264,7 +261,7 @@ class ReceivedItemTask < OrderItemTask
   end
   
   def complete_estimate
-    depends_on.first.delivery_estimate
+    depends_on.first.delivery_estimate   
   end
 end
 
