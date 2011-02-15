@@ -1,4 +1,7 @@
 Artwork for PO-<%= @po.quickbooks_ref %> from Mountain Xpress Promotions
+<% if @po.purchase.supplier.account_number -%>
+Account: <%= @po.purchase.supplier.account_number %>
+<% end -%>
 
 <% for group in @groups -%>
 Group: <%= group.name %>
@@ -6,11 +9,13 @@ Group: <%= group.name %>
 Desc: <%= group.description %>
 <% end -%>
 <%   for decoration in group.order_item_decorations %>
- <%= decoration.order_item.product.name %> (<%= decoration.order_item.quantity %>)
+ Product: <%= decoration.order_item.product.name %> (<%= decoration.order_item.quantity %>)
    Imprint: <%= decoration.description %>
 <% if decoration.count -%>
-   Colors: <%= decoration.count %>
+   Number of Colors: <%= decoration.count %>
 <% end -%>
+<% variants = decoration.order_item.order_item_variants.find_all { |v| v.quantity > 0 } -%>
+   Imprint Colors: <%= variants.length == 1 ? variants.first.imprint_colors : variants.collect { |v| "#{v.variant.supplier_num}: #{v.imprint_colors}" }.join(', ') %>
 <% if decoration.decoration -%>
    Location: <%= decoration.decoration.location %>
 <% end -%>
@@ -20,6 +25,6 @@ Desc: <%= group.description %>
 <%   end %>
 <% artworks = group.artworks.find_all { |a| a.has_tag?('supplier') } -%>
   File(s):  <%= artworks.collect { |a| a.art.original_filename }.join(', ') %>
-  URL(s): <%= artworks.collect { |a| "http://www.mountainofpromos.com#{a.art.url}" }.join(', ') %>
+  URL(s): <%= artworks.collect { |a| "http://www.mountainofpromos.com#{a.art.url.gsub(' ', '%20')}" }.join(', ') %>
 
 <% end -%>
