@@ -30,7 +30,8 @@ class Purchase < ActiveRecord::Base
   end
 
   def ship_by_date
-    add_weekdays(Date.today, max_lead_time+1)
+    return nil unless lt = max_lead_time
+    add_weekdays(Date.today, lt+1)
   end
 
   def max_transit_time

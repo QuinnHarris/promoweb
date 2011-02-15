@@ -8,5 +8,5 @@
     = entry.technique.name
     for
     = text_field_tag "#{entry.class}-#{entry.id}-count", entry.count, :class => 'num'
-    = entry.technique.unit_name
+    #{entry.technique.unit_name}(s)
 = render :partial => 'order_item_entry_tail', :locals => { :object => entry, :poed => false, :null => false }

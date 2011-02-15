@@ -89,7 +89,7 @@
               - if decoration.count
                 for
                 = decoration.count
-                = decoration.technique.unit_name
+                = decoration.count > 1 ? decoration.technique.unit_name.pluralize : decoration.technique.unit_name
             %td.num
               - decoration_list = decoration.send("list_#{aspect}")
               - unit_sum += decoration_list.marginal unless unit_sum.nil?

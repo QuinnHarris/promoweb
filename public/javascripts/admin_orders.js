@@ -391,7 +391,7 @@ function entry_insert(request, id, pos)
   var table = $(id)
   var tbody = table.getElementsByTagName('tbody')[0]
 
-  var tr = tbody.insertRow(pos ? 2 : tbody.rows.length)
+  var tr = tbody.insertRow(pos ? 3 : tbody.rows.length)
   tr.innerHTML = request.responseText
   
   setup_events(tr)
