@@ -597,7 +597,7 @@ public
         group = @order.customer.artwork_groups.find_by_name(group_name) unless group
         group = @order.customer.artwork_groups.create(:name => group_name) unless group
 
-        group.artworks.create(params[:artwork].merge(:user => @user, :host => request.remote_ip))
+        artwork = group.artworks.create(params[:artwork].merge(:user => @user, :host => request.remote_ip))
         if artwork.id
           artwork.tags.create(:name => 'customer') unless @user
           task_complete({ :data => { :id => artwork.id } }, ArtReceivedOrderTask, nil, false)

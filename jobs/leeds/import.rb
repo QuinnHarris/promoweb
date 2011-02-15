@@ -64,6 +64,7 @@ class LeedsXLSProducts < XLSFile
     
     supplier_num = get(row, 'ItemNumber').to_s.strip
     return nil if supplier_num.empty?
+    return nil if supplier_num == '1225-69' # Patent BS
     raise "Bad Item: #{supplier_num}" unless /(\d+-\d+)(\w*)/ =~ supplier_num
     product_data['supplier_num'] = $1
     
