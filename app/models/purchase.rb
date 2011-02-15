@@ -19,6 +19,24 @@ class Purchase < ActiveRecord::Base
     supplier_orig || items.first.product.supplier
   end
 
+  def max_lead_time
+    items.collect { |i| order.rush ? i.product.lead_time_rush : i.product.lead_time_normal_max }.compact.max
+  end
+
+  def add_weekdays(date, n)
+    date += n.days + (2*(n/5.floor)).days
+    date += 1.days until (1..5).member?(date.wday)
+    date
+  end
+
+  def ship_by_date
+    add_weekdays(Date.today, max_lead_time+1)
+  end
+
+  def max_transit_time
+    items.collect { |i| i.shipping && i.shipping.days }.compact.max || 5
+  end
+
   def artwork_groups
     items.to_a.collect { |i| i.decorations.to_a.collect { |d| d.artwork_group } }.flatten.compact
   end

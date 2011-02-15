@@ -42,10 +42,13 @@
       - if @purchase.order.rush
         %br
         %strong RUSH ORDER
-      - if @purchase.order.delivery_date
-        %br
-        %strong In-Hands Date:
+      %br
+      - if @purchase.order.delivery_date and (@purchase.order.delivery_date < (@purchase.ship_by_date + @purchase.max_transit_time))
+        %strong In Hands Date:
         = format_time_abs(@purchase.order.delivery_date, false)
+      - else
+        %strong Ship by Date:
+        = format_time_abs(@purchase.ship_by_date, false)
       - if @purchase.order.user
         %br
         %strong Representative:

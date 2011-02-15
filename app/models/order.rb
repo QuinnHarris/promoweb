@@ -21,10 +21,9 @@ class Order < ActiveRecord::Base
   
   has_many :permissions
 
-#  validates_presence_of :delivery_date
   validates_each :delivery_date do |record, attr, value|
-    if record.send("#{attr}_changed?") && value && value <= Date.today
-      record.errors.add attr, 'must be after today'
+    if record.send("#{attr}_changed?") && value && value < Date.today+2
+      record.errors.add attr, "must be #{Date.today+2} or later"
     end
   end
 
