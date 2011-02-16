@@ -24,6 +24,19 @@
               - for tag in @product.tags
                 = image_tag("tags/#{tag.name.downcase}.png") + "#{tag.name}"
           %h1= @product.name
+          %div#share
+            %div{ :class => "addthis_toolbox addthis_default_style" }
+              %a{ :href => "http://www.addthis.com/bookmark.php?v=250&amp;username=mountainxpress", :class => "addthis_button_compact" }
+                Share
+              %span{ :class => "addthis_separator"} |
+              %a{ :class => "addthis_button_preferred_1" }
+              %a{ :class => "addthis_button_preferred_2" }
+              %a{ :class => "addthis_button_preferred_3" }
+              %a{ :class => "addthis_button_preferred_4" }
+            :javascript
+              var addthis_config = {"data_track_clickback":true};
+            %script{ :type => "text/javascript", :src => "http://s7.addthis.com/js/250/addthis_widget.js#username=mountainxpress" }
+
           = path_tail_list
 
         - setup_main if @user
@@ -48,6 +61,21 @@
                 - for prop in @common_properties
                   %dt= "#{prop.name.capitalize}:"
                   %dd= prop.is_image? ? image_tag(prop.translate) : prop.translate
+
+          - if @product.lead_time_normal_min
+            #leadtime.box
+              .note Business days to ship after order and artwork acknowledgement.
+              %h2 Lead Time
+              %dl
+                %dt Normal:
+                %dd
+                  = [@product.lead_time_normal_min, @product.lead_time_normal_max].uniq.join(' to ')
+                  days
+                - if @product.lead_time_rush
+                  %dt Rush:
+                  %dd
+                    = @product.lead_time_rush.to_s + (@product.lead_time_rush == 1 ? ' day' : ' days')
+                    = @product.lead_time_rush_charge ? '(Additional Charges)' : '(No Charge, Some Restrictions)'
 
           :javascript
             var prices = [
@@ -145,23 +173,7 @@
                         %a{ :href => '#', :onclick => 'return sel_loc(this)' }
                           %span= dec.display
 
-          %script{ :type => "text/javascript" } load_tech();
-
-          - if @product.lead_time_normal_min
-            #leadtime.box
-              .note Business days to ship after order and artwork acknowledgement.
-              %h2 Lead Time
-              %dl
-                %dt Normal:
-                %dd
-                  = [@product.lead_time_normal_min, @product.lead_time_normal_max].uniq.join(' to ')
-                  days
-                - if @product.lead_time_rush
-                  %dt Rush:
-                  %dd
-                    = @product.lead_time_rush.to_s + (@product.lead_time_rush == 1 ? ' day' : ' days')
-                    = @product.lead_time_rush_charge ? '(Additional Charges)' : '(No Charge, Some Restrictions)'
-              
+          %script{ :type => "text/javascript" } load_tech();             
 
           - if true #@category
             - form_tag({ :controller => :order, :action => :add_item }, {:name => "productform", :onsubmit => 'return order_submit(this, true);' }) do

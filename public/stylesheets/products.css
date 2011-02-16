@@ -240,3 +240,8 @@ span.action a:hover {
  border-right: 10px solid #5ba3e0;
  background-color: #2586d7;
 }
+
+div#share {
+  float: right;
+  margin: 0.5em;
+}
