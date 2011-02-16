@@ -233,7 +233,7 @@ public
           @customer.save_with_validation(false)
         else
           # Quickbooks Customer on demand
-          if @customer.quickbooks_id = 'BLOCKED'
+          if @customer.quickbooks_id == 'BLOCKED'
             @customer.quickbooks_id = nil
             @customer.save!
           end
