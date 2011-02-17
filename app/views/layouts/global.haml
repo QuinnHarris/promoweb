@@ -7,6 +7,8 @@
       %meta{ :name => "description", :content => @description }
     - if @keywords
       %meta{ :name => "keywords", :content => @keywords }
+    - if params[:controller] == 'categories' and params[:action] == 'home'
+      %meta{ 'http-equiv' => "PICS-Label", :content => '(PICS-1.1 "http://www.classify.org/safesurf/" L gen true for "http://www.mountainofpromos.com/" r (SS~~000 1))' }
     %link{ :href => "/images/icon.png", :rel => "icon", :type => "image/png" }
     = stylesheet_link_tag "global", :media => 'all'
     - if @user
