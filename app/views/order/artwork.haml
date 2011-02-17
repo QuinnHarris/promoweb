@@ -20,7 +20,11 @@
   width: 0;
   }
 
-- unless !@user and @order.task_completed?(ArtAcknowledgeOrderTask)
+- if @user and @static
+  .admin
+    = link_to "Unlock to Modify", :unlock => true
+
+- unless @static or (!@user and @order.task_completed?(ArtAcknowledgeOrderTask))
   - form_for :artwork, @artwork, { :url => { :action => :artwork_add, :order_id => @order, :upload_id => @upload_id }, :html => { :multipart => true } }  do |artwork|
     %table.form
       %caption Add Artwork

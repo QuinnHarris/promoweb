@@ -556,7 +556,7 @@ public
     @artwork_groups << "Artwork from other orders" unless groups.empty?
     @artwork_groups += groups
 
-    @static = @order.task_completed?(ArtAcknowledgeOrderTask)
+    @static = @order.task_completed?(ArtAcknowledgeOrderTask) && (!@user || !params[:unlock])
 
     @order_item_decorations = @order.items.collect { |oi| oi.decorations.find(:all, :conditions => { 'artwork_group_id' => nil }) }.flatten
     @upload_id = Time.now.to_i.to_s
@@ -676,6 +676,7 @@ public
   
   def status
     apply_calendar_header if session[:user_id]
+#    @javascripts = ['calendar_date_select/calendar_date_select.js']
     
     if params[:static]
       @order = Order.new

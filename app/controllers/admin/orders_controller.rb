@@ -239,6 +239,11 @@ class Admin::OrdersController < Admin::BaseController
           object = @order
         end
 
+        unless @order.user_id
+          @order.user = @user
+          @order.save!
+        end
+
         task_params = {
           :user_id => session[:user_id],
           :host => request.remote_ip,
@@ -281,6 +286,21 @@ class Admin::OrdersController < Admin::BaseController
       task.active = nil
       task.save!
     end
+    redirect_to :back
+  end
+
+  def task_comment
+    OrderTask.transaction do
+      task_class = Kernel.const_get(params[:class])
+      raise "Permission Denied" if (task_class.roles & @permissions).empty?
+
+      object = task_class.reflections[:object].klass.find(params[:id])
+      
+      task = object.task_get(task_class)
+      task.update_attributes(params[:task])
+      task.save!
+    end
+
     redirect_to :back
   end
 
