@@ -162,12 +162,12 @@ module ObjectTaskMixin
   end
 
   def task_get(task_class)
-    attributes = {
-      task_class.reflections[:object].primary_key_name => id,
-      :active => false
-    }
-    task = task_class.find(:first, :conditions => attributes)
-    task = task_class.new(attributes) unless task
+    task = task_class.find(:first, :order => 'active',
+                           :conditions => ["#{task_class.reflections[:object].primary_key_name} = ? AND (active = 'false' OR active IS NULL)", id])
+    task = task_class.new({
+                            task_class.reflections[:object].primary_key_name => id,
+                            :active => false
+                          }) unless task
     task
   end
 end
