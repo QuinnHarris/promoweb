@@ -74,7 +74,9 @@
           %div
             %h3 Bill To
             - payment = customer.payment_methods.find(:first)
-            = payment.name
+            /= payment.name
+            - if valid?(customer, :company_name)
+              = customer.company_name
             %br
             = render :partial => '/order/address', :locals => { :address => payment.address, :customer => customer }
 
