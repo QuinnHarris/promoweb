@@ -33,7 +33,7 @@ class Supplier < ActiveRecord::Base
 
   %w(quickbooks_id quickbooks_sequence price_source_id address_id artwork_email po_email fax phone account_number).each do |name|
     define_method(name) do
-      if val = attributes[name]
+      unless (val = attributes[name]).blank?
         next val
       end
       next nil unless parent
