@@ -14,6 +14,7 @@ class HeaderItemTask
   end
   
   def new_record?; true; end
+  def active; false; end
   def ready?; false; end
   def admin; false; end
     
@@ -66,8 +67,8 @@ class OrderSentItemTask < OrderItemTask
 
   end
   
-  def complete_estimate
-    time_add_weekday(depend_max_at, 0, 1)
+  def execute_duration
+    15.minutes
   end
 end
 
@@ -96,6 +97,10 @@ class ArtSentItemTask < OrderItemTask
 #  def admin
 #    true
 #  end
+
+  def execute_duration
+    15.minutes
+  end
 end
 
 class ConfirmItemTask < OrderItemTask
@@ -119,10 +124,10 @@ class ConfirmItemTask < OrderItemTask
   
   def admin
     true
-  end  
-  
-  def complete_estimate
-    time_add_weekday(depend_max_at, 0, 4)
+  end
+
+  def execute_duration
+    4.hours
   end
 end
 
@@ -142,7 +147,7 @@ class EstimatedItemTask < OrderItemTask
   
   def ship_date
     return nil unless data
-    time_add_weekday(data[:ship_date].to_time, 0, 4)
+    data[:ship_date].to_time + 17.hours
   end
   
   def ship_days
@@ -168,9 +173,9 @@ Please let me know if you have any questions.)
   def status
     true
   end
-  
-  def complete_estimate
-    time_add_weekday(depend_max_at, 1)
+
+  def execute_duration
+    1.day
   end
 end
 
@@ -217,16 +222,25 @@ Please let me know when this arrives.)
   def status
     true
   end
+
+  def execute_duration
+    1.day
+  end
   
   def complete_estimate
-    return depends_on.first.ship_date unless depends_on.first.new_record?
+    unless depends_on.first.new_record?
+      # Complete by 9:00 am the next day
+      #return time_add_workday(depends_on.first.ship_date, 1.day + 9.hours)
+      return depends_on.first.ship_date + 4.hours
+    end
+
     lead_time = object.order.rush ? object.product.lead_time_rush : object.product.lead_time_normal_max
-    time_add_weekday(depend_max_at, lead_time || 15)
+    time_add_workday(depend_max_at, (lead_time || 15).days)
   end
 
   def delivery_estimate
-    # Get estimate from carrier!!!
-    time_add_weekday(complete_estimate, depends_on.first.ship_days)
+    # Delivers by 5 pm
+    time_add_workday(complete_estimate, depends_on.first.ship_days.days).beginning_of_day + 17.hours
   end
 end
 
@@ -240,8 +254,8 @@ class ReconciledItemTask < OrderItemTask
   
 #  def status; false; end
 #  def admin; true; end
-  def complete_estimate
-    time_add_weekday(depend_max_at, 1)
+  def execute_duration
+    2.days
   end
 end
 
@@ -259,9 +273,13 @@ class ReceivedItemTask < OrderItemTask
   def status
     true
   end
+
+  def execute_duration
+    1.day
+  end
   
   def complete_estimate
-    depends_on.first.delivery_estimate   
+    depends_on.first.delivery_estimate
   end
 end
 
@@ -280,8 +298,8 @@ class AcceptedItemTask < OrderItemTask
   def status
     true
   end
-  
-  def complete_estimate
-    time_add_weekday(depend_max_at, 1)
+
+  def execute_duration
+    2.days
   end
 end

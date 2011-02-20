@@ -26,7 +26,7 @@
   - for tr in @display
     %tr{ :style => " height: 2em;" }
       - for td in tr
-        - class_name = (!td.new_record? && 'complete') || (td.ready? && 'ready') || (td.is_a?(HeaderItemTask) && 'header') || 'pending'
+        - class_name = (td.active && 'complete') || (td.ready? && 'ready') || (td.is_a?(HeaderItemTask) && 'header') || 'pending'
         - class_name += " admin" if td.admin
         %td{ :class => class_name, :rowspan => td.rows, :colspan => (td.cols * @cols_mult).to_i }
           - if td.is_a?(HeaderItemTask)
@@ -42,7 +42,7 @@
             .time
               - if td.respond_to?(:email_complete)
                 = image_tag "email.png"
-              - if td.new_record?
+              - unless td.active
                 - if td.complete_at
                   ETA:
                   = format_time_course(td.complete_at)
@@ -53,8 +53,8 @@
                 = link_to image_tag('remove.png'), { :controller => '/admin/orders', :action => :task_revoke, :id => td, :class => td.class, :order_id => @order }, { :confirm => "Revoke #{td.status_name} task?" }
             .name
               = image_tag td.customer ? 'there_task.png' : 'our_task.png'
-              - if td.uri and (@user ? td.allowed?(@permissions) : (td.ready? or !td.new_record?))
-                = link_to td.status_name, td.uri
+              - if td.uri and (@user ? td.allowed?(@permissions) : (td.ready? or td.active))
+                = link_to_task(td.status_name, td)
               - else
                 = td.status_name
             - if td.respond_to?(:apply)
@@ -91,7 +91,7 @@
           %td= task.user ? task.user.name : "Customer"
           %td= link_to(task.host, "http://www.maxmind.com/app/locate_ip?ips=#{task.host}") if task.host
           %td= (allowed?('Super') and task.active and task.revokable?) ? link_to(image_tag('remove.png'), { :controller => '/admin/orders', :action => :task_revoke, :id => task, :class => task.class, :order_id => @order }, { :confirm => "Revoke #{task.status_name} task?" }) : (task.active ? 'X' : '-')
-          %td= link_to_task(task.completed_name, task, @order)
+          %td= link_to_task(task.completed_name, task)
           %td= task.data.inspect
 
 %hr

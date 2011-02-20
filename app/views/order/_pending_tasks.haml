@@ -8,9 +8,10 @@
         - if order_item = task.object.is_a?(OrderItem) and !task.object.new_record?
           - title += " (#{task.object.description})"
         - if task.respond_to?(:our_comment)
-          - form_tag({ :controller => '/admin/orders', :action => :task_execute, :id => task.object, :tasks => tasks.collect { |t| t.class } }) do
+          - task = task.object.task_find_inactive(task.class) || task if task.new_record?
+          - form_for :data, task, :url => { :controller => '/admin/orders', :action => :task_execute, :id => task.object, :tasks => tasks.collect { |t| t.class } } do |t|
             %h2= title
-            = text_area :data, :our_comment, 'cols' => 120, 'rows' => 10, :value => task.object.task_get(task.class).our_comment
+            = t.text_area :our_comment, 'cols' => 120, 'rows' => 10
             %br
             = submit_tag 'Completed'
             - if task.respond_to?(:email_complete)
@@ -23,7 +24,7 @@
             = link_to "(WITHOUT EMAIL)", uri.merge(:without_email => true)
 
       - else # Link to task page
-        %span= task.uri ? link_to(task.status_name, task.uri) : task.status_name
+        %span= link_to_task(task.status_name, task)
       - if deligate and !(users = deligate.delegatable_users(session[:user_id])).empty?
         .delegate
           then delegate
@@ -45,6 +46,18 @@
         %ul
         - for user in users
           %li= link_to user.name, { :controller => '/admin/orders', :action => :task_execute, :order_id => @order, :delegate_perm => user.delegatables.first.name, :user_id => user.id }, :class => 'action'
+
+    - if task.complete_estimate
+      - form_for :task, task, :url =>  { :controller => '/admin/orders', :action => :task_comment, :id => task.object, :class => tasks.last.class } do |t|
+        %hr
+        = t.text_area :comment, 'cols' => 120, 'rows' => 2         
+        %div
+          Completion:
+          - ['30m', '1h', '2h', '4h', 'EOD', '1d', '2d', '3d', '4d', '5d'].each do |name|
+            = submit_tag name
+          |
+          = calendar_input_time('task[expected_at]', t.object.complete_at.strftime('%Y-%m-%d %H:%M'), {}, {}, "_#{task.class}")
+          = submit_tag 'Apply'
 
 
 - if @revokable and !@revokable.empty?

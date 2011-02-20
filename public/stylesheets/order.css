@@ -95,6 +95,10 @@ div#key span {
 	background-color: #FFFFE0;
 }
 
+.late {
+	color: red;	
+}
+
 div.time {
 	font-size: 0.8em;
 	float: right;

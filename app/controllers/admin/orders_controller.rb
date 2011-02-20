@@ -83,6 +83,17 @@ class Admin::OrdersController < Admin::BaseController
     urgent = @orders.find_all { |o| o.urgent_note && !o.urgent_note.strip.empty? }
     @groups = urgent.empty? ? [] : [ ['Urgent', urgent] ]
 
+    today = Time.now.end_of_day
+    ready_orders = @orders.collect do |order|
+      time = order.tasks_allowed(@permissions).collect do |task|
+        next unless task.complete_at and (task.complete_at < today)
+        task.complete_at
+      end.compact.min
+      next unless time
+      [order, time]
+    end.compact.sort_by { |order, time| time }.collect { |order, time| order }
+    @groups << ['Ready and Late', ready_orders] unless ready_orders.empty?
+
     if params[:sort] == 'task'
       groups = {}
       @orders.each do |o|
@@ -295,8 +306,26 @@ class Admin::OrdersController < Admin::BaseController
       raise "Permission Denied" if (task_class.roles & @permissions).empty?
 
       object = task_class.reflections[:object].klass.find(params[:id])
-      
-      task = object.task_get(task_class)
+
+      time = case params[:commit]
+             when /^(\d{2})m$/
+               Time.now + Integer($1).minutes
+             when /^(\d{1})h$/
+               Time.now + Integer($1).hours
+             when 'EOD'
+               Time.now.beginning_of_day + 17.hours
+             when /^(\d{1})d$/
+               Time.now.beginning_of_day + 17.hours + Integer($1).days
+             else
+               params[:task][:expected_at]
+             end
+      params[:task][:expected_at] = time
+
+      attributes = {
+        task_class.reflections[:object].primary_key_name => object.id,
+        :active => false }
+      task = task_class.find(:first, :conditions => attributes)
+      task = task_class.new(attributes) unless task
       task.update_attributes(params[:task])
       task.save!
     end
@@ -791,6 +820,7 @@ class Admin::OrdersController < Admin::BaseController
   def_tasked_action :items_edit, RequestOrderTask, RevisedOrderTask, QuoteOrderTask do       
     @stylesheets = ['order']
     @javascripts = ['autosubmit.js', 'admin_orders', 'effects', 'controls']
+    apply_calendar_header
     
     # Populate supplier - po - item list
     @suppliers = {}

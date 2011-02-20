@@ -54,7 +54,7 @@
             -   included << task.waiting_name
               %div
                 = image_tag task.customer ? 'there_task.png' : 'our_task.png'
-                = link_to_task(task.waiting_name, task, order, {}, :class => task.late ? "late" : nil)
+                = link_to_task(task.waiting_name, task, order)
           %td
             - last_task = order.task_recent
             %div

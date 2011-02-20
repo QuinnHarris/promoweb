@@ -135,6 +135,14 @@ private
       hash.merge(:delegate => delegate.first)
     end
   end
+
+  # KLUDGE REPLACE THIS CALENDAR
+private
+  def apply_calendar_header
+    @javascripts = (@javascripts || []) + ["calendar", "lang/calendar-en", "calendar-setup"].collect { |n| "/jscalendar-1.0/#{n}" }
+    @stylesheets = (@stylesheets || []) + ["calendar-blue"].collect { |n| "/jscalendar-1.0/#{n}"}    
+  end
+public
 end
 
 class OrderController < ApplicationController 
@@ -380,13 +388,6 @@ public
     
     render :partial => 'shipping', :locals => { :rates => @rates }
   end
-  
-private
-  def apply_calendar_header
-    @javascripts = (@javascripts || []) + ["calendar", "lang/calendar-en", "calendar-setup"].collect { |n| "/jscalendar-1.0/#{n}" }
-    @stylesheets = (@stylesheets || []) + ["calendar-blue"].collect { |n| "/jscalendar-1.0/#{n}"}    
-  end
-public
   
   # Order Information
   def_tasked_action :info, InformationOrderTask do    

@@ -28,11 +28,15 @@ module OrderHelper
     end
   end
   
-  def link_to_task(name, task, order, options = {}, html_options = {})
+  def link_to_task(name, task, order = @order, options = {}, html_options = {})
     if task.uri
-      link_to(name, task.uri.merge(:order_id => order.id).merge(options), html_options)
+      link_to(name, task.uri.merge(:order_id => order.id).merge(options), html_options.merge(:class => @user && task.late && 'late'))
     else
-      name
+      if @user && task.late
+        "<span class='late'>#{name}</span>"
+      else
+        name
+      end
     end
   end
     
@@ -113,4 +117,28 @@ Calendar.setup({
     "#{tft}#{imt}#{script}"
   end
 
+  def calendar_input_time(text_name, text_value, text_attributes={}, image_attributes={}, id_suffix = '')
+    image_name = 'start_cal'+id_suffix
+    image_attributes[:name] = image_name if image_name
+    image_attributes[:id] = image_name if image_name
+    date_format = '%Y-%m-%d %H:%M' #'%m/%d/%y'
+
+    text_value = Date.today.strftime(date_format) if text_value.to_s.upcase.eql? 'TODAY'
+    imt = image_tag('date.png', image_attributes)
+    id_name = sanitize_to_id(text_name) + id_suffix
+    tft = text_field_tag(text_name, text_value, text_attributes.merge(:id => id_name))
+    script = %(<script language='javascript'>
+Calendar.setup({
+  inputField : '#{id_name}',
+  ifFormat : '#{date_format}',
+  showsTime : true,
+  button : '#{image_name}',
+  weekNumbers : false,
+  range : [#{yr = Time.now.year}, #{yr+1}],
+/*  disableFunc : function (date) { var ref = new Date(); return date.getTime() < ref.getTime(); }*/
+});
+</script>)
+    
+    "#{tft}#{imt}#{script}"
+  end
 end

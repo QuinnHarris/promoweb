@@ -12,7 +12,7 @@ class Order < ActiveRecord::Base
   # Used by status page
   def tasks_all
     (tasks_dep.find_all { |t| !t.new_record? } +
-      customer.tasks_inactive + tasks_inactive + items.collect { |i| i.tasks_inactive }.flatten).uniq.sort { |l, r| l.created_at <=> r.created_at }
+     customer.tasks_inactive + tasks_inactive + items.collect { |i| i.tasks_inactive }.flatten).uniq.sort_by { |t| t.created_at } 
   end
     
   has_many :items, :class_name => 'OrderItem', :foreign_key => 'order_id', :order => "order_items.id"
@@ -163,8 +163,7 @@ class Order < ActiveRecord::Base
   end
   
   def tasks_allowed(permissions)
-    list = tasks_dep.find_all { |t| t.ready? and t.allowed?(permissions) } #  and !t.blocked?
-    list
+    tasks_dep.find_all { |t| t.ready? and t.allowed?(permissions) }
   end
   
   def permissions_for_user(user)

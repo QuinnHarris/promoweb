@@ -12,6 +12,7 @@ module ObjectTaskMixin
       table_name = Kernel.const_get("#{self}Task").table_name
       has_many :tasks_active, :class_name => "#{self}Task", :order => 'created_at DESC', :conditions => "#{table_name}.active"
       has_many :tasks_inactive, :class_name => "#{self}Task", :order => 'created_at DESC', :conditions => "#{table_name}.active IS NULL"
+      has_many :tasks_other, :class_name => "#{self}Task", :order => 'created_at DESC', :conditions => "NOT #{table_name}.active"
     end
   end
   
@@ -52,7 +53,13 @@ module ObjectTaskMixin
     tasks_active.to_a.find { |t| t.is_a?(task_class) }
   end
   def task_find_all(task_class)
-    (tasks_active.to_a + tasks_new).find { |t| t.is_a?(task_class) }
+    (tasks_active.to_a + tasks_new + tasks_other.to_a).find { |t| t.is_a?(task_class) }
+  end
+
+  # Only used by _pending_tasks.haml
+  def task_find_inactive(task_class)
+    task_class.find(:first, :order => 'id',
+                    :conditions => ["#{task_class.reflections[:object].primary_key_name} = ? AND active IS NULL", id])
   end
 
   
@@ -69,7 +76,7 @@ module ObjectTaskMixin
   def task_revoke(tasks_revoke, data_inject = nil)
     tasks_revoke = [tasks_revoke].flatten
     task_object =  tasks_context.find { |t| t.is_a?(tasks_revoke.first) }
-    return nil if !task_object or task_object.new_record?
+    return nil if !task_object or task_object.new_record? or !task_object.active
 
     unless task_object.revokable?(tasks_revoke[1..-1])
       raise TaskUnrevokeError, tasks_revoke
@@ -159,16 +166,6 @@ module ObjectTaskMixin
         task_class.create(attributes.merge(params)) 
       end
     end
-  end
-
-  def task_get(task_class)
-    task = task_class.find(:first, :order => 'active',
-                           :conditions => ["#{task_class.reflections[:object].primary_key_name} = ? AND (active = 'false' OR active IS NULL)", id])
-    task = task_class.new({
-                            task_class.reflections[:object].primary_key_name => id,
-                            :active => false
-                          }) unless task
-    task
   end
 end
 
@@ -262,7 +259,7 @@ module TaskMixin
           end
         end
 
-        if task_class and !target_task.new_record?
+        if task_class and !target_task.new_record? and target_task.active
           # If current and dependant are active
           # use single active dependant
           task_class_list = [task_class]
@@ -366,7 +363,7 @@ module TaskMixin
   
   
   def ready?(inject = [])
-    return nil unless new_record?    
+    return nil unless new_record? or !active   
     not depends_on.find do |task|
       not ((!task.new_record? and task.active) or
            (inject.include?(task.class) and task.ready?(inject - [task.class])))
@@ -374,7 +371,7 @@ module TaskMixin
   end
   
   def revokable?(reject = [])
-    return false if new_record?
+    return false if new_record? or !active
     return true unless dependants
     not dependants.find { |t| !t.new_record? and t.active and !(reject.include?(t.class) and t.revokable?(reject)) }
   end
@@ -388,52 +385,35 @@ module TaskMixin
   def status; nil; end
   def admin; nil; end
     
-  def complete_estimate; nil; end
-  def complete_at
-    if new_record?
-      return @complete_at if @complete_at
-      @complete_estimate = complete_estimate
-      return @complete_at = nil if @complete_estimate.nil?
-      return @complete_at = Time.now.utc + 60*5 if @complete_estimate < Time.now.utc
-      return @complete_at = @complete_estimate
+  def complete_estimate
+    if respond_to?(:execute_duration)
+      return time_add_workday(depend_max_at, execute_duration)
     end
-    created_at
+    nil
+  end
+  def complete_at
+    return expected_at if expected_at
+    return created_at if !new_record? and active
+    complete_estimate
   end
   def late
-    @complete_estimate = complete_estimate unless @complete_estimate
-    @complete_estimate < Time.now.utc if @complete_estimate
+    return nil if !new_record? and active
+    ca = complete_at
+    ca < Time.now.utc if ca
   end
   
   def depend_max_at
-    depends_on.collect { |t| t.complete_at }.compact.max || Time.now.utc
+    depends_on && depends_on.collect { |t| t.complete_at }.compact.max || Time.now.utc
   end
-  
-  def time_add_weekday(time, days = 0, hours = 0, minutes = 0)
-    # weeks
-    weeks = days / 5
-    days -= weeks*5
-    time += weeks*7*24*60*60
-    
-    # dow
-    time = time.next_week if [0,6].include?(time.wday)
-    time_new = time + days*24*60*60
-    if time_new.wday < time.wday or [0,6].include?(time_new.wday)
-      time_new += 2*24*60*60
+
+  def time_add_workday(time, duration)
+    unless (1..5).member?(time.wday)
+      time = time.beginning_of_day + 8.hours
+      time += 1.day until (1..5).member?(time.wday)
     end
-    
-    tod = time_new - time_new.beginning_of_day
-    if tod < 8*60*60
-      tod = 8*60*60
-    elsif tod > 17*60*60
-      tod = 8*60*60
-      time_new += 24*60*60
-    end
-    tod += (hours*60 + minutes)*60
-    if tod > 17*60*60
-      tod = (tod - 17*60*60) + 8*60*60
-      time_new += 24*60*60
-    end
-    time_new.beginning_of_day + tod
+    time += duration + (2*(duration/5.day)).days
+    time += 1.day until (1..5).member?(time.wday)
+    time
   end
 end
 

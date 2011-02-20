@@ -103,10 +103,9 @@ We look forward to working with you for your promotional needs.)
   def status
     true
   end
-  
-  def complete_estimate
-    # 24 hours after Last info is placed
-    time_add_weekday(depend_max_at, 1)
+
+  def execute_duration
+    1.hour
   end
 end
 
@@ -136,16 +135,15 @@ class QuoteOrderTask < OrderTask
   end
   
   def status
-    not new_record?
+    active
   end
 
   def self.blocked(order)
     super || (order.task_completed?(RevisedOrderTask) && "Order Revised")
   end
   
-  def complete_estimate
-    # 24 hours after Order Request
-    time_add_weekday(depend_max_at, 1)
+  def execute_duration
+    1.hour
   end
 end
 
@@ -226,9 +224,8 @@ Customer Comments:
     nil
   end
 
-  def complete_estimate
-    # 24 hours after Order Request
-    time_add_weekday(depend_max_at, 1)
+  def execute_duration
+    1.hour
   end
 end
 
@@ -249,10 +246,9 @@ class AcknowledgeOrderTask < OrderTask
   def status
     true
   end
-  
-  def complete_estimate
-    # 24 hours after Order Revision
-    time_add_weekday(depend_max_at, 1)
+
+  def execute_duration
+    1.day
   end
 end
 
@@ -268,10 +264,6 @@ class PaymentInfoOrderTask < OrderTask
   def status
     true
   end
-  
-#  def complete_estimate
-#    Time.now.utc if dependants.first.ready?([self])
-#  end
 end
 
 class PaymentOverrideOrderTask < OrderTask
@@ -317,9 +309,9 @@ class FirstPaymentOrderTask < OrderTask
   def status
     true
   end
-  
-  def complete_estimate
-    time_add_weekday(depend_max_at, 0, 1)
+
+  def execute_duration
+    15.minutes
   end
 end
 
@@ -370,9 +362,9 @@ class ArtDepartmentOrderTask < OrderTask
   def admin
     true
   end
-  
-  def complete_estimate
-    time_add_weekday(depend_max_at, 0, 1)
+
+  def execute_duration
+    15.minutes
   end
 end
 
@@ -421,9 +413,9 @@ Customer Comments:
   def status
     true
   end
-  
-  def complete_estimate
-    depend_max_at + 24*60*60
+
+  def execute_duration
+    4.hours
   end
 end
 
@@ -445,9 +437,9 @@ class ArtAcknowledgeOrderTask < OrderTask
   def status
     true
   end
-  
-  def complete_estimate
-    depend_max_at + 24*60*60
+
+  def execute_duration
+    1.day
   end
 end
 
@@ -467,6 +459,10 @@ class FinalPaymentOrderTask < OrderTask
   
   def self.blocked(order)
     super || (!order.total_billable.zero? && "Outstanding balance")
+  end
+
+  def execute_duration
+    1.day
   end
 end
 
@@ -497,10 +493,10 @@ We look forward to working with you again!)
   def status
     true
   end
-  
-  def complete_estimate
-    time_add_weekday(depend_max_at, 0, 1)
-  end   
+
+  def execute_duration
+    1.day
+  end  
 end
 
 class ReviewOrderTask < OrderTask
