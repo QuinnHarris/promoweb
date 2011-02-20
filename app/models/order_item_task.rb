@@ -52,7 +52,6 @@ class OrderSentItemTask < OrderItemTask
   self.status_name = 'Purchase Order to Supplier'
   self.waiting_name = 'Send Order to Supplier'
   self.completed_name = 'Order Sent to Supplier'
-  self.uri = { :controller => '/admin/orders', :action => 'items_edit' }
   self.roles = %w(Orders)
   
   def status
@@ -235,6 +234,7 @@ Please let me know when this arrives.)
     end
 
     lead_time = object.order.rush ? object.product.lead_time_rush : object.product.lead_time_normal_max
+    logger.info("Leed: #{lead_time}")
     time_add_workday(depend_max_at, (lead_time || 15).days)
   end
 
@@ -249,7 +249,6 @@ class ReconciledItemTask < OrderItemTask
   self.status_name = 'Reconciled Invoice from Supplier'
   self.waiting_name = 'Waiting for Supplier Invoice'
   self.completed_name = 'Invoice Received from Supplier'
-  self.uri = { :controller => '/admin/orders', :action => 'items_edit' }
 #  self.roles = %w(Orders)
   
 #  def status; false; end

@@ -28,7 +28,7 @@ module OrderModule
       uri = { :controller => "/#{self.controller_path}", :action => action}
       tasks.each do |task|
         next if task.is_a?(String)
-        raise "uri already set #{action} #{task}" if task.uri and task.uri != uri
+        raise "uri already set #{action} #{task} as #{uri.inspect}" if task.uri and task.uri != uri
         task.uri = uri
       end
       instance_variable_set "@#{action}_tasks", tasks

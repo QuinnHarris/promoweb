@@ -92,7 +92,7 @@ class Admin::OrdersController < Admin::BaseController
       next unless time
       [order, time]
     end.compact.sort_by { |order, time| time }.collect { |order, time| order }
-    @groups << ['Ready and Late', ready_orders] unless ready_orders.empty?
+    @groups << ['Ready or Late', ready_orders] unless ready_orders.empty?
 
     if params[:sort] == 'task'
       groups = {}
@@ -326,7 +326,7 @@ class Admin::OrdersController < Admin::BaseController
         :active => false }
       task = task_class.find(:first, :conditions => attributes)
       task = task_class.new(attributes) unless task
-      task.update_attributes(params[:task])
+      task.update_attributes(params[:task].merge(:user_id => session[:user_id]))
       task.save!
     end
 
@@ -817,7 +817,7 @@ class Admin::OrdersController < Admin::BaseController
     end
   end
   
-  def_tasked_action :items_edit, RequestOrderTask, RevisedOrderTask, QuoteOrderTask do       
+  def_tasked_action :items_edit, RequestOrderTask, RevisedOrderTask, QuoteOrderTask, OrderSentItemTask, ReconciledItemTask do
     @stylesheets = ['order']
     @javascripts = ['autosubmit.js', 'admin_orders', 'effects', 'controls']
     apply_calendar_header
