@@ -106,7 +106,7 @@ class Admin::OrdersController < Admin::BaseController
         [klass.waiting_name, groups[klass]]
       end.compact
     else
-      @groups << [@groups.empty? ? nil : 'Normal', @orders]
+      @groups << [@groups.empty? ? nil : 'Normal', @orders - ready_orders - urgent]
     end
   end
     
