@@ -1,11 +1,3 @@
-class TaskError < StandardError; end
-class TaskUnrevokeError < TaskError
-  def initialize(tasks)
-    @tasks = tasks
-  end
-  attr_reader :tasks
-end
-
 module ObjectTaskMixin  
   module ClassMethods
     def has_tasks
@@ -74,12 +66,12 @@ module ObjectTaskMixin
   
   # if revokable = nil then revoke without considering dependancies
   def task_revoke(tasks_revoke, data_inject = nil)
-    tasks_revoke = [tasks_revoke].flatten
+    tasks_revoke = [tasks_revoke].flatten.uniq
     task_object =  tasks_context.find { |t| t.is_a?(tasks_revoke.first) }
-    return nil if !task_object or task_object.new_record? or !task_object.active
+    return nil unless task_object and task_object.active
 
     unless task_object.revokable?(tasks_revoke[1..-1])
-      raise TaskUnrevokeError, tasks_revoke
+      raise "Task unrevoke: #{tasks_revoke.inspect}"
     end
         
     primary_task = nil
@@ -98,6 +90,7 @@ module ObjectTaskMixin
           end
         end
         task.save!
+        tasks_active.target.delete(task)
       end
     end
     return primary_task
@@ -371,7 +364,7 @@ module TaskMixin
   end
   
   def revokable?(reject = [])
-    return false if new_record? or !active
+    return false unless active
     return true unless dependants
     not dependants.find { |t| !t.new_record? and t.active and !(reject.include?(t.class) and t.revokable?(reject)) }
   end

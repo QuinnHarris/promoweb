@@ -234,7 +234,6 @@ Please let me know when this arrives.)
     end
 
     lead_time = object.order.rush ? object.product.lead_time_rush : object.product.lead_time_normal_max
-    logger.info("Leed: #{lead_time}")
     time_add_workday(depend_max_at, (lead_time || 15).days)
   end
 
