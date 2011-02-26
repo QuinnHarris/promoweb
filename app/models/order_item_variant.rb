@@ -29,22 +29,26 @@ class OrderItemVariant < ActiveRecord::Base
     order_item.save!
   end
 
-#  def to_destroy?
-#    quantity == 0 and imprint_colors.blank? and quickbooks_po_id.blank? and quickbooks_bill_id.blank?
-#  end
+  def to_destroy?
+    quantity == 0 and imprint_colors.blank? and quickbooks_po_id.blank? and quickbooks_bill_id.blank?
+  end
 end
 
 # Used as place holder for empty OrderItemVariants
 class OrderItemVariantMeta
   def self.fetch(order_item)
     all_variants = order_item.product.variants.to_a
-    all_variants.unshift nil if all_variants.length > 1
     our_variants = order_item.order_item_variants.to_a
 
-    all_variants.collect do |variant|
-      our = our_variants.find { |v| v.variant_id == (variant && variant.id) }
-      our || OrderItemVariantMeta.new(order_item, variant)
+    variants = our_variants + all_variants.collect do |variant|
+      unless our_variants.find { |v| v.variant_id == (variant && variant.id) } 
+        OrderItemVariantMeta.new(order_item, variant)
+      end
+    end.compact
+    if all_variants.length > 1 and !our_variants.find { |v| v.variant_id.nil? }
+      variants.unshift OrderItemVariantMeta.new(order_item, nil)
     end
+    variants
   end
 
   def initialize(order_item, variant)

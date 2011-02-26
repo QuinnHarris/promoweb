@@ -669,10 +669,22 @@ class Admin::OrdersController < Admin::BaseController
                                     :price => price,
                                     :cost => cost,
                                     :shipping_price => free ? Money.new(0) : nil )
-        orig_item.order_item_variants.each do |oiv|
-          item.order_item_variants.create(:variant_id => oiv.variant_id,
-                                          :quantity => ((oiv.quantity == 0) or (!samples)) ? oiv.quantity : 1)
+        oivs = orig_item.order_item_variants.to_a
+        if oiv_null = oivs.find { |v| v.variant_id.nil? }
+          oivs.delete(oiv_null)
+        else
+          oiv_null = item.order_item_variants.new(:variant_id => nil,
+                                                  :quantity => 0)
         end
+        oivs.each do |oiv|
+          if item.product.variants.to_a.find { |v| v.id == oiv.variant_id } 
+            item.order_item_variants.create(:variant_id => oiv.variant_id,
+                                            :quantity => ((oiv.quantity == 0) or (!samples)) ? oiv.quantity : 1)
+          else
+            oiv_null.quantity += oiv.quantity
+          end
+        end
+        oiv_null.save! if oiv_null.quantity > 0
 
         if samples
           item.entries.create(:description => 'Sample Item')
@@ -978,8 +990,8 @@ class Admin::OrdersController < Admin::BaseController
         obj.send("#{attr}=", newValue)
       end
       
-#      (obj.respond_to?(:to_destroy?) and obj.to_destroy?) ? obj.destroy : obj.save!
-      obj.save!
+      (obj.respond_to?(:to_destroy?) and obj.to_destroy?) ? obj.destroy : obj.save!
+#      obj.save!
       
       if obj.respond_to?(:normal_h) and %w(quantity count).include?(attr)
 #      if (klass == OrderItemVariant and attr == "quantity") or
