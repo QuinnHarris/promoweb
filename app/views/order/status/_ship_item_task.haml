@@ -1,4 +1,4 @@
-- if task.new_record?
+- unless task.active
   - if @user and task.ready?
     = select(:data, :carrier, %w(UPS FedEx DHL Trucking Other))
     = text_field(:data, :tracking, :size => 20)
