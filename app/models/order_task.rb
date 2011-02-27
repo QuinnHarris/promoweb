@@ -128,7 +128,7 @@ class QuoteOrderTask < OrderTask
     return string if string
 
     string =  "Hi #{object.customer.person_name.split(' ').first},\n"
-    string += "Thank you for contacting Mountain Xpress promotions.\n"
+    string += "Thank you for contacting Mountain Xpress Promotions.\n"
     string += "Please review the revised quote below.\n"
     string += "Please let me know if I can answer any questions.\n"
     string
@@ -179,7 +179,7 @@ Customer Comments:
     return string if string
 
     string =  "Hi #{object.customer.person_name.split(' ').first},\n"
-    string += "Thank you for contacting Mountain Xpress promotions.\n"
+    string += "Thank you for contacting Mountain Xpress Promotions.\n"
     string += "Please review the revised order below.\n"
     unless object.task_completed?(PaymentInfoOrderTask)
       string += "You will be required to provide payment before the order can proceed and your artwork can be processed.\n"
