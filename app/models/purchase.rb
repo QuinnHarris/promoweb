@@ -59,5 +59,7 @@ class Purchase < ActiveRecord::Base
         bill.save!
       end
     end
+
+    order.push_quickbooks!
   end
 end

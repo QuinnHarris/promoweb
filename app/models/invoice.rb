@@ -10,4 +10,9 @@ class Invoice < ActiveRecord::Base
   def destroy_children
     entries.each { |e| e.destroy }
   end
+
+  after_save :cascade_update
+  def cascade_update
+    order.push_quickbooks!
+  end
 end

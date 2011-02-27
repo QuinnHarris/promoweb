@@ -186,7 +186,21 @@ class Order < ActiveRecord::Base
   def update_cache
     self['total_price_cache'] = price = total_item_price.min.round_cents
     self['total_cost_cache'] = cost = total_item_cost.min.round_cents
+    self.quickbooks_id = 'BLOCKED'
     true
+  end
+
+  def push_quickbooks!
+    Order.transaction do
+      if self.quickbooks_id == 'BLOCKED'
+        self.quickbooks_id = nil
+        self.save!
+      end
+      if customer.quickbooks_id == 'BLOCKED'
+        customer.quickbooks_id = nil
+        customer.save!
+      end
+    end
   end
 
   def total_profit_cache
