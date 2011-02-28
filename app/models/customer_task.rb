@@ -107,7 +107,7 @@ module ObjectTaskMixin
         task_revoke([task_class] + revokable)
       else
         if task_object = tasks_context.find { |t| t.is_a?(task_class) }
-          raise "Task not active" unless task_object.active
+#          raise "Task not active" unless task_object.active
           if revokable and !task_object.new_record? and !task_object.revokable?(revokable)
             raise "Task has unrevokable dependance: #{task_class}"
           end
