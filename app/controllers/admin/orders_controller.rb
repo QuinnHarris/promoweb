@@ -777,11 +777,14 @@ class Admin::OrdersController < Admin::BaseController
         raise "Unkown Supplier name #{params[:commit]}" unless supplier
       end
 
-      purchase = Purchase.create(:supplier => supplier)
+      # After Save of purchase needs to know order from item
+      purchase = Purchase.new(:supplier => supplier)
       items.each do |item|
         item.purchase = purchase
+        purchase.items.target << item
         item.save_cost!
       end
+      purchase.save!
       PurchaseOrder.create(:purchase => purchase)
     end
     redirect_to :action => :items_edit
