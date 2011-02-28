@@ -58,6 +58,8 @@
           |
           = calendar_input_time('task[expected_at]', t.object.complete_at.strftime('%Y-%m-%d %H:%M'), {}, {}, "_#{task.class}")
           = submit_tag 'Apply'
+          - unless task.new_record?
+            X
 
 
 - if @revokable and !@revokable.empty?

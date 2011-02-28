@@ -404,8 +404,11 @@ module TaskMixin
       time = time.beginning_of_day + 8.hours
       time += 1.day until (1..5).member?(time.wday)
     end
-    time += duration + (2*(duration/5.day)).days
-    time += 1.day until (1..5).member?(time.wday)
+    while duration > (eow = (5 - time.wday).days)
+      duration -= eow
+      time += eow + 2.days
+    end
+    time += duration
     time
   end
 end
