@@ -43,6 +43,8 @@ class Customer < ActiveRecord::Base
   def strip_name
     self.company_name = company_name.strip
     self.person_name = person_name.strip
+    self.quickbooks_id = 'BLOCKED'
+    true
   end
   
 

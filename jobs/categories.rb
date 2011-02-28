@@ -56,6 +56,16 @@ private
     end
   end
 
+  def always(exclude = nil)
+    Proc.new do |record, match_category|
+      if exclude
+        [match_category[0..(-1-exclude)]]
+      else
+        [match_category]
+      end
+    end
+  end
+
   def match(properties, values, exclude = nil)
     properties = [properties].flatten.dup
     values = [values].flatten.collect { |v| v.is_a?(String) ? v.downcase : v }.dup
@@ -91,10 +101,12 @@ private
     end
   end
 
-  def exclude(elem)
+  def exclude(elements)
     Proc.new do |record, match_category|
-      if elem.call(record, match_category)
-        record['categories'].delete_if { |cat| cat == match_category }
+      [elements].flatten.compact.each do |elem|
+        if elem.call(record, match_category)
+          record['categories'].delete_if { |cat| cat == match_category }
+        end
       end
       nil
     end
@@ -310,7 +322,7 @@ private
                         match('name', 'bag') ) ) ] ],
         ] ],
      ['Portfolios & Business Bags',
-      [match('name', ['portfolio', 'attache', 'briefcase', 'brief case']),
+      [match('name', ['portfolio', /attache(?:\s|$)/, 'briefcase', 'brief case']),
        match('name', 'brief', 1),
        supplier('Leeds',
                 category('Business Cases', 'Business Cases') ),
@@ -585,7 +597,9 @@ private
    supplier('Norwood',
             category('TECHNOLOGY', 'ELEC') ),
    supplier('Bullet Line',
-            category('Desktop', 'Multi-Card Readers') )
+            category('Desktop', 'Multi-Card Readers') ),
+   supplier('LogoIncluded',
+            category('Card Reader') )
   ],[
      ['CD Products',
       [match('name', ['CD case', 'DVD case']),
@@ -610,11 +624,17 @@ private
                 all(match('name', ' mouse'),
                     category('OFFICE', 'TECHNOLOGY') ) ),
        supplier('Bullet Line',
-                category('Desktop', 'Mice') ) ]],
+                category('Desktop', 'Mice') ),
+       supplier('LogoIncluded',
+                category('Mouse') ) ]],
      ['Computer Mouse Pads',
       [match('name', ['mousepad', 'mouse pad']),
        supplier('Bullet Line',
                 category('Desktop', 'Mouse Pads') ) ] ],
+     ['Screen Cleaners',
+      [match('name', 'screen cleaner'),
+      supplier('LogoIncluded',
+               category('Screen Cleaner') )] ],
      ['MP3 Players',
       [match('name', %w(mp3 mp4 iPod)),
        supplier('Leeds',
@@ -623,9 +643,17 @@ private
                 category('Office / Computer Essentials', 'Mouse Pads') ),
        supplier('Prime Line',
                 all(category('Mp3 / Radios'),
-                    match(%w(name description), %w(mp3 iPod)) ) )]],
+                    match(%w(name description), %w(mp3 iPod)) ) ),
+       supplier('LogoIncluded',
+                category('MP3 Player / MP4 Player') )]],
      ['Web Cams',
       [match('name', 'web cam')] ],
+     ['Web Keys',
+      [supplier('LogoIncluded',
+                category('Web Key') )] ],
+     ['WiFi Finders',
+      [supplier('LogoIncluded',
+                category('WiFi Finder') )] ],
      ['USB Hubs',
       [match('name', 'hub', 1),
        match('name', 'usb hub'),
@@ -635,10 +663,14 @@ private
                 all(match('name', ' hub'),
                     category('OFFICE', 'TECHNOLOGY') ) ),
        supplier('Bullet Line',
-                category('Desktop', 'USB Hubs') ),]],
+                category('Desktop', 'USB Hubs') ),
+       supplier('LogoIncluded',
+                category('USB Hub'))]],
      ['USB Accessories',
       [all(match('name', 'usb'),
-           match('name', ['charger']) ) ]],
+           match('name', ['charger']) ),
+       supplier('LogoIncluded',
+                category('USB Accessories') ) ]],
      ['USB Flash Drives',
       [match('name', %w(flash memory mb gb), 1),
        supplier('Leeds',
@@ -651,15 +683,20 @@ private
          ['Pen USB Flash Drives',
           [match('name', 'pen', 1),
            supplier('Leeds',
-                    category('Memory', 'Memory Pens') )]],
+                    category('Memory', 'Memory Pens') ),
+           supplier('LogoIncluded',
+                    category('Pen Drive') )]],
          ['Recycled Flash Drives',
           [match(%w(name description), 'recycle', 1),
            supplier('Leeds',
                     category('EcoSmart', 'Memory') ) ]],
         ] +
-      ['128M', '256M', '512M', '1G', '2G', '4G', '8G'].collect do |name|
+      ['128M', '256M', '512M', '1G', '2G', '4G', '8G', '16G', '32G'].collect do |name|
         ["#{name}B Flash Drives",
-         [match('name', name, 1)]]
+         [match('name', name, 1),
+          supplier('LogoIncluded',
+                   category('USB Drive'),
+                   category('Wireless Presenter') )]]
       end
      ],
      ['Digital Photo Frames',
@@ -671,7 +708,9 @@ private
                 all(match('name', 'digital photo'),
                     category('OFFICE', 'TECHNOLOGY') ) ),
        supplier('Bullet Line',
-                category('Desktop', 'Digital Photo Frames') ), ]],
+                category('Desktop', 'Digital Photo Frames') ),
+       supplier('LogoIncluded',
+                category('Digital Photo Frame') )]],
     ] ],
 
  ['Desktop Accessories',
@@ -765,7 +804,9 @@ private
                 category('Laser Pointers') ),
        supplier('Bullet Line',
                 category('Lighting', 'Laser Pointers'),
-                category('Desktop', 'Laser Pointers') ) ]],
+                category('Desktop', 'Laser Pointers') ),
+       supplier('LogoIncluded',
+                category('Wireless Presenter') )]],
      ['Mouse Pads',
       [match('name', ['mousepad', 'mouse pad']),
        supplier('Norwood',
@@ -783,7 +824,9 @@ private
       [match('name', %w(headphones earbuds earphones ear\ plugs ear\ phones)),
        supplier('Leeds',
                 all(category('Technology', 'Music & Media'),
-                    match('name', %w(headph ear)) ) )] ],
+                    match('name', %w(headph ear)) ) ),
+       supplier('LogoIncluded',
+                category('Bluetooth Headset') ) ] ],
      ['Desktop Organizers',
       [match('name', ['desk caddy', 'desk organizer', 'pen caddy'])]],
      ['Card Holders',
@@ -1112,6 +1155,7 @@ private
       [match('name', ['ball'], 1),
        match('name', ['flying disc', 'flyer', 'kite', 'football', 'rocket', 'boomerang', 'basketball', 'soccer']),
        exclude(match('name', 'stress')),
+       exclude(supplier('LogoIncluded', always)),
        supplier('High Caliber Line',
                 match('name', ['super ball', 'flying star', 'paddle ball']) ),
        supplier('Gemline',
@@ -1199,8 +1243,14 @@ private
                 category('Travel / Personal Care', 'Luggage Tags') ) ]],
      ['Travel Accessories',
       [supplier('Leeds',
-               category('Travel Gifts', 'Accessories') )] ],
-
+                category('Travel Gifts', 'Accessories'),
+                exclude(match('name', 'charge')))] ],
+     ['Phone Chargers',
+      [supplier('Leeds',
+                all(category('Travel Gifts', 'Accessories'),
+                    match('name', 'charge'))),
+       supplier('LogoIncluded',
+                category('Solar Charger') )] ],
      ['Travel Clocks', duplicate(['Desktop Accessories', 'Clocks', 'Travel Clocks']) ],
      ['Travel Games', duplicate(['Games & Toys', 'Travel Games']) ],
      ['Travel Sets',
@@ -1211,7 +1261,10 @@ private
                category('Luggage & Golf', 'Utility Kits') ) ],
      ['Travel Technology',
       supplier('Leeds',
-               category('Technology', 'Travel') ) ],
+               category('Technology', 'Travel') ),
+      supplier('LogoIncluded',
+               category('Solar Charger'),
+               category('Executive Kit'))],
     ] ],
  ['Housewares',
   [
@@ -1226,7 +1279,8 @@ private
                 category('Outdoor Living', 'BBQ & Picnic') ),
        supplier('Norwood',
                 category('HOUSEWARES', 'PICNIC2'),
-                category('OUTDOOR', 'PICNIC') )
+                category('OUTDOOR', 'PICNIC') ),
+       exclude(supplier('LogoIncluded', always)),
       ]],
      ['Beverage & Bar',
       [supplier('Leeds',
@@ -1443,7 +1497,9 @@ private
       ] ],
      ['PDA/Phone Holder',
       [supplier('Lanco',
-                category('Bags / Containers', 'PDA Holder') ) ] ],
+                category('Bags / Containers', 'PDA Holder') ),
+       supplier('LogoIncluded',
+                category('Phone Cases') ) ] ],
      ['Eyeglass Accessories',
       [],[
           ['Eyeglass Cases',
@@ -1519,6 +1575,8 @@ private
                     category('Keychains, Keylights & Carabiners', 'Keylights') ),
            supplier('Bullet Line',
                     category('Lighting', 'Key-Lights') ) ] ],
+         ['Flash Drive Key Chains',
+          [supplier('LogoIncluded', match(%w(name description), ['key chain', 'keychain', 'key holder']))]],
         ] ],
      ['Wallets',
       [match('name', 'wallet'),

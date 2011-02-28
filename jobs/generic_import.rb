@@ -211,6 +211,7 @@ class GenericImport
     @supplier_name = supplier
     [supplier].flatten.each do |name|
       @supplier_record = ((@supplier_record && @supplier_record.children) || Supplier).find_by_name(name)
+      raise "Supplier not found: #{supplier.inspect}" unless @supplier_record
     end
 #    unless @supplier_record
 #      @supplier_record = Supplier.create(:name => supplier,

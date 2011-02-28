@@ -951,6 +951,9 @@ class Product < ActiveRecord::Base
         "http://norwood.com/product/#{supplier_num}/"
       when "Bullet Line"
         "http://www.bulletline.com/ViewItem.aspx?pn=#{supplier_num}"
+      when "LogoIncluded"
+        /^([a-z]+)(\d+)$/i === supplier_num
+      "http://logoincluded.com/products/flash-drives/#{name}-#{$2}/snapshot.asp"
       else
         "http://www.mountainofpromos.com/search/#{supplier.name}"
     end

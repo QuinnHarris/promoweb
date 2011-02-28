@@ -17,11 +17,16 @@ class Admin::SuppliersController < Admin::BaseController
     end
     
     if request.post?
-      @supplier.attributes = params[:supplier]
-      @supplier.address ||= Address.new
-      @supplier.address.update_attributes!(params[:address])
-      return unless @supplier.valid?
-      @supplier.save!
+      Supplier.transaction do
+        @supplier.attributes = params[:supplier]
+        @supplier.address ||= Address.new
+        @supplier.address.update_attributes!(params[:address])
+        return unless @supplier.valid?
+        unless @supplier.price_source
+          @supplier.price_source = PriceSource.create(:name => @supplier.name)
+        end
+        @supplier.save!
+      end
       redirect_to :action => :index
     end
   end
