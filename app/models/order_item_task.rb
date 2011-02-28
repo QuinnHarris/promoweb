@@ -227,7 +227,7 @@ Please let me know when this arrives.)
   end
   
   def complete_estimate
-    unless depends_on.nil? or depends_on.first.new_record?
+    unless depends_on.nil? or depends_on.first.new_record? or depends_on.first.ship_date.nil?
       # Complete by 9:00 am the next day
       #return time_add_workday(depends_on.first.ship_date, 1.day + 9.hours)
       return depends_on.first.ship_date + 4.hours
