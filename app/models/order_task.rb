@@ -450,7 +450,7 @@ class ReOrderTask < OrderTask
   self.roles = %w(Customer Orders)
   
   def status
-    true
+    active
   end
 end
 
