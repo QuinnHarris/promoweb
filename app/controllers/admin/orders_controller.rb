@@ -655,7 +655,10 @@ class Admin::OrdersController < Admin::BaseController
       @order = orig_order.customer.orders.create( :user => @user, :special => samples ? "SAMPLES" : "Reorder" )
       task_complete({}, InformationOrderTask)
 
+      purchases = {}
+
       orig_order.items.each do |orig_item|
+        # Price and Cost
         if samples
           pricing = orig_item.price_group.pricing
           price = free ? PricePair.new(0,0) : pricing.pair_at(pricing.maximum)
@@ -664,10 +667,24 @@ class Admin::OrdersController < Admin::BaseController
           price = orig_item.price
           cost = orig_item.cost
         end
+
+        # Purchase if Exact ReOrder
+        purchase = nil
+        if params[:exact]
+          unless purchase = purchases[orig_item.purchase_id]
+            purchase = purchases[orig_item.purchase_id] =
+              Purchase.create(:order => @order,
+                              :supplier_id => orig_item.purchase.supplier_id,
+                              :comment => "Exact ReOrder of #{orig_item.purchase.purchase_order.quickbooks_ref}")
+            PurchaseOrder.create(:purchase => purchase)
+          end
+        end
+
         item = @order.items.create( :product_id => orig_item.product_id,
                                     :price_group_id => orig_item.price_group_id,
                                     :price => price,
                                     :cost => cost,
+                                    :purchase => purchase,
                                     :shipping_type => samples ? nil : orig_item.shipping_type,
                                     :shipping_code => samples ? nil : orig_item.shipping_code,
                                     :shipping_price => free ? Money.new(0) : nil )
@@ -782,14 +799,12 @@ class Admin::OrdersController < Admin::BaseController
         raise "Unkown Supplier name #{params[:commit]}" unless supplier
       end
 
-      # After Save of purchase needs to know order from item
-      purchase = Purchase.new(:supplier => supplier)
+      purchase = Purchase.create(:order => @order,
+                                 :supplier => supplier)
       items.each do |item|
         item.purchase = purchase
-        purchase.items.target << item
         item.save_cost!
       end
-      purchase.save!
       PurchaseOrder.create(:purchase => purchase)
     end
     redirect_to :action => :items_edit
