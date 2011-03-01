@@ -13,7 +13,7 @@ module Admin::OrdersHelper
     elems << link_to('Website', "http://#{supplier.web}") unless supplier.web.blank?
     elems << format_phone(supplier.phone) if supplier.phone
     elems << "FAX: #{format_phone(supplier.fax)}" if supplier.fax
-    elems << mail_to(supplier.po_email)
+    elems << mail_to(supplier.send_email(@order.sample))
     elems.join(' ')
   end
 end

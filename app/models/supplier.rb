@@ -51,4 +51,12 @@ class Supplier < ActiveRecord::Base
       parent.send(name)
     end
   end
+
+  def fax?
+    po_email.blank?
+  end
+
+  def send_email(sample = false)
+    sample ? samples_email : po_email
+  end
 end

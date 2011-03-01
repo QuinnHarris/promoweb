@@ -24,7 +24,7 @@
       - for order in orders
         %tr{ :class => cycle('even', 'odd') }
           %td
-            = link_to((order.id.to_s + (order.special == 'SAMPLES' ? '<strong>S</strong>' : '')), { :controller => '/order', :action => 'status', :order_id => order })
+            = link_to((order.id.to_s + (order.sample ? '<strong>S</strong>' : '')), { :controller => '/order', :action => 'status', :order_id => order })
             - unless (pos = order.items.collect { |i| i.purchase && i.purchase.purchase_order }.compact.uniq).empty?
               = '(' + pos.collect { |po| po.quickbooks_ref }.join(', ') + ')'
             %br

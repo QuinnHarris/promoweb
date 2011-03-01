@@ -7,7 +7,11 @@ class Purchase < ActiveRecord::Base
   has_one :bill
 
   def fax?
-    supplier.po_email.nil? || supplier.po_email.empty?
+    supplier.fax?
+  end
+
+  def send_email
+    supplier.send_email(order.sample)
   end
   
   def order

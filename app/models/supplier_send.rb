@@ -45,29 +45,24 @@ helper OrderHelper
     primary_email = purchase.order.user.email_string
     secondary_email = (purchase.order.user_id != user.id) && user.email_string
 
-    supplier_email = purchase.fax? ? "#{purchase.supplier.fax}@rcfax.com" : purchase.supplier.po_email
-    supplier_email = SEND_EMAIL unless RAILS_ENV == "production"
-
     # To Supplier
     send = self.create_purchase_order(purchase)
     if purchase.fax?
       send.from = FAX_EMAIL
-      supplier_email = "#{purchase.supplier.fax}@rcfax.com"
-      supplier_email = "8777902011@rcfax.com" unless RAILS_ENV == "production"
+      send.to = "#{purchase.supplier.fax}@rcfax.com"
     else
       send.from = primary_email
       send.reply_to = [primary_email, secondary_email] if secondary_email
-      supplier_email = purchase.supplier.po_email
-      supplier_email = SEND_EMAIL unless RAILS_ENV == "production"
+      send.to = purchase.supplier.send_email
     end
-    send.to = supplier_email
+    send.to = SEND_EMAIL unless RAILS_ENV == "production"
     send.subject = "PO-#{purchase.purchase_order.quickbooks_ref} / Mountain Xpress Promotions"
     self.deliver(send)
 
     
     # To Self
     send.from = purchase.fax? ? FAX_EMAIL : SEND_EMAIL
-    send.reply_to = supplier_email
+    send.reply_to = send.to
     send.to = primary_email
     send.cc = secondary_email if secondary_email
     send.subject = "PO-#{purchase.purchase_order.quickbooks_ref} Supplier PO [#{user.name}]"

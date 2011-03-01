@@ -5,7 +5,7 @@
 
 - form_for :supplier, @supplier do |supplier|
   %table
-    - %w(name account_number description fax phone artwork_email po_email web status).each do |name|
+    - %w(name account_number description fax phone artwork_email po_email samples_email web status).each do |name|
       %tr
         %th= "#{name.gsub('_', ' ').capitalize}:"
         %td= supplier.text_field name

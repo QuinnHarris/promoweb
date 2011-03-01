@@ -1,6 +1,6 @@
 .tabs.nav
   - if @user
-    - if @order.special == 'SAMPLES'
+    - if @order.sample
       SAMPLE
     %div{ :style => 'float: right;' }
       - if allowed?(%w(Super Orders))

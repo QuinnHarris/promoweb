@@ -27,6 +27,10 @@ class Order < ActiveRecord::Base
     end
   end
 
+  def sample
+    special && special.include?('SAMPLE')
+  end
+
   def days_to_deliver
     return nil unless delivery_date
 
