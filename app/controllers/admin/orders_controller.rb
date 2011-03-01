@@ -668,6 +668,8 @@ class Admin::OrdersController < Admin::BaseController
                                     :price_group_id => orig_item.price_group_id,
                                     :price => price,
                                     :cost => cost,
+                                    :shipping_type => samples ? nil : orig_item.shipping_type,
+                                    :shipping_code => samples ? nil : orig_item.shipping_code,
                                     :shipping_price => free ? Money.new(0) : nil )
         oivs = orig_item.order_item_variants.to_a
         if oiv_null = oivs.find { |v| v.variant_id.nil? }
@@ -679,7 +681,8 @@ class Admin::OrdersController < Admin::BaseController
         oivs.each do |oiv|
           if item.product.variants.to_a.find { |v| v.id == oiv.variant_id } 
             item.order_item_variants.create(:variant_id => oiv.variant_id,
-                                            :quantity => ((oiv.quantity == 0) or (!samples)) ? oiv.quantity : 1)
+                                            :quantity => ((oiv.quantity == 0) or (!samples)) ? oiv.quantity : 1,
+                                            :imprint_colors => oiv.imprint_colors)
           else
             oiv_null.quantity += oiv.quantity
           end
@@ -690,7 +693,7 @@ class Admin::OrdersController < Admin::BaseController
           item.entries.create(:description => 'Sample Item')
         else
           orig_item.decorations.each do |dec|
-            item.decorations.create([:technique_id, :decoration_id, :count, :price, :cost].inject({}) do |hash, method|
+            item.decorations.create([:technique_id, :decoration_id, :artwork_group_id, :count, :price, :cost].inject({}) do |hash, method|
                                       hash[method] = dec.send(method)
                                       hash
                                     end)
@@ -719,6 +722,8 @@ class Admin::OrdersController < Admin::BaseController
       end
 
       task_complete({}, PaymentNoneOrderTask) if free
+
+      task_complete({}, ReOrderTask) if params[:exact]
     end
     redirect_to :action => :items_edit, :order_id => @order
   end
