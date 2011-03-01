@@ -531,6 +531,11 @@ class ReviewOrderTask < OrderTask
     end
   end
 
+  # Don't block even if order closed
+  def self.blocked(order)
+    nil
+  end
+
   def publish=(val)
     self[:data] ||= {}
     self[:data]['publish'] = case val
