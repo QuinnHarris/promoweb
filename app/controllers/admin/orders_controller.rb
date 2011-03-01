@@ -652,7 +652,9 @@ class Admin::OrdersController < Admin::BaseController
       free = params[:free] && samples
 
       # Create new order
-      @order = orig_order.customer.orders.create( :user => @user, :special => samples ? "SAMPLES" : "Reorder" )
+      @order = orig_order.customer.orders.create(:user => @user,
+                                                 :special => samples ? "SAMPLES" : "Reorder",
+                                                 :delivery_date_not_important => samples)
       task_complete({}, InformationOrderTask)
 
       purchases = {}

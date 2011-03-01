@@ -22,8 +22,10 @@ class Order < ActiveRecord::Base
   has_many :permissions
 
   validates_each :delivery_date do |record, attr, value|
-    if record.send("#{attr}_changed?") && value && value < Date.today+2
-      record.errors.add attr, "must be #{Date.today+2} or later"
+    if record.delivery_date_changed? || record.delivery_date_not_important_changed?
+      if !record.delivery_date_not_important && record.delivery_date && record.delivery_date < Date.today+2
+        record.errors.add attr, "must be #{Date.today+2} or later"
+      end
     end
   end
 
@@ -33,6 +35,7 @@ class Order < ActiveRecord::Base
 
   def days_to_deliver
     return nil unless delivery_date
+    return nil if delivery_date_not_important
 
     return -1 if delivery_date < Date.today
 
