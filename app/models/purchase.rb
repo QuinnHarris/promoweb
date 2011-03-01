@@ -11,7 +11,12 @@ class Purchase < ActiveRecord::Base
   end
   
   def order
-    items.first.order
+    return @order if @order
+    @order = items.first.order
+  end
+
+  def order=(order)
+    @order = order
   end
   
   alias_method :supplier_orig, :supplier
