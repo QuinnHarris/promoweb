@@ -1,13 +1,15 @@
 = render :partial => 'order/menu'
 = render :partial => 'items_menu'
 = link_to("Create Product", :controller => :products, :action => :new)
-
+|
 = link_to "Sample Order", { :action => :order_duplicate, :samples => true }, { :confirm => "Create new order with samples of current items" }
 |
 = link_to "FREE Sample Order", { :action => :order_duplicate, :samples => true, :free => true }, { :confirm => "Create new order with FREE samples of current items" }
 - if acknowledged = @order.task_completed?(AcknowledgeOrderTask)
   |
   = link_to "ReOrder", { :action => :order_duplicate }, { :confirm => "Create new reorder current items" }
+  |
+  = link_to "Exact ReOrder", { :action => :order_duplicate, :exact => true }, { :confirm => "Create new reorder current items" }
 - if @locked
   .admin
     The order has been Acknowledged so customer pricing can't be changed.

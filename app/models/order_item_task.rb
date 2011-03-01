@@ -48,7 +48,7 @@ class ArtExcludeItemTask < OrderItemTask
 end
 
 class OrderSentItemTask < OrderItemTask
-  set_depends_on [FirstPaymentOrderTask, PaymentOverrideOrderTask, PaymentNoneOrderTask], [ArtAcknowledgeOrderTask, ArtExcludeItemTask]
+  set_depends_on [FirstPaymentOrderTask, PaymentOverrideOrderTask, PaymentNoneOrderTask], [ArtAcknowledgeOrderTask, ArtExcludeItemTask, ReOrderTask]
   self.status_name = 'Purchase Order to Supplier'
   self.waiting_name = 'Send Order to Supplier'
   self.completed_name = 'Order Sent to Supplier'
@@ -103,7 +103,7 @@ class ArtSentItemTask < OrderItemTask
 end
 
 class ConfirmItemTask < OrderItemTask
-  set_depends_on OrderSentItemTask, [ArtSentItemTask, ArtExcludeItemTask]
+  set_depends_on OrderSentItemTask, [ArtSentItemTask, ArtExcludeItemTask, ReOrderTask]
   self.status_name = 'Order Confirmed by Supplier'
   self.waiting_name = 'Waiting for Order Confirmation from Supplier'
   self.completed_name = 'Order Confirmation Received from Supplier'

@@ -443,6 +443,17 @@ class ArtAcknowledgeOrderTask < OrderTask
   end
 end
 
+class ReOrderTask < OrderTask
+  self.status_name = 'Exact ReOrder'
+  self.completed_name = 'Exact ReOrder'
+  self.customer = true
+  self.roles = %w(Customer Orders)
+  
+  def status
+    true
+  end
+end
+
 
 OrderItemTask
 
