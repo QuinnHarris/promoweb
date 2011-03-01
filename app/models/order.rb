@@ -193,8 +193,12 @@ class Order < ActiveRecord::Base
   def update_cache
     self['total_price_cache'] = price = total_item_price.min.round_cents
     self['total_cost_cache'] = cost = total_item_cost.min.round_cents
-    self.quickbooks_id = 'BLOCKED'
     true
+  end
+
+  before_create :block_qb
+  def block_qb
+    self.quickbooks_id = 'BLOCKED'
   end
 
   def push_quickbooks!

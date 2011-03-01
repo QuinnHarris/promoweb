@@ -43,7 +43,6 @@ class Customer < ActiveRecord::Base
   def strip_name
     self.company_name = company_name.strip
     self.person_name = person_name.strip
-    self.quickbooks_id = 'BLOCKED'
     true
   end
   
@@ -51,6 +50,7 @@ class Customer < ActiveRecord::Base
   before_create :set_uuid
   def set_uuid
     self['uuid'] = UUIDTools::UUID.random_create.to_s22
+    self.quickbooks_id = 'BLOCKED'
   end
   
   def self.uuid_authenticate(id)

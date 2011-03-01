@@ -61,7 +61,7 @@
                   = link_to image_tag('add.png') + "New Customer", { :controller => '/admin/orders', :action => :new_order }, { :class => 'button', :confirm => 'Create a new customer and order?' }
               %ul#leftmenu.nav
                 = li_to 'Orders', {:controller => '/admin/orders', :action => 'index' } do params[:controller].index('order') or !params[:controller].index('admin') end
-                = li_to 'Admin', {:controller => '/admin/access', :action => 'paths' } do  !params[:controller].index('order') and params[:controller].index('admin') end
+                = li_to 'Admin', {:controller => '/admin/employee', :action => :commission } do  !params[:controller].index('order') and params[:controller].index('admin') end
 
               #sublist.nav
                 - if !params[:controller].index('order') and params[:controller].index('admin')
