@@ -447,7 +447,7 @@ class ReOrderTask < OrderTask
   self.status_name = 'Exact ReOrder'
   self.completed_name = 'Exact ReOrder'
   self.customer = true
-  self.roles = %w(Customer Orders)
+  self.roles = %w(Orders)
   
   def status
     active
