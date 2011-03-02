@@ -133,7 +133,7 @@ class Admin::OrdersController < Admin::BaseController
         charge_transaction = PaymentTransaction.find(params[:txn_id])
         max = charge_transaction.amount
       else
-        raise "Unknown Action"
+        raise "Unknown Action: #{params[:commit].inspect}"
       end    
 
       if amount.cents < 500 or amount > max
@@ -818,7 +818,7 @@ class Admin::OrdersController < Admin::BaseController
 
       data = {}
 
-      if params[:commit].include?(OrderSentItemTask.status_name)
+      if OrderSentItemTask.status_name.include?(params[:commit])
         data[:email_sent] = false
         if params[:commit].include?("Send")
           SupplierSend.purchase_order_send(purchase, @user)
@@ -827,10 +827,10 @@ class Admin::OrdersController < Admin::BaseController
         purchase.purchase_order.sent = true
         purchase.purchase_order.save!
         task_class = OrderSentItemTask
-      elsif params[:commit].include?(ReconciledItemTask.status_name)
+      elsif ReconciledItemTask.status_name.include?(params[:commit])
         task_class = ReconciledItemTask
       else
-        raise "Unknown Action"
+        raise "Unknown Action: #{params[:commit].inspect}"
       end
 
       raise "Permission Denied" if (task_class.roles & @permissions).empty?

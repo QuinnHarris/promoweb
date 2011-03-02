@@ -43,7 +43,7 @@ module QbwcHelper
       txn_po_id = item && item.send("quickbooks_po_#{aspect ? (aspect+'_') : ''}id") if bill_po
     end
 
-    return if exclude and txn_po_id.nil?
+    return if exclude #and txn_po_id.nil?
 
     xml.tag!("#{qb_type}Line#{new_item ? 'Add' : 'Mod'}") do
       xml.TxnLineID txn_id || -1 unless new_item
