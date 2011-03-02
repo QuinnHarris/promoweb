@@ -277,12 +277,6 @@ public
         item = @order.items.new(item_params)
         item.save!
 
-        # Quickbooks Product on demand
-        if product.quickbooks_id == 'BLOCKED'
-          product.quickbooks_id = nil
-          product.save!
-        end
-
         item.order_item_variants.create(:variant => variant,
                                         :quantity => quantity)
 

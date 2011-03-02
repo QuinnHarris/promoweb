@@ -67,6 +67,14 @@ class OrderItem < ActiveRecord::Base
       purchase.save! 
     end
   end
+
+  after_create :qb_on_demand
+  def qb_on_demand
+    if product.quickbooks_id == 'BLOCKED'
+      product.quickbooks_id = nil
+      product.save!
+    end
+  end
   
   def quickbooks_ref
     product.quickbooks_id
