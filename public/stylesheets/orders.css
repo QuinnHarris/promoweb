@@ -215,3 +215,7 @@ div.auto_complete ul strong.highlight {
     margin:0;
     padding:0;
 }
+
+div.hide {
+    display: none;
+}

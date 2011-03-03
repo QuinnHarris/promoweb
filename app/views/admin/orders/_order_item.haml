@@ -20,6 +20,9 @@
           %th
           %th.head{ :colspan => "3" } Price (Invoice)
           %th.admin{ :colspan => "3" } Cost (Purchase Order)
+          - if item.our_notes.blank?
+            %th{ :colspan => "2" }
+              %a{ :href => "javascript:show('notes-#{item.id}')" } Show Notes
         %tr
           %td Description
           %td Unit
@@ -112,3 +115,6 @@
       .block
         %h3 Customer Notes
         %p= item.customer_notes
+    .block{ :id => "notes-#{item.id}", :class => item.our_notes.blank? ? 'hide' : '' }
+      %h3 Common Notes
+      = text_area_tag "OrderItem-#{item.id}-our_notes", item.our_notes, :class => 'null', :rows => 8, :cols => 40

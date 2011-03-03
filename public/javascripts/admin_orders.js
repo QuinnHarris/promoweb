@@ -411,7 +411,7 @@ function entry_remove(request, id)
 
 function setup_events(obj)
 {   
-  inputs = obj.getElementsByTagName('input')
+  var inputs = obj.getElementsByTagName('input')
   for (var j = 0; j < inputs.length; j++) {
     var input = inputs[j];
     if (input.type != 'text')
@@ -425,6 +425,13 @@ function setup_events(obj)
 	new Ajax.Autocompleter(input, nxtSib, '/admin/orders/auto_complete_generic', {
 		afterUpdateElement: autocomplete_change
 	} )
+  }
+
+  var inputs = obj.getElementsByTagName('textarea')
+  for (var j = 0; j < inputs.length; j++) {
+    var input = inputs[j];
+    Event.observe(input, 'change', input_change)
+    Event.observe(input, 'blur', input_blur)
   }
 }
 
@@ -497,6 +504,11 @@ function get_all_shipping()
 	    }
 	}
     }
+}
+
+function show(name)
+{
+    $(name).removeClassName('hide');
 }
 
 function initialize(){

@@ -171,14 +171,19 @@
     - unless invoice
       .block
         - if static
-          - if order_item.customer_notes and !order_item.customer_notes.empty?
-            %h3 Notes
-            %p= order_item.customer_notes
+          - unless order_item.blank?
+            %h3 Customer Notes
+            %p= order_item.customer_notes 
         - else
-          %h3 Notes
+          %h3 Customer Notes
           = text_area 'comments', order_item.id, 'cols' => 50, 'rows' => 5, 'value' => order_item.customer_notes
           - if !@user and order_item.decorations.empty?
             %p
               Please make note of desired decoration method.
               %br
               e.g. Screen Print, Embroidery, Deboss
+    - unless order_item.our_notes.blank?
+      .block
+        %h3 Notes
+        %p= order_item.our_notes.gsub("\n", "<br/>")
+          
