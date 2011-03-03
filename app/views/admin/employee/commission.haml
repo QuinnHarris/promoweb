@@ -56,7 +56,7 @@
             - total_price += order.total_price_cache
             - total_cost += order.total_cost_cache
             - total_profit += order.total_profit_cache
-            - total_payable += order.payable
+            - total_payable += order.payable - order.payed
             %td.money= order.total_profit_cache.to_perty
             %td= "%0.0f%" % (order.commission * 100.0)
             %td.money

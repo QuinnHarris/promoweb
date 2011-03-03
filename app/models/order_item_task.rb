@@ -233,6 +233,8 @@ Please let me know when this arrives.)
       return depends_on.first.ship_date + 4.hours
     end
 
+    return nil unless object.product
+
     lead_time = object.order.rush ? object.product.lead_time_rush : object.product.lead_time_normal_max
     time_add_workday(depend_max_at, (lead_time || 15).days)
   end
@@ -277,7 +279,7 @@ class ReceivedItemTask < OrderItemTask
   end
   
   def complete_estimate
-    depends_on.first.delivery_estimate
+    depends_on && depends_on.first.delivery_estimate
   end
 end
 

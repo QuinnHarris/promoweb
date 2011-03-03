@@ -1,7 +1,7 @@
 class ShippingRate < ActiveRecord::Base
   belongs_to :customer
   belongs_to :product
-  def supplier; product.supplier; end
+  def supplier; product && product.supplier; end
 
   serialize :data
   # data is list of [code, description, days, price]

@@ -818,7 +818,7 @@ class Admin::OrdersController < Admin::BaseController
 
       data = {}
 
-      if OrderSentItemTask.status_name.include?(params[:commit])
+      if params[:commit].include?(OrderSentItemTask.status_name)
         data[:email_sent] = false
         if params[:commit].include?("Send")
           SupplierSend.purchase_order_send(purchase, @user)
