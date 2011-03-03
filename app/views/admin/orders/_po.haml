@@ -43,7 +43,7 @@
         %br
         %strong RUSH ORDER
       %br
-      - if @purchase.order.delivery_date and (@purchase.ship_by_date.nil? or (@purchase.order.delivery_date < (@purchase.ship_by_date + @purchase.max_transit_time)))
+      - if !@purchase.order.delivery_date_not_important and @purchase.order.delivery_date and (@purchase.ship_by_date.nil? or (@purchase.order.delivery_date < (@purchase.ship_by_date + @purchase.max_transit_time)))
         %strong In Hands Date:
         = format_time_abs(@purchase.order.delivery_date, false)
       - else

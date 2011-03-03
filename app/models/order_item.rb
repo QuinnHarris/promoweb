@@ -42,7 +42,7 @@ class OrderItem < ActiveRecord::Base
     "#{product.supplier_num} - #{product.name}  (#{prop_str})"
   end
   
-  @@invoice_attributes = %w(price_group_id product_id marginal_price fixed_price shipping_type shipping_code shipping_price shipping_cost)
+  @@invoice_attributes = %w(price_group_id product_id marginal_price fixed_price shipping_type shipping_code shipping_price shipping_cost our_notes)
   def invoice_data
     ret = @@invoice_attributes.inject({}) { |h, a| h[a] = attributes[a]; h }
     ret['decorations'] = decorations.collect { |d| d.invoice_data }
