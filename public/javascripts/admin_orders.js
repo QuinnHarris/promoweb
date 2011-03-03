@@ -240,7 +240,7 @@ function parseField(target, value)
 
 function setField(target, value)
 {
-    if (target.hasClassName('null') && isNaN(value))
+    if (target.hasClassName('null') && (target.hasClassName('money') || target.hasClassName('num')) && isNaN(value))
 	return '';
     if (target.hasClassName('money')) {
 	var digits = (value % (multiplier / 100)) ? 3 : 2;
@@ -508,7 +508,11 @@ function get_all_shipping()
 
 function show(name)
 {
-    $(name).removeClassName('hide');
+    var elem = $(name);
+    if (elem.hasClassName('hide'))
+	elem.removeClassName('hide');
+    else
+	elem.addClassName('hide');
 }
 
 function initialize(){

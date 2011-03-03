@@ -117,4 +117,4 @@
         %p= item.customer_notes
     .block{ :id => "notes-#{item.id}", :class => item.our_notes.blank? ? 'hide' : '' }
       %h3 Common Notes
-      = text_area_tag "OrderItem-#{item.id}-our_notes", item.our_notes, :class => 'null', :rows => 8, :cols => 40
+      = text_area_tag "OrderItem-#{item.id}-our_notes", item.our_notes, :class => 'null', :rows => [6, item.our_notes ? item.our_notes.split("\n").length : 0].max, :cols => 40

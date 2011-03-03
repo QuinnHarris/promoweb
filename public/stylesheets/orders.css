@@ -42,7 +42,7 @@ img {
 }
 
 
-.block input {
+.block input, .block textarea {
   font-size: 1em;
   font-family: sans-serif;
   background-color: #FFFFD0;
@@ -84,7 +84,7 @@ input.predicate {
   background-color: #D0FFD0;
 }
 
-input.sending {
+input.sending, textarea.sending {
   border-top: thin solid red;
   border-bottom: thin solid red;
 }
