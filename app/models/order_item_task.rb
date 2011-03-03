@@ -213,8 +213,7 @@ class ShipItemTask < OrderItemTask
     header = %(Hi #{object.order.customer.person_name}
 Your order has shipped.
 Please find your tracking number for #{carrier} below.
-<a href="#{tracking_url}">#{tracking}</a>
-Please let me know when this arrives.)
+<a href="#{tracking_url}">#{tracking}</a>)
     CustomerSend.dual_send(self, subject, header)
   end
   
@@ -280,6 +279,16 @@ class ReceivedItemTask < OrderItemTask
   
   def complete_estimate
     depends_on && depends_on.first.delivery_estimate
+  end
+
+  def email_complete
+    subject = "Order Delivered"
+    header = %(Hi #{object.order.customer.person_name}
+It looks like your order has been delivered.
+Please let us know if the product has arrived as expected.
+<a href="http://ratepoint.com/tellus/77047">You can review our service by clicking on this link.</a>
+I hope we have served you well and look forward to working with you again!)
+    CustomerSend.dual_send(self, subject, header)
   end
 end
 
