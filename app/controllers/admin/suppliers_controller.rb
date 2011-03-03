@@ -1,5 +1,7 @@
 class Admin::SuppliersController < Admin::BaseController 
   def index
+    @title = "Suppliers"
+
     suppliers = Supplier.find(:all,
                                :order => 'name')
 #                                   :page => params[:page] || 1)
@@ -15,6 +17,8 @@ class Admin::SuppliersController < Admin::BaseController
     else
       @supplier = Supplier.new
     end
+
+    @title = "Supplier: #{@supplier.name}"
     
     if request.post?
       Supplier.transaction do

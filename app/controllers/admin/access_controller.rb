@@ -7,6 +7,7 @@ class Admin::AccessController < Admin::BaseController
   cattr_reader :domain_icons
 
   def paths
+    @title = "Access Paths"
     conditions = ["user_id IS NULL"]
 
     if params[:session_id]

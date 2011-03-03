@@ -30,7 +30,8 @@ private
   end
 
 public
-  def commission      
+  def commission
+    @title = "Commissions"
     calculate
     @acknowledged_orders = @user.orders.find(:all, :order => 'orders.id DESC',
                                 :include => :tasks_active,
