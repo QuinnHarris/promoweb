@@ -67,6 +67,6 @@
     %span
       %strong Revoke: 
     - for task in @revokable
-      - string = task.status_name
+      - string = task.status_name.dup
       - string << " <strong>for</strong> #{task.object.product.name}" if task.is_a?(OrderItemTask)
       = link_to "#{image_tag('remove.png')} #{string}", { :controller => '/admin/orders', :action => :task_revoke, :id => task, :class => task.class, :order_id => @order }, { :confirm => "Revoke #{task.status_name} task?" }

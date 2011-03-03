@@ -491,12 +491,11 @@ class CompleteOrderTask < OrderTask
   end
 
   def email_complete
-    subject = "Order Complete"
+    subject = "Order Complete, Review Request"
     header = 
-      %q(I would like to thank you for placing your order with Mountain Xpress Promotions. Please find below your attached invoices. Please print these for your records.
-{I would also appreciate it if you would click on this link to review your experience with Mountainofpromos.com.}
-Thank you for your business it is truly appreciated.
-We look forward to working with you again!)
+      %q(Thank you for ordering from Mountain Xpress Promotions, LLC.
+<a href="http://ratepoint.com/tellus/77047">We would greatly appreciate if you would review our service by clicking on this link.</a>
+We hope we have served you well and look forward to working with you again!)
 
     CustomerSend.dual_send(self, subject, header)
   end
