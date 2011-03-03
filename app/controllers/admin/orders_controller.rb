@@ -55,7 +55,7 @@ class Admin::OrdersController < Admin::BaseController
   OrderTask
   OrderItemVariant
 
-  def index
+  def index   
     tasks_competed = [CustomerInformationTask]
     tasks_competed = TaskSet.set - [AddItemOrderTask] if params.has_key?(:all)
     
@@ -108,6 +108,8 @@ class Admin::OrdersController < Admin::BaseController
     else
       @groups << [@groups.empty? ? nil : 'Normal', @orders - ready_orders - urgent]
     end
+
+    @title = "Orders #{ready_orders.length} of #{@count}"
   end
     
   def payment_charge

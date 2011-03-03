@@ -49,6 +49,12 @@ private
     end
 
 #    raise "No session @order" unless @order
+
+    if @user
+      @title = "#{(@order.customer.company_name.blank? ? @order.customer.person_name : @order.customer.company_name)[0..18]}|#{params[:action].capitalize}"[0..22]
+    else
+      @title = "Order #{@order.id} #{params[:action].capitalize}"
+    end
     
     # Check Task Permissions
     tasks_name = "#{params[:action]}_tasks"

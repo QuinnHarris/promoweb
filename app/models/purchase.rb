@@ -54,6 +54,23 @@ class Purchase < ActiveRecord::Base
   def artwork_has_tag?(tag)
     not artwork_groups.find { |g| not g.artworks.to_a.find { |a| a.has_tag?(tag) } }
   end
+
+  def supplier_status_url
+    case supplier.name
+      when "Gemline"
+      # Improve!
+      "http://www.gemline.com/MyGemline/"
+      when "Leeds"
+      # Improve!
+      "http://my2.leedsworld.com/"
+      when "Lanco"
+      "http://www.lancopromo.com/orderstatus?refonetype=CSTPONBR&refone=#{purchase_order.quickbooks_ref}&reftwotype=custnmbr&reftwo=#{supplier.account_number}"
+      #when "Prime Line"
+      #""
+      when "High Caliber Line"
+      "http://icheck.highcaliberline.com/partqtypopup/PartQtyPopup.aspx?Action=OrderStatus&CustNbr=#{supplier.account_number}&ASI=&SO=&PO=#{purchase_order.quickbooks_ref}"
+    end
+  end
   
   after_save :cascade_update
   def cascade_update

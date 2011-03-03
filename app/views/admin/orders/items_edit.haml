@@ -40,6 +40,8 @@
                     -else
                       = purchase.bill.quickbooks_ref                      
                   )
+                  - if url = purchase.supplier_status_url
+                    = link_to "Supplier Status", url
                 - if purchase.supplier != supplier
                   = "(#{format_supplier_info(purchase.supplier)})"
                 %div

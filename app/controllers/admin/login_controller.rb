@@ -53,6 +53,7 @@ class Admin::LoginController < ApplicationController
   
   
   def index
+    @title = "Users"
     @users = User.find(:all, :order => 'id')
     @users -= [@users.find { |u| u.id == 0 }]  # Remove System user
   end

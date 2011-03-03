@@ -9,6 +9,8 @@ class Admin::SystemController < Admin::BaseController
   end
   
   def quickbooks_blocked
+    @title = "Quickbooks"
+
     @list = QbwcController.objects.collect do |klass|
       [klass,
        klass.find(:all, :order => 'id',
