@@ -22,5 +22,8 @@ class PurchaseEntry < ActiveRecord::Base
   def cascade_update
     purchase.updated_at_will_change!
     purchase.save!
+
+    purchase.order.updated_at_will_change!
+    purchase.order.save!
   end
 end
