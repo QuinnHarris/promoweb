@@ -135,7 +135,7 @@ class Order < ActiveRecord::Base
   end
   
   def total_price
-    invoices.inject(Money.new(0)) { |m, i| m += i.total_price}
+    invoices.inject(Money.new(0)) { |m, i| m += i.total_price }
   end
   
   def total_charge
@@ -157,6 +157,7 @@ class Order < ActiveRecord::Base
       total = MyRange.new(Money.new(0))
       items.each { |i| total += i.new_record? ? Money.new(0) : i.send("total_#{type}") }
       entries.each { |i| total += i.send("total_#{type}") }
+      po_entries.each { |i| total += i.send("total_#{type}") }
       total.single || total
     end
   end
