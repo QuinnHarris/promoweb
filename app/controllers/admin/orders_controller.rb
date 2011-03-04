@@ -656,7 +656,7 @@ class Admin::OrdersController < Admin::BaseController
       # Create new order
       @order = orig_order.customer.orders.create(:user => @user,
                                                  :special => samples ? "SAMPLES" : "Reorder",
-                                                 :delivery_date_not_important => samples)
+                                                 :delivery_date_not_important => samples || false)
       task_complete({}, InformationOrderTask)
 
       purchases = {}
