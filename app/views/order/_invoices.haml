@@ -34,7 +34,10 @@
           = mail_to @order.user.email
         %h4 Terms
         Required Date:
-        = @order.delivery_date || "Not Specified"
+        - if @order.delivery_date_not_important
+          Not Important
+        - else
+          = @order.delivery_date || "Not Specified"
         %br
         Rush Order:
         = @order.rush ? "YES" : "NO"
