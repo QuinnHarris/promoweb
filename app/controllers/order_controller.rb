@@ -111,7 +111,7 @@ private
       end
 
       @revokable = @order.tasks_dep.find_all do |task|
-        next false unless task.revokable?
+        next false unless task.allowed?(@permissions) and task.revokable?
 #        next false unless task.status
         tasks.include?(task.class)
       end

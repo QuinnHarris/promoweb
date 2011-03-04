@@ -49,7 +49,7 @@
               - else
                 = format_time(td.complete_at)
 
-              - if allowed?('Super') and td.revokable?
+              - if td.allowed?(@permissions) and td.revokable?
                 = link_to image_tag('remove.png'), { :controller => '/admin/orders', :action => :task_revoke, :id => td, :class => td.class, :order_id => @order }, { :confirm => "Revoke #{td.status_name} task?" }
             .name
               = image_tag td.customer ? 'there_task.png' : 'our_task.png'
@@ -90,7 +90,7 @@
           %td= format_time(task.created_at)
           %td= task.user ? task.user.name : "Customer"
           %td= link_to(task.host, "http://www.maxmind.com/app/locate_ip?ips=#{task.host}") if task.host
-          %td= (allowed?('Super') and task.active and task.revokable?) ? link_to(image_tag('remove.png'), { :controller => '/admin/orders', :action => :task_revoke, :id => task, :class => task.class, :order_id => @order }, { :confirm => "Revoke #{task.status_name} task?" }) : (task.active ? 'X' : '-')
+          %td= (task.allowed?(@permissions) and task.revokable?) ? link_to(image_tag('remove.png'), { :controller => '/admin/orders', :action => :task_revoke, :id => task, :class => task.class, :order_id => @order }, { :confirm => "Revoke #{task.status_name} task?" }) : (task.active ? 'X' : '-')
           %td= link_to_task(task.completed_name, task)
           %td= task.data.inspect
 

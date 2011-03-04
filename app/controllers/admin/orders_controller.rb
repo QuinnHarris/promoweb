@@ -292,8 +292,8 @@ class Admin::OrdersController < Admin::BaseController
   end
   
   def task_revoke
-    raise "Permission Denied" unless @permissions.include?('Super')
     klass = Kernel.const_get(params[:class])
+    raise "Permission Denied" unless klass.allowed?(@permissions)
     klass.transaction do
       task = klass.find(params[:id])
       task.active = nil
