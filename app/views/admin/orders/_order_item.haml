@@ -1,6 +1,6 @@
 .item
   .block.thumb
-    - unless @invoiced and @locked
+    - unless @price_lock || purchase_lock
       = link_to(image_tag('remove.png') + "Remove", { :controller => '/order', :action => :item_remove, :id => item }, { :confirm => "Remove #{item.product.name}" })
       %br
     %a{ :href => url_for_product(item.product) }
@@ -10,7 +10,7 @@
     %br
     = link_to "<em>#{item.product.supplier.name}: #{item.product.supplier_num}</em>", item.product.supplier_url
     %br
-    - unless poed
+    - unless purchase_lock
       = check_box :item_po, item.id, { :checked => true }
       Include in PO
   .info_block
@@ -37,7 +37,7 @@
         %tr.defined
           %td<
             %strong= item.product.name
-          = render :partial => 'order_item_entry_tail', :locals => { :object => item, :poed => poed, :null => false }
+          = render :partial => 'order_item_entry_tail', :locals => { :object => item, :purchase_lock => purchase_lock, :null => false }
         %tr
           %td{ :colspan => "7" }
             %dl.variants
@@ -50,46 +50,46 @@
                 %span{ :class => cycle('odd', 'even') } Imprint:
               %dd
                 %ul
-                  - for oiv in (@locked and poed) ? item.order_item_variants.find_all { |v| v.quantity != 0 } : OrderItemVariantMeta.fetch(item)
+                  - for oiv in purchase_lock ? item.order_item_variants.find_all { |v| v.quantity != 0 } : OrderItemVariantMeta.fetch(item)
                     %li
                       - reset_cycle
                       - for name in names
                         %span{ :class => cycle('odd', 'even') }<
                         = (oiv.variant && (p = oiv.variant.properties.to_a.find { |p| p.name == name })) ? p.value : 'Not Specified'
                       %span{ :class => cycle('odd', 'even') }<
-                        = text_field_tag "#{oiv.class}-#{oiv.id}-quantity", oiv.quantity, :class => 'num shipset', :readonly => ((@invoiced || poed) and @locked)
+                        = text_field_tag "#{oiv.class}-#{oiv.id}-quantity", oiv.quantity, :class => 'num shipset', :readonly => (@price_lock || purchase_lock)
                       %span{ :class => cycle('odd', 'even') }<
-                        = text_field_tag "#{oiv.class}-#{oiv.id}-imprint_colors", oiv.imprint_colors, :class => 'imprint', :readonly => ((@invoiced || poed) and @locked)
+                        = text_field_tag "#{oiv.class}-#{oiv.id}-imprint_colors", oiv.imprint_colors, :class => 'imprint', :readonly => (@price_lock || purchase_lock)
         %tr.defined
           - if item.shipping_rates
             %td.shipping= render :partial => 'order_item_shipping', :locals => { :item => item }
           - else
             %td.shipping.pending Shipping Pending
           %td.num
-          %td.num= text_field_tag "OrderItem-#{item.id}-shipping_price", item.shipping_price.to_s, :class => 'money null', :readonly => (@invoiced and @locked)
+          %td.num= text_field_tag "OrderItem-#{item.id}-shipping_price", item.shipping_price.to_s, :class => 'money null', :readonly => @price_lock
           %td.num ???
           %td.admin
-          %td.num.admin= text_field_tag "OrderItem-#{item.id}-shipping_cost", item.shipping_cost.to_s, :class => 'money null', :readonly => (poed and @locked)
+          %td.num.admin= text_field_tag "OrderItem-#{item.id}-shipping_cost", item.shipping_cost.to_s, :class => 'money null', :readonly => purchase_lock
           %td.num.admin
           %td.num.admin
-            = text_field_tag "profit-#{item.id}", "???", :class => 'money null profit', :readonly => (@invoiced and @locked) 
+            = text_field_tag "profit-#{item.id}", "???", :class => 'money null profit', :readonly => @price_lock
           %td.num.admin
-            = text_field_tag "margin-#{item.id}", "???", :class => 'money null margin', :readonly => (@invoiced and @locked)
+            = text_field_tag "margin-#{item.id}", "???", :class => 'money null margin', :readonly => @price_lock
             \%
 
         - decorations = item.decorations.find(:all, :include => [:technique, :decoration])
         - for decoration in decorations
           %tr.defined
-            = render :partial => 'order_item_decoration', :locals => { :entry => decoration }
+            = render :partial => 'order_item_decoration', :locals => { :entry => decoration, :purchase_lock => purchase_lock }
         - for entry in item.entries.find(:all, :order => 'id')
           %tr
-            = render :partial => 'order_item_entry', :locals => { :entry => entry, :poed => poed }
+            = render :partial => 'order_item_entry', :locals => { :entry => entry, :purchase_lock => purchase_lock }
       %tfoot
         %tr.total
           %td
-            - unless @invoiced and @locked
+            - unless @price_lock || purchase_lock
               %div
-                = link_to_remote image_tag("add.png")+" Add General Entry", :complete => "entry_insert(request, 'item-#{item.id}', false)", :url => { :action => :order_item_entry_insert, :id => item.id }
+                = link_to_remote image_tag("add.png")+" Add General Entry", :complete => "entry_insert(request, 'item-#{item.id}', false)", :url => { :action => :order_item_entry_insert, :id => item.id, :unlock => @unlock }
               %div.add_dec
                 %h4= image_tag("add.png") + " Add Decorations"
                 - decors = [DecorationTechnique.find_by_name('General')] + item.product.decorations.collect { |d| d.technique.id != 1 ? d.technique : nil }.uniq.compact

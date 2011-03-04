@@ -13,6 +13,15 @@ class Purchase < ActiveRecord::Base
   def send_email
     supplier.send_email(order.sample)
   end
+
+  def reconciled
+    return @reconciled unless @reconciled.nil?
+    @reconciled = items.first.task_completed?(ReconciledItemTask)
+  end
+
+  def locked(unlock = false)
+    reconciled || (!unlock && purchase_order && purchase_order.sent)
+  end
   
   def order
     return @order if @order

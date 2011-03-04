@@ -81,7 +81,7 @@ class RequestOrderTask < OrderTask
   self.customer = true
   self.roles = %w(Customer Orders)
   self.action_name = 'Assume order request'
-  self.auto_complete = true #[RevisedOrderTask, QuoteOrderTask]
+  self.auto_complete = true
   
   def email_complete
     if object.task_completed?(PaymentInfoOrderTask)
@@ -326,7 +326,7 @@ class ArtReceivedOrderTask < OrderTask
   self.action_name = 'accept existing artwork for this order'
   self.customer = true
   self.roles = %w(Customer Orders)
-  self.auto_complete = true #[ArtDepartmentOrderTask]
+  self.auto_complete = true
   self.notify = true
 
   def self.blocked(object)
@@ -343,12 +343,16 @@ class ArtOverrideOrderTask < OrderTask
   self.status_name = 'Art Department Payment Override'
   self.completed_name = 'Sent to Art Department without Payment'
   self.action_name = 'ignore <strong>no customer payment and proceed with artwork</strong>'
-  self.auto_complete = true #[ArtReceivedOrderTask, ArtDepartmentOrderTask]
-  self.roles = %w(Super)
+  self.auto_complete = true
+  self.roles = %w(Orders)
   
   def admin
     !new_record? and active
-  end  
+  end
+
+  def self.blocked(object)
+    super || (object.task_completed?(PaymentInfoOrderTask) && "payment information received")
+  end
 end
 
 class ArtDepartmentOrderTask < OrderTask
@@ -465,7 +469,7 @@ class FinalPaymentOrderTask < OrderTask
   self.waiting_name = 'Charge Final Payment'
   self.completed_name = 'Final Payment Charged'
   self.action_name = 'mark final payment received'
-  self.auto_complete = true #[CompleteOrderTask]
+  self.auto_complete = true
 #  self.roles = %w(Orders)
   
   def self.blocked(order)
@@ -483,7 +487,7 @@ class CompleteOrderTask < OrderTask
   self.waiting_name = 'Order Completion'
   self.completed_name = 'Order Complete'
   self.action_name = 'Order Complete'
-  self.roles = %w(Orders)
+#  self.roles = %w(Orders)
   
   def apply(params)
     object.closed = true
@@ -494,8 +498,8 @@ class CompleteOrderTask < OrderTask
     subject = "Order Complete, Review Request"
     header = 
       %q(Thank you for ordering from Mountain Xpress Promotions, LLC.
-<a href="http://ratepoint.com/tellus/77047">We would greatly appreciate if you would review our service by clicking on this link.</a>
-We hope we have served you well and look forward to working with you again!)
+<a href="http://ratepoint.com/tellus/77047">I would greatly appreciate if you would review our service by clicking on this link.</a>
+I hope we have served you well and look forward to working with you again!)
 
     CustomerSend.dual_send(self, subject, header)
   end
@@ -567,7 +571,7 @@ class CancelOrderTask < OrderTask
   self.status_name = 'Order Canceled'
   self.action_name = 'Cancel Order'
   self.completed_name = 'Order Canceled'
-#  self.roles = %w(Orders)
+  self.roles = %w(Orders)
 
   def self.blocked(order)
     return super if super

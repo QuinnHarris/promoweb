@@ -17,8 +17,9 @@
     %tfoot
       %tr.total
         %td{ :rowspan => "2" }
-          %div
-            = link_to_remote image_tag("add.png")+" Add General Entry to #{order.class}", :complete => "entry_insert(request, '#{order.class}-#{order.id}', false)", :url => { :action => :order_entry_insert, :id => order.id, :klass => order.class.to_s}
+          - unless @price_lock || purchase_lock
+            %div
+              = link_to_remote image_tag("add.png")+" Add General Entry to #{order.class}", :complete => "entry_insert(request, '#{order.class}-#{order.id}', false)", :url => { :action => :order_entry_insert, :id => order.id, :klass => order.class.to_s, :unlock => @unlock }
         %td.money.num{ :colspan => "3" }
           Total:
           %td.money.num ???
