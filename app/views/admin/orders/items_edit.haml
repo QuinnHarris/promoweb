@@ -10,7 +10,7 @@
   = link_to "ReOrder", { :action => :order_duplicate }, { :confirm => "Create new reorder current items" }
   |
   = link_to "Exact ReOrder", { :action => :order_duplicate, :exact => true }, { :confirm => "Create new reorder current items" }
-- if @locked
+- if @permissions.include?('Super') && !@unlock
   .admin
     The order has been Acknowledged so customer pricing can't be changed.
     = link_to "UNLOCK", { :order_id => @order.id, :unlock => true }, { :confirm => "Unlock this page to modify items even though the order has been acknowledged!!!" }
@@ -35,9 +35,9 @@
                   = purchase.purchase_order.quickbooks_ref
                   - if purchase.bill
                     Bill:
-                    - if ReconciledItemTask.allowed?(@permissions) and !purchase.items.first.task_completed?(ReconciledItemTask)
+                    - if ReconciledItemTask.allowed?(@permissions) and !purchase.reconciled
                       = text_field_tag "Bill-#{purchase.bill.id}-quickbooks_ref", purchase.bill.quickbooks_ref, 'size' => 8
-                    -else
+                    - else
                       = purchase.bill.quickbooks_ref                      
                   )
                   - if url = purchase.supplier_status_url
@@ -55,16 +55,16 @@
                   = submit_tag ReconciledItemTask.status_name
                 - else
                   = ReconciledItemTask.waiting_name
-              - elsif purchase.items.first.task_completed?(ReconciledItemTask)
+              - elsif purchase.reconciled
                 %strong= ReconciledItemTask.completed_name
             - for item in purchase.items
-              = render :partial => 'order_item', :locals => { :item => item, :poed => !purchase.new_record? }
+              = render :partial => 'order_item', :locals => { :item => item, :purchase_lock => purchase.locked(@unlock) }
             - unless purchase.new_record?
               .block.notes
                 %strong Notes for Supplier:
-                = text_field_tag "Purchase-#{purchase.id}-comment", purchase.comment, 'size' => 80
-              = render :partial => 'order', :locals => { :order => purchase }
-  = render :partial => 'order', :locals => { :order => @order }
+                = text_field_tag "Purchase-#{purchase.id}-comment", purchase.comment, :size => 80, :readonly => purchase.locked(@unlock)
+              = render :partial => 'order', :locals => { :order => purchase, :purchase_lock => purchase.locked(@unlock) }
+  = render :partial => 'order', :locals => { :order => @order, :purchase_lock => false }
 
 - unless @tasks.empty? and @revokable.empty?
   %hr

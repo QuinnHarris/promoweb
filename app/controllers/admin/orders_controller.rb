@@ -855,6 +855,13 @@ class Admin::OrdersController < Admin::BaseController
       render :inline => 'Unable to Determing Shipping'
     end
   end
+
+private
+  def order_locks
+    @unlock = params[:unlock] && @permissions.include?('Super')
+    @price_lock = @order.task_completed?(AcknowledgeOrderTask) && !@unlock
+  end
+public
   
   def_tasked_action :items_edit, RequestOrderTask, RevisedOrderTask, QuoteOrderTask, OrderSentItemTask, ReconciledItemTask do
     @stylesheets = ['order']
@@ -893,9 +900,8 @@ class Admin::OrdersController < Admin::BaseController
       
       @order.our_comments = string
     end
-    
-#    @locked = !params[:unlock]
-    @invoiced = @order.task_completed?(AcknowledgeOrderTask)
+
+    order_locks
 
     determine_pending_tasks
   end
@@ -921,24 +927,27 @@ class Admin::OrdersController < Admin::BaseController
   end
   
   def order_entry_insert
+    order_locks
     klass = get_klass(params[:klass])
     order = klass.find(params[:id])
     entry = order.entries.create
-    render :partial => 'order_entry', :locals => { :entry => entry, :poed => false }
+    render :partial => 'order_entry', :locals => { :entry => entry, :purchase_lock => false }
   end
   
   def order_item_entry_insert
+    order_locks
     order_item = OrderItem.find(params[:id])
     entry = order_item.entries.create
-    render :partial => 'order_item_entry', :locals => { :entry => entry, :poed => false }
+    render :partial => 'order_item_entry', :locals => { :entry => entry, :purchase_lock => order_item.purchase && order_item.purchase.locked(@unlock) }
   end
   
   def order_item_decoration_insert
+    order_locks
     order_item = OrderItem.find(params[:id])
     entry = order_item.decorations.create({
       :technique_id => params[:technique]
     })
-    render :partial => 'order_item_decoration', :locals => { :entry => entry }
+    render :partial => 'order_item_decoration', :locals => { :entry => entry, :purchase_lock => order_item.purchase && order_item.purchase.locked(@unlock) }
   end
 
   def order_item_remove

@@ -248,7 +248,7 @@ class ReconciledItemTask < OrderItemTask
   set_depends_on ShipItemTask
   self.status_name = 'Reconciled Invoice from Supplier'
   self.waiting_name = 'Waiting for Supplier Invoice'
-  self.completed_name = 'Invoice Received from Supplier'
+  self.completed_name = 'Invoice Reconciled from Supplier'
 #  self.roles = %w(Orders)
   
 #  def status; false; end

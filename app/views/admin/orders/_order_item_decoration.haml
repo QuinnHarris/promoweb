@@ -1,12 +1,12 @@
 %td
-  - unless @invoiced and @locked
+  - unless @price_lock || purchase_lock
     = link_to_remote image_tag("remove.png"), :complete => "entry_remove(request, '#{entry.class}-#{entry.id}-cost-marginal')", :confirm => "Remove item?", :url => { :action => :order_item_remove, :id => entry.id, :klass => 'OrderItemDecoration' }
   - if entry.technique.name == 'General'
     Dec: 
-    = text_field_tag "#{entry.class}-#{entry.id}-description", entry.description, :size => 28, :readonly => (@invoiced and @locked)
+    = text_field_tag "#{entry.class}-#{entry.id}-description", entry.description, :size => 28, :readonly => @price_lock || purchase_lock
   - elsif true
     = entry.technique.name
     for
     = text_field_tag "#{entry.class}-#{entry.id}-count", entry.count, :class => 'num'
     #{entry.technique.unit_name}(s)
-= render :partial => 'order_item_entry_tail', :locals => { :object => entry, :poed => false, :null => false }
+= render :partial => 'order_item_entry_tail', :locals => { :object => entry, :purchase_lock => purchase_lock, :null => false }
