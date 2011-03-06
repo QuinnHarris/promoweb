@@ -145,6 +145,21 @@ class PhoneController < ActionController::Base
   end
 
   def polycom_notify
+    #PolycomIPPhone
+    #  IncomingCallEvent
+    #    CalledPartyNumber => "sip:a46f22acead469c9@216.246.9.251"
+    #    CalledPartyName => "Quinn Harris"
+    #    PhoneIP => "10.86.201.174"
+    #    TimeStamp => "2011-03-06T12:43:16-07:00"
+    #    CallingPartyNumber => "sip:+19707595163@216.246.9.251:5061"
+    #    CallingPartyName => "WIRELESS CALLER"
+    #    MACAddress => "0004f212bd80"
 
+    user = User.find_by_login(params[:id])
+    event_params = params['PolycomIPPhone']['IncomingCallEvent']
+    /^sip:\+(\d+)\@/ === event_params['CallingPartyNumber']
+    user.update_attributes!(:incoming_phone_number => $1,
+                            :incoming_phone_name => event_params['CallingPartyName'],
+                            :incoming_phone_time => Time.now)
   end
 end

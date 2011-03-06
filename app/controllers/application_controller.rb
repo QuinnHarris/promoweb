@@ -35,9 +35,25 @@ public
         session_record = SessionAccess.find(:first, :conditions => 
           ["user_agent = ? AND id IN (SELECT session_access_id FROM page_accesses WHERE address = ? AND created_at > NOW() - '3 month'::interval )",
            request.env['HTTP_USER_AGENT'], request.remote_ip])
-        session_record = SessionAccess.create(
-          :user_agent => request.env['HTTP_USER_AGENT'],
-          :language => request.env['HTTP_ACCEPT_LANGUAGE'] && request.env['HTTP_ACCEPT_LANGUAGE'].to(63)) unless session_record
+
+        unless session_record
+          attributes = {
+            :user_agent => request.env['HTTP_USER_AGENT'],
+            :language => request.env['HTTP_ACCEPT_LANGUAGE'] && request.env['HTTP_ACCEPT_LANGUAGE'].to(63)
+          }
+
+          # GeoIP area code for incoming phone lookup
+          begin
+            if gi = GEOIP[request.remote_ip]
+              attributes.merge!(:area_code => gi.area_code)
+            end
+          rescue
+            # Rescue Everything
+          end
+
+          session_record = SessionAccess.create(attributes)
+        end
+
         session[:ses_id] = session_record.id
       end
 
