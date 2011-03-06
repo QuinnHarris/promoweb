@@ -157,7 +157,7 @@ class PhoneController < ActionController::Base
 
     user = User.find_by_login(params[:id])
     event_params = params['PolycomIPPhone']['IncomingCallEvent']
-    /^sip:\+(\d+)\@/ === event_params['CallingPartyNumber']
+    /^sip:\+?(\d+)\@/ === event_params['CallingPartyNumber']
     user.update_attributes!(:incoming_phone_number => $1,
                             :incoming_phone_name => event_params['CallingPartyName'],
                             :incoming_phone_time => Time.now)

@@ -42,4 +42,14 @@ class Admin::AccessController < Admin::BaseController
        @tasks.collect { |t| t.order_id }])
   end
 
+  def phone
+    @customer = Customer.find(:first,
+                              :conditions => ["regexp_replace(phone, '[^0-9]', '', 'g') ~ ?", @user.incoming_phone_number.to_s.gsub(/^1/,'')])
+    return if @customer
+
+    /^1?(\d{3})/ === @user.incoming_phone_number
+    @accesses = PageAccess.find(:all,
+                                :include => :session,
+                                :conditions => ["page_accesses.created_at > ? AND session_accesses.area_code = ? AND page_accesses.controller = 'products' AND action = 'main'", Time.now - 4.hours, $1])
+  end
 end

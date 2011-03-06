@@ -55,7 +55,8 @@
         %td.layout
           #header.nav
             - if @user
-              - if allowed?(%w(Super Order))
+              - if allowed?(%w(Super Orders))
+                = link_to image_tag('phone.png'), { :controller => '/admin/access', :action => :phone }, :id => 'phone'
                 #buttonn.nav
                   = link_to image_tag('find.png') + "Find Customer", { :controller => '/admin/orders', :action => :contact_find }, :class => 'button'
                   = link_to image_tag('add.png') + "New Customer", { :controller => '/admin/orders', :action => :new_order }, { :class => 'button', :confirm => 'Create a new customer and order?' }
@@ -71,8 +72,8 @@
                         = li_to 'Commission', { :controller => '/admin/employee', :action => 'commission' }
                       - if allowed?(%w(Super Orders))
                         = li_to 'Access', {:controller => '/admin/access', :action => 'paths' }
-                      - if allowed?('Super')
                         = li_to 'Suppliers', {:controller => '/admin/suppliers', :action => 'index' }
+                      - if allowed?('Super')
                         = li_to 'Users', {:controller => '/admin/login', :action => 'index'}
                         = li_to 'Quickbooks', {:controller => '/admin/system/quickbooks_blocked', :action => 'index'}
                       = li_to 'Password', {:controller => '/admin/login', :action => :password }

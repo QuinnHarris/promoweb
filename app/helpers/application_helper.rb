@@ -49,7 +49,7 @@ module ApplicationHelper
   end
 
   def format_phone(number)
-    if /^(\d{3})(\d{3})(\d{4})$/ === number.to_s
+    if /^1?(\d{3})(\d{3})(\d{4})$/ === number.to_s
       "#{$1}-#{$2}-#{$3}"
     else
       number

@@ -8,8 +8,9 @@
     - %w(name account_number description fax phone artwork_email po_email samples_email web status).each do |name|
       %tr
         %th= "#{name.gsub('_', ' ').capitalize}:"
-        %td= supplier.text_field name
-    = render :partial => '/order/address_edit', :locals => { :field_name => :address, :disabled => false }
+        %td= @static ? @supplier.send(name) : supplier.text_field(name)
+    - if @address and !@static
+      = render :partial => '/order/address_edit', :locals => { :field_name => :address, :disabled => false }
 
     - %w(inside_sales accounting customer_service problem_resolution).each do |name|
       - %w(name email phone).each do |field|
@@ -17,13 +18,14 @@
           %th
             =(field == 'name') ? name.gsub('_', ' ').capitalize : ''
             = "#{field.capitalize}:"
-          %td= supplier.text_field "#{name}_#{field}"
+          %td= @static ? @supplier.send("#{name}_#{field}") : supplier.text_field("#{name}_#{field}")
     %tr
       %th Credit:
-      %td= supplier.text_field :credit
+      %td= @static ? @supplier.credit : supplier.text_field(:credit)
     %tr
       %th Notes:
-      %td= supplier.text_area :notes
+      %td= @static ? @supplier.notes : supplier.text_area(:notes)
 
-  = submit_tag 'Submit'
+  - unless @static
+    = submit_tag 'Submit'
 
