@@ -300,7 +300,7 @@ public
       end
       
       # Don't change task if item added to existing order even if order acknowledged
-      unless @order.task_completed?(AcknowledgeOrderTask) and (params[:dispos] == 'exist') and @permissions.include?('Super')
+      unless (@order.task_completed?(AcknowledgeOrderTask) or @order.task_completed?(PaymentNoneOrderTask)) and (params[:dispos] == 'exist') and @permissions.include?('Super')
         task_complete({ :data => { :product_id => product.id, :item_id => item.id }},
                       AddItemOrderTask, [AddItemOrderTask, RequestOrderTask, RevisedOrderTask, QuoteOrderTask])
       end

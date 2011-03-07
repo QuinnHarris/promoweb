@@ -15,4 +15,4 @@
           %td= supplier.description
           %td= supplier.products.count
           %td
-            = link_to (@static ? 'View' : 'Edit'), { :action => 'detail', :id => supplier }
+            = link_to((@static ? 'View' : 'Edit'), { :action => 'detail', :id => supplier })

@@ -23,7 +23,7 @@
       %th Orders
       %td= @customer.orders.collect { |o| link_to o.id, :controller => '/order', :action => :status, :order_id => o.id }.join(', ')
 
-- unless @accesses.empty?
+- if @accesses and !@accesses.empty?
   %h2 Product Views
   - for access in @accesses
     - product = Product.find(access.action_id)
