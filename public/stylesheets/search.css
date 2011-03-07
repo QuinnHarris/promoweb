@@ -1,6 +1,9 @@
 h2 {
-  text-align: center;
-  background-color: #0848B8;
-  color: white;
+  color: #332735;
   margin: 0.5em;
+  padding-left: 1em;
+
+  background-color: #816f86;
+  background-image: url('/images/grads/head-main.png');
+  background-repeat: repeat-y;
 }

@@ -50,6 +50,8 @@ class Admin::AccessController < Admin::BaseController
     /^1?(\d{3})/ === @user.incoming_phone_number
     @accesses = PageAccess.find(:all,
                                 :include => :session,
-                                :conditions => ["page_accesses.created_at > ? AND session_accesses.area_code = ? AND page_accesses.controller = 'products' AND action = 'main'", Time.now - 4.hours, $1])
+                                :limit => 10,
+                                :order => 'page_accesses.id DESC',
+                                :conditions => ["page_accesses.created_at > ? AND session_accesses.area_code = ? AND page_accesses.controller = 'products' AND action = 'main'", Time.now - 30.days, $1])
   end
 end

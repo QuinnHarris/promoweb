@@ -41,6 +41,11 @@ class PhoneController < ActionController::Base
       return
     end
 
+    user = User.find_by_login(params[:id])
+    user.update_attributes!(:incoming_phone_number => params[:number],
+                            :incoming_phone_name => params[:name],
+                            :incoming_phone_time => Time.now)
+
     number = params[:number].gsub(/^1/,'')
 
     customer = Customer.find(:first,
