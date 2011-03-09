@@ -576,13 +576,15 @@ class Admin::OrdersController < Admin::BaseController
     doc.show "#{imprint_height / 72.0} in", :with => :label_font
     
     # Scale
+    apply_scale = params[:scale]
     offset_x = offset_y = 0
     scale_note = nil
-    scale = [imprint_width/eps_width, imprint_height/eps_height].min
-    if scale == imprint_width/eps_width
+    scale = apply_scale ? [imprint_width/eps_width, imprint_height/eps_height].min : 1.0
+    if !apply_scale || (scale == imprint_width/eps_width)
       offset_y = (imprint_height - eps_height*scale)/2
       scale_note = "width"
-    else
+    end
+    if !apply_scale || (scale == imprint_height/eps_height)
       offset_x = (imprint_width - eps_width*scale)/2
       scale_note = "height"
     end

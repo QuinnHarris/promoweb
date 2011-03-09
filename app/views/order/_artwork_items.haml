@@ -55,8 +55,9 @@
                         - if group.artworks.to_a.find { |a| a.art.original_filename == artwork.filename_pdf }
                           PDF Generated
                         - else
-                          - if artwork.can_proof?(@order)
-                            = link_to "(Generate Proof)", { :controller => '/admin/orders', :action => 'artwork_generate_proof', :id => artwork }, :confirm => "Generate Proof and mark this file as supplier and the proof as proof?"
+                          - if artwork.can_proof?(@order)                           
+                            = link_to "Generate Proof", { :controller => '/admin/orders', :action => 'artwork_generate_proof', :id => artwork }, :confirm => "Generate Proof and mark this file as supplier and the proof as proof?"
+                            = link_to "(Scaled)", { :controller => '/admin/orders', :action => 'artwork_generate_proof', :id => artwork, :scale => true }, :confirm => "Generate Proof and mark this file as supplier and the proof as proof?"
                       %hr
                       - complete = @order.tasks_dep.collect { |t| !t.new_record? and t.class }.compact
                       - tags = artwork.tags.collect { |t| t.name }
