@@ -714,10 +714,16 @@ class Admin::OrdersController < Admin::BaseController
           item.entries.create(:description => 'Sample Item')
         else
           orig_item.decorations.each do |dec|
-            item.decorations.create([:technique_id, :decoration_id, :artwork_group_id, :count, :price, :cost].inject({}) do |hash, method|
-                                      hash[method] = dec.send(method)
-                                      hash
-                                    end)
+            dec_hash = {}
+            [:technique_id, :decoration_id, :artwork_group_id, :count, :price, :cost].each do |method|
+              dec_hash[method] = dec.send(method)
+            end
+            if params[:exact]
+              # No setup on Exact reorders
+              dec_hash[:price].fixed = Money.new(0)
+              dec_hash[:cost].fixed = Money.new(0)
+            end
+            item.decorations.create(dec_hash)
           end
           orig_item.entries.each do |entry|
             item.entries.create(:description => entry.description,
