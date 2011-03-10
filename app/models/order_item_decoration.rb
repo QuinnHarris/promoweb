@@ -24,15 +24,19 @@ class OrderItemDecoration < ActiveRecord::Base
   end
 
   def width
-    return decoration.width if decoration_id
-    @@dim_reg === our_notes
-    Float($1)
+    if @@dim_reg === our_notes
+      return Float($1)
+    end
+
+    decoration.width if decoration_id
   end
 
   def height
-    return decoration.height if decoration_id
-    @@dim_reg === our_notes
-    Float($2)
+    if @@dim_reg === our_notes
+      return Float($2)
+    end
+  
+    decoration.height if decoration_id
   end
 
   # Make Act like order_item_entry

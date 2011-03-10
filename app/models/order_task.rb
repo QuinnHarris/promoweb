@@ -350,9 +350,9 @@ class ArtOverrideOrderTask < OrderTask
     !new_record? and active
   end
 
-  def self.blocked(object)
-    super || (object.task_completed?(PaymentInfoOrderTask) && "payment information received")
-  end
+#  def self.blocked(object)
+#    super || (object.task_completed?(PaymentInfoOrderTask) && "payment information received")
+#  end
 end
 
 class ArtDepartmentOrderTask < OrderTask

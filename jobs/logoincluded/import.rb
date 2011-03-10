@@ -146,7 +146,7 @@ class LogoIncludedXML < GenericImport
           # EQP
           costs = prices.collect do |p|
             { :fixed => p[:fixed],
-              :marginal => (p[:marginal] * 0.6).round_cents,
+              :marginal => p[:marginal],
               :minimum => p[:minimum] }
           end
 #          costs = [{ :fixed => Money.new(0),
