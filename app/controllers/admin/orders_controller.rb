@@ -837,6 +837,8 @@ class Admin::OrdersController < Admin::BaseController
         purchase.purchase_order.sent = true
         purchase.purchase_order.save!
         task_class = OrderSentItemTask
+      elsif ConfirmItemTask.status_name.include?(params[:commit])
+        task_class = ConfirmItemTask
       elsif ReconciledItemTask.status_name.include?(params[:commit])
         task_class = ReconciledItemTask
       else

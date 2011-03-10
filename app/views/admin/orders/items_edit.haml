@@ -50,6 +50,8 @@
               - if purchase.items.first.task_ready?(OrderSentItemTask)
                 = submit_tag "Send by #{purchase.fax? ? 'FAX' : 'eMail'} #{OrderSentItemTask.status_name}"
                 = submit_tag "Mark #{OrderSentItemTask.status_name} (Without email)"
+              - elsif purchase.items.first.task_ready?(ConfirmItemTask)
+                = submit_tag ConfirmItemTask.status_name
               - elsif purchase.items.first.task_ready?(ReconciledItemTask)
                 - if ReconciledItemTask.allowed?(@permissions)
                   = submit_tag ReconciledItemTask.status_name
