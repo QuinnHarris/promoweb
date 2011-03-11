@@ -45,7 +45,10 @@
       - if @search
         %tr
           %th Order #
-          %td= text_field :order, :id, :value => ''
+          %td= text_field :order, :id
+        %tr
+          %th Purchase #
+          %td= text_field :purchase_order, :quickbooks_ref
           %td= submit_tag('Find')
       %tr
         %th Company:

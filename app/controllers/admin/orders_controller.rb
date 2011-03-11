@@ -227,10 +227,17 @@ class Admin::OrdersController < Admin::BaseController
   end
 
   def contact_find
-    if params[:order] and params[:order][:id] and !params[:order][:id].empty? and
+    if params[:order] and !params[:order][:id].blank? and
         Order.exists?(params[:order][:id].to_i)
       redirect_to :controller => '/order', :action => 'status', :order_id => params[:order][:id].to_i
       return
+    end
+
+    if params[:purchase_order] and !params[:purchase_order][:quickbooks_ref].blank?
+      if po = PurchaseOrder.find_by_quickbooks_ref(params[:purchase_order][:quickbooks_ref])
+        redirect_to :controller => '/admin/orders', :action => :items_edit, :order_id => po.purchase.order.id
+        return
+      end
     end
 
     @customer = Customer.new
