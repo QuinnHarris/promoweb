@@ -27,6 +27,7 @@
                 - for sub in [supplier] + supplier.children
                   = submit_tag("#{sub['name']}", :onclick => "return confirm('Are you sure you want to create a PO ?')")                 
             - else
+              - purchase_lock = !(params[:override] and allowed?('Super')) and purchase.locked(allowed?('Super'))
               %h2
                 Purchase for
                 = purchase.supplier.name
@@ -36,7 +37,7 @@
                   - if purchase.bill
                     Bill:
                     - if ReconciledItemTask.allowed?(@permissions) and !purchase.reconciled
-                      = text_field_tag "Bill-#{purchase.bill.id}-quickbooks_ref", purchase.bill.quickbooks_ref, 'size' => 8
+                      = text_field_tag "Bill-#{purchase.bill.id}-quickbooks_ref", purchase.bill.quickbooks_ref, 'size' => 8, :readonly => purchase_lock
                     - else
                       = purchase.bill.quickbooks_ref                      
                   )
@@ -60,12 +61,12 @@
               - elsif purchase.reconciled
                 %strong= ReconciledItemTask.completed_name
             - for item in purchase.items
-              = render :partial => 'order_item', :locals => { :item => item, :purchase_lock => purchase.locked(@unlock) }
+              = render :partial => 'order_item', :locals => { :item => item, :purchase_lock => purchase_lock }
             - unless purchase.new_record?
               .block.notes
                 %strong Notes for Supplier:
-                = text_field_tag "Purchase-#{purchase.id}-comment", purchase.comment, :size => 80, :readonly => purchase.locked(@unlock)
-              = render :partial => 'order', :locals => { :order => purchase, :purchase_lock => purchase.locked(@unlock) }
+                = text_field_tag "Purchase-#{purchase.id}-comment", purchase.comment, :size => 80, :readonly => purchase_lock
+              = render :partial => 'order', :locals => { :order => purchase, :purchase_lock => purchase_lock }
   = render :partial => 'order', :locals => { :order => @order, :purchase_lock => false }
 
 - unless @tasks.empty? and @revokable.empty?
