@@ -758,14 +758,18 @@ class Admin::OrdersController < Admin::BaseController
   end
   
   def order_own
+    redirect_to :back
+
+    if @order.user_id
+      next if @order.user_id = @user.id
+      raise "permission denied" unless OwnershipOrderTask.allowed?(@permissions)
+    end
+
     Order.transaction do
-      @order = Order.find(session[:order_id], :include => :user)
-      raise "permission denied" if @order.user_id and !OwnershipOrderTask.allowed?(@permissions)
       task_complete({ :data => { :user_id => @order.user_id } }, OwnershipOrderTask, [OwnershipOrderTask])
       @order.user_id = params[:unown] ? nil : session[:user_id]
       @order.save!
     end
-    redirect_to :back
   end
 
   def order_item_variant_set

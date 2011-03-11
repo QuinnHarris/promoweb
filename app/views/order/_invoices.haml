@@ -48,8 +48,9 @@
         Ship Method:
         = @order.ship_method
         %br
-        FOB:
-        = @order.fob
+        - unless @order.fob.blank?
+          FOB:
+          = @order.fob
 
       %td{ :style => 'width: 1em;' }
       %td
@@ -88,7 +89,7 @@
   .invoice
     .date
       - if invoice.created_at
-        = format_time(invoice.created_at)
+        = format_time_abs(invoice.created_at)
         - if !@static and allowed?('Super') and invoice.is_a?(Invoice)
           = link_to(image_tag('remove.png'), { :controller => '/admin/orders', :action => :invoice_remove, :id => invoice }, { :confirm => "Remove Invoice" })
       - else

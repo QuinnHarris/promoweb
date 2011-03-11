@@ -245,7 +245,7 @@ Please find your tracking number for #{carrier} below.
 end
 
 class ReconciledItemTask < OrderItemTask
-  set_depends_on ShipItemTask
+  set_depends_on EstimatedItemTask
   self.status_name = 'Reconciled Invoice from Supplier'
   self.waiting_name = 'Waiting for Supplier Invoice'
   self.completed_name = 'Invoice Reconciled from Supplier'

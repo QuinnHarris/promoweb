@@ -585,7 +585,7 @@ class CancelOrderTask < OrderTask
     end
     
     order.items.each do |item|
-      return "Item in production but not received" if item.task_completed?(ConfirmItemTask) and !item.task_completed?(ReceivedItemTask)
+      return "Item confirmed by supplier" if item.task_completed?(ConfirmItemTask)
     end
     
     nil
@@ -604,4 +604,5 @@ end
 
 class OwnershipOrderTask < OrderTask
   self.completed_name = 'Ownership Changed'
+  self.roles = %w(Orders)
 end
