@@ -95,7 +95,7 @@ protected
   # If its empty we assume that the user didn't want to change his
   # password and just reset it to the old value.
   def crypt_unless_empty
-    unless password_changed?
+    if password_changed?
       write_attribute "password", self.class.sha1(password)
     end        
   end  
