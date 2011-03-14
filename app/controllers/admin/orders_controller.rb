@@ -448,7 +448,12 @@ class Admin::OrdersController < Admin::BaseController
     imprint_height = oid.height * 72
 
     product_name = oid.order_item.product.name
-    product_image = oid.order_item.product.image_path_absolute('main', 'jpg')
+    if oid.order_item.product.product_images.empty?
+      product_image = oid.order_item.product.image_path_absolute('main', 'jpg')
+    else
+      product_images = oid.order_item.active_images.first.image.url(:medium)
+    end
+      
 
     props = {}
     imprint = []

@@ -28,16 +28,26 @@ end
 class ImageNode
   @@cache_dir = File.join(RAILS_ROOT, "cache")
 
-  def initialize(id, uri)
+  def initialize(id)
     @id = id
-    @uri = URI.parse(uri.gsub(' ', '%20'))
   end 
 
-  attr_reader :id, :uri
+  attr_reader :id
 
   def ==(other)
     @id == other.id
   end
+
+  def to_s; id; end
+end
+
+class ImageNodeFetch < ImageNode
+  def initialize(id, uri)
+    super id
+    @uri = URI.parse(uri.gsub(' ', '%20'))
+  end
+
+  attr_reader :uri
 
   def uri_tail
     @uri.respond_to?(:request_uri) ? @uri.request_uri : @uri.path
@@ -49,9 +59,8 @@ class ImageNode
     base
   end
 
-  def to_s; id; end
-
   def get
+    puts "GET: #{uri}"
    unless File.exists?(path)
       FileUtils.mkdir_p(File.split(path).first)
 
@@ -434,10 +443,12 @@ public
       end
     end
     
-    # check images   
-    unless product_data["image-hires"] or product_data["images"]
-      %w(thumb main large).each do |name|
-        product_log << "  No #{name} image" unless product_data["image-#{name}"]
+    # check images
+    if (product_data['variants'].collect { |v| v['images'] } + [product_data['images']]).flatten.compact.empty?
+      unless product_data["image-hires"] or product_data["images"]
+        %w(thumb main large).each do |name|
+          product_log << "  No #{name} image" unless product_data["image-#{name}"]
+        end
       end
     end
     
@@ -531,7 +542,7 @@ public
         new_price_groups, new_cost_groups = [], []
 
         # Fetch Images
-#        product_record.set_images(product_data['images'])
+        product_record.set_images(product_data['images'])
        
         # Process Variants
         variant_records = product_data['variants'].collect do |variant_data|
@@ -541,7 +552,7 @@ public
           variant_record.save! if variant_new
 
           # Fetch Images
-#          variant_record.set_images(variant_data['images']) if variant_data['images']
+          variant_record.set_images(variant_data['images'])
           
           # Properties
           @@properties.each do |attr_name|

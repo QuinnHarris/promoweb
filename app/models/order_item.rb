@@ -19,6 +19,16 @@ class OrderItem < ActiveRecord::Base
   belongs_to :purchase
   
   has_many :invoice_entries, :class_name => 'InvoiceOrderItem', :foreign_key => 'entry_id', :conditions => "type = 'InvoiceOrderItem'"
+
+
+  def active_images
+    variants = order_item_variants.collect { |oiv| oiv.quantity != 0 ? oiv.variant : nil }.compact
+    if variants.empty? or (variants.include?(nil) and variants.length == 1)
+      product.product_images.to_a
+    else
+      variants.compact.collect { |v| v.product_images.to_a }.flatten.uniq
+    end
+  end
   
 
   # Remove sometime?

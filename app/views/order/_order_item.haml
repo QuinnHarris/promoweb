@@ -2,16 +2,22 @@
 - tail ||= nil
 .item
   .block.thumb
-    - if !static and RemoveItemOrderTask.allowed?(@permissions)
-      = link_to(image_tag('remove.png') + "Remove", { :action => :item_remove, :id => order_item }, :confirm => "Remove #{order_item.product.name}")
+    - if order_item.product.product_images.empty?
+      - thumb_path = order_item.product.image_path_relative('thumb')
+    - else
+      - thumb_path = order_item.active_images.first.image.url(:thumb) 
     - unless absolute
       - link_to({ :controller => '/products', :action => 'main', :id => order_item.product }) do
-        = image_tag(order_item.product.image_path_relative('thumb'), :alt => "#{order_item.product.name} Thumbnail")
+        = image_tag(thumb_path, :alt => "#{order_item.product.name} Thumbnail")
         %br
         %strong= "M#{order_item.product.id}</strong>"
+        - if !static and RemoveItemOrderTask.allowed?(@permissions)
+          %br
+          %br
+          = link_to(image_tag('remove.png') + "Remove", { :action => :item_remove, :id => order_item }, :confirm => "Remove #{order_item.product.name}")
     - else
       %a{ :href => "http://www.mountainofpromos.com/products/main/#{order_item.product.id}" }
-        %img{ :src => "http://www.mountainofpromos.com#{order_item.product.image_path_relative('thumb')}" }
+        %img{ :src => "http://www.mountainofpromos.com#{thumb_path}" }
         %br
         %strong= "M#{order_item.product.id}"
     - if @user and aspect == :cost and order_item.product.supplier_url
