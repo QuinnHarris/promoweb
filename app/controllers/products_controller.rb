@@ -204,7 +204,7 @@ public
   
       @title = "#{@product.name}, Custom Imprinted (#{@product.supplier.name}: #{@product.supplier_num})"
       
-      @javascripts = ['products']
+      @javascripts = ['effects', 'products']
       
       @email_subject = "#{@product.name} (M#{@product.id})"
     

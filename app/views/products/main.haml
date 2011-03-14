@@ -42,10 +42,24 @@
         - setup_main if @user
         - cache do
           - setup_main unless @user
-          #prod_img
-            = image_tag(@product.image_path_relative('main'), :alt => @product.name)
-            %br
-            = link_to "Large Image", @product.image_path_relative('large'), :rel => 'external'
+          - if @product.product_images.empty?
+            #prod_img
+              = image_tag(@product.image_path_relative('main'), :alt => @product.name)
+              %br
+              = link_to "Large Image", @product.image_path_relative('large'), :rel => 'external'
+          - else
+            #prod_img
+              %ul#main_imgs
+                - @product.product_images.each_with_index do |image, idx|
+                  %li{ :style => (idx == 0 ? nil : 'display: none;')}= image_tag(image.image.url(:medium), :alt => @product.name)
+              %br
+              = link_to "Large Image", @product.image_path_relative('large'), :rel => 'external'
+
+              - if @product.product_images.length > 1
+                - for group in @product.product_images.to_a.in_groups_of(3)
+                  %ul.thumbs
+                    - for images in group.compact                  
+                      %li.active{ :class => (images == @product.product_images.first) ? 'sel' : nil, 'data-variants' => images.variants.collect { |v| v.id }.join(' ') }= image_tag images.image.url(:thumb)          
 
           - unless @product.description.nil? or @product.description.empty?
             .box
@@ -89,7 +103,7 @@
                 "],[" +
                 @properties.collect do |names, properties|
                 "['#{names.join(',')}'," +
-                properties.collect { |p| (p.first && props.index(p.first.id)) ? p.first.id : nil }.compact.join(',') +
+                properties.collect { |p, v| (p.first && props.index(p.first.id)) ? p.first.id : nil }.compact.join(',') +
                 "]"
                 end.join(',') +
                 "]]"
@@ -131,12 +145,11 @@
                     %a{ :href => "#", :onclick => "return clear_opt(this);" }
                       - reset_cycle
                       - for name in names
-                        %span{ :class => cycle('odd', 'even') }
-                          = "#{name.capitalize}:"
+                        %span{ :class => cycle('odd', 'even') }= "#{name.capitalize}:"
                   %dd
                     %ul{ :id => "group-#{index += 1}" }
-                      - for props in properties
-                        %li{ :id => props.compact.first && "prop-#{props.compact.first.id}" }
+                      - for props, variants in properties
+                        %li{ :id => props.compact.first && "prop-#{props.compact.first.id}", 'data-variants' => variants.collect { |v| v.id }.join(' ') }
                           %a{ :href => "#", :onclick => "return sel_opt(this);" }
                             - reset_cycle
                             - for prop in props

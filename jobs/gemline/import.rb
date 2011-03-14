@@ -144,7 +144,11 @@ class GemlineXML < GenericImport
           swatches_element.each_element do |image|
             swatches[image.name] = image.attributes['path'] + image.attributes['name']
           end
-          val['images'] = swatches
+          val['swatches'] = swatches
+        end
+
+        if image_node = item.get_elements('images/zoomed').first
+          val['images'] = ImageNodeFetch.new(val['num'], "#{image_node.attributes['path']}#{image_node.attributes['name']}")
         end
 
         prices = []
@@ -204,25 +208,6 @@ class GemlineXML < GenericImport
       prod_data['tags'].uniq! if prod_data['tags']
       prod_data['supplier_categories'] = prod_categories
 
-      # images (will save if new record to get id)
-      if images = product.get_elements('items/item/images').first
-        res = {}
-        puts "Images: #{images.inspect}"
-        images.each_element do |image|
-          puts "Image: #{image.inspect}"
-          if image.attributes['name']
-            res[image.name] = image.attributes['path'] + image.attributes['name']
-          end
-        end
-        
-        if res['zoomed']
-          prod_data["image-large"] = CopyImageFetch.new(res['zoomed'])
-          %w(thumb main).each do |name|
-            prod_data["image-#{name}"] = TransformImageFetch.new(res['zoomed'])
-          end
-        end
-      end
-
 
       hash = {}
       hash.default = []
@@ -254,14 +239,15 @@ class GemlineXML < GenericImport
           data = {
             'supplier_num' => variant['num'],
             'material' => variant['material'],
+            'images' => variant['images'],
             'dimension' => dimension,
             'prices' => prices,
             'costs' => costs,
             'color' => variant['color']
           }
-          
+ 
           %w(small medium).each do |name|
-            data["swatch-#{name}"] = CopyImageFetch.new(variant['images'][name]) if variant['images'][name]
+            data["swatch-#{name}"] = CopyImageFetch.new(variant['swatches'][name]) if variant['swatches'][name]
           end
           data
         end

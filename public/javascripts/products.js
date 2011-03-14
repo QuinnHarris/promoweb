@@ -208,31 +208,31 @@ function sel_loc(a) {
 }
 
 function sel_opt(a) {
-  var li = a.parentNode
-  var ul = li.parentNode
-  unselect(ul)
-  li.className = 'sel'
+    var li = a.parentNode;
+    var ul = li.parentNode;
+    unselect(ul);
+    li.className = 'sel';
   
-  var grp_id = id_parse(ul.id)
-  var prop_id = id_parse(li.id)
-  prop_selected[grp_id] = prop_id
+    var grp_id = id_parse(ul.id);
+    var prop_id = id_parse(li.id);
+    prop_selected[grp_id] = prop_id;
   
-  calc_prices()
-  
-  return false
+    calc_prices();
+
+    cycler.setVariants(a.parentNode.getAttribute('data-variants'));
 }
 
 function clear_opt(a) {
-  var div = a.parentNode.parentNode
-  var ul = div.getElementsByTagName('ul')[0]
-  unselect(ul)
+    var div = a.parentNode.parentNode;
+    var ul = div.getElementsByTagName('ul')[0];
+    unselect(ul);
   
-  var grp_id = id_parse(ul.id)
-  prop_selected[grp_id] = NaN
+    var grp_id = id_parse(ul.id);
+    prop_selected[grp_id] = NaN;
   
-  calc_prices()
+    calc_prices();
   
-  return false
+    cycler.setVariants('');
 }
 
 function get_groups() {
@@ -415,6 +415,22 @@ function load_quantity() {
     $('quantity').value = quantity
 }
 
+function image_change(event) {
+    var main = $('main_img');
+    var target = event.target;
+    if (target.tagName == 'LI')
+	target = $(target).down();
+    main.src = target.src.replace('_thumb', '_medium')
+}
+
+function load_image() {
+    var lis = $('prod_img').getElementsByTagName('li');
+    for (var i = 0; i < lis.length; i++) {
+	var li = lis[i];
+	Event.observe(li, 'mouseover', image_change);
+    }
+}
+
 function num_keypress(myfield, e, post_func) {
   var key;
   var keychar;
@@ -469,3 +485,184 @@ function order_submit(form, pedantic) {
   form.unit_count.value = tech_value
   return true
 }
+
+
+/**
+ * protocycle.js - Cycle extension for Prototype JS library
+ * --------------------------------------------------------
+ * Copied and modified from:
+ * http://www.omcore.net/blog/33/introducing-protocycle-an-easy-way-to-fade-between-images/
+ * http://www.flyspain.co.uk/
+ *
+ * v1.0, Oct 1st 2009
+ *
+ */
+
+var Protocycle = Class.create({
+	initialize: function(container, thumbs, options) {  
+            this.options = {
+                fx: 'fade', // 'fade' or 'none'
+                timeout: 4000, // time between slide changes (in milliseconds)
+                speed: 500, // time taken to do the transition (in milliseconds)
+                sync: true, // true if in/out transitions should occur simultaneously 
+                containerResize: true // automatically resize container to fit largest slide 
+            }
+            Object.extend(this.options, options || {});  
+            
+            
+            // automatically set timeout option if the container element has a classname of 
+            // timeout[n] where n is the desired value in milliseconds
+            $w(container.className).each(function(classname) {
+		    var result = classname.match(/timeout\[([0-9]+)\]/);
+		    
+		    if(result != null) {
+			this.options.timeout = result[1];
+		    }
+		}.bind(this));
+          
+            var slideHeight = 0; // default
+            var slideWidth = 0; // default
+            this.currentSlide = 0;
+            
+            // If the holder isnt valid then stop here
+            if(!container) return false;
+            
+            container.setStyle({position: 'relative'});
+            this.slides = container.childElements();
+	    this.thumbs = thumbs;
+            this.totalSlides = this.slides.size();
+	    this.active = this.slides.collect(function() { return true; });
+            
+            // Work out the dimensions of the biggest slide, also hides all but the first slide
+            var first = true;
+            this.slides.each(function(el) {
+		    var dimensions = el.getDimensions();
+    
+		    if(dimensions.height > slideHeight) slideHeight = dimensions.height;
+		    if(dimensions.width > slideWidth) slideWidth = dimensions.width;
+		    
+		    if(!first) {
+			el.setStyle({display: 'none'});
+		    }
+		    first = false;
+		    el.setStyle({position: 'absolute'});
+		});
+            
+            // Automatically resize container?
+            if(this.options.containerResize) {
+                container.setStyle({height: slideHeight+'px', width: slideWidth+'px'});
+            }
+            
+            if(this.totalSlides > 1) {
+                this.executer = new PeriodicalExecuter(this.nextSlide.bind(this), (this.options.timeout/1000));
+
+		this.thumbs.each(function(el) {
+			Event.observe(el, 'mouseover', this.onThumbEvent.bind(this));
+			Event.observe(el, 'mouseout', this.onThumbEvent.bind(this));
+		    }.bind(this));
+            }
+	},
+
+	onThumbEvent: function(event)
+	{
+	    var nextSlide = 0;
+	    var target = event.target;
+
+	    this.thumbs.find(function(el) {
+		    if (el == event.target || event.target.childOf(el))
+			return true;
+		    nextSlide++;
+		});
+
+	    if (event.type == 'mouseover') {
+		this.executer.stop();
+		this.setSlide(nextSlide, true);
+	    }
+
+	    if (event.type == 'mouseout') {
+		this.executer = new PeriodicalExecuter(this.nextSlide.bind(this), (this.options.timeout/1000));
+	    }
+	},
+
+	setSlide: function(nextSlide, instant)
+	{
+            if(this.options.fx == 'fade' && !instant) {
+                var currentOpts = {from: 1.0, to: 0.0, duration: (this.options.speed/1000), afterFinish: function(effect) { effect.element.setStyle({display: 'none'}); }};
+                var nextOpts = {from: 0.0, to: 1.0, duration: (this.options.speed/1000), afterSetup: function(effect) { effect.element.setStyle({display: 'block'});   }};
+		
+                if(this.options.sync) {
+                    // Run both animations in parallel.
+                    Object.extend(currentOpts, {sync: true});  
+                    Object.extend(nextOpts, {sync: true}); 
+                    
+                    new Effect.Parallel([
+					 new Effect.Opacity(this.slides[this.currentSlide], currentOpts),
+					 new Effect.Opacity(this.slides[nextSlide], nextOpts)
+					 ]);
+                } else {
+                    // Run in and out animation after one another.
+                    Object.extend(currentOpts, {queue: 'end'});  
+                    Object.extend(nextOpts, {queue: 'end'}); 
+                    
+                    new Effect.Opacity(this.slides[this.currentSlide], currentOpts);
+                    new Effect.Opacity(this.slides[nextSlide], nextOpts);
+                }
+            } else {
+                // If no fx has been set then just do a simple swap
+                this.slides[this.currentSlide].setStyle({display: 'none'});
+                this.slides[nextSlide].setStyle({display: 'block', opacity: 1.0});
+            }
+
+	    this.thumbs[this.currentSlide].removeClassName('sel')
+            this.thumbs[nextSlide].addClassName('sel');
+
+	    this.currentSlide = nextSlide;
+	},
+        
+        nextSlide: function()
+        {
+	    var nextSlide = this.currentSlide + 1;
+	    while (!this.active[nextSlide] && nextSlide != this.currentSlide) {
+		nextSlide++;
+		if(nextSlide >= this.totalSlides) nextSlide = 0;
+	    }
+
+	    if (nextSlide == this.currentSlide)
+		return;
+        
+	    this.setSlide(nextSlide);
+        },
+
+	setVariants: function(string)
+	{
+	    var count = 0;
+	    var variants = string.split(' ');
+	    this.active = this.thumbs.collect(function(li) {
+		    if (li.getAttribute('data-variants').split(' ').intersect(variants).length > 0) {
+			li.addClassName('active');
+			count++;
+			return true;
+		    } else {
+			li.removeClassName('active');
+			return false;
+		    }			
+		});
+
+	    if (count == 0) {
+		this.active = this.thumbs.collect(function(li) {
+			li.addClassName('active');
+			return true;
+		    });
+	    }
+
+	    this.nextSlide();
+	}
+    });
+
+/*--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------*/
+var cycler = null;
+Event.observe(window, "load", function() {
+        cycler = new Protocycle($('main_imgs'), $$('ul.thumbs li'));
+    });
+    

@@ -2,7 +2,7 @@ class Variant < ActiveRecord::Base
   belongs_to :product
   has_and_belongs_to_many :properties, :after_remove => :destroy_after_remove   
   has_and_belongs_to_many :price_groups, :after_remove => :destroy_after_remove
-#  has_and_belongs_to_many :product_images
+  has_and_belongs_to_many :product_images
   
   has_many :order_item_variants
   
@@ -16,6 +16,7 @@ class Variant < ActiveRecord::Base
   end
 
   def set_images(images)
+    images = [images].flatten.compact
     orig = product_images.to_a.dup
     images.delete_if do |img|
       pi = orig.find { |pi| pi.supplier_ref == img.id }
@@ -23,9 +24,10 @@ class Variant < ActiveRecord::Base
     end
 
     images.each do |img|
-      product_images.create(:supplier_ref => img.id,
-                            :image => img.get,
-                            :product => product)
+      pi = product_images.create(:supplier_ref => img.id,
+                                 :image => img.get,
+                                 :product => product)
+      pi.image.save
     end
 
     orig.each do |pi|

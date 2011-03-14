@@ -245,3 +245,33 @@ div#share {
   float: right;
   margin: 0.5em;
 }
+
+ul.thumbs {
+  list-style: none;
+}
+
+ul#main_imgs {
+  list-style: none;
+  display: block;
+  position: relative;
+  width: 320px;
+  height: 320px;
+}
+
+ul#main_imgs li {
+    display: block;
+    position: absolute;
+}
+
+ul.thumbs li {
+  display: inline-block;
+  border: thin solid white;
+}
+
+ul.thumbs li.active {
+  border: thin solid #DDD;
+}
+
+ul.thumbs li.sel {
+  border: thin solid yellow;
+}

@@ -27,7 +27,7 @@
                 - for sub in [supplier] + supplier.children
                   = submit_tag("#{sub['name']}", :onclick => "return confirm('Are you sure you want to create a PO ?')")                 
             - else
-              - purchase_lock = !(params[:override] and allowed?('Super')) and purchase.locked(allowed?('Super'))
+              - purchase_lock = !(params[:override] and allowed?('Super')) #and purchase.locked(allowed?('Super'))
               %h2
                 Purchase for
                 = purchase.supplier.name

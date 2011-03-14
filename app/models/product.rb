@@ -526,7 +526,7 @@ class Product < ActiveRecord::Base
   
   has_many :page_products
 
-#  has_many :product_images
+  has_many :product_images
     
   record_images({ "thumb" => { :ext => 'jpg', :size => "120x120", :quality => 80 },
                   "main" => { :ext => 'jpg', :size => "400x320", :quality => 90 },
@@ -633,11 +633,11 @@ class Product < ActiveRecord::Base
     used = []
     @property_groups = variant_hash.collect do |var, props|
       props.collect { |p| p.name }.uniq.sort
-    end.uniq.sort { |l,r| r.size <=> l.size }.collect do |names|
+    end.uniq.sort_by { |e| e.size }.collect do |names|
       ret = names.delete_if { |n| used.index(n) }
       used += ret
       ret.empty? ? nil : ret
-    end.compact  
+    end.compact.sort
   end
   
   def common_properties
@@ -661,11 +661,13 @@ class Product < ActiveRecord::Base
 
   def variant_properties   
     property_groups.collect do |names|
-      [names.sort, variants.collect do |variant|
-        names.collect do |name|
-          variant.properties.to_a.find { |p| p.name == name }
-        end
-      end.uniq.sort_by { |n| v = n.compact.first; v ? v.translate : '' }]
+      [names, variants.collect do |variant|
+        [names.collect do |name|
+           variant.properties.to_a.find { |p| p.name == name }
+         end, variant]
+       end.group_by(&:first).collect do |properties, list|
+         [properties, list.collect { |e| e.last }]
+       end.sort_by { |n, vars| v = n.compact.first; v ? v.translate : '' }]
     end.sort_by { |n| n.first }
   end
   
@@ -740,6 +742,7 @@ class Product < ActiveRecord::Base
   end
 
   def set_images(images)
+    images = [images].flatten.compact
     orig = product_images.to_a.find_all { |pi| pi.variants.empty? }
     images.delete_if do |img|
       pi = orig.find { |pi| pi.supplier_ref == img.id }
@@ -747,8 +750,9 @@ class Product < ActiveRecord::Base
     end
 
     images.each do |img|
-      product_images.create(:supplier_ref => img.id,
-                            :image => img.get)
+      pi = product_images.create(:supplier_ref => img.id,
+                                 :image => img.get)
+      pi.image.save
     end
 
     orig.each do |pi|

@@ -678,6 +678,7 @@ private
 public
   
   def status
+    Admin::OrdersController
     apply_calendar_header if session[:user_id]
 #    @javascripts = ['calendar_date_select/calendar_date_select.js']
     
