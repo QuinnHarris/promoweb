@@ -132,6 +132,8 @@ class PhoneController < ActionController::Base
   end
 
   def polycom_idle
+    user = User.find_by_login(params[:id])
+
     @new_orders = Order.count(:include => :customer,
                 :conditions => "NOT orders.closed AND orders.user_id IS NULL AND customers.person_name != ''")
 
@@ -142,7 +144,7 @@ class PhoneController < ActionController::Base
         "(SELECT id, max(created_at) FROM " + 
           "((SELECT orders.id, order_tasks.created_at " +
               "FROM order_tasks JOIN orders ON order_tasks.order_id = orders.id " +
-              "WHERE NOT orders.closed AND orders.user_id IS NOT NULL AND order_tasks.type NOT IN ('VisitArtworkOrderTask')) " +
+              "WHERE NOT orders.closed AND orders.user_id = #{user.id} AND order_tasks.type NOT IN ('VisitArtworkOrderTask')) " +
           "UNION (SELECT orders.id, order_item_tasks.created_at " +
                    "FROM order_item_tasks JOIN order_items ON order_item_tasks.order_item_id = order_items.id JOIN orders ON order_items.order_id = orders.id " +
                    "WHERE NOT orders.closed AND orders.user_id IS NOT NULL)) AS sub GROUP BY id)")
