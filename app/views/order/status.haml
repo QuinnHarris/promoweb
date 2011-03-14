@@ -30,7 +30,11 @@
         - class_name += " admin" if td.admin
         %td{ :class => class_name, :rowspan => td.rows, :colspan => (td.cols * @cols_mult).to_i }
           - if td.is_a?(HeaderItemTask)
-            = link_to td.item.product.name + '<br/>' + image_tag(td.item.product.image_path_relative('thumb'), :alt => "#{td.item.product.name} Thumbnail"), { :controller => '/products', :action => 'main', :id => td.item.product }
+            - if td.item.product.product_images.empty?
+              - thumb_path = td.item.product.image_path_relative('thumb')
+            - else
+              - thumb_path = td.item.active_images.first.image.url(:thumb) 
+            = link_to td.item.product.name + '<br/>' + image_tag(thumb_path, :alt => "#{td.item.product.name} Thumbnail"), { :controller => '/products', :action => 'main', :id => td.item.product }
             %br
             Qty:
             = td.item.quantity
