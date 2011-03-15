@@ -11,15 +11,17 @@
     - unless @second_phase
       = ak.text_area :comment, :rows => 4
       %br
-      = submit_tag('Acknowledge Artwork')
+      - unless params[:reject]
+        = submit_tag('Accept Artwork')
       = submit_tag('Reject Artwork')
     - else
       - if @order_task.comment and !@order_task.comment.empty?
         %p= "Customer Comment: #{@order_task.comment}"
         = ak.hidden_field :comment, :value => @order_task.comment
-      = submit_tag('Acknowledge Artwork Confirm')
+      %p Please click below to accept this artwork and proceed with your order.
+      = submit_tag('Accept Artwork Confirm')
       - if @user
-        = submit_tag('Acknowledge Artwork (Without Email)')
+        = submit_tag('Accept Artwork (Without Email)')
 
 - elsif @order.task_completed?(ArtAcknowledgeOrderTask)
   %h3

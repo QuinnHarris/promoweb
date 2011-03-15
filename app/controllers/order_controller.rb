@@ -937,15 +937,16 @@ public
   def_tasked_action :acknowledge_artwork, ArtAcknowledgeOrderTask do
     @customer = @order.customer   
     @order_task = OrderTask.new(params[:order_task])
+    @second_phase = true if params[:accept]
 
     if params[:commit]
       case params[:commit]
-        when 'Acknowledge Artwork'
+        when 'Accept Artwork'
           @second_phase = true
           next
-        when 'Acknowledge Artwork (Without Email)'
+        when 'Accept Artwork (Without Email)'
           task_complete({ :data => { :email_sent => false, :customer_comment => @order_task.comment } }, ArtAcknowledgeOrderTask)
-        when 'Acknowledge Artwork Confirm'
+        when 'Accept Artwork Confirm'
           task_complete({ :data => { :customer_comment => @order_task.comment }}, ArtAcknowledgeOrderTask)
           redirect_to :action => :status, :order_id => @order
         when 'Reject Artwork'

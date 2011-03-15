@@ -17,25 +17,26 @@ class OrderItemDecoration < ActiveRecord::Base
   end
   
   # Dimention proxy
-  @@dim_reg = /(\d+\.\d{1,4})x(\d+\.\d{1,4})/
+  @@dim_reg = /(?:(\d+\.\d{1,4})x(\d+\.\d{1,4}))|(?:(\d+\.\d{1,4})dia)/
   def has_dimension?
     return true if decoration_id
     @@dim_reg === our_notes
   end
 
-  def width
-    if @@dim_reg === our_notes
-      return Float($1)
-    end
+  def diameter
+    @@dim_reg === our_notes
+    return Float($3) unless $3.nil?
+    return nil unless decoration_id
+    decoration.diameter
+  end
 
+  def width
+    return Float($1) if @@dim_reg === our_notes
     decoration.width if decoration_id
   end
 
   def height
-    if @@dim_reg === our_notes
-      return Float($2)
-    end
-  
+    return Float($2) if @@dim_reg === our_notes  
     decoration.height if decoration_id
   end
 

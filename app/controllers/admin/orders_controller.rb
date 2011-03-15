@@ -47,7 +47,6 @@ class RGhost::Document
   attr_reader :paper
 end
 
-
 class Admin::OrdersController < Admin::BaseController
   include ::OrderController::OrderModule
   before_filter :setup_order, :except => [:set]
@@ -444,8 +443,13 @@ class Admin::OrdersController < Admin::BaseController
     imprint_file = artwork.art.path
 
     oid = artwork.group.order_item_decorations.first
-    imprint_width = oid.width * 72
-    imprint_height = oid.height * 72
+    if diameter = oid.diameter
+      diameter *= 72
+      imprint_width= imprint_height = diameter
+    else
+      imprint_width = oid.width * 72
+      imprint_height = oid.height * 72
+    end
 
     product_name = oid.order_item.product.name
     if oid.order_item.product.product_images.empty?
@@ -510,6 +514,7 @@ class Admin::OrdersController < Admin::BaseController
       tag :subtitle_font, :name => 'Times', :size => 12
       tag :bold_font, :name => 'Times-Bold', :size => 14
       tag :label_font, :name => 'Helvetica', :size => 10
+      tag :action_font, :name => 'Helvetica-Bold', :size => 18, :color => :blue
     end
 
     # Title
@@ -519,7 +524,7 @@ class Admin::OrdersController < Admin::BaseController
     pos_y = page_height - page_margin - 36 - 12
     info_list = ["Customer: #{company_name}",
      "Product: #{product_name}",
-     oid.decoration && "Location: #{oid.decoration.location}",
+     oid.decoration && (oid.decoration.location.blank? ? nil : "Location: #{oid.decoration.location}"),
      @order.user && "Rep: #{@order.user.name} (#{@order.user.email})"
     ].compact
 
@@ -569,15 +574,20 @@ class Admin::OrdersController < Admin::BaseController
       g.stroke
     end
 
-    doc.graphic do |g|
-      g.line_width 0.25
-      g.border :color => :yellow
-      g.moveto :x => center_x - imprint_width/2, :y => center_y - imprint_height/2
-      g.rlineto :x => imprint_width, :y => 0
-      g.rlineto :x => 0, :y => imprint_height
-      g.rlineto :x => -imprint_width, :y => 0
-      g.rlineto :x => 0, :y => -imprint_height
-      g.stroke
+    if diameter
+      doc.circle :x => center_x, :y => center_y, :radius => diameter / 2.0, :content => {:fill => false}, :border => { :color => :yellow, :width => 0.25 }
+    else
+      doc.graphic do |g|
+
+          g.line_width 0.25
+          g.border :color => :yellow
+          g.moveto :x => center_x - imprint_width/2, :y => center_y - imprint_height/2
+          g.rlineto :x => imprint_width, :y => 0
+          g.rlineto :x => 0, :y => imprint_height
+          g.rlineto :x => -imprint_width, :y => 0
+          g.rlineto :x => 0, :y => -imprint_height
+        g.stroke
+      end
     end
 
     # Crop mark Label
@@ -610,6 +620,10 @@ class Admin::OrdersController < Admin::BaseController
     # Insert eps
     doc.image imprint_file, :x => (center_x - imprint_width/2 + offset_x)/scale, :y => (center_y - imprint_height/2 + offset_y)/scale
 
+    # Links
+    url_prefix = "http://www.mountainofpromos.com/order/acknowledge_artwork?auth=#{@order.customer.uuid}&order_id=#{@order.id}&"
+    doc.text_link "Accept", :url => url_prefix + "accept=true", :color => :blue, :x => center_x- 100, :y => page_margin + 48, :tag => :action_font
+    doc.text_link "Reject", :url => url_prefix + "reject=true", :color => :blue, :x => center_x + 50, :y => page_margin + 48, :tag => :action_font
     
     # Write File
     dst_name = artwork.filename_pdf
