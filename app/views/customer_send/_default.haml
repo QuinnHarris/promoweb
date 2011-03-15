@@ -12,8 +12,12 @@
 %h2 Order Information
 %table.info
   %tr
-    %th Delivery Date:
-    %td= @order.delivery_date
+    %th Required Date:
+    %td
+      - if @order.delivery_date_not_important
+        Not Important
+      - else
+        = @order.delivery_date || "Not Specified"
   %tr
     %th Event Nature:
     %td= @order.event_nature
