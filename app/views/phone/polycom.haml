@@ -1,9 +1,9 @@
 !!! Strict
 %html
   %body
-    = @customer.company_name
+    &= @customer.company_name
     %br
-    = @customer.person_name
+    &= @customer.person_name
     %br
     %a{ :href => "Tel://#{@customer.phone.gsub(/[^0-9]/,'')[0..9]}" }= @customer.phone
     - orders = @customer.orders.find(:all, :conditions => 'NOT closed').collect { |o| o.id }
