@@ -585,7 +585,7 @@ class Product < ActiveRecord::Base
   end
 
   def web_id
-    "#{id}-#{URI.encode(name.gsub(/ +|\//, '_').gsub(/[^A-Z0-9_]/i,''))}"
+    "#{id}-#{URI.encode(name.gsub(/ +|\//, '-').gsub(/[^A-Z0-9_]/i,'-'))}"
   end
        
   def tag_names
