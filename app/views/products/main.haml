@@ -83,12 +83,11 @@
               %dl
                 %dt Normal:
                 %dd
-                  = [@product.lead_time_normal_min, @product.lead_time_normal_max].uniq.join(' to ')
-                  days
+                  = [@product.lead_time_normal_min, @product.lead_time_normal_max].uniq.collect { |d| format_leed_time(d) }.join(' to ')
                 - if @product.lead_time_rush
                   %dt Rush:
                   %dd
-                    = @product.lead_time_rush.to_s + (@product.lead_time_rush == 1 ? ' day' : ' days')
+                    = format_leed_time(@product.lead_time_rush)
                     = @product.lead_time_rush_charge ? '(Additional Charges)' : '(No Charge, Some Restrictions)'
 
           :javascript
@@ -253,7 +252,7 @@
               input.name = 'dispos';
               document.productform.appendChild(input);
             Add to
-            - if @order.task_completed?(AcknowledgeOrderTask)
+            - if @order && @order.task_completed?(AcknowledgeOrderTask)
               (Not Current Order: Acknowledged)
             - else
               = submit_tag "Current Order", :onclick => "if (order_submit(document.productform, false)) { document.productform.dispos.value = 'exist'; document.productform.submit(); }"

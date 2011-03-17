@@ -38,6 +38,15 @@ module ProductsHelper
     '</ul>'
     
   end
+
+  def format_leed_time(days)
+    if days % 5 == 0
+      weeks = days / 5
+      "#{weeks} week#{weeks > 1 ? 's' : ''}"
+    else
+      "#{days} day#{days > 1 ? 's' : ''}"
+    end
+  end
   
   def setup_main
     # Properties
