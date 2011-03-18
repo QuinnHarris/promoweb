@@ -53,13 +53,13 @@
                 %span{ :class => cycle('odd', 'even') } Quantity:
                 %span{ :class => cycle('odd', 'even') } Imprint:
               %dd
-                %ul
+                %ul#variants
                   - for oiv in purchase_lock ? item.order_item_variants.find_all { |v| v.quantity != 0 } : OrderItemVariantMeta.fetch(item)
                     %li
                       - reset_cycle
                       - for name in names
                         %span{ :class => cycle('odd', 'even') }<
-                        = (oiv.variant && (p = oiv.variant.properties.to_a.find { |p| p.name == name })) ? p.value : 'Not Specified'
+                        %a{ :href => '#', :onclick => "variant_change(this);" }= (oiv.variant && (p = oiv.variant.properties.to_a.find { |p| p.name == name })) ? p.value : 'Not Specified'
                       %span{ :class => cycle('odd', 'even') }<
                         = text_field_tag "#{oiv.class}-#{oiv.id}-quantity", oiv.quantity, :class => 'num shipset', :readonly => (@price_lock || purchase_lock)
                       %span{ :class => cycle('odd', 'even') }<

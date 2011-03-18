@@ -53,20 +53,13 @@ function profit_margin_calculate(cells, index, price, cost)
 	cells[index+1].innerHTML = str + '%';
 }
 
-function order_item_quantity(tbody)
+function order_item_quantity(node)
 {
-    var quantity = 0;
-
-    if (tbody.rows[1].cells.length == 1) {
-	var inputs = tbody.rows[1].getElementsByTagName('input')
-	    for (var i = 0; i < inputs.length; i++) {
-		if (inputs[i].hasClassName('num'))
-		    quantity += parseInt(inputs[i].value);
-	    }
-    }
-
-    return quantity;
+    return $A(node.getElementsByClassName('shipset')).inject(0, function(acc, inp) {
+	    return acc + parseInt(inp.value);
+	});
 }
+
 
 var table_mapping = { 1: 0, 2: 1, 4: 2, 5: 3 };
 function order_item_row_vals(tr, update)
@@ -470,6 +463,42 @@ function calculate_all()
   var div = generals[generals.length - 1];
   var table = div.getElementsByTagName('table')[0];
   order_entry_calculate(table, total_price, total_cost);
+}
+
+
+function variant_change(target)
+{
+    var ul = $('variants');
+    var quantity = order_item_quantity(ul);
+
+    if (!confirm('Set ' + quantity + ' units for ' + target.text + ' only'))
+	return;
+    
+    $A(ul.getElementsByClassName('shipset')).each(function(inp) {
+	    inp.value = '0';
+	});
+
+    var imprint = $A(ul.getElementsByClassName('imprint')).inject([], function(acc, inp) {
+	    var value = inp.value;
+	    inp.value = '';
+	    return value.empty() ? acc : acc.compact().concat([value]);
+	}).join(', ');
+
+    var quant_node = target.parentNode.getElementsByClassName('shipset')[0];
+    var oldValue = parseInt(quant_node.value);
+    quant_node.value = quantity;
+    target.parentNode.getElementsByClassName('imprint')[0].value = imprint;
+
+    quant_node.addClassName("sending");
+    new Ajax.Request('/admin/orders/variant_change', {
+	    parameters:   {
+		"id" : quant_node.id,
+		    "oldValue" : oldValue,
+		    "newValue" : quantity,
+		    "imprint" : imprint
+		    },
+		onComplete: request_complete
+		});
 }
 
 function shipping_change(target)

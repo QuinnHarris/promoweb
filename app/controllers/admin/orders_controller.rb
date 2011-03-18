@@ -1016,60 +1016,37 @@ public
     end
   end
 
-  def set
-    klass_name, id, attr, prop = params[:id].split('-')
-  
-    klass = get_klass(klass_name)
+  def variant_change
     Order.transaction do
-      obj = klass.find(id)
-      raise "Could find object" unless obj
-
-      # dbValue
-      dbValue = obj.send(attr)
-      dbValue = dbValue.send(prop) if prop
+      obj = set_common
+      return unless obj
+      obj.imprint_colors = params[:imprint]
+      obj.save!
       
-      # dbKlass
-      if reflection = klass.reflections[attr.to_sym]
-        dbKlass = reflection.klass
-      elsif column = obj.column_for_attribute(attr)
-        dbKlass = column.klass
-      else
-        raise "Unkown Class"
-      end
-      dbKlass = Money if dbKlass == PricePair and prop
-      logger.info("dbKlass: #{dbKlass.inspect} #{dbValue.inspect}")
+      quantity = obj.order_item.order_item_variants.collect do |oiv|
+        next if oiv == obj
+        oiv.destroy
+        oiv.quantity
+      end.compact.sum
 
-      # oldValue
-      oldValue = params[:oldValue] == 'NaN' ? nil : dbKlass.new(params[:oldValue])
-      
-      # check old value
-      if (dbValue != oldValue)
-        str = "DB: #{oldValue.inspect} != #{dbValue.inspect}"
+      if quantity != Integer(params[:newValue])
+        str = "Quantity mismatch: #{quantity} != #{Integer(params[:newValue])}"
         logger.error(str)
         render :inline => str
-        return false
       end
-      
-      # newValue
-      if params[:newValue] == 'NaN'
-        newValue = nil        
-      else
-        newValue = dbKlass.new(params[:newValue])
-      end
-      
-      # set value
-      if prop
-        attr_obj = obj.send(attr)
-        attr_obj.send("#{prop}=", newValue)
-        obj.send("#{attr}=", attr_obj)
-      else
-        obj.send("#{attr}=", newValue)
-      end
-      
+    end
+
+    render :inline => "{}"
+  end
+
+  def set
+    Order.transaction do
+      obj = set_common
+      return unless obj
+
       (obj.respond_to?(:to_destroy?) and obj.to_destroy?) ? obj.destroy : obj.save!
-#      obj.save!
-      
-      if obj.respond_to?(:normal_h) and %w(quantity count).include?(attr)
+            
+      if obj.respond_to?(:normal_h) and %w(quantity count).include?(@attr)
 #      if (klass == OrderItemVariant and attr == "quantity") or
 #         (klass == OrderItemDecoration and attr == "count")
         ret = obj.normal_h.to_json
@@ -1079,6 +1056,58 @@ public
         render :inline => "{}"
       end
     end    
+  end
+
+  def set_common
+    klass_name, id, @attr, prop = params[:id].split('-')
+    klass = get_klass(klass_name)
+
+    obj = klass.find(id)
+    raise "Could find object" unless obj
+    
+    # dbValue
+    dbValue = obj.send(@attr)
+    dbValue = dbValue.send(prop) if prop
+    
+    # dbKlass
+    if reflection = klass.reflections[@attr.to_sym]
+      dbKlass = reflection.klass
+    elsif column = obj.column_for_attribute(@attr)
+      dbKlass = column.klass
+    else
+      raise "Unkown Class"
+    end
+    dbKlass = Money if dbKlass == PricePair and prop
+    logger.info("dbKlass: #{dbKlass.inspect} #{dbValue.inspect}")
+    
+    # oldValue
+    oldValue = params[:oldValue] == 'NaN' ? nil : dbKlass.new(params[:oldValue])
+    
+    # check old value
+    if (dbValue != oldValue)
+      str = "Value mismatch: #{oldValue.inspect} != #{dbValue.inspect}"
+      logger.error(str)
+      render :inline => str
+      return false
+    end
+    
+    # newValue
+    if params[:newValue] == 'NaN'
+      newValue = nil        
+    else
+      newValue = dbKlass.new(params[:newValue])
+    end
+    
+    # set value
+    if prop
+      attr_obj = obj.send(@attr)
+      attr_obj.send("#{prop}=", newValue)
+      obj.send("#{@attr}=", attr_obj)
+    else
+      obj.send("#{@attr}=", newValue)
+    end
+
+    obj
   end
   
   
