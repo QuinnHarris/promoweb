@@ -1,9 +1,12 @@
 = render :partial => 'menu'
-- unless @user
-  %p
-    Review the
-    = link_to "Artwork Requirements", :controller => :static, :action => :artwork
-    page for information on the type of artwork files to upload.
+
+%p High quality artwork will be necissary to produce any custom imprinted item.  We will make sure what you provide is acceptable or re create your artwork if necissary.
+%p If your logo was created by a graphics professional, they most likely either provided you with or will have an acceptable artwork file.
+%p Acceptable artwork will typically be in an EPS, PDF, PS or SVG format and can be represented at any size without any loss of clarity.  There is no value in converting a PNG, JPEG or other raster image into another format.
+%p
+  For more information refer to the 
+  = link_to "Artwork Requirements", :controller => :static, :action => :artwork
+  page.
 
 = error_messages_for :artwork
 
@@ -34,6 +37,7 @@
       %tr
         %th Notes:
         %td= artwork.text_area :customer_notes, 'rows' => 3
+        %td Please specify the name of any fonts used or acceptable substitutes if you are uploading a PNG, JPEG or other raster image.
     = submit_tag 'Add', :id => 'add-button'
 
 #progress-bar{ :style => "display: none;" }

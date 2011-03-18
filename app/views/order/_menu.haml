@@ -23,6 +23,6 @@
     = li_to_task 'Payment', PaymentInfoOrderTask
     - if @order.task_ready_completed?(ReviewOrderTask)
       = li_to_task "Review", ReviewOrderTask
-    - if allowed?('Super')
+    - if @user
       = li_to "Emails", { :controller => '/admin/orders', :action => :email_list }
       = li_to "Access", { :controller => '/admin/orders', :action => :paths }
