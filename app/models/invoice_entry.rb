@@ -24,7 +24,7 @@ class InvoiceEntry < ActiveRecord::Base
       if orig_price.zero?
         total_quantity = "Item Removed "
       else
-        total_quantity = "(New Price: #{total_quantity}<strong>#{orig_price.to_perty})</strong> &ndash; (Previous invoice total: <strong>#{predicesor.orig_price.to_perty})</strong> = <strong>#{total_price.to_perty}</strong>"
+        total_quantity = "(New Price: <strong>#{orig_price.to_perty})</strong> &ndash; (Previous invoice total: <strong>#{predicesor.orig_price.to_perty})</strong> = <strong>#{total_price.to_perty}</strong>"
       end
     end
     
