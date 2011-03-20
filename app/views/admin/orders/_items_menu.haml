@@ -1,4 +1,4 @@
 .tabs.nav
   %ul
-    = li_to "Edit", { :controller => '/admin/orders', :action => :items_edit, :order_id => @order }, 'admin'
+    = li_to "Edit", { :controller => '/admin/orders', :action => :items_edit, :order_id => @order }
     = li_to "Customer View", { :controller => '/order', :action => :items, :order_id => @order }

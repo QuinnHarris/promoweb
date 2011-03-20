@@ -198,7 +198,7 @@ public
         if order.task_completed?(AcknowledgeOrderTask)
           @message = "The current order is in production and can't be changed.  If you add this product a new order will be created."
         elsif order.task_completed?(RevisedOrderTask)
-          @message = "Current order is ready for final acknowledgement from the customer.  If you add this product the whole order will need to be reviewed again by Mountain Xpress Promotions."
+          @message = "Current order is ready for final acknowledgement.  If you another product the whole order will need to be reviewed again by Mountain Xpress Promotions."
         end
       end
   

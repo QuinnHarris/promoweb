@@ -26,6 +26,34 @@ module Scruffy::Layers
   end
 end
 
+# Kludge to fix "viewBox"
+module Scruffy::Renderers
+  class Base
+    # Renders the graph and all components.
+    def render(options = {})
+      options[:graph_id]    ||= 'scruffy_graph'
+      options[:complexity]  ||= (global_complexity || :normal)
+
+      # Allow subclasses to muck with components prior to renders.
+      rendertime_renderer = self.clone
+      rendertime_renderer.instance_eval { before_render if respond_to?(:before_render) }
+
+      svg = Builder::XmlMarkup.new(:indent => 2)
+      svg.instruct!
+      svg.declare!(:DOCTYPE, :svg, :PUBLIC, "-//W3C//DTD SVG 1.1//EN", "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd")
+      svg.svg(:xmlns => "http://www.w3.org/2000/svg", 'xmlns:xlink' => "http://www.w3.org/1999/xlink") {
+        svg.g(:id => options[:graph_id]) {
+          rendertime_renderer.components.each do |component|
+            component.render(svg, 
+                             bounds_for( options[:size], component.position, component.size ), 
+                             options)
+          end
+        }
+      }
+      svg.target!
+    end
+  end
+end
 
 module Scruffy
   module Components

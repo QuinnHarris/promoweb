@@ -102,9 +102,9 @@ class OrderItem < ActiveRecord::Base
  
   
   # Calculated price pair for price group given quantity
-  def normal_price
+  def normal_price(blank = false)
     pricing = price_group.pricing(quantity)
-    if pricing.pair_at
+    pair = if pricing.pair_at
       if pricing.pair_at.nil?
         # Above Maximum
         pricing.pair_at(pricing.breaks.last.minimum-1)
@@ -114,8 +114,17 @@ class OrderItem < ActiveRecord::Base
       end
     else
       # Below Minimum
-      pricing.pair_at(pricing.breaks.first.minimum)
+      if blank
+        prices = PriceCollection.new(product)
+        prices.adjust_to_profit!
+        price = prices.price_range(prices.minimums.first).max
+        PricePair.new(price, Money.new(0))
+      else
+        pricing.pair_at(pricing.breaks.first.minimum)
+      end
     end
+    pair.fixed = Money.new(0) if blank
+    pair
   end
     
   def normal_cost

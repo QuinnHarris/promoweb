@@ -114,7 +114,7 @@ div#leftbar div li a {
 }
 
 a { text-decoration: none;}
-a.thumb { text-align: center; }
+a.thumb { text-align: center; font-size: 0.8em; }
 a.thumb span { display: block; color: black; }
 a.thumb span.price { font-size: 0.9em; color: #600000; }
 a.thumb:hover span { text-decoration: underline; }
@@ -133,7 +133,7 @@ h1#path {
   background-color: #6d5771;
   background-image: url('/images/grads/title.png');
   background-repeat: repeat-y;
-  font-size: 1.2em;
+  font-size: 1.0em;
   margin: 0 0 0.5em 0;
   padding: 0.2em 0 0.2em 0.5em;
   color: black;
@@ -273,7 +273,7 @@ div.tabs ul li.active {
 div.tabs ul li a {
   padding: 0 0.5em 0 0.5em;
   color: black;
-  font-size: 1.2em;
+  font-size: 1.0em;
   white-space:nowrap;
 }
 

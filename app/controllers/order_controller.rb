@@ -225,11 +225,11 @@ public
     Customer.transaction do
       @customer = @order.customer if @order
 
-      if @user and %w(order customer).include?(params[:dispos])
+      if @user and %w(order customer).include?(params[:disposition])
         @order = nil
-        @customer = nil if params[:dispos] == 'customer'
-        logger.info("Adding as new #{params[:dispos]}")
-      elsif @order and @order.task_completed?(AcknowledgeOrderTask) and (params[:dispos] != 'exist')
+        @customer = nil if params[:disposition] == 'customer'
+        logger.info("Adding as new #{params[:disposion]}")
+      elsif @order and @order.task_completed?(AcknowledgeOrderTask) and (params[:disposion] != 'exist')
         order = @customer.orders.find(:first)
         if @order.id != order.id and !order.task_completed?(AcknowledgeOrderTask)
           @order = order
@@ -264,6 +264,11 @@ public
         :price_group_id => price_group.id
       }
 
+      if technique.id == 1
+        blank = true
+        technique = nil
+      end
+
       technique_params = {
           :technique_id => technique.id,
           :count => unit_count,
@@ -278,7 +283,8 @@ public
         oiv.save!
         
         # Reset price with new quantity
-        item.price = item.normal_price || PricePair.new(Money.new(0),Money.new(0))
+        item.price = item.normal_price(blank) || PricePair.new(Money.new(0),Money.new(0))
+        item.sample_requested = (params[:disposition] == 'sample')
         item.save!
       else
         # Create Order Item
@@ -288,7 +294,8 @@ public
         item.order_item_variants.create(:variant => variant,
                                         :quantity => quantity)
 
-        item.price = item.normal_price || PricePair.new(Money.new(0),Money.new(0))
+        item.price = item.normal_price(blank) || PricePair.new(Money.new(0),Money.new(0))
+        item.sample_requested = (params[:disposition] == 'sample')
         item.save!
         
         if technique
@@ -300,7 +307,7 @@ public
       end
       
       # Don't change task if item added to existing order even if order acknowledged
-      unless (@order.task_completed?(AcknowledgeOrderTask) or @order.task_completed?(PaymentNoneOrderTask)) and (params[:dispos] == 'exist') and @permissions.include?('Super')
+      unless (@order.task_completed?(AcknowledgeOrderTask) or @order.task_completed?(PaymentNoneOrderTask)) and (params[:disposion] == 'exist') and @permissions.include?('Super')
         task_complete({ :data => { :product_id => product.id, :item_id => item.id }},
                       AddItemOrderTask, [AddItemOrderTask, RequestOrderTask, RevisedOrderTask, QuoteOrderTask])
       end
@@ -309,8 +316,12 @@ public
     # Wait until all has succeeded to write session
     set_order_id(@order.id)
 
-    if @user and params[:dispos] == 'customer'
-      redirect_to :action => :contact, :order_id => @order
+    if @user
+      if params[:disposion] == 'customer'
+        redirect_to :action => :contact, :order_id => @order
+      else
+        redirect_to :controller => "/admin/orders", :action => :items_edit, :order_id => @order
+      end
     else
       redirect_to :action => :items, :order_id => @order, :task => 'AddItemOrder'
     end
@@ -327,18 +338,18 @@ public
     
     @javascripts = ['quote.js', 'autosubmit.js']   
     
-    if params[:comments]
+    if params[:order_items]
       OrderItem.transaction do      
         modified = {}
-        params[:comments].each do |id, value|
+        params[:order_items].each do |id, hash|
           item = @order.items.to_a.find { |i| i.id.to_i == id.to_i }
           raise "Item row not found order_id: #{@order.id} id: #{id}" unless item
-          if item.customer_notes != value
-            item.customer_notes = value
+          item.update_attributes(hash)
+          if item.changed?
+            modified.merge!({ item.id => hash })
             item.save!
-            modified.merge!({ item.id => value })
           end
-        end if params[:comments]
+        end
         
         # Don't revise order on comment changes
         unless @order.task_completed?(ItemNotesOrderTask) or modified.empty?

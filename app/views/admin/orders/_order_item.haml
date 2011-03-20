@@ -1,27 +1,17 @@
 .item
-  .block.thumb
-    - if item.product.product_images.empty?
-      - thumb_path = item.product.image_path_relative('thumb')
-    - else
-      - thumb_path = item.active_images.first.image.url(:thumb)
-    - unless @price_lock || purchase_lock
-      = link_to(image_tag('remove.png') + "Remove", { :controller => '/order', :action => :item_remove, :id => item }, { :confirm => "Remove #{item.product.name}" })
-      %br
-    %a{ :href => url_for_product(item.product) }
-      = image_tag(thumb_path, :alt => "#{item.product.name} Thumbnail")
-      %br
-      %strong= "M#{item.product.id}"
-    %br
-    = link_to "<em>#{item.product.supplier.name}: #{item.product.supplier_num}</em>", item.product.supplier_url
-    %br
-    - unless purchase_lock
-      = check_box :item_po, item.id, { :checked => true }
-      Include in PO
   .info_block
     %table.block{ :id => "item-#{item.id}" }
       %thead
         %tr
           %th
+            - unless @price_lock || purchase_lock
+              = link_to(image_tag('remove.png') + "Remove", { :controller => '/order', :action => :item_remove, :id => item }, { :confirm => "Remove #{item.product.name}" })
+            - unless purchase_lock
+              = check_box :item_po, item.id, { :checked => true }
+              Include in PO
+            - if item.sample_requested
+              .late
+                SAMPLE REQ
           %th.head{ :colspan => "3" } Price (Invoice)
           %th.admin{ :colspan => "3" } Cost (Purchase Order)
           - if item.our_notes.blank?
@@ -40,10 +30,21 @@
       %tbody
         %tr.defined
           %td<
-            %strong= item.product.name
+            %strong
+              #{item.product.name} (M#{item.product.id}) - 
+              = link_to "<em>#{item.product.supplier.name}: #{item.product.supplier_num}</em>", item.product.supplier_url
           = render :partial => 'order_item_entry_tail', :locals => { :object => item, :purchase_lock => purchase_lock, :null => false }
         %tr
-          %td{ :colspan => "7" }
+          %td{ :colspan => 10 }
+
+            .block.thumb
+              - if item.product.product_images.empty?
+                - thumb_path = item.product.image_path_relative('thumb')
+              - else
+                - thumb_path = item.active_images.first.image.url(:thumb)
+              %a{ :href => url_for_product(item.product) }
+                = image_tag(thumb_path, :alt => "#{item.product.name} Thumbnail")
+
             %dl.variants
               - names = item.product.property_group_names
               %dt

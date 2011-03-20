@@ -152,7 +152,7 @@
                         %td
                           - if @order
                             %div#customer
-                              = link_to((image_tag('cart.png') + "Cart (#{@order.items.count})"), { :controller => '/order', :action => :items })
+                              = link_to((image_tag('cart.png') + "Quote or Order Items (#{@order.items.count})"), { :controller => '/order', :action => :items })
 
 
           #content

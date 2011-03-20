@@ -11,7 +11,6 @@ div#prod_list div {
   padding-left: 0.5em;
   margin-left: 0.5em;
 }
-
 div#prod_list div.current {
   border-top: thin solid black;
   border-left: thin solid black;
@@ -33,37 +32,39 @@ div#prod {
 }
 
 #prod_title h1 {
-  font-size: 2em;
+  font-size: 1.5em;
   margin: 0;
   padding-left: 0.5em;
   background-color: #F0F0F8;
+  background: -moz-linear-gradient(top, #D0D0D8, white);
+  background: -webkit-linear-gradient(top, #D0D0D8, white);
+  background: linear-gradient(top, #D0D0D8, white);
 }
-
 #prod_title #prod_num {
   float: right;
-  font-size: 1.2em;
+  font-size: 1em;
   padding: 0.1em 0.5em 0.1em 0.5em;
   margin: 0.2em;
   background-color: #FFFFE0;
+  background: rgba(255,255,225,0.6);
   -moz-border-radius: 1em;
   border-radius: 1em;
 }
-
 #prod_title ul {
   list-style: none;
   margin: 0;
+  margin-left: 0.5em;
   padding: 0;
 }
-
 #prod_title ul li {
   display: inline;
-  margin-left: 1em;
-  margin-right: 1em;
+  margin-left: 0;
+  margin-right: 0.5em;
   padding-left: 0.5em;
   padding-right: 0.5em;
+  font-size: 0.8em;
 }
-
-#prod_title #tags {
+#tags {
   float: right;
   margin-right: 0.5em;
   margin-top: -0.25em;
@@ -73,23 +74,58 @@ div#prod {
   -moz-border-radius: 1em;
   border-radius: 1em;
 }
-
-#prod_title #tags img {
+#tags img {
     margin-bottom: -3px;
     margin-right: 0.25em;
 }
 
-
-div.box {
-  margin-left: 1em;
-  margin-top: 1em;
-  margin-right: 1em;
-  padding: 0.25em;  
+div#message {
+    color: red;
+    margin: 0.5em 1em 0.5em 1em;
 }
 
-div.box h2 {
+div.box, div.desc {
+  margin-left: 1em;
+  margin-top: 0.5em;
+  font-size: 0.8em;
+  /*border: thin solid black;*/
+}
+
+div#static {
+    margin-left: 0.5em;
+    margin-bottom: 1em;
+}
+div#static div#features {
+    background-color: #E8F0E8;
+    background: -moz-radial-gradient(ellipse, white, #E0E8E0);
+    background: -webkit-radial-gradient(ellipse, white, #E0E8E0);
+    background: radial-gradient(ellipse, white, #E0E8E0);
+}
+div#static div#leadtime {
+    background-color: #F0E8E8;
+    background: -moz-radial-gradient(ellipse, white, #E8E0E0);
+    background: -webkit-radial-gradient(ellipse, white, #E8E0E0);
+    background: radial-gradient(ellipse, white, #E8E0E0);
+}
+div#static div#attributes {
+    background-color: #E8E8F0;
+    background: -moz-radial-gradient(ellipse, white, #E0E0E8);
+    background: -webkit-radial-gradient(ellipse, white, #E0E0E8);
+    background: radial-gradient(ellipse, white, #E0E0E8);
+}
+
+div.desc {
+    display: inline-block;
+    margin-left: 0.5em;
+    background-color: #F0F0F0;
+    -moz-border-radius: 1em;
+    border-radius: 1em;
+    padding: 0.5em;
+    vertical-align: top;
+}
+div.desc h2 {
   display: block;
-  font-size: 1.2em;
+  font-size: 1.0em;
   border-bottom: thin solid black;
   margin: 0;
   margin-bottom: 0.25em;
@@ -97,14 +133,13 @@ div.box h2 {
   padding-right: 10em;
 }
 
-div.box div.note {
-  float: right;
-  font-size: 0.8em;
-  text-align: right;
-  margin-top: 0.5em;
+div.desc ul {
+    margin: 0;
+    margin-left: 1em;
+    padding: 0;
 }
 
-div.box p {
+div.desc p {
   margin: 0;
   margin-left: 1em;
 }
@@ -120,18 +155,15 @@ div.box ul li {
   margin-left: 1.5em;
 }
 
-div.box dl {
+div#prod dl {
   margin: 0;
   padding: 0;
 }
 
-div.box dl dt {
+div#prod dl dt {
   float: left;
-  text-align: right;
   margin: 0;
   padding: 0;
-  padding-left: 0.5em;
-  padding-right: 0.5em;
   font-weight: bold;
 }
 
@@ -143,7 +175,6 @@ div.box dl dd {
   display: block;
   overflow: hidden;
   margin: 0;
-  margin-bottom: 0.5em;
   padding: 0;
 }
 
@@ -153,78 +184,175 @@ div.box dl dd ul {
 
 div.box dl dd ul li {
   float: left;
-  margin: 0 0.25em 0 0.25em;
+  margin: 0 0.2em 0.2em 0.2em;
   padding: 0;
   text-align: center;
-  border: thin outset black;
+  border: thin solid #808080;
+  -moz-border-radius: 0.5em;
+  border-radius: 0.5em;
+  background-color: #E0E0E8;
+  background: -moz-linear-gradient(top, white, #E0E0E8 50%, #D0D0D8 50%, #E0E0E8);
+  background: -webkit-linear-gradient(top, white, #E0E0E8 50%, #D0D0D8 50%, #E0E0E8);
+  background: linear-gradient(top, white, #E0E0E8 50%, #D0D0D8 50%, #E0E0E8);
 }
 
 div.box dl span {
   display: block;
-  padding: 0.25em 0.5em 0.25em 0.5em;
+  padding: 0.15em 0.25em 0.15em 0.25em;
+  color: black;
 }
 
 div.box span.even { background-color: #F4F4FF; }
 
-div.box dl dd ul li:hover { background-color: #FFFFF0; }
+div.box dl dd ul li:hover {
+    background-color: #F0F0E8;
+    background: -moz-linear-gradient(top, #F0F0E8, #E0E0D8 50%, #F0F0E8 50%, white);
+    background: -webkit-linear-gradient(top, #F0F0E8, #E0E0D8 50%, #F0F0E8 50%, white);
+    background: linear-gradient(top, #F0F0E8, #E0E0D8 50%, #F0F0E8 50%, white);
+}
 div.box dl dd ul li:hover span.even { background-color: #F4F4F0; }
 
-div.box dl dd ul li.sel { background-color: #FFFFE0; border: thin inset black; }
+div.box dl dd ul li.sel {
+    background-color: #FFFFE0;
+    background: -moz-linear-gradient(top, #F0F0E8, #E0E0D8 50%, #F0F0E8 50%, white);
+    background: -webkit-linear-gradient(top, #F0F0E8, #E0E0D8 50%, #F0F0E8 50%, white);
+    background: linear-gradient(top, #F0F0E8, #E0E0D8 50%, #F0F0E8 50%, white);
+    border: thin solid #D0D050;
+
+/*    border: thin inset black;*/
+}
 div.box dl dd ul li.sel span.even { background-color: #F4F4E0; }
 
+div#decorations dl#sub {
+    background-color: #E0E0D8;
+    margin-left: 1em;
+    padding-left: 0.5em;
+    -moz-border-radius: 1em;
+    border-radius: 1em;
+    display: block;
+}
+div#decorations dl#sub dt, div#decorations dl#sub dd {
+    padding-top: 0.2em;
+    padding-bottom: 0.2em;
+}
+div#decorations dd#techniques {
+    -moz-border-radius: 0.5em 1.5em 0 0;
+    border-top-left-radius: 0.5em;
+    border-top-right-radius: 1.5em;
+    padding-right: 1em;
+    background-color: #E0E0D8;
+    background: -moz-linear-gradient(top, white, #E0E0D8);
+    background: -webkit-linear-gradient(top, white, #E0E0D8);
+    background: linear-gradient(top, white, #E0E0D8);
+}
 
 div#prod_img {
-  float: left;
+  float: right;
   background-color: white;
-  margin-top: 1em;
-  padding-right: 1em;
   text-align: center;
-  margin-left: 1em;
+  margin: 0;
+  padding: 0;
+  padding-left: 1.5em;
   margin-bottom: 0.5em;
+  background: -moz-linear-gradient(left, rgba(255,255,255,0), white 1.6em, white);
+  background: -webkit-linear-gradient(left, rgba(255,255,255,0), white 1.6em, white);
+  background: linear-gradient(left, rgba(255,255,255,0), white 1.6em, white);
 }
 
+/* Price Box */
+#prices {
+    background-color: #D8E0E0;
+    background: -moz-linear-gradient(left, #D8E0E0, white);
+    background: -webkit-linear-gradient(left, #D8E0E0, white);
+    background: linear-gradient(left, #D8E0E0, white);
+    -moz-border-radius: 1em;
+    border-radius: 1em;
+}
+
+td#submit {
+    padding-left: 0.5em;
+}
+
+td#submit a {
+    display: block;
+    color: black;
+    border: thin solid black;
+    padding: 0.15em 0.25em 0.15em 0.25em;
+    margin: 0.15em;
+    -moz-border-radius: 0.5em;
+    border-radius: 0.5em;
+    background-color: #E8E0E0;
+    background: -moz-linear-gradient(top, white, #E8E0E0 50%, #D8D0D0 50%, #E8E0E0);
+    background: -webkit-linear-gradient(top, white, #E8E0E0 50%, #D8D0D0 50%, #E8E0E0);
+    background: linear-gradient(top, white, #E8E0E0 50%, #D8D0D0 50%, #E8E0E0);
+}
+
+td#submit a span {
+    font-weight: bold;
+}
+
+td#submit a:hover {
+    background-color: #D8D0D0;
+    background: -moz-linear-gradient(bottom, white, #E8E0E0 50%, #D8D0D0 50%, #E8E0E0);
+    background: -webkit-linear-gradient(bottom, white, #E8E0E0 50%, #D8D0D0 50%, #E8E0E0);
+    background: linear-gradient(bottom, white, #E8E0E0 50%, #D8D0D0 50%, #E8E0E0);
+}
 
 div.box table {
-  margin-left: auto;
-  margin-right: auto;
-  margin-top: 0.5em;
-  border-collapse: collapse;
-  font-size: 1em;
-  text-align: center;
+    display: inline-block;
+    border-collapse: collapse;
+    text-align: center;
 }
 
-div.box table thead tr {
-  border-bottom: 1px solid black;
-  font-weight: bold;
+div.box table#price_calc {
+    margin-top: 0.5em;
+    margin-left: 0.5em;
+}
+div.box table#price_calc td.num {
+    text-align: right;
+}
+div.box table#price_calc tr.dec {
+    background-color: #E0E0D8;
+}
+div.box table#price_calc #item_unit_price {
+    font-weight: bold;
+}
+div.box table#price_calc tr#total {
+    font-size: 1.2em;
+    font-weight: bold;
+    text-align: right;
+}
+div.box table#price_calc tr#total td {
+    border-top: thin solid black;
+    text-align: right;
+}
+div.box table#price_calc div#info {
+    font-weight: bold;
+    color: red;
 }
 
-div.box table thead tr td {
-  border-left: 1px solid #808080;
-  padding: 0.25em 0.5em 0.25em 0.5em;
+div.box table#price_list {
+    margin: 1em;
+    margin-right: 0;
+    vertical-align: top;
+}
+div.box table#price_list th {
+    text-align: right;
+    padding-right: 0.4em;
+}
+div.box table#price_list td {
+    border-left: thin solid black;
+    border-right: thin solid black;
+    padding: 0 0.25em 0 0.25em;
+}
+div.box table#price_list thead {
+    font-weight: bold;
+    border-bottom: thin solid black;
+}
+div.box table#price_list td.sel {
+    font-weight: bold;
 }
 
-div.box table th {
-  border-right: 1px solid black;
-  padding: 0.25em 0.5em 0.25em 0.5em;
-  text-align: left;
-}
-
-div.box table tbody td {
-  border-left: 1px solid #808080;
-  text-align: center;
-  vertical-align: middle;
-  padding: 0 0.5em 0 0.5em;
-}
-
-
-#prices { text-align: center; }
-#prices h2 { text-align: left; }
-
-div#actions {
-  margin-top: 1em;
-  margin-bottom: 1em;
-  text-align: center;
-}
 
 span.action a {
   color: white;
@@ -242,8 +370,9 @@ span.action a:hover {
 }
 
 div#share {
-  float: right;
-  margin: 0.5em;
+    position: relative;
+    right: 0;
+    margin: 0.5em;
 }
 
 ul.thumbs {

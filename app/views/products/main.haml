@@ -19,36 +19,51 @@
           %span#prod_num
             %em= link_to_unless(@user.nil?, "#{@product.supplier.name}: #{@product.supplier_num}", @product.supplier_url)
             %strong= "(M#{@product.id})"
-          - unless @product.tags.empty?
-            %span#tags
-              - for tag in @product.tags
-                = image_tag("tags/#{tag.name.downcase}.png") + "#{tag.name}"
           %h1= @product.name
-          %div#share
-            %div{ :class => "addthis_toolbox addthis_default_style" }
-              %a{ :href => "//www.addthis.com/bookmark.php?v=250&amp;username=mountainxpress", :class => "addthis_button_compact" }
-                Share
-              %span{ :class => "addthis_separator"} |
-              %a{ :class => "addthis_button_preferred_1" }
-              %a{ :class => "addthis_button_preferred_2" }
-              %a{ :class => "addthis_button_preferred_3" }
-              %a{ :class => "addthis_button_preferred_4" }
-            :javascript
-              var addthis_config = {"data_track_clickback":true};
-            %script{ :type => "text/javascript", :src => "//s7.addthis.com/js/250/addthis_widget.js#username=mountainxpress" }
-
           = path_tail_list
+
+        - if @message
+          #message= @message
+
+        - if @user
+          #actions.admin
+            %span.action
+              Add to
+              - if @order && @order.task_completed?(AcknowledgeOrderTask)
+                (Not Current Order: Acknowledged)
+              - else
+                = submit_tag "Current Order", :onclick => "order_submit('exist', false);"
+              or
+              = submit_tag "New Order", :onclick => "order_submit('order', false);"
+              or
+              = submit_tag "New Customer", :onclick => "order_submit('customer', false);"
 
         - setup_main if @user
         - cache do
           - setup_main unless @user
-          - if @product.product_images.empty?
-            #prod_img
+          #prod_img
+            - unless @product.tags.empty?
+              %span#tags
+                - for tag in @product.tags
+                  = image_tag("tags/#{tag.name.downcase}.png") + "#{tag.name}"
+            %div#share
+              %div{ :class => "addthis_toolbox addthis_default_style" }
+                %a{ :href => "//www.addthis.com/bookmark.php?v=250&amp;username=mountainxpress", :class => "addthis_button_compact" }
+                  Share
+                %span{ :class => "addthis_separator"} |
+                %a{ :class => "addthis_button_preferred_1" }
+                %a{ :class => "addthis_button_preferred_2" }
+                %a{ :class => "addthis_button_preferred_3" }
+                %a{ :class => "addthis_button_preferred_4" }
+              :javascript
+                var addthis_config = {"data_track_clickback":true};
+              %script{ :type => "text/javascript", :src => "//s7.addthis.com/js/250/addthis_widget.js#username=mountainxpress" }
+
+            - if @product.product_images.empty?
               = image_tag(@product.image_path_relative('main'), :alt => @product.name)
               %br
               = link_to "Large Image", @product.image_path_relative('large'), :rel => 'external'
-          - else
-            #prod_img
+            - else
               %ul#main_imgs
                 - @product.product_images.each_with_index do |image, idx|
                   %li{ :style => (idx == 0 ? nil : 'display: none;')}= image_tag(image.image.url(:medium), :alt => @product.name)
@@ -60,35 +75,6 @@
                   %ul.thumbs
                     - for images in group.compact                  
                       %li.active{ :class => (images == @product.product_images.first) ? 'sel' : nil, 'data-variants' => images.variants.collect { |v| v.id }.join(' ') }= image_tag images.image.url(:thumb)          
-
-          - unless @product.description.nil? or @product.description.empty?
-            .box
-              %h2 Features
-              %ul#description
-                - for desc in @product.description.split("\n")
-                  %li= desc
-
-          - unless @common_properties.empty?
-            .box
-              %h2 Attributes
-              %dl
-                - for prop in @common_properties
-                  %dt= "#{prop.name.capitalize}:"
-                  %dd= prop.is_image? ? image_tag(prop.translate) : prop.translate
-
-          - if @product.lead_time_normal_min
-            #leadtime.box
-              .note Business days to ship after order and artwork acknowledgement.
-              %h2 Lead Time
-              %dl
-                %dt Normal:
-                %dd
-                  = [@product.lead_time_normal_min, @product.lead_time_normal_max].uniq.collect { |d| format_leed_time(d) }.join(' to ')
-                - if @product.lead_time_rush
-                  %dt Rush:
-                  %dd
-                    = format_leed_time(@product.lead_time_rush)
-                    = @product.lead_time_rush_charge ? '(Additional Charges)' : '(No Charge, Some Restrictions)'
 
           :javascript
             var prices = [
@@ -113,7 +99,7 @@
              #{@techniques.collect do |tech|
                  price_group = @product.supplier.find_decoration_price_group(tech)
                  
-                 "[#{tech.id},'#{tech.unit_name ? (tech.unit_name.capitalize + ':') : nil}',#{tech.unit_default},[" +
+                 "[#{tech.id},'#{tech.unit_name ? (tech.unit_name.capitalize) : nil}',#{tech.unit_default},[" +
                  @decorations.collect do |d|
                  (d.technique == tech and d.location and !d.location.empty?) ? "#{d.id},'#{d.display}',#{d.limit}" : nil
                  end.compact.join(',') + 
@@ -135,8 +121,6 @@
 
           - unless @properties.empty?
             #variants.box
-              .note Click box to select variant.
-              %h2 Variants
               %dl
                 - index = -1
                 - for names, properties in @properties
@@ -149,7 +133,7 @@
                     %ul{ :id => "group-#{index += 1}" }
                       - for props, variants in properties
                         %li{ :id => props.compact.first && "prop-#{props.compact.first.id}", 'data-variants' => variants.collect { |v| v.id }.join(' ') }
-                          %a{ :href => "#", :onclick => "return sel_opt(this);" }
+                          %a{ :href => "#", :onclick => "return sel_opt(this);", :title => "Click to select #{props.first.translate}" }
                             - reset_cycle
                             - for prop in props
                               %span{ :class => cycle('odd', 'even') }
@@ -157,21 +141,20 @@
 
           - unless @locations.empty?
             #decorations.box
-              .note Click box to select option.
-              %h2 Decorations
               %dl
                 %dt>
-                  %span Technique:
-                %dd>
-                  %ul#techniques
+                  %span Decoration:
+                %dd#techniques
+                  %ul
                     - for tech in @techniques
                       %li{ :class => (tech == @techniques.first) && 'sel', :id => "tech-#{tech.id}" }
-                        %a{ :href => "#", :onclick => "return sel_tech(this)" }
+                        %a{ :href => "#", :onclick => "return sel_tech(this)", :title => "Click to select #{tech.name}" }
                           %span= tech.name
 
+              %dl#sub
                 - display = @techniques.first.unit_name
                 %dt{ :style => !display && 'display:none;' }>
-                  %span= display && "#{@techniques.first.unit_name.capitalize}:"
+                  %span Number of #{display && @techniques.first.unit_name.capitalize}(s):
                 %dd{ :style => !display && 'display:none;' }>
                   %input#unit_value{ :name => "unit_value", :onkeypress => "return num_keypress(this, event, change_units)", :type => "text", :value => @techniques.first.unit_default, :size => "6" }
 
@@ -185,16 +168,9 @@
                         %a{ :href => '#', :onclick => 'return sel_loc(this)' }
                           %span= dec.display
 
-          %script{ :type => "text/javascript" } load_tech();             
-
           - if true #@category
             - form_tag({ :controller => :order, :action => :add_item }, {:name => "productform", :onsubmit => 'return order_submit(this, true);' }) do
               #prices.box
-                .note Enter quantity for exact price.
-                %h2 Prices
-                - if @product.tag_names.include?('Closeout')
-                  %strong Quantities limited on this closeout product!
-                  %hr
                 %p
                   = hidden_field_tag "product", @product.id
                   = hidden_field_tag "price_group", @prices.price_sets.first && @prices.price_sets.first.group.id
@@ -202,14 +178,64 @@
                   = hidden_field_tag "technique", @techniques.first ? @techniques.first.id : ''
                   = hidden_field_tag "decoration", ''
                   = hidden_field_tag "unit_count", (@techniques.first and @techniques.first.unit_name) ? @techniques.first.unit_default : ''
+                  = hidden_field_tag "disposition", ''
 
-                  Quantity:
-                  %input#quantity{ :name => "quantity", :size => "4", :onkeypress => "return num_keypress(this, event, change_quantity)", :type => "text" }
+                  %table#price_calc
+                    %tr
+                      %td
+                        Quantity:
+                        %input#quantity{ :name => "quantity", :size => "4", :onkeypress => "return num_keypress(this, event, change_quantity)", :type => "text" }
+                      %td.num
+                        &times;
+                        %span#item_unit_price
+                          $??.??
+                      %td =
+                      %td.num#item_total_price
+                        $???.??
+                      %td#submit{ :rowspan => 4 }
+                        %a{ :href => '#', :onclick => "order_submit('quote', true);", :title => "Click to Get Quote or Order" }
+                          Get
+                          %span Quote
+                          %br
+                          or
+                          %span Order
+                        %a#sample{ :href => '#', :onclick => "order_submit('sample', true);", :title => "Click for sample with quote" }
+                          with
+                          %span Sample
+                    %tr.dec
+                      %td#dec_desc{ :rowspan => '2'} JavaScript Required
+                      %td.num
+                        %span#dec_unit_price
+                          $??.??
+                      %td =
+                      %td.num#dec_total_price
+                        $???.??
+                    %tr.dec
+                      %td.num Setup
+                      %td
+                      %td.num#dec_fixed_price $???.??
+                    %tr#total
+                      %th Total:
+                      %td{ :colspan => 3 }
+                        %span.num#total_price $????.??
+                    %tr
+                      %td{ :colspan => 5 }
+                        #info
+                        - if @product.tag_names.include?('Closeout')
+                          %div
+                            %strong Quantities limited on this closeout product!
+                        - if @locations.empty?
+                          %strong Additional setup charges WILL apply for decoration options.
+                        - else
+                          Additional charges may apply.                       
+                
+
+
                 - unless @prices.price_sets.empty? or @prices.price_sets.first.breaks.first.marginal.nil?
-                  %table
+                  %table#price_list
                     %thead
                       %tr#qty_row<
-                        %th>
+                        %th> Quantity
                         - for qty in @minimums
                           %td>= qty
                     %tbody
@@ -217,50 +243,37 @@
                         %th> Unit Price
                         - for qty in @minimums
                           %td>= @prices.price_range(qty).to_perty
-                      %tr#setup_row<
-                        %th> Setup Price
-                        - for qty in @minimums
-                          %td> 0.00
-                      %tr#total_row<
-                        %th> Total Price
-                        - for qty in @minimums
-                          %td>= (@prices.price_range(qty) * qty).to_perty
 
-                  %hr
-                - if @locations.empty?
-                  %p
-                    %strong Additional setup charges WILL apply for any decoration options.
-                - else
-                  %p Additional charges may apply.
+          #static
+            - if @product.lead_time_normal_min
+              .desc#leadtime
+                %h2 Production Time
+                %dl
+                  %dt Normal:
+                  %dd
+                    = [@product.lead_time_normal_min, @product.lead_time_normal_max].uniq.collect { |d| format_leed_time(d) }.join(' to ')
+                  - if @product.lead_time_rush
+                    %dt Rush:
+                    %dd
+                      = format_leed_time(@product.lead_time_rush)
+                      = @product.lead_time_rush_charge ? '(Additional Charges)' : '(No Charge, Some Restrictions)'
 
-              %script{ :type => "text/javascript" } load_quantity(); calc_prices();
+            - unless @common_properties.empty?
+              .desc#attributes
+                %h2 Attributes
+                %dl
+                  - for prop in @common_properties
+                    %dt= "#{prop.name.capitalize}:"
+                    %dd= prop.is_image? ? image_tag(prop.translate) : prop.translate
 
-              #actions
-                %span.action= submit_tag "Add to Cart"
-                %p To get a quote or order, enter a quantity above then click "Add to Cart".
-
-      - if @message
-        %div= @message
-
+            - unless @product.description.nil? or @product.description.empty?
+              .desc#features
+                %h2 Features
+                %ul#description
+                  - for desc in @product.description.split("\n")
+                    %li= desc
 
       - if @user
-        #actions.admin
-          %span.action
-            :javascript
-              var input = document.createElement('input');
-              input.type = 'hidden';
-              input.name = 'dispos';
-              document.productform.appendChild(input);
-            Add to
-            - if @order && @order.task_completed?(AcknowledgeOrderTask)
-              (Not Current Order: Acknowledged)
-            - else
-              = submit_tag "Current Order", :onclick => "if (order_submit(document.productform, false)) { document.productform.dispos.value = 'exist'; document.productform.submit(); }"
-            or
-            = submit_tag "New Order", :onclick => "if (order_submit(document.productform, false)) { document.productform.dispos.value = 'order'; document.productform.submit(); }"
-            or
-            = submit_tag "New Customer", :onclick => "if (order_submit(document.productform, false)) { document.productform.dispos.value = 'customer'; document.productform.submit(); }"
-
         .admin
           %br
           - unless @sessions.empty?

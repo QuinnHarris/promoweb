@@ -54,7 +54,7 @@ div.category table td { border: none; }
 div.category a.title {
   display: block;
   color: #332735;
-  font-size: 1.3em;
+  font-size: 1.2em;
   font-weight: bold;
   white-space: nowrap;
 
@@ -71,13 +71,14 @@ div.category a.title:hover {
 
 div.category div.tags {
   float: right;
+  font-size: 0.9em;
   margin-right: 0.5em;
   margin-top: 0.5em;
   white-space: nowrap;
   margin-left: 16em;
   margin-bottom: 0.5em;
 }
-div.category div.tags a{
+div.category div.tags a {
     color: black; padding: 0.25em;   
     border: thin solid #666;
     -moz-border-radius: 0.6em;
@@ -93,7 +94,7 @@ div.category div.tags a:hover {
 div.category div.tags img { margin: 0 0.25em -3px 0; }
 
 table.breaks { width: 100%; }
-table.breaks tr td { background-color: #F0F0FF; white-space: nowrap; text-align: center; }
+table.breaks tr td { background-color: #F0F0FF; white-space: nowrap; text-align: center; font-size: 0.9em; }
 table.breaks tr td a { display: block; color: #000060; padding: 0.25em 0.5em 0.25em 0.5em; }
 table.breaks tr td a:hover { background-color: #E0E0FF; }
 

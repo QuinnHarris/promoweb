@@ -127,12 +127,14 @@
           %th
           %td= unit_sum.to_perty
           %td= total_sum.to_perty
-        %tr.num
+        %tr
           %td
-          %td
+            = check_box "order_items[#{order_item.id}]", :sample_requested, :checked => order_item.sample_requested
+            Request Sample
+          %td.num
             \&times;
             = order_item.quantity
-          %td
+          %td.num
             - x = unit_sum * order_item.quantity
             = x.to_perty
             - total_sum += x unless total_sum.nil?
@@ -182,7 +184,7 @@
             %p= order_item.customer_notes 
         - else
           %h3 Customer Notes
-          = text_area 'comments', order_item.id, 'cols' => 50, 'rows' => 5, 'value' => order_item.customer_notes
+          = text_area "order_items[#{order_item.id}]", :customer_notes, { :cols => 50, :rows => 5, :value => order_item.customer_notes }
           - if !@user and order_item.decorations.empty?
             %p
               Please make note of desired decoration method.
