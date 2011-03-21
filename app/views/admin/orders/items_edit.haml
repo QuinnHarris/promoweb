@@ -1,5 +1,8 @@
 = render :partial => 'order/menu'
 = render :partial => 'items_menu'
+- last_art = Artwork.find(:first, :include => { :group => :customer }, :conditions => { 'customers.id' => @order.customer.id }, :order => 'artworks.created_at DESC')
+- if last_art and last_art.has_tag?('customer')
+  .late CUSTOMER UPLOADED ARTWORK
 = link_to("Create Product", :controller => :products, :action => :new)
 |
 = link_to "Sample Order", { :action => :order_duplicate, :samples => true }, { :confirm => "Create new order with samples of current items" }

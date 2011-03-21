@@ -82,8 +82,7 @@
             = text_field_tag "margin-#{item.id}", "???", :class => 'money null margin', :readonly => @price_lock
             \%
 
-        - decorations = item.decorations.find(:all, :include => [:technique, :decoration])
-        - for decoration in decorations
+        - for decoration in item.decorations.find(:all, :include => [:technique, :decoration])
           %tr.defined
             = render :partial => 'order_item_decoration', :locals => { :entry => decoration, :purchase_lock => purchase_lock }
         - for entry in item.entries.find(:all, :order => 'id')

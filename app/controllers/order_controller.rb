@@ -305,6 +305,11 @@ public
           decor.save!
         end
       end
+
+      if blank
+        item.task_complete({ :user_id => session[:user_id],
+                             :host => request.remote_ip }, ArtExcludeItemTask)
+      end
       
       # Don't change task if item added to existing order even if order acknowledged
       unless (@order.task_completed?(AcknowledgeOrderTask) or @order.task_completed?(PaymentNoneOrderTask)) and (params[:disposion] == 'exist') and @permissions.include?('Super')

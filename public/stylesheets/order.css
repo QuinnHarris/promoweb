@@ -83,6 +83,15 @@ div#key span {
     white-space: nowrap; 
 }
 
+.message {
+    font-size: 0.8em;
+}
+
+.message p {
+    margin-top: 0.4em;
+    margin-bottom: 0.4em;
+}
+
 .pending {
 	background-color: #F0F0FF;
 }

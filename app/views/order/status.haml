@@ -9,12 +9,15 @@
   %hr
 
 %h2 Order Status Overview
-%div{ :style => "float: right; font-size: 1.2em;" }
+%div{ :style => "float: right" }
   %span
-    = image_tag "there_task.png"
+    = image_tag 'check.png'
+    Completed Task
+  %span
+    = image_tag 'there_task.png'
     Customer Task
   %span
-    = image_tag "our_task.png"
+    = image_tag 'our_task.png'
     Mountain Xpress Promotions Task
 %div#key{ :style => "" }
   %span.complete Completed
@@ -55,8 +58,8 @@
 
               - if td.allowed?(@permissions) and td.revokable?
                 = link_to image_tag('remove.png'), { :controller => '/admin/orders', :action => :task_revoke, :id => td, :class => td.class, :order_id => @order }, { :confirm => "Revoke #{td.status_name} task?" }
-            .name
-              = image_tag td.customer ? 'there_task.png' : 'our_task.png'
+            .name                
+              = image_tag td.active ? 'check.png' : (td.customer ? 'there_task.png' : 'our_task.png')
               - if td.uri and (@user ? td.allowed?(@permissions) : ((td.ready? or td.active) and !td.uri[:controller].include?('admin')))
                 = link_to_task(td.status_name, td)
               - else

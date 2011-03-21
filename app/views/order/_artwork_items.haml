@@ -38,17 +38,12 @@
           .block
             %table.form
               %tbody
-                - if static
-                  %tr
-                    %th Name:
-                    %td{ :colspan => "2" }
-                      %a{ :href => artwork.art.url }= artwork.art.original_filename
-                - else
-                  %tr
-                    %th Name:
-                    %td
-                      %a{ :href => artwork.art.url }= artwork.art.original_filename
-                    %td{ :rowspan => "4", :style => "vertical-align: top;" }
+                %tr
+                  %th Name:
+                  %td
+                    %a{ :href => artwork.art.url }= artwork.art.original_filename
+                  %td{ :rowspan => "4", :style => "vertical-align: top;" }
+                    - unless static
                       = link_to(image_tag('remove.png') + "Remove", { :action => 'artwork_remove', :id => artwork }, :confirm => "Remove #{artwork['file']}")
                       - if @user and artwork.can_pdf?
                         %br
@@ -59,15 +54,15 @@
                             = link_to "Generate Proof", { :controller => '/admin/orders', :action => 'artwork_generate_proof', :id => artwork }, :confirm => "Generate Proof and mark this file as supplier and the proof as proof?"
                             = link_to "(Scaled)", { :controller => '/admin/orders', :action => 'artwork_generate_proof', :id => artwork, :scale => true }, :confirm => "Generate Proof and mark this file as supplier and the proof as proof?"
                       %hr
-                      - complete = @order.tasks_dep.find_all { |t| t.active }
-                      - tags = artwork.tags.collect { |t| t.name }
-                      - for name, req in ArtworkTag.tags_availible(tags)
-                        - if req and !complete.include?(req)
-                          = link_to "#{tags.include?(name) ? 'Unmark' : 'Mark'} as #{name.capitalize}", :controller => '/admin/orders', :action => :artwork_mark, :id => artwork.id, :tag => name, :state => !tags.include?(name)
-                          %br
-                        - elsif tags.include?(name)
-                          = name.capitalize
-                          %br
+                    - complete = @order.tasks_dep.find_all { |t| t.active }
+                    - tags = artwork.tags.collect { |t| t.name }
+                    - for name, req in ArtworkTag.tags_availible(tags)
+                      - if !static and req and !complete.include?(req)
+                        = link_to "#{tags.include?(name) ? 'Unmark' : 'Mark'} as #{name.capitalize}", :controller => '/admin/orders', :action => :artwork_mark, :id => artwork.id, :tag => name, :state => !tags.include?(name)
+                        %br
+                      - elsif tags.include?(name)
+                        = name.capitalize
+                        %br
                 %tr
                   %th Uploaded:
                   %td= format_time(artwork.created_at)
