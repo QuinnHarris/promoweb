@@ -38,6 +38,7 @@ div#prod {
   background-color: #F0F0F8;
   background: -moz-linear-gradient(top, #D0D0D8, white);
   background: -webkit-linear-gradient(top, #D0D0D8, white);
+  background: -o-linear-gradient(top, #D0D0D8, white);
   background: linear-gradient(top, #D0D0D8, white);
 }
 #prod_title #prod_num {
@@ -193,6 +194,7 @@ div.box dl dd ul li {
   background-color: #E0E0E8;
   background: -moz-linear-gradient(top, white, #E0E0E8 50%, #D0D0D8 50%, #E0E0E8);
   background: -webkit-linear-gradient(top, white, #E0E0E8 50%, #D0D0D8 50%, #E0E0E8);
+  background: -o-linear-gradient(top, white, #E0E0E8 50%, #D0D0D8 50%, #E0E0E8);
   background: linear-gradient(top, white, #E0E0E8 50%, #D0D0D8 50%, #E0E0E8);
 }
 
@@ -208,6 +210,7 @@ div.box dl dd ul li:hover {
     background-color: #F0F0E8;
     background: -moz-linear-gradient(top, #F0F0E8, #E0E0D8 50%, #F0F0E8 50%, white);
     background: -webkit-linear-gradient(top, #F0F0E8, #E0E0D8 50%, #F0F0E8 50%, white);
+    background: -o-linear-gradient(top, #F0F0E8, #E0E0D8 50%, #F0F0E8 50%, white);
     background: linear-gradient(top, #F0F0E8, #E0E0D8 50%, #F0F0E8 50%, white);
 }
 div.box dl dd ul li:hover span.even { background-color: #F4F4F0; }
@@ -216,6 +219,7 @@ div.box dl dd ul li.sel {
     background-color: #FFFFE0;
     background: -moz-linear-gradient(top, #F0F0E8, #E0E0D8 50%, #F0F0E8 50%, white);
     background: -webkit-linear-gradient(top, #F0F0E8, #E0E0D8 50%, #F0F0E8 50%, white);
+    background: -o-linear-gradient(top, #F0F0E8, #E0E0D8 50%, #F0F0E8 50%, white);
     background: linear-gradient(top, #F0F0E8, #E0E0D8 50%, #F0F0E8 50%, white);
     border: thin solid #D0D050;
 
@@ -243,6 +247,7 @@ div#decorations dd#techniques {
     background-color: #E0E0D8;
     background: -moz-linear-gradient(top, white, #E0E0D8);
     background: -webkit-linear-gradient(top, white, #E0E0D8);
+    background: -o-linear-gradient(top, white, #E0E0D8);
     background: linear-gradient(top, white, #E0E0D8);
 }
 
@@ -257,6 +262,7 @@ div#prod_img {
   margin-bottom: 0.5em;
   background: -moz-linear-gradient(left, rgba(255,255,255,0), white 1.6em, white);
   background: -webkit-linear-gradient(left, rgba(255,255,255,0), white 1.6em, white);
+  background: -o-linear-gradient(left, rgba(255,255,255,0), white 1.6em, white);
   background: linear-gradient(left, rgba(255,255,255,0), white 1.6em, white);
 }
 
@@ -265,6 +271,7 @@ div#prod_img {
     background-color: #D8E0E0;
     background: -moz-linear-gradient(left, #D8E0E0, white);
     background: -webkit-linear-gradient(left, #D8E0E0, white);
+    background: -o-linear-gradient(left, #D8E0E0, white);
     background: linear-gradient(left, #D8E0E0, white);
     -moz-border-radius: 1em;
     border-radius: 1em;
@@ -285,6 +292,7 @@ td#submit a {
     background-color: #E8E0E0;
     background: -moz-linear-gradient(top, white, #E8E0E0 50%, #D8D0D0 50%, #E8E0E0);
     background: -webkit-linear-gradient(top, white, #E8E0E0 50%, #D8D0D0 50%, #E8E0E0);
+    background: -o-linear-gradient(top, white, #E8E0E0 50%, #D8D0D0 50%, #E8E0E0);
     background: linear-gradient(top, white, #E8E0E0 50%, #D8D0D0 50%, #E8E0E0);
 }
 
@@ -296,6 +304,7 @@ td#submit a:hover {
     background-color: #D8D0D0;
     background: -moz-linear-gradient(bottom, white, #E8E0E0 50%, #D8D0D0 50%, #E8E0E0);
     background: -webkit-linear-gradient(bottom, white, #E8E0E0 50%, #D8D0D0 50%, #E8E0E0);
+    background: -o-linear-gradient(bottom, white, #E8E0E0 50%, #D8D0D0 50%, #E8E0E0);
     background: linear-gradient(bottom, white, #E8E0E0 50%, #D8D0D0 50%, #E8E0E0);
 }
 
