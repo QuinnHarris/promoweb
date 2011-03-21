@@ -129,8 +129,9 @@
           %td= total_sum.to_perty
         %tr
           %td
-            = check_box "order_items[#{order_item.id}]", :sample_requested, :checked => order_item.sample_requested
-            Request Sample
+            - unless static
+              = check_box "order_items[#{order_item.id}]", :sample_requested, :checked => order_item.sample_requested
+              Request Sample
           %td.num
             \&times;
             = order_item.quantity
