@@ -133,7 +133,7 @@
                     %ul{ :id => "group-#{index += 1}" }
                       - for props, variants in properties
                         %li{ :id => props.compact.first && "prop-#{props.compact.first.id}", 'data-variants' => variants.collect { |v| v.id }.join(' ') }
-                          %a{ :href => "#", :onclick => "return sel_opt(this);", :title => "Click to select #{props.first.translate}" }
+                          %a{ :href => "#", :onclick => "return sel_opt(this);", :title => props.first && "Click to select #{props.first.translate}" }
                             - reset_cycle
                             - for prop in props
                               %span{ :class => cycle('odd', 'even') }
