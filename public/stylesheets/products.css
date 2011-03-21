@@ -247,6 +247,7 @@ div#decorations dd#techniques {
 }
 
 div#prod_img {
+  clear: both;
   float: right;
   background-color: white;
   text-align: center;
