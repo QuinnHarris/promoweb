@@ -113,16 +113,17 @@ public
     @reviews = ReviewOrderTask.find(:all, :order => 'id DESC', :limit => 10, :conditions => { :active => true })
     @reviews.delete_if do |review|
       next !review.publish unless review.publish.nil?
-      sum = 0
-      num = 0
-      ReviewOrderTask.aspect_methods.each do |method|
-        rate = review.send(method).to_i
-        next unless rate
-        num += 1
-        sum += rate
-        sum = -100 if rate < 3
-      end
-      next true if sum <= (num * 3)
+      false
+#      sum = 0
+#      num = 0
+#      ReviewOrderTask.aspect_methods.each do |method|
+#        rate = review.send(method).to_i
+#        next unless rate
+#        num += 1
+#        sum += rate
+#        sum = -100 if rate < 3
+#      end
+#      next true if sum <= (num * 3)
     end
   end
 
