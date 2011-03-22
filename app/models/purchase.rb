@@ -48,6 +48,7 @@ class Purchase < ActiveRecord::Base
   end
 
   def ship_by_date
+    return add_weekdays(Date.today, 1) if order.sample
     return nil unless lt = max_lead_time
     add_weekdays(Date.today, lt+1)
   end
