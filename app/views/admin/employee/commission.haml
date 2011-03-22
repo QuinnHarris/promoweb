@@ -6,7 +6,7 @@
 %h1= "Commissions for #{@user.name}"
 
 %h2 Commission Payments
-- form_for :commission, @commission, :url => { :action => :apply_commission } do |comm|
+- form_for :commission, @commission, :url => { :action => :apply_commission, :id => params[:id] } do |comm|
   %table
     %thead
       %td Date

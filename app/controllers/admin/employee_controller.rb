@@ -63,6 +63,6 @@ public
       raise "Overpaying" unless pay.zero?
     end
 
-    redirect_to :action => :commission
+    redirect_to :action => :commission, :id => params[:id]
   end
 end
