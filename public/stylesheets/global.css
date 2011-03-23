@@ -317,42 +317,6 @@ div.tabs ul li a {
   white-space:nowrap;
 }
 
-/*div#header {
-  background-repeat: repeat-y;
-  background-image: url('/images/grads/header.png');
-}*/
-
-div#header table {
-  width: 100%;
-  margin: 0;
-  padding: 0;
-  border-collapse: collapse;
-}
-
-div#header table td {
-  margin: 0;
-  padding: 0;
-  padding-left: 0.25em;
-  padding-right: 0.25em;
-  vertical-align: middle;
-  text-align: center;
-}
-
-div#header table td#person {
-  width: 0;
-  padding: 0;
-  margin: 0;
-  vertical-align: bottom;
-}
-
-div#header table td#person img {
-  display: block;
-}
-
-div#header table td#crafty {
-  width: 0;
-}
-
 span#phone {
   width: 0;
   font-size: 1.8em;

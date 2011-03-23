@@ -69,56 +69,56 @@
           - if @user
             = link_to "Logout", { :controller => '/admin/login', :action => 'logout' }
         %td.layout
-          #header.nav
-            - if @user
-              - if allowed?(%w(Super Orders))
-                = link_to image_tag('phone.png'), { :controller => '/admin/access', :action => :phone }, :id => 'phone'
-                #buttonn.nav
-                  = link_to image_tag('find.png') + "Find Customer", { :controller => '/admin/orders', :action => :contact_find }, :class => 'button'
-                  = link_to image_tag('add.png') + "New Customer", { :controller => '/admin/orders', :action => :new_order }, { :class => 'button', :confirm => 'Create a new customer and order?' }
-              %ul#leftmenu.nav
-                = li_to 'Orders', {:controller => '/admin/orders', :action => 'index' } do params[:controller].index('order') or !params[:controller].index('admin') end
-                = li_to 'Admin', {:controller => '/admin/employee', :action => :commission } do  !params[:controller].index('order') and params[:controller].index('admin') end
+          - if @user
+            - if allowed?(%w(Super Orders))
+              = link_to image_tag('phone.png'), { :controller => '/admin/access', :action => :phone }, :id => 'phone'
+              #buttonn.nav
+                = link_to image_tag('find.png') + "Find Customer", { :controller => '/admin/orders', :action => :contact_find }, :class => 'button'
+                = link_to image_tag('add.png') + "New Customer", { :controller => '/admin/orders', :action => :new_order }, { :class => 'button', :confirm => 'Create a new customer and order?' }
+            %ul#leftmenu.nav
+              = li_to 'Orders', {:controller => '/admin/orders', :action => 'index' } do params[:controller].index('order') or !params[:controller].index('admin') end
+              = li_to 'Admin', {:controller => '/admin/employee', :action => :commission } do  !params[:controller].index('order') and params[:controller].index('admin') end
 
-              #sublist.nav
-                - if !params[:controller].index('order') and params[:controller].index('admin')
-                  .tabs{ :style => "padding-top: 2.5em;" }
-                    %ul
-                      - if allowed?('Orders')
-                        = li_to 'Commission', { :controller => '/admin/employee', :action => 'commission' }
-                      - if allowed?(%w(Super Orders))
-                        = li_to 'Access', {:controller => '/admin/access', :action => 'paths' }
-                        = li_to 'Suppliers', {:controller => '/admin/suppliers', :action => 'index' }
-                      - if allowed?('Super')
-                        = li_to 'Users', {:controller => '/admin/login', :action => 'index'}
-                        = li_to 'Quickbooks', {:controller => '/admin/system/quickbooks_blocked', :action => 'index'}
-                      = li_to 'Password', {:controller => '/admin/login', :action => :password }
-                - elsif @order
-                  #custinfo
-                    - link_to({ :controller => '/order', :action => 'status', :order_id => @order }) do
-                      %strong
-                        = @order.customer.company_name
-                      \:
-                      = @order.customer.person_name
-                      \:
-                      = @order.customer.phone
-                      \:
-                    = mail_to "#{@order.customer.person_name} <#{@order.customer.email}>", @order.customer.email
-                  %div
-                    \-
-                    = @order.user ? @order.user.name : '?'
-                    - if @order.user_id.nil? or (@order.user_id != @user.id and allowed?('Super'))
-                      = link_to "Own", { :controller => '/admin/orders', :action => :order_own }, (@order.user_id ? { :class => 'admin', :confirm => "Take ownership of order from #{@order.user.name}" } : nil)
-                    - elsif allowed?('Super')
-                      = link_to "UnOwn", { :controller => '/admin/orders', :action => :order_own, :unown => true }, { :class => 'admin', :confirm => "UnOwn order from #{@order.user.name}" }
-                    \-
-                    - if @customer_zone
-                      = @customer_zone.name
-                      \=>
-                      %strong
-                        = @customer_zone.now.strftime("%I:%M %p")
-                    = link_to("(Deliver: #{@order.delivery_date ? @order.delivery_date.strftime("%A %b %d") + " : #{@order.days_to_deliver} days" : 'unknown'})", { :controller => '/order', :action => 'info', :order_id => @order })
-            - else
+            #sublist.nav
+              - if !params[:controller].index('order') and params[:controller].index('admin')
+                .tabs{ :style => "padding-top: 2.5em;" }
+                  %ul
+                    - if allowed?('Orders')
+                      = li_to 'Commission', { :controller => '/admin/employee', :action => 'commission' }
+                    - if allowed?(%w(Super Orders))
+                      = li_to 'Access', {:controller => '/admin/access', :action => 'paths' }
+                      = li_to 'Suppliers', {:controller => '/admin/suppliers', :action => 'index' }
+                    - if allowed?('Super')
+                      = li_to 'Users', {:controller => '/admin/login', :action => 'index'}
+                      = li_to 'Quickbooks', {:controller => '/admin/system/quickbooks_blocked', :action => 'index'}
+                    = li_to 'Password', {:controller => '/admin/login', :action => :password }
+              - elsif @order
+                #custinfo
+                  - link_to({ :controller => '/order', :action => 'status', :order_id => @order }) do
+                    %strong
+                      = @order.customer.company_name
+                    \:
+                    = @order.customer.person_name
+                    \:
+                    = @order.customer.phone
+                    \:
+                  = mail_to "#{@order.customer.person_name} <#{@order.customer.email}>", @order.customer.email
+                %div
+                  \-
+                  = @order.user ? @order.user.name : '?'
+                  - if @order.user_id.nil? or (@order.user_id != @user.id and allowed?('Super'))
+                    = link_to "Own", { :controller => '/admin/orders', :action => :order_own }, (@order.user_id ? { :class => 'admin', :confirm => "Take ownership of order from #{@order.user.name}" } : nil)
+                  - elsif allowed?('Super')
+                    = link_to "UnOwn", { :controller => '/admin/orders', :action => :order_own, :unown => true }, { :class => 'admin', :confirm => "UnOwn order from #{@order.user.name}" }
+                  \-
+                  - if @customer_zone
+                    = @customer_zone.name
+                    \=>
+                    %strong
+                      = @customer_zone.now.strftime("%I:%M %p")
+                  = link_to("(Deliver: #{@order.delivery_date ? @order.delivery_date.strftime("%A %b %d") + " : #{@order.days_to_deliver} days" : 'unknown'})", { :controller => '/order', :action => 'info', :order_id => @order })
+          - else
+            #header.nav
               %div
                 %span#phone
                   1-877-686-5646
