@@ -859,8 +859,10 @@ class Admin::OrdersController < Admin::BaseController
       data = {}
 
       send_email = nil
-
-      if params[:commit].include?(OrderSentItemTask.status_name)
+      
+      task_class = Kernel.const_get(params[:class])
+      case params[:class]
+      when 'OrderSentItemTask'
         data[:email_sent] = false
         if params[:commit].include?("Send")
           SupplierSend.purchase_order_send(purchase, @user)
@@ -868,21 +870,12 @@ class Admin::OrdersController < Admin::BaseController
         end
         purchase.purchase_order.sent = true
         purchase.purchase_order.save!
-        task_class = OrderSentItemTask
-      elsif ConfirmItemTask.status_name.include?(params[:commit])
-        task_class = ConfirmItemTask
-      elsif ReconciledItemTask.status_name.include?(params[:commit])
-        task_class = ReconciledItemTask
-      elsif params[:function] == 'estimated'
-        task_class = EstimatedItemTask
-        data = params[:data].symbolize_keys
-        send_email = !params[:commit].include?('Without')
-      elsif params[:function] == 'ship'
-        task_class = ShipItemTask
+      when 'ConfirmItemTask', 'ReconciledItemTask'
+      when 'EstimatedItemTask', 'ShipItemTask'
         data = params[:data].symbolize_keys
         send_email = !params[:commit].include?('Without')
       else
-        raise "Unknown Action: #{params[:commit].inspect}"
+        raise "Unknown Action: #{task_class.inspect} #{params[:class]}"
       end
 
       raise "Permission Denied" if (task_class.roles & @permissions).empty?

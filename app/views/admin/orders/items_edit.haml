@@ -51,34 +51,38 @@
                 %div
                   = link_to image_tag('html.png'), :action => :po, :id => purchase
                   = link_to image_tag('pdf.png'), :action => :po, :id => purchase, :format => 'pdf'
-              - if purchase.items.first.task_ready?(OrderSentItemTask)
+              
+              - klass = purchase.items.first.tasks_ready.first
+              = hidden_field_tag(:class, klass.class.to_s)
+              - case klass
+              - when OrderSentItemTask
                 = submit_tag "Send by #{purchase.fax? ? 'FAX' : 'eMail'} #{OrderSentItemTask.status_name}"
                 = submit_tag "Mark #{OrderSentItemTask.status_name} (Without email)"
-              - elsif purchase.items.first.task_ready?(ConfirmItemTask)
+              - when ConfirmItemTask
                 = submit_tag ConfirmItemTask.status_name
-              - elsif purchase.items.first.task_ready?(EstimatedItemTask)
-                = hidden_field_tag(:function, 'estimated')
-                = EstimatedItemTask.status_name
-                = calendar_input('data[ship_date]', '', { :class => 'ignore' }, {}, "_#{purchase.id}")
-                Days Shipping:
-                = text_field(:data, :ship_days, { :size => 3, :value => purchase.items.first.shipping && purchase.items.first.shipping.days, :class => 'ignore' })
-                = check_box :data, :ship_saturday
-                Saturday Delivery
+              - when EstimatedItemTask, ShipItemTask
+                = klass.status_name
+                - if klass.is_a?(EstimatedItemTask)
+                  = calendar_input('data[ship_date]', '', { :class => 'ignore' }, {}, "_#{purchase.id}")
+                  Days Shipping:
+                  = text_field(:data, :ship_days, { :size => 3, :value => purchase.items.first.shipping && purchase.items.first.shipping.days, :class => 'ignore' })
+                  = check_box :data, :ship_saturday
+                  Saturday Delivery
+                - else
+                  = select(:data, :carrier, ShippingRate.carriers)
+                  = text_field(:data, :tracking, { :size => 20, :class => 'ignore' })
+
                 = submit_tag 'Completed'
                 = submit_tag 'Completed (Without Email)'
-              - elsif purchase.items.first.task_ready?(ShipItemTask)
-                = hidden_field_tag(:function, 'ship')
-                = select(:data, :carrier, ShippingRate.carriers)
-                = text_field(:data, :tracking, { :size => 20, :class => 'ignore' })
-                = submit_tag 'Completed'
-                = submit_tag 'Completed (Without Email)'
-              - elsif purchase.items.first.task_ready?(ReconciledItemTask)
+              - when ReconciledItemTask
                 - if ReconciledItemTask.allowed?(@permissions)
                   = submit_tag ReconciledItemTask.status_name
                 - else
                   = ReconciledItemTask.waiting_name
-              - elsif purchase.reconciled
-                %strong= ReconciledItemTask.completed_name
+              - else
+                - if purchase.reconciled
+                  %strong= ReconciledItemTask.completed_name
+
             - for item in purchase.items
               = render :partial => 'order_item', :locals => { :item => item, :purchase_lock => purchase_lock }
             - unless purchase.new_record?
