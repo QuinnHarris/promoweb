@@ -71,7 +71,7 @@ module ObjectTaskMixin
     return nil unless task_object and task_object.active
 
     unless task_object.revokable?(tasks_revoke[1..-1])
-      raise "Task unrevoke: #{tasks_revoke.inspect}"
+      raise "Task unrevoke: #{task_object} #{tasks_revoke.collect { |t| t.name }.inspect}"
     end
         
     primary_task = nil

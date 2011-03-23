@@ -698,7 +698,7 @@ public
     apply_calendar_header if session[:user_id]
 #    @javascripts = ['calendar_date_select/calendar_date_select.js']
     
-    if params[:static]
+    unless @order
       @order = Order.new
       @order.customer = Customer.new
     end
@@ -707,6 +707,7 @@ public
     if @order.items.empty?
       order_item = OrderItem.new
       order_item.order = @order
+      order_item.product = Product.find(8248)
       @order.items.target = [order_item]
     end
 

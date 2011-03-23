@@ -223,9 +223,15 @@
                         #info
                         - if @product.tag_names.include?('Closeout')
                           %div
-                            %strong Quantities limited on this closeout product!
+                            %strong
+                              Quantities limited on
+                              %br
+                              this closeout product!
                         - if @locations.empty?
-                          %strong Additional setup charges WILL apply for decoration options.
+                          %strong
+                            Additional setup charges WILL
+                            %br
+                            apply for decoration options.
                         - else
                           Additional charges may apply.                       
                 

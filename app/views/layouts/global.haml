@@ -38,12 +38,28 @@
             %div
               = link_to "Product Categories", '/categories', { :class => 'head', :rel => 'nofollow' }
               = get_rendered_categories
-            #information
-              = link_to "Information", '/static/order', { :class => 'head', :rel => 'nofollow' }
-              %ul
-                - for page in StaticController.pages
-                  = content_tag('li', link_to(page.first, { :controller => '/static', :action => page.last }, :rel => 'nofollow'), :class => (params[:controller] == 'static' and params[:action] == page.last) ? 'sel' : nil)
+            - if @user
+              #information
+                = link_to "Information", '/static/order', { :class => 'head', :rel => 'nofollow' }
+                %ul
+                  - for name, action, desc in StaticController.pages
+                    = content_tag('li', link_to(name, { :controller => '/static', :action => action }, :rel => 'nofollow'), :class => (params[:controller] == 'static' and params[:action] == action) ? 'sel' : nil)
           #badges
+            - if RAILS_ENV == "production"
+              %div
+                %a{ :href => "http://secure.trust-guard.com/certificates/www.mountainofpromos.com",
+                    :name => 'trustlink', :target => '_blank',
+                    :onclick => "var nonwin=navigator.appName!='Microsoft Internet Explorer'?'yes':'no'; window.open(this.href.replace('http', 'https'),'welcome','location='+nonwin+',scrollbars=yes,width=517,height='+screen.availHeight+',menubar=no,toolbar=no'); return false;",
+                    :oncontextmenu => "var d = new Date(); alert('Copying Prohibited by Law - This image and all included logos are copyrighted by trust-guard \251 '+d.getFullYear()+'.'); return false;"}
+                  %img{ :name => 'trustseal', :alt => 'Security Seal', :src => "https://secure.trust-guard.com/seals/5356/scanned/mini/gray" }
+
+              - unless @no_truste
+                %div
+                  %a{ :href => "//privacy-policy.truste.com/click-to-verify/www.mountainofpromos.com",
+                      :title => "Privacy Policy by TRUSTe", :target => '_blank' }
+                    %img{ :alt => "Privacy Policy by TRUSTe",
+                          :src => "//privacy-policy.truste.com/verified-seal/www.mountainofpromos.com/green/h.png" }
+
             %div
               = image_tag('credit_cards.png')
             %div
@@ -103,63 +119,46 @@
                         = @customer_zone.now.strftime("%I:%M %p")
                     = link_to("(Deliver: #{@order.delivery_date ? @order.delivery_date.strftime("%A %b %d") + " : #{@order.days_to_deliver} days" : 'unknown'})", { :controller => '/order', :action => 'info', :order_id => @order })
             - else
-              %table
-                %tr
-                  %td{ :rowspan => '2', :id => 'person' }
-                    = image_tag('person.jpg')
-                  %td#phone
-                    1-877-MTN-Logo
-                    %div
-                      686-5646                  
-                  %td#email
-                    - if @real_user
-                      - unless @order and @order.user
-                        %a{ :href => "mailto:maps@mountainofpromos.com", :style => "display: none;" }
-                          maps@mountainofpromos.com
-                        = mail_to MAIN_EMAIL, nil, :subject => @email_subject, :encode => 'javascript'
-                      - else
-                        = mail_to "#{@order.user.name} <#{@order.user.email}>", nil, :subject => "Order #{@order.id}"
-                        Rep Phone: 970-375-1900 x#{@order.user.extension}
+              %div
+                %span#phone
+                  1-877-686-5646
+                  - if @order and @order.user
+                    x#{@order.user.extension}
+                %span#email
+                  - if @real_user
+                    - unless @order and @order.user
+                      %a{ :href => "mailto:maps@mountainofpromos.com", :style => "display: none;" }
+                        maps@mountainofpromos.com
+                      = mail_to MAIN_EMAIL, nil, :subject => @email_subject, :encode => 'javascript'
+                    - else
+                      = mail_to "#{@order.user.name} <#{@order.user.email}>", nil, :subject => "Order #{@order.id}"
+                - if @order
+                  = link_to((image_tag('cart.png') + "Items (#{@order.items.count})"), { :controller => '/order', :action => :items }, :id => 'items')
+                - else
+                  %div#tagline
+                    Your logo on custom imprinted
+                    %br
+                    promotional products / ad specialties
 
-                  %td#certs
-                    - if RAILS_ENV == "production"
-                      - unless @no_truste
-                        %a{ :href => "//privacy-policy.truste.com/click-to-verify/www.mountainofpromos.com",
-                            :title => "Privacy Policy by TRUSTe", :target => '_blank' }
-                          %img{ :alt => "Privacy Policy by TRUSTe",
-                                :src => "//privacy-policy.truste.com/verified-seal/www.mountainofpromos.com/green/h.png" }
-                    
-                        %a{ :href => "http://secure.trust-guard.com/certificates/www.mountainofpromos.com",
-                            :name => 'trustlink', :target => '_blank',
-                            :onclick => "var nonwin=navigator.appName!='Microsoft Internet Explorer'?'yes':'no'; window.open(this.href.replace('http', 'https'),'welcome','location='+nonwin+',scrollbars=yes,width=517,height='+screen.availHeight+',menubar=no,toolbar=no'); return false;",
-                            :oncontextmenu => "var d = new Date(); alert('Copying Prohibited by Law - This image and all included logos are copyrighted by trust-guard \251 '+d.getFullYear()+'.'); return false;"}
-                          %img{ :name => 'trustseal', :alt => 'Security Seal', :src => "https://secure.trust-guard.com/seals/5356/scanned/mini/gray" }
+              %div
+                #search
+                  - form_tag({:controller => '/search'}, {:method => 'get'}) do
+                    = text_field_tag 'terms', params[:terms], :id => 'terms'
+                    %input#submit{ :value => "Search", :type => "submit" }
 
-                %tr#topmenu
-                  %td{ :colspan => '3' }
-                    %table
-                      %tr
-                        %td
-                          #search
-                            - form_tag({:controller => '/search'}, {:method => 'get'}) do
-                              %div.head
-                                Search
-                              %div.span
-                                = text_field_tag 'terms', params[:terms]
-                                %input{ :value => "go", :type => "submit" }
-                        %td#message
-                          
-                        %td
-                          - if @order
-                            %div#customer
-                              = link_to((image_tag('cart.png') + "Quote or Order Items (#{@order.items.count})"), { :controller => '/order', :action => :items })
-
+                %div.tabs.nav
+                  %ul#infomenu
+                    - for name, action, desc in StaticController.pages
+                      = content_tag('li', link_to(name, { :controller => '/static', :action => action }, :rel => 'nofollow'), :class => (params[:controller] == 'static' and params[:action] == action) ? 'sel' : nil, :title => desc)
 
           #content
             = @content_for_layout
       %tr
         %td.layout{ :colspan => "2" }
           #footer
+            %span
+              = link_to "Privacy Policy", { :controller => '/static', :action => 'privacy' }
+            |
             %span
               = link_to "Sitemap", { :controller => '/categories', :action => 'map' }
             |

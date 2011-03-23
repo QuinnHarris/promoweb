@@ -1,11 +1,9 @@
 class StaticController < ApplicationController
   @@pages = [
-   ['About Us', 'about'],
-   ['Order Information', 'order'],
-   ['Artwork Requirements', 'artwork'],
-   ['Color Chart', 'color_chart'],
-#   ['Lead Times', 'lead_times'],
-   ['Privacy Policy', 'privacy'],
+   ['About Us', 'about', 'About Us'],
+   ['Ordering', 'order', 'Order Information'],
+   ['Artwork', 'artwork', 'Artwork Requirements'],
+   ['Colors', 'color_chart', 'Pantone Color Chart'],
   ]
   
   @@hidden_pages = [
