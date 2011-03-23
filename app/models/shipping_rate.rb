@@ -6,6 +6,10 @@ class ShippingRate < ActiveRecord::Base
   serialize :data
   # data is list of [code, description, days, price]
 
+  def self.carriers
+    %w(UPS FedEx DHL Trucking Other)
+  end
+
   def self.get(qty, prod, cust, fetch = false)
     sr = find(:first, :conditions => {
            :product_id => prod.id,

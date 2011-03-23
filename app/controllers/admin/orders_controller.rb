@@ -858,6 +858,8 @@ class Admin::OrdersController < Admin::BaseController
 
       data = {}
 
+      send_email = nil
+
       if params[:commit].include?(OrderSentItemTask.status_name)
         data[:email_sent] = false
         if params[:commit].include?("Send")
@@ -871,6 +873,14 @@ class Admin::OrdersController < Admin::BaseController
         task_class = ConfirmItemTask
       elsif ReconciledItemTask.status_name.include?(params[:commit])
         task_class = ReconciledItemTask
+      elsif params[:function] == 'estimated'
+        task_class = EstimatedItemTask
+        data = params[:data].symbolize_keys
+        send_email = !params[:commit].include?('Without')
+      elsif params[:function] == 'ship'
+        task_class = ShipItemTask
+        data = params[:data].symbolize_keys
+        send_email = !params[:commit].include?('Without')
       else
         raise "Unknown Action: #{params[:commit].inspect}"
       end
@@ -880,7 +890,8 @@ class Admin::OrdersController < Admin::BaseController
       purchase.items.each do |item|
         item.task_complete({ :user_id => session[:user_id],
                              :host => request.env['REMOTE_HOST'],
-                             :data => { :po => purchase.id }.merge(data) }, task_class)
+                             :data => { :po => purchase.id, :email_sent => send_email }.merge(data) }, task_class)
+        send_email = nil
       end
     end
     redirect_to :action => :items_edit

@@ -56,6 +56,22 @@
                 = submit_tag "Mark #{OrderSentItemTask.status_name} (Without email)"
               - elsif purchase.items.first.task_ready?(ConfirmItemTask)
                 = submit_tag ConfirmItemTask.status_name
+              - elsif purchase.items.first.task_ready?(EstimatedItemTask)
+                = hidden_field_tag(:function, 'estimated')
+                = EstimatedItemTask.status_name
+                = calendar_input('data[ship_date]', '', { :class => 'ignore' }, {}, "_#{purchase.id}")
+                Days Shipping:
+                = text_field(:data, :ship_days, { :size => 3, :value => purchase.items.first.shipping && purchase.items.first.shipping.days, :class => 'ignore' })
+                = check_box :data, :ship_saturday
+                Saturday Delivery
+                = submit_tag 'Completed'
+                = submit_tag 'Completed (Without Email)'
+              - elsif purchase.items.first.task_ready?(ShipItemTask)
+                = hidden_field_tag(:function, 'ship')
+                = select(:data, :carrier, ShippingRate.carriers)
+                = text_field(:data, :tracking, { :size => 20, :class => 'ignore' })
+                = submit_tag 'Completed'
+                = submit_tag 'Completed (Without Email)'
               - elsif purchase.items.first.task_ready?(ReconciledItemTask)
                 - if ReconciledItemTask.allowed?(@permissions)
                   = submit_tag ReconciledItemTask.status_name

@@ -1,6 +1,6 @@
 - unless task.active
   - if @user and task.ready?
-    = select(:data, :carrier, %w(UPS FedEx DHL Trucking Other))
+    = select(:data, :carrier, ShippingRate.carriers)
     = text_field(:data, :tracking, :size => 20)
 - else
   Shipped via

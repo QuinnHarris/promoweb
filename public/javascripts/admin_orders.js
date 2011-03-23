@@ -407,7 +407,7 @@ function setup_events(obj)
   var inputs = obj.getElementsByTagName('input')
   for (var j = 0; j < inputs.length; j++) {
     var input = inputs[j];
-    if (input.type != 'text')
+    if (input.type != 'text' || input.hasClassName('ignore'))
       continue;
     Event.observe(input, 'keypress', input_press)
     Event.observe(input, 'change', input_change)
