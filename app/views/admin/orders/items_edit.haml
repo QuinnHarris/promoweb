@@ -84,9 +84,8 @@
                     = submit_tag ReconciledItemTask.status_name
                   - else
                     = ReconciledItemTask.waiting_name
-                - else
-                  - if purchase.reconciled
-                    %strong= ReconciledItemTask.completed_name
+                - if purchase.reconciled
+                  %strong= ReconciledItemTask.completed_name
             - unless (partial_tasks = (all_tasks - common_tasks)).empty?
               Partially Complete:
               = partial_tasks.collect { |t| t.status_name }.join(', ')
