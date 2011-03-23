@@ -23,73 +23,81 @@
       %h2= "#{link_to(supplier.name, { :controller => '/admin/suppliers', :action => :detail, :id => supplier })} (#{format_supplier_info(supplier)})"
       - for purchase in purchase_list.sort_by { |pl| (pl.id || 0) }
         .purchase
-          - form_for :order, @order, { :url => { :action => (purchase.new_record? ? :purchase_create : :purchase_mark), :id => (purchase.new_record? ? supplier.id : purchase.id), :order_id => @order } } do |order|
-            - if purchase.new_record?
+          - purchase_lock = !(params[:override] && allowed?('Super')) && purchase.locked(allowed?('Super'))
+          - if purchase.new_record?
+            - form_for :order, @order, { :url => { :action => :purchase_create, :id => supplier.id, :order_id => @order } } do |order|
               %h2
                 Purchase Order - Create as
                 - for sub in [supplier] + supplier.children
-                  = submit_tag("#{sub['name']}", :onclick => "return confirm('Are you sure you want to create a PO ?')")                 
-            - else
-              - purchase_lock = !(params[:override] && allowed?('Super')) && purchase.locked(allowed?('Super'))
-              %h2
-                Purchase for
-                = purchase.supplier.name
-                - if purchase.purchase_order.quickbooks_ref
-                  (PO:
-                  = purchase.purchase_order.quickbooks_ref
-                  - if purchase.bill
-                    Bill:
-                    - if ReconciledItemTask.allowed?(@permissions) and !purchase.reconciled
-                      = text_field_tag "Bill-#{purchase.bill.id}-quickbooks_ref", purchase.bill.quickbooks_ref, 'size' => 8, :readonly => purchase_lock
-                    - else
-                      = purchase.bill.quickbooks_ref                      
-                  )
-                  - if url = purchase.supplier_status_url
-                    = link_to "Supplier Status", url
-                - if purchase.supplier != supplier
-                  = "(#{format_supplier_info(purchase.supplier)})"
-                %div
-                  = link_to image_tag('html.png'), :action => :po, :id => purchase
-                  = link_to image_tag('pdf.png'), :action => :po, :id => purchase, :format => 'pdf'
-              
-              - klass = purchase.items.first.tasks_ready.first
-              = hidden_field_tag(:class, klass.class.to_s)
-              - case klass
-              - when OrderSentItemTask
-                = submit_tag "Send by #{purchase.fax? ? 'FAX' : 'eMail'} #{OrderSentItemTask.status_name}"
-                = submit_tag "Mark #{OrderSentItemTask.status_name} (Without email)"
-              - when ConfirmItemTask
-                = submit_tag ConfirmItemTask.status_name
-              - when EstimatedItemTask, ShipItemTask
-                = klass.status_name
-                - if klass.is_a?(EstimatedItemTask)
-                  = calendar_input('data[ship_date]', '', { :class => 'ignore' }, {}, "_#{purchase.id}")
-                  Days Shipping:
-                  = text_field(:data, :ship_days, { :size => 3, :value => purchase.items.first.shipping && purchase.items.first.shipping.days, :class => 'ignore' })
-                  = check_box :data, :ship_saturday
-                  Saturday Delivery
-                - else
-                  = select(:data, :carrier, ShippingRate.carriers)
-                  = text_field(:data, :tracking, { :size => 20, :class => 'ignore' })
+                  = submit_tag("#{sub['name']}", :onclick => "return confirm('Are you sure you want to create a PO ?')")
+          - else             
+            %h2
+              Purchase for
+              = purchase.supplier.name
+              - if purchase.purchase_order.quickbooks_ref
+                (PO:
+                = purchase.purchase_order.quickbooks_ref
+                - if purchase.bill
+                  Bill:
+                  - if ReconciledItemTask.allowed?(@permissions) and !purchase.reconciled
+                    = text_field_tag "Bill-#{purchase.bill.id}-quickbooks_ref", purchase.bill.quickbooks_ref, 'size' => 8, :readonly => purchase_lock
+                  - else
+                    = purchase.bill.quickbooks_ref                      
+                )
+                - if url = purchase.supplier_status_url
+                  = link_to "Supplier Status", url
+              - if purchase.supplier != supplier
+                = "(#{format_supplier_info(purchase.supplier)})"
+              %div
+                = link_to image_tag('html.png'), :action => :po, :id => purchase
+                = link_to image_tag('pdf.png'), :action => :po, :id => purchase, :format => 'pdf'
+            
+            - common_tasks = all_tasks = purchase.items.first.tasks_ready.collect { |t| t.class }
+            - purchase.items.each { |i| t = i.tasks_ready.collect { |t| t.class }; common_tasks &= t; all_tasks |= t; }
+            - common_tasks.each do |klass|
+              - form_for :order, @order, { :url => { :action => :purchase_mark, :id => purchase.id, :order_id => @order } } do |order|
+                = hidden_field_tag(:class, klass.to_s)
+                - case klass.to_s
+                - when 'OrderSentItemTask'
+                  = submit_tag "Send by #{purchase.fax? ? 'FAX' : 'eMail'} #{OrderSentItemTask.status_name}"
+                  = submit_tag "Mark #{OrderSentItemTask.status_name} (Without email)"
+                - when 'ConfirmItemTask', 'ReceivedItemTask', 'AcceptedItemTask'
+                  = submit_tag klass.status_name
+                  - if klass.instance_method_already_implemented?(:email_complete)
+                    = submit_tag klass.status_name + ' (Without Email)'
+                - when 'EstimatedItemTask', 'ShipItemTask'
+                  = klass.status_name
+                  - if klass.is_a?(EstimatedItemTask)
+                    = calendar_input('data[ship_date]', '', { :class => 'ignore' }, {}, "_#{purchase.id}")
+                    Days Shipping:
+                    = text_field(:data, :ship_days, { :size => 3, :value => purchase.items.first.shipping && purchase.items.first.shipping.days, :class => 'ignore' })
+                    = check_box :data, :ship_saturday
+                    Saturday Delivery
+                  - else
+                    = select(:data, :carrier, ShippingRate.carriers)
+                    = text_field(:data, :tracking, { :size => 20, :class => 'ignore' })
 
-                = submit_tag 'Completed'
-                = submit_tag 'Completed (Without Email)'
-              - when ReconciledItemTask
-                - if ReconciledItemTask.allowed?(@permissions)
-                  = submit_tag ReconciledItemTask.status_name
+                  = submit_tag 'Completed'
+                  = submit_tag 'Completed (Without Email)'
+                - when 'ReconciledItemTask'
+                  - if ReconciledItemTask.allowed?(@permissions)
+                    = submit_tag ReconciledItemTask.status_name
+                  - else
+                    = ReconciledItemTask.waiting_name
                 - else
-                  = ReconciledItemTask.waiting_name
-              - else
-                - if purchase.reconciled
-                  %strong= ReconciledItemTask.completed_name
+                  - if purchase.reconciled
+                    %strong= ReconciledItemTask.completed_name
+            - unless (partial_tasks = (all_tasks - common_tasks)).empty?
+              Partially Complete:
+              = partial_tasks.collect { |t| t.status_name }.join(', ')
 
-            - for item in purchase.items
-              = render :partial => 'order_item', :locals => { :item => item, :purchase_lock => purchase_lock }
-            - unless purchase.new_record?
-              .block.notes
-                %strong Notes for Supplier:
-                = text_field_tag "Purchase-#{purchase.id}-comment", purchase.comment, :size => 80, :readonly => purchase_lock
-              = render :partial => 'order', :locals => { :order => purchase, :purchase_lock => purchase_lock }
+          - for item in purchase.items
+            = render :partial => 'order_item', :locals => { :item => item, :purchase_lock => purchase_lock }
+          - unless purchase.new_record?
+            .block.notes
+              %strong Notes for Supplier:
+              = text_field_tag "Purchase-#{purchase.id}-comment", purchase.comment, :size => 80, :readonly => purchase_lock
+            = render :partial => 'order', :locals => { :order => purchase, :purchase_lock => purchase_lock }
   = render :partial => 'order', :locals => { :order => @order, :purchase_lock => false }
 
 - unless @tasks.empty? and @revokable.empty?

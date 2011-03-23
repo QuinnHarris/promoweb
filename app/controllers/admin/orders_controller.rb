@@ -870,10 +870,9 @@ class Admin::OrdersController < Admin::BaseController
         end
         purchase.purchase_order.sent = true
         purchase.purchase_order.save!
-      when 'ConfirmItemTask', 'ReconciledItemTask'
-      when 'EstimatedItemTask', 'ShipItemTask'
-        data = params[:data].symbolize_keys
-        send_email = !params[:commit].include?('Without')
+      when 'ConfirmItemTask', 'ReconciledItemTask', 'EstimatedItemTask', 'ShipItemTask', 'ReceivedItemTask', 'AcceptedItemTask'
+        data = params[:data].symbolize_keys if params[:data]
+        send_email = !params[:commit].include?('Without') if task_class.instance_method_already_implemented?(:email_complete)
       else
         raise "Unknown Action: #{task_class.inspect} #{params[:class]}"
       end
