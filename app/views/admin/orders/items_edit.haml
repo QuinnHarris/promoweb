@@ -30,6 +30,9 @@
                 Purchase Order - Create as
                 - for sub in [supplier] + supplier.children
                   = submit_tag("#{sub['name']}", :onclick => "return confirm('Are you sure you want to create a PO ?')")
+
+              - for item in purchase.items
+                = render :partial => 'order_item', :locals => { :item => item, :purchase_lock => purchase_lock }
           - else             
             %h2
               Purchase for
@@ -89,8 +92,8 @@
               Partially Complete:
               = partial_tasks.collect { |t| t.status_name }.join(', ')
 
-          - for item in purchase.items
-            = render :partial => 'order_item', :locals => { :item => item, :purchase_lock => purchase_lock }
+            - for item in purchase.items
+              = render :partial => 'order_item', :locals => { :item => item, :purchase_lock => purchase_lock }
           - unless purchase.new_record?
             .block.notes
               %strong Notes for Supplier:
