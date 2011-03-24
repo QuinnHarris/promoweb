@@ -45,7 +45,7 @@
                   - for name, action, desc in StaticController.pages
                     = content_tag('li', link_to(name, { :controller => '/static', :action => action }, :rel => 'nofollow'), :class => (params[:controller] == 'static' and params[:action] == action) ? 'sel' : nil)
           #badges
-            - if RAILS_ENV == "production"
+            - if !@user and RAILS_ENV == "production"
               %div
                 %a{ :href => "http://secure.trust-guard.com/certificates/www.mountainofpromos.com",
                     :name => 'trustlink', :target => '_blank',
