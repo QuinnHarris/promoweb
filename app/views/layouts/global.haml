@@ -140,7 +140,7 @@
                     %br
                     promotional products / ad specialties
 
-              %div
+              %div.nav
                 #search
                   - form_tag({:controller => '/search'}, {:method => 'get'}) do
                     = text_field_tag 'terms', params[:terms], :id => 'terms'

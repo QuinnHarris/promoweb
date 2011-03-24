@@ -3,7 +3,7 @@ div#content { display: block; border: none; }
 
 h1 { border-bottom: medium solid black; }
 
-div.box { page-break-inside: avoid; }
+div.box, div.desc { page-break-inside: avoid; }
 div.item { page-break-inside: avoid; }
 div.box h2 { border-bottom: thin solid black; }
 

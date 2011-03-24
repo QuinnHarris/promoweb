@@ -236,7 +236,7 @@ div.tabs ul {
   overflow: hidden;
   border-bottom:thin solid black;
 }
-div#header div.tabs {
+div#header div.tabs ul {
     border-bottom: none;
 }
 
