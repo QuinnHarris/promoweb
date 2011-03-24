@@ -135,7 +135,9 @@ class Admin::OrdersController < Admin::BaseController
         max = charge_transaction.amount
       else
         raise "Unknown Action: #{params[:commit].inspect}"
-      end    
+      end
+
+      max *= 1.1 if payment_method.is_a?(PaymentSendCheck)
 
       if amount.cents < 500 or amount > max
         render :inline => "Charge must be between $5.00 $#{max}"

@@ -23,13 +23,18 @@
 - else
   - if chargeable = (@user and @order.task_ready_completed?(FirstPaymentOrderTask, [PaymentInfoOrderTask]) and ((total_billable = @transaction ? -@order.total_billable : @order.total_billable) > Money.new(0)))
     :javascript
-      function charge_check(form)
+      function charge(form, check)
       {
-        var amount = parseMoney(form.getElementsByClassName('money')[0].value);
+        var string = form.getElementsByClassName('money')[0].value;
+        var amount = parseMoney(string);
         if (!amount ||
-            (amount > #{total_billable.to_i}) ||
+            (!check && (amount > #{total_billable.to_i})) ||
             (amount < 0)) {
           alert('Amount must be less than #{total_billable}');
+          return false;
+        }
+        if ((amount/multiplier).toFixed(2) != string) {
+          alert("Amount must be of form xx.xx");
           return false;
         }
 
@@ -64,7 +69,7 @@
               = link_to(image_tag('add.png') + 'Use as Payment', { :action => :payment_use, :id => method }, :confirm => "Use #{method.type_name} for #{method.name} as payment information")
 
           .block
-            - form_remote_tag :update => "method-#{method.id}", :html => { :onsubmit => "return charge_check(this)" }, :url => { :order_id => @order, :controller => '/admin/orders', :action => :payment_charge, :id => method.id, :txn_id => params[:txn_id] } do
+            - form_remote_tag :update => "method-#{method.id}", :html => { :onsubmit => "return charge(this, #{method.is_a?(PaymentSendCheck)})" }, :url => { :order_id => @order, :controller => '/admin/orders', :action => :payment_charge, :id => method.id, :txn_id => params[:txn_id] } do
               %table
                 %thead
                   %tr
