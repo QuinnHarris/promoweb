@@ -70,7 +70,7 @@
                     = klass.waiting_name
                 - when 'EstimatedItemTask', 'ShipItemTask'
                   = klass.status_name
-                  - if klass.is_a?(EstimatedItemTask)
+                  - if klass == EstimatedItemTask
                     = calendar_input('data[ship_date]', '', { :class => 'ignore' }, {}, "_#{purchase.id}")
                     Days Shipping:
                     = text_field(:data, :ship_days, { :size => 3, :value => purchase.items.first.shipping && purchase.items.first.shipping.days, :class => 'ignore' })
