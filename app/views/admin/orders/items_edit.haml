@@ -61,10 +61,13 @@
                 - when 'OrderSentItemTask'
                   = submit_tag "Send by #{purchase.fax? ? 'FAX' : 'eMail'} #{OrderSentItemTask.status_name}"
                   = submit_tag "Mark #{OrderSentItemTask.status_name} (Without email)"
-                - when 'ConfirmItemTask', 'ReceivedItemTask', 'AcceptedItemTask'
-                  = submit_tag klass.status_name
-                  - if klass.instance_method_already_implemented?(:email_complete)
-                    = submit_tag klass.status_name + ' (Without Email)'
+                - when 'ConfirmItemTask', 'ReceivedItemTask', 'AcceptedItemTask', 'ReconciledItemTask'
+                  - if klass.allowed?(@permissions)
+                    = submit_tag klass.status_name
+                    - if klass.instance_method_already_implemented?(:email_complete)
+                      = submit_tag klass.status_name + ' (Without Email)'
+                  - else
+                    = klass.waiting_name
                 - when 'EstimatedItemTask', 'ShipItemTask'
                   = klass.status_name
                   - if klass.is_a?(EstimatedItemTask)
@@ -79,13 +82,9 @@
 
                   = submit_tag 'Completed'
                   = submit_tag 'Completed (Without Email)'
-                - when 'ReconciledItemTask'
-                  - if ReconciledItemTask.allowed?(@permissions)
-                    = submit_tag ReconciledItemTask.status_name
-                  - else
-                    = ReconciledItemTask.waiting_name
-                - if purchase.reconciled
-                  %strong= ReconciledItemTask.completed_name
+
+            - if purchase.reconciled
+              %strong= ReconciledItemTask.completed_name
             - unless (partial_tasks = (all_tasks - common_tasks)).empty?
               Partially Complete:
               = partial_tasks.collect { |t| t.status_name }.join(', ')
