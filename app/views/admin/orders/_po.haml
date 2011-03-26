@@ -39,13 +39,13 @@
       %br
       %strong Date:
       = format_time_abs(@purchase.created_at, false)
-      - if @purchase.order.rush
-        %br
-        %strong RUSH ORDER
       %br
-      - if !@purchase.order.delivery_date_not_important and @purchase.order.delivery_date and (@purchase.ship_by_date.nil? or (@purchase.order.delivery_date < (@purchase.ship_by_date + @purchase.max_transit_time)))
+      - if firm_inhands = (!@purchase.order.delivery_date_not_important and @purchase.order.delivery_date and (@purchase.ship_by_date.nil? or (@purchase.order.delivery_date < (@purchase.ship_by_date + @purchase.max_transit_time))))
         %strong In Hands Date:
         = format_time_abs(@purchase.order.delivery_date, false)
+        - if @purchase.order.rush
+          %br
+          %strong RUSH ORDER
       - else
         %strong Ship by Date:
         = format_time_abs(@purchase.ship_by_date, false)
@@ -108,5 +108,6 @@
   %h3 Notes
   %p= @purchase.comment
 
-%hr
-%p If in-hands date cannot be met we must be notified immediately. If order is shipped late without our approval, it will be rejected!
+- if firm_inhands
+  %hr
+  %p If in-hands date cannot be met we must be notified immediately. If order is shipped late without our approval, it will be rejected!

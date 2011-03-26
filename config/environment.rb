@@ -104,3 +104,38 @@ class ActiveRecord::Base
     end
   end
 end
+
+
+class Time
+  def add_workday(duration)
+    duration = duration.to_i
+    # If this is on the weekend advance to the beginning of the week
+    time = self.dup
+    unless (1..5).member?(time.wday)
+      time = time.beginning_of_day + 8.hours
+      time += 1.day until (1..5).member?(time.wday)
+    end
+
+    while time + duration > (eow = (time + (5 - time.wday).days).end_of_day)
+      duration -= (eow - time).to_i
+      time = (eow + 3.days).beginning_of_day
+    end
+    time += duration
+    time
+  end
+end
+
+class Date
+  def add_workday(days)
+    # If this is on the weekend advance to the beginning of the week
+    date = self.dup
+    date += 1.day until (1..5).member?(date.wday)
+
+    while date + days > (eow = (date + (5 - date.wday)))
+      days -= (eow - date)
+      date = (eow + 3)
+    end
+    date += days
+    date
+  end
+end

@@ -235,12 +235,12 @@ Please find your tracking number for #{carrier} below.
     return nil unless object.product
 
     lead_time = object.order.rush ? object.product.lead_time_rush : object.product.lead_time_normal_max
-    time_add_workday(depend_max_at, (lead_time || 15).days)
+    depend_max_at.add_workday((lead_time || 15).days)
   end
 
   def delivery_estimate
     # Delivers by 5 pm
-    time_add_workday(complete_estimate, depends_on.first.ship_days.days).beginning_of_day + 17.hours
+    complete_estimate.add_workday(depends_on.first.ship_days.days).beginning_of_day + 17.hours
   end
 end
 

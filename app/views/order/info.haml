@@ -21,7 +21,9 @@
         %td= @static ? @order.terms : order.text_field(:terms)
       %tr.admin
         %th Rush Order:
-        %td= @static ? @order.rush : order.check_box(:rush)
+        %td
+          = @static ? @order.rush : order.check_box(:rush)
+          Adjust Ship Date as Rush
       %tr.admin
         %th Shipping Method:
         %td= @static ? @order.ship_method : order.text_field(:ship_method)
@@ -38,7 +40,7 @@
       - else
         %td
           = order.check_box(:delivery_date_not_important)
-          Delivery Date Not Important
+          Delivery Date Not Essential
     %tr
       %th Event Nature:
       %td= @static ? @order.event_nature : order.text_field(:event_nature)

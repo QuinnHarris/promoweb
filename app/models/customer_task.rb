@@ -380,7 +380,7 @@ module TaskMixin
     
   def complete_estimate
     if respond_to?(:execute_duration)
-      return time_add_workday(depend_max_at, execute_duration)
+      return depend_max_at.add_workday(execute_duration)
     end
     nil
   end
@@ -397,22 +397,6 @@ module TaskMixin
   
   def depend_max_at
     depends_on && depends_on.collect { |t| t.complete_at }.compact.max || Time.now.utc
-  end
-
-  def time_add_workday(time, duration)
-    duration = duration.to_i
-    # If this is on the weekend advance to the beginning of the week
-    unless (1..5).member?(time.wday)
-      time = time.beginning_of_day + 8.hours
-      time += 1.day until (1..5).member?(time.wday)
-    end
-
-    while time + duration > (eow = (time + (5 - time.wday).days).end_of_day)
-      duration -= (eow - time).to_i
-      time = (eow + 3.days).beginning_of_day
-    end
-    time += duration
-    time
   end
 end
 

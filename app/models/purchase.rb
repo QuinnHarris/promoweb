@@ -41,16 +41,10 @@ class Purchase < ActiveRecord::Base
     items.collect { |i| order.rush ? i.product.lead_time_rush : i.product.lead_time_normal_max }.compact.max
   end
 
-  def add_weekdays(date, n)
-    date += n.days + (2*(n/5.floor)).days
-    date += 1.days until (1..5).member?(date.wday)
-    date
-  end
-
   def ship_by_date
-    return add_weekdays(Date.today, 1) if order.sample
+    return Date.today.add_workday(1) if order.sample
     return nil unless lt = max_lead_time
-    add_weekdays(Date.today, lt+1)
+    Date.today.add_workday(lt)
   end
 
   def max_transit_time
