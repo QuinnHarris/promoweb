@@ -667,7 +667,15 @@ class Product < ActiveRecord::Base
          end, variant]
        end.group_by(&:first).collect do |properties, list|
          [properties, list.collect { |e| e.last }]
-       end.sort_by { |n, vars| v = n.compact.first; v ? v.translate : '' }]
+       end.sort_by do |n, vars|
+         next [] unless v = n.compact.first.translate
+         v.split(/(\d+)/).collect do |s|
+           next if s.empty?
+           i = s.to_i
+           next i if i.to_s == s
+           s
+         end.compact
+       end]
     end.sort_by { |n| n.first }
   end
   
