@@ -60,6 +60,14 @@ class Customer < ActiveRecord::Base
   def email_string
     email.split(',').collect { |e| "\"#{person_name}\" <#{e}>" }
   end
+
+  def sales_tax
+    if default_address &&
+        (default_address.state.downcase == 'colorado' ||
+         default_address.state.downcase == 'co')
+      ['Colorado', 0.029]
+    end
+  end
 end
 
 #class CustomerValidate < Customer

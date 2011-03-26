@@ -533,11 +533,13 @@ public
           @ship_address.destroy
           @customer.shipping_rates_clear!
         end
+
+        @order.save! if update && @order.apply_sales_tax
         
         if @customer.valid?
           render_edit
           next
-        end        
+        end
       end
     end
     

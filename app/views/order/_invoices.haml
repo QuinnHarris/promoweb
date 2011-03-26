@@ -103,15 +103,20 @@
         - else
           Quote
 
-      - total = Money.new(0)
       - for entry in invoice.entries
         %div.entry
           = entry.html_row(self, absolute)
-          - total += entry.total_price
       - if invoice.entries.length != 1
         %div.total
           Total:
-          %span.money= total.to_perty
+          %span.money= invoice.total_item_price.to_perty
+      - if invoice.tax_rate > 0.0
+        %div.total
+          #{invoice.tax_type} Sales Tax:
+          %span.money= invoice.total_tax.to_perty
+        %div.total
+          Grand Total:
+          %span.money= invoice.total_price.to_perty
       .block
         - if !static and @user and invoice.new_record?
           %h3 Notes

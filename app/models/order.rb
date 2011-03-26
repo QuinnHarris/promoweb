@@ -92,7 +92,7 @@ class Order < ActiveRecord::Base
     included = []
     
     InvoiceEntry
-    invoice = Invoice.new(:order => self)
+    invoice = Invoice.new(:order => self, :tax_rate => tax_rate, :tax_type => tax_type)
     (items + po_entries + entries).each do |entry|
       invoice_klass = Kernel.const_get(entry.class.reflections[:invoice_entries].class_name)
       entry_last = invoice_entries[[invoice_klass.to_s, entry.id]]
@@ -134,7 +134,7 @@ class Order < ActiveRecord::Base
       :conditions => ['purchases.id IN (?)', purchase_list])
   end
   
-  def total_price
+  def total_invoice_price
     invoices.inject(Money.new(0)) { |m, i| m += i.total_price }
   end
   
@@ -145,7 +145,7 @@ class Order < ActiveRecord::Base
   end
   
   def total_billable
-    total_price - total_charge
+    total_invoice_price - total_charge
   end
 
   %w(price cost).each do |type|
@@ -163,7 +163,11 @@ class Order < ActiveRecord::Base
   end
 
   def total_tax
-    total_item_price * tax_rate
+    (total_item_price * tax_rate).round_cents
+  end
+
+  def total_price
+    total_item_price + total_tax
   end
   
   def tasks_dep
@@ -201,9 +205,16 @@ class Order < ActiveRecord::Base
     true
   end
 
-  before_create :block_qb
+  before_create :block_qb, :apply_sales_tax
   def block_qb
     self.quickbooks_id = 'BLOCKED'
+  end
+
+  def apply_sales_tax
+    unless tax_type
+      self.tax_type, self.tax_rate = customer.sales_tax
+      logger.info("Apply: #{tax_type} #{tax_rate}")
+    end
   end
 
   def push_quickbooks!
