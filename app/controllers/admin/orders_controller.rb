@@ -456,9 +456,12 @@ class Admin::OrdersController < Admin::BaseController
     product_name = oid.order_item.product.name
     if oid.order_item.product.product_images.empty?
       product_image = oid.order_item.product.image_path_absolute('main', 'jpg')
+      logger.info("XSDFASDFASDF: #{product_images}")
     else
-      product_images = oid.order_item.active_images.first.image.url(:medium)
+      product_images = oid.order_item.active_images.first.image.path(:medium)
+      logger.info("SDFASDFASDF: #{product_images}")
     end
+
       
 
     props = {}
@@ -552,7 +555,7 @@ class Admin::OrdersController < Admin::BaseController
     center_y = max_center_y if center_y > max_center_y
     
     # Product
-    doc.image product_image, :zoom => 20, :x => page_margin_left*2, :y => page_height - page_margin - 36 - 36 - 36 - 8
+#    doc.image product_image, :zoom => 20, :x => page_margin_left*2, :y => page_height - page_margin - 36 - 36 - 36 - 8
 
     doc.moveto :x => center_x, :y => page_margin + 14
     doc.show "Mountain Xpress Promotions, LLC", :with => :bold_font, :align => :show_center

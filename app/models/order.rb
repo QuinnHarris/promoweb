@@ -161,6 +161,10 @@ class Order < ActiveRecord::Base
       total.single || total
     end
   end
+
+  def total_tax
+    total_item_price * tax_rate
+  end
   
   def tasks_dep
     return @tasks_dep if @tasks_dep

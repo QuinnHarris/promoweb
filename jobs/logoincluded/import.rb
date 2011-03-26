@@ -1,4 +1,5 @@
 require 'rexml/document'
+require 'net/ftp'
 
 class LogoIncludedXML < GenericImport
   include REXML
@@ -6,6 +7,20 @@ class LogoIncludedXML < GenericImport
   def initialize(file_name)
     @src_file = File.join(JOBS_DATA_ROOT,file_name)
     super "LogoIncluded"
+  end
+
+  def fetch
+    puts "Fetching"
+    remote_file = 'feed.xml'
+    Net::FTP.open('ftp.logoincluded.com') do |ftp|
+      ftp.login('mountainofpromos', 'Br3S9Ebr')
+      if ftp.mtime(remote_file) < File.mtime(@src_file)
+        puts "** No update **"
+        return
+      end
+      ftp.getbinaryfile(remove_file, @src_file)
+    end
+    puts "Fetched"
   end
 
   def warning(msg)
@@ -34,8 +49,18 @@ class LogoIncludedXML < GenericImport
         'supplier_num' => product.get_text('SKU').to_s,
         'name' => name,
         'supplier_categories' => [[category]],
-        'description' => product.get_text('Description').to_s.gsub(/\.\s+/,".\n")
+        'description' => product.get_text('Description').to_s.gsub(/\.\s+/,".\n"),
+        'data' => { :url => product.get_text('LogoincludedURL').to_s.strip }
       }
+
+      url_string = product.get_text('LogoincludedURL').to_s.strip
+      unless url_string.empty?
+        unless /^http:\/\/www\.logoincluded\.com\/products\/(.+)$/ === url_string
+          raise "Unknown URL: #{url_string}"
+        end
+        product_data['data'] = { :path => $1 }
+      end
+        
 
 
 #      puts "Product: #{product_data['supplier_num']} : #{product_data['name']}"
@@ -175,7 +200,7 @@ class LogoIncludedXML < GenericImport
         next data if colors.empty?
 
         colors.collect do |color|
-          data.merge('supplier_num' => data['supplier_num'] + "-#{color}",
+          data.merge('supplier_num' => (data['supplier_num'] + "-#{color}")[0..31],
                      'color' => color)
         end
       end.flatten.compact

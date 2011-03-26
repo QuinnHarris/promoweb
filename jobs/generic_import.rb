@@ -288,7 +288,7 @@ class GenericImport
   end
   
   def run_parse_cache
-    @product_list = cache_marshal("#{@supplier_record.name}_parse") do
+    @product_list = cache_marshal("#{@supplier_record.name}_parse", @src_file) do
       run_parse
       @product_list
     end  
