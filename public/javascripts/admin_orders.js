@@ -24,6 +24,11 @@ function parseMoney(val)
   return parseInt(Math.round(parseFloat(val) * multiplier))
 }
 
+function roundToCent(val)
+{
+    return Math.round(val * 100.0 / multiplier) * (multiplier / 100.0)
+}
+
 listing = $H({})
 
 function merge_listing(list)
@@ -462,7 +467,16 @@ function calculate_all()
   var generals = invoice.getElementsByClassName('general');
   var div = generals[generals.length - 1];
   var table = div.getElementsByTagName('table')[0];
-  order_entry_calculate(table, total_price, total_cost);
+  var ret = order_entry_calculate(table, total_price, total_cost);
+  total_price += ret[0];
+  var tax_row = $('tax');
+  if (tax_row) {
+      var rate = parseFloat(tax_row.cells[1].innerHTML) / 100.0;
+      var tax_price = roundToCent(total_price * rate);
+      tax_row.cells[2].innerHTML = displayMoney(tax_price);
+      var total_row = tax_row.nextSibling.nextSibling;
+      total_row.cells[1].innerHTML = displayMoney(total_price + tax_price);
+  }
 }
 
 
