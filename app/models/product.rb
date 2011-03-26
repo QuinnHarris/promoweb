@@ -669,12 +669,18 @@ class Product < ActiveRecord::Base
          [properties, list.collect { |e| e.last }]
        end.sort_by do |n, vars|
          next [] unless v = n.compact.first.translate
-         v.split(/(\d+)/).collect do |s|
+         res = v.split(/(\d+)/).collect do |s|
            next if s.empty?
            i = s.to_i
            next i if i.to_s == s
            s
          end.compact
+         class << res
+           def <=>(a)
+             super(a) || -1
+           end
+         end
+         res
        end]
     end.sort_by { |n| n.first }
   end
