@@ -457,7 +457,7 @@ class Admin::OrdersController < Admin::BaseController
     if oid.order_item.product.product_images.empty?
       product_image = oid.order_item.product.image_path_absolute('main', 'jpg')
     else
-      product_images = oid.order_item.active_images.first.image.url(:medium)
+      product_images = oid.order_item.active_images.first.image.path(:medium)
     end
       
 
