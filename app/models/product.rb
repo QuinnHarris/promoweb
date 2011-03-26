@@ -675,7 +675,7 @@ class Product < ActiveRecord::Base
            next i if i.to_s == s
            s
          end.compact
-         class << res
+         class << res # Kludge to handle non comparable arrays (int vs str)
            def <=>(a)
              super(a) || -1
            end
