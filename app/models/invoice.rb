@@ -9,7 +9,7 @@ class Invoice < ActiveRecord::Base
   memoize :total_item_price
 
   def total_tax
-    return 0.0 if tax_rate == 0.0
+    return Money.new(0) if tax_rate == 0.0
     (total_item_price * tax_rate).round_cents
   end
 

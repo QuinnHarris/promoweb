@@ -14,21 +14,18 @@ class InvoiceEntry < ActiveRecord::Base
   def html_row(template, absolute = false)
     desc = description
     desc = "#{predicesor.description} -> #{desc}" if predicesor and predicesor.description != desc
-    
-    total_quantity = "<strong>#{total_price.to_perty}</strong>"
-    if quantity != 1
-      total_quantity = "$#{orig_price / quantity} &times; #{quantity} = " + total_quantity
+    desc += " (Additional Charge)" if predicesor
+
+    qty_col = (quantity > 1)
+    str = "<td colspan='#{qty_col ? 1 : 3}'>#{desc}</td>"
+
+    if qty_col
+      str << "<td>#{(total_price / quantity).to_perty}</td><td>#{quantity}</td>"
     end
 
-    if predicesor
-      if orig_price.zero?
-        total_quantity = "Item Removed "
-      else
-        total_quantity = "(New Price: <strong>#{orig_price.to_perty})</strong> &ndash; (Previous invoice total: <strong>#{predicesor.orig_price.to_perty})</strong> = <strong>#{total_price.to_perty}</strong>"
-      end
-    end
-    
-    "#{desc}: <span class='num'>#{total_quantity}</span>"
+    str << "<td class='num subtotal'>#{total_price.to_perty}</td>"
+
+    str
   end
   
   def orig_price
@@ -72,7 +69,7 @@ class InvoiceOrderItem < InvoiceEntry
   def html_row(template, absolute = false)
     tail = nil
     if predicesor
-      tail = ["&ndash; (Previous invoice total: <strong>#{predicesor.orig_price.to_perty}</strong>) = <strong>Total:</strong>", total_price.to_perty]
+      tail = ["&ndash; (Previous invoice total: <strong>#{predicesor.orig_price.to_perty}</strong>) = Total:", total_price.to_perty]
     end
     template.render(:partial => '/order/order_item',
                     :locals => { :order_item => order_item, :static => true, :absolute => absolute, :shipping => false, :invoice => true, :user => nil, :tail => tail })

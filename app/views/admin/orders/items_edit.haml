@@ -1,4 +1,3 @@
-= render :partial => 'order/menu'
 = render :partial => 'items_menu'
 - last_art = Artwork.find(:first, :include => { :group => :customer }, :conditions => { 'customers.id' => @order.customer.id }, :order => 'artworks.created_at DESC')
 - if last_art and last_art.has_tag?('customer')
@@ -18,7 +17,7 @@
     The order has been Acknowledged so customer pricing can't be changed.
     = link_to "UNLOCK", { :order_id => @order.id, :unlock => true }, { :confirm => "Unlock this page to modify items even though the order has been acknowledged!!!" }
 .invoice{ :id => "order-#{@order.id}" }
-  - for supplier, purchase_list in @suppliers.to_a.sort_by { |s| s.first.name }
+  - for supplier, purchase_list in @suppliers.to_a.sort_by { |s| s.first.id }
     .supplier
       %h2= "#{link_to(supplier.name, { :controller => '/admin/suppliers', :action => :detail, :id => supplier })} (#{format_supplier_info(supplier)})"
       - for purchase in purchase_list.sort_by { |pl| (pl.id || 0) }

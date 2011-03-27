@@ -41,6 +41,9 @@ img {
   top: 3px;
 }
 
+div.thumb { float: left; }
+div.item div.notes { float: right; }
+
 
 .block input, .block textarea {
   font-size: 1em;

@@ -103,20 +103,40 @@
         - else
           Quote
 
-      - for entry in invoice.entries
-        %div.entry
-          = entry.html_row(self, absolute)
-      - if invoice.entries.length != 1
-        %div.total
-          Total:
-          %span.money= invoice.total_item_price.to_perty
-      - if invoice.tax_rate > 0.0
-        %div.total
-          #{invoice.tax_type} Sales Tax:
-          %span.money= invoice.total_tax.to_perty
-        %div.total
-          Grand Total:
-          %span.money= invoice.total_price.to_perty
+      %table#items_table
+        %tbody
+          - entries = invoice.entries
+          - order_item_entries = entries.find_all { |e| e.is_a?(InvoiceOrderItem) }
+          - for entry in order_item_entries
+            %tr
+              %td{ :colspan => 4 }= entry.html_row(self, absolute)
+            %tr.spacer
+          - other_entries = entries - order_item_entries
+          - qty_col = other_entries.find { |e| e.quantity > 1 }
+          - unless other_entries.empty?
+            %tr.thead
+              %td{ :colspan => qty_col ? 1 : 3 } Description
+              - if qty_col
+                %td Price
+                %td{ :style => 'max-width: 2em;' } Quantity
+              %td Amount
+            - for entry in other_entries
+              %tr= entry.html_row(self, absolute)
+              %tr.spacer
+
+        - if entries.length > 1
+          %tfoot
+            - if invoice.tax_rate > 0.0
+              %tr
+                %th{ :colspan => 3 } Sub Total:
+                %td.num.total= invoice.total_item_price.to_perty
+              %tr
+                %th{ :colspan => 3 } #{invoice.tax_type} Sales Tax (#{invoice.tax_rate * 100.0}%):
+                %td.num= invoice.total_tax.to_perty
+            %tr.total
+              %th{ :colspan => 3 } Total:
+              %td.num= invoice.total_price.to_perty
+
       .block
         - if !static and @user and invoice.new_record?
           %h3 Notes

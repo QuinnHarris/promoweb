@@ -1,5 +1,4 @@
 - unless @search
-  = render :partial => 'menu'
   = error_messages_for_many [:customer, :default_address, :ship_address]
   - if @user and @static and !@reassoc
     .admin

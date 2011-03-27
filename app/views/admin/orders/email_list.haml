@@ -1,4 +1,3 @@
-= render :partial => 'order/menu'
 %table#email
   %tbody
     - for size, mail in @list
@@ -6,9 +5,9 @@
       %tr{ :class => (mail.from.find { |m| m.index('mountainofpromos.com') } && 'our') }
         %td
           .subject= mail.subject
-          .preview= body.split("\n")[0..5].collect { |s| s.strip }.join('<br/>')
+          .preview= body.split("\n")[0..31].collect { |s| s.strip }.join('<br/>')
         %td
-          .date= format_time(mail.date.utc)
+          .date= format_time(mail.date)
           %div
             From:
             = format_email(mail, :from)

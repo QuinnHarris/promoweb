@@ -50,6 +50,8 @@ end
 class Admin::OrdersController < Admin::BaseController
   include ::OrderController::OrderModule
   before_filter :setup_order, :except => [:set]
+
+  layout 'order'
   
   OrderTask
   OrderItemVariant
@@ -244,7 +246,7 @@ class Admin::OrdersController < Admin::BaseController
     @customer = Customer.new
     @search = true
     @javascripts = ['effects.js', 'controls.js']
-    render :template => '/order/contact'
+    render :template => '/order/contact', :layout => 'global'
   end
     
   def task_execute

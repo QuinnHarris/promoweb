@@ -1,11 +1,9 @@
-- if @order
-  = render :partial => 'menu'
-  - if @user
-    - if @order.closed
-      .admin= link_to "Open Order", { :controller => '/admin/orders', :action => 'restore', :id => @order }, { :confirm => "Unclose order #{@order.id}" }
-    - else
-      %h3 Availible Tasks
-      = render :partial => 'pending_tasks'
+- if @order and @user
+  - if @order.closed
+    .admin= link_to "Open Order", { :controller => '/admin/orders', :action => 'restore', :id => @order }, { :confirm => "Unclose order #{@order.id}" }
+  - else
+    %h3 Availible Tasks
+    = render :partial => 'pending_tasks'
   %hr
 
 %h2 Order Status Overview

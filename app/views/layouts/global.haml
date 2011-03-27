@@ -151,8 +151,10 @@
                     - for name, action, desc in StaticController.pages
                       = content_tag('li', link_to(name, { :controller => '/static', :action => action }, :rel => 'nofollow'), :class => (params[:controller] == 'static' and params[:action] == action) ? 'sel' : nil, :title => desc)
 
-          #content
-            = @content_for_layout
+          /- if content_for?(:content)
+          #content= yield(:content) || yield
+          /- else
+          /  #content= yield
       %tr
         %td.layout{ :colspan => "2" }
           #footer

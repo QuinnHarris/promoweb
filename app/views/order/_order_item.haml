@@ -1,199 +1,218 @@
 - aspect ||= :price
 - tail ||= nil
+
+- rows = 4
+
+- oivs = order_item.order_item_variants.find_all { |o| o.quantity != 0 }
+- rows += 1 if oivs.empty?
+
+- product_list = order_item.send("list_#{aspect}")
+- rows += 1 unless product_list.fixed.nil? or product_list.fixed.zero?
+
+- decorations = order_item.decorations.find_all { |d| list = d.send("list_#{aspect}"); !(d.technique_id == 1 && list.marginal.zero? && list.fixed.zero?) }
+- rows += decorations.length
+
+- unit_entries = []; fixed_entries = []
+- order_item.entries.each do |entry|
+  - list = entry.send(aspect)
+  - if list.marginal
+    - unit_entries << entry
+  - elsif list.fixed
+    - fixed_entries << entry
+- rows += 1 if additional_setup = (unit_entries.empty? and !invoice and order_item.decorations.empty?)
+- rows += unit_entries.length
+- rows += fixed_entries.length
+
+- list_shipping = order_item.send("list_shipping_#{aspect}")
+- has_shipping = order_item.shipping_type && !((order_item.shipping_type == 'NONE') and list_shipping.zero?)
+- additional_shipping = (!@static and order_item.entries.empty?)
+- rows += 1 if has_shipping || additional_shipping
+
+- rows += 2 if tail
+  
 .item
-  .block.thumb
-    - if order_item.product.product_images.empty?
-      - thumb_path = order_item.product.image_path_relative('thumb')
-    - else
-      - thumb_path = order_item.active_images.first.image.url(:thumb) 
-    - unless absolute
-      - link_to({ :controller => '/products', :action => 'main', :id => order_item.product }) do
-        = image_tag(thumb_path, :alt => "#{order_item.product.name} Thumbnail")
-        %br
-        %strong= "M#{order_item.product.id}</strong>"
-        - if !static and RemoveItemOrderTask.allowed?(@permissions)
-          %br
-          %br
-          = link_to(image_tag('remove.png') + "Remove", { :action => :item_remove, :id => order_item }, :confirm => "Remove #{order_item.product.name}")
-    - else
-      %a{ :href => "http://www.mountainofpromos.com/products/main/#{order_item.product.id}" }
-        %img{ :src => "http://www.mountainofpromos.com#{thumb_path}" }
-        %br
-        %strong= "M#{order_item.product.id}"
-    - if @user and aspect == :cost and order_item.product.supplier_url
-      %br
-      = link_to "<em>#{order_item.product.supplier.name}: #{order_item.product.supplier_num}</em>", order_item.product.supplier_url
+  %table
+    %thead
+      %tr
+        %th
+          - if !static and RemoveItemOrderTask.allowed?(@permissions)
+            = link_to(image_tag('remove.png') + "Remove", { :action => :item_remove, :id => order_item }, :confirm => "Remove #{order_item.product.name}")
+        %td Description
+        %td Unit
+        %td Fixed
+    %tbody
+      %tr
+        %td.thumb{ :rowspan => rows }
+          - if order_item.product.product_images.empty?
+            - thumb_path = order_item.product.image_path_relative('thumb')
+          - else
+            - thumb_path = order_item.active_images.first.image.url(:thumb) 
+          - unless absolute
+            - link_to({ :controller => '/products', :action => 'main', :id => order_item.product }) do
+              = image_tag(thumb_path, :alt => "#{order_item.product.name} Thumbnail")
+              %br
+              %strong= "M#{order_item.product.id}</strong>"
+          - else
+            %a{ :href => "http://www.mountainofpromos.com/products/main/#{order_item.product.id}" }
+              %img{ :src => "http://www.mountainofpromos.com#{thumb_path}" }
+              %br
+              %strong= "M#{order_item.product.id}"
+          - if @user and aspect == :cost and order_item.product.supplier_url
+            %br
+            = link_to "<em>#{order_item.product.supplier.name}: #{order_item.product.supplier_num}</em>", order_item.product.supplier_url
+        %td
+          - if aspect == :cost and order_item.product.supplier_url
+            = link_to "#{order_item.product.supplier_num}: ", order_item.product.supplier_url
 
-  .info_block
-    - product_list = order_item.send("list_#{aspect}")
-    %table.block
-      %thead
-        %tr
-          %td Description
-          %td Unit
-          %td Fixed
-      %tbody
-        %tr
-          %td
-            - if aspect == :cost and order_item.product.supplier_url
-              = link_to "#{order_item.product.supplier_num}: ", order_item.product.supplier_url
-
-            - unless absolute
-              %strong
-                = link_to order_item.product.name, { :controller => '/products', :action => 'main', :id => order_item.product }
-            - else
-              %strong
-                %a{ :href => "http://www.mountainofpromos.com/products/main/#{order_item.product.id}" }
-                  = order_item.product.name
-            %em
-              (for
-              = order_item.quantity
-              units)
-          %td.num= (unit_sum = MyRange.new(product_list.marginal)).to_perty
-
-        - oivs = order_item.order_item_variants.find_all { |o| o.quantity != 0 }
-        - unless oivs.empty?
-          %tr
-            %td{ :colspan => "7" }
-              %dl.variants
-                %dt
-                  - reset_cycle
-                  - names = order_item.product.property_group_names
-                  - for name in names
-                    %span{ :class => cycle('odd', 'even') }
-                      = name.capitalize
-                      \:
-                  %span{ :class => cycle('odd', 'even') } Quantity:
-                  %span{ :class => cycle('odd', 'even') } Imprint:
-                %dd
-                  %ul
-                    - for oiv in oivs
-                      %li
-                        - reset_cycle
-                        - for name in names
-                          %span{ :class => cycle('odd', 'even') }
-                            = (oiv.variant && (p = oiv.variant.properties.to_a.find { |p| p.name == name }) && p.value) || 'Not Specified'
-                        %span{ :class => cycle('odd', 'even') }
-                          = oiv.quantity
-                        %span{ :class => cycle('odd', 'even') }
-                          = oiv.imprint_colors
-
-        - total_sum = MyRange.new(product_list.fixed)
-        - unless total_sum.nil? or (total_sum.single and total_sum.single.zero?)
-          %tr
-            %td
-              %strong
-                Charge for less than
-                = order_item.price_group.minimum
-                units
-            %td
-            %td.num= total_sum.to_perty
-        - for decoration in order_item.decorations.find_all { |d| list = d.send("list_#{aspect}"); !(d.technique_id == 1 && list.marginal.zero? && list.fixed.zero?) }
-          %tr
-            %td
-              = decoration.description
-              - if decoration.count
-                for
-                = decoration.count
-                - if decoration.technique.unit_name
-                  = decoration.count > 1 ? decoration.technique.unit_name.pluralize : decoration.technique.unit_name
-            %td.num
-              - decoration_list = decoration.send("list_#{aspect}")
-              - unit_sum += decoration_list.marginal unless unit_sum.nil?
-              = "#{decoration_list.marginal.to_perty}"
-            %td.num
-              - total_sum += decoration_list.fixed unless total_sum.nil?
-              = "#{decoration_list.fixed.to_perty}"
-        - entries = order_item.entries
-        - if entries.empty? and !invoice
-          - if order_item.decorations.empty?
-            %tr
-              %td
-                %strong Additional setup charges WILL apply!
-              %td
-              %td.num
-                %strong $**.**
-        - else
-          - for entry in entries
-            - next unless list = entry.send(aspect)
-            - next if list.marginal.nil?
-            %tr
-              %td= entry.description
-              - unit_sum += list.marginal
-              %td.num= list.marginal.to_perty
-              - unless list.fixed.nil?
-                - total_sum += list.fixed
-                %td.num= list.fixed.to_perty
-        %tr.num.total
-          %th
-          %td= unit_sum.to_perty
-          %td= total_sum.to_perty
-        %tr
-          %td
-            - unless static
-              = check_box "order_items[#{order_item.id}]", :sample_requested, :checked => order_item.sample_requested
-              Request Sample
-          %td.num
-            \&times;
+          - unless absolute
+            %strong
+              = link_to order_item.product.name, { :controller => '/products', :action => 'main', :id => order_item.product }
+          - else
+            %strong
+              %a{ :href => "http://www.mountainofpromos.com/products/main/#{order_item.product.id}" }
+                = order_item.product.name
+          %em
+            (for
             = order_item.quantity
+            units)
+        %td.num= (unit_sum = MyRange.new(product_list.marginal)).to_perty
+
+      - unless oivs.empty?
+        %tr
+          %td{ :colspan => 7 }
+            %dl.variants
+              %dt
+                - reset_cycle
+                - names = order_item.product.property_group_names
+                - for name in names
+                  %span{ :class => cycle('odd', 'even') }
+                    = name.capitalize
+                    \:
+                %span{ :class => cycle('odd', 'even') } Quantity:
+                %span{ :class => cycle('odd', 'even') } Imprint:
+              %dd
+                %ul
+                  - for oiv in oivs
+                    %li
+                      - reset_cycle
+                      - for name in names
+                        %span{ :class => cycle('odd', 'even') }
+                          = (oiv.variant && (p = oiv.variant.properties.to_a.find { |p| p.name == name }) && p.value) || 'Not Specified'
+                      %span{ :class => cycle('odd', 'even') }
+                        = oiv.quantity
+                      %span{ :class => cycle('odd', 'even') }
+                        = oiv.imprint_colors
+
+      - total_sum = MyRange.new(product_list.fixed)
+      - unless product_list.fixed.nil? or product_list.fixed.zero?
+        %tr
+          %td
+            %strong
+              Charge for less than
+              = order_item.price_group.minimum
+              units
+          %td
+          %td.num= total_sum.to_perty
+      - for decoration in decorations
+        %tr
+          %td
+            = decoration.description
+            - if decoration.count
+              for
+              = decoration.count
+              - if decoration.technique.unit_name
+                = decoration.count > 1 ? decoration.technique.unit_name.pluralize : decoration.technique.unit_name
           %td.num
-            - x = unit_sum * order_item.quantity
-            = x.to_perty
-            - total_sum += x unless total_sum.nil?
-        - for entry in entries
-          - next unless list = entry.send(aspect)
-          - next if !list.marginal.nil? || list.fixed.nil?
-          %tr
-            %td= entry.description
-            %td
+            - decoration_list = decoration.send("list_#{aspect}")
+            - unit_sum += decoration_list.marginal unless unit_sum.nil?
+            = "#{decoration_list.marginal.to_perty}"
+          %td.num
+            - total_sum += decoration_list.fixed unless total_sum.nil?
+            = "#{decoration_list.fixed.to_perty}"
+      - if additional_setup
+        %tr
+          %td
+            %strong Additional setup charges WILL apply!
+          %td
+          %td.num
+            %strong $**.**
+      - for entry in unit_entries
+        %tr
+          - list = entry.send(aspect)
+          %td= entry.description
+          - unit_sum += list.marginal
+          %td.num= list.marginal.to_perty
+          - unless list.fixed.nil?
             - total_sum += list.fixed
             %td.num= list.fixed.to_perty
-        - if order_item.shipping_type.nil?
-          - if !@static and order_item.entries.empty?
-            %tr
-              %td
-                %strong Additional shipping charges WILL apply!
-              %td
-              %td.num
-                %strong $**.**
-        - elsif (order_item.shipping_type != 'NONE') and (!(list_shipping = order_item.send("list_shipping_#{aspect}")).zero?)
-          %tr
-            %td
-              - unless aspect == :cost
-                Estimated
-              Shipping:
-              %strong= order_item.shipping_description(aspect == :cost)
-            %td
-            - total_sum += list_shipping
-            %td.num= list_shipping.to_perty
-        %tr.num.total
-          - unless tail
-            %th{ :colspan => "2" } Total:
-            %td.total= total_sum.to_perty
-          - else
-            %th{ :colspan => "2" } Subtotal:
-            %td= total_sum.to_perty
-        - if tail
-          %tr.num
-            %td{ :colspan => "2" }= tail.first
-            %td.total= tail.last
-
-    - unless invoice
-      .block
-        - if static
-          - unless order_item.blank?
-            %h3 Customer Notes
-            %p= order_item.customer_notes 
-        - else
-          %h3 Customer Notes
-          = text_area "order_items[#{order_item.id}]", :customer_notes, { :cols => 50, :rows => 5, :value => order_item.customer_notes }
-          - if !@user and order_item.decorations.empty?
-            %p
-              Please make note of desired decoration method.
-              %br
-              e.g. Screen Print, Embroidery, Deboss
-    - unless order_item.our_notes.blank?
-      .block
-        %h3 Notes
-        %p= order_item.our_notes.gsub("\n", "<br/>")
+      %tr.num.total
+        %th
+        %td= unit_sum.to_perty
+        %td= total_sum.to_perty
+      %tr
+        %td
+          - unless static
+            = check_box "order_items[#{order_item.id}]", :sample_requested, :checked => order_item.sample_requested
+            Request Sample
+        %td.num
+          \&times;
+          = order_item.quantity
+        %td.num
+          - x = unit_sum * order_item.quantity
+          = x.to_perty
+          - total_sum += x unless total_sum.nil?
+      - for entry in fixed_entries
+        - list = entry.send(aspect)
+        %tr
+          %td= entry.description
+          %td
+          - total_sum += list.fixed
+          %td.num= list.fixed.to_perty
           
+      - if has_shipping
+        %tr
+          %td
+            - unless aspect == :cost
+              Estimated
+            Shipping:
+            %strong= order_item.shipping_description(aspect == :cost)
+          %td
+          - total_sum += list_shipping
+          %td.num= list_shipping.to_perty
+      - elsif additional_shipping
+        %tr
+          %td
+            %strong Additional shipping charges WILL apply!
+          %td
+          %td.num
+            %strong $**.**
+      - if tail
+        %tr
+          %th{ :colspan => 2 } Sub Total:
+          %td.num= total_sum.to_perty
+        %tr
+          %th{ :colspan => 2 }= tail.first
+          %td.num.total= tail.last
+      %tr
+        %td{ :colspan => tail ? 3 : 2, :rowspan => tail ? 1 : 2 }
+          - unless static and order_item.our_notes.blank?
+            %h3 Notes
+          - unless order_item.our_notes.blank?
+            %div= order_item.our_notes.gsub("\n", "<br/>")
+          %div
+            - if static
+              - unless order_item.blank?
+                = order_item.customer_notes 
+            - else
+              = text_area "order_items[#{order_item.id}]", :customer_notes, { :cols => 60, :rows => 2, :value => order_item.customer_notes }
+              - if !@user and order_item.decorations.empty?
+                Please make note of desired decoration method.
+                %br
+                e.g. Screen Print, Embroidery, Deboss
+
+        - unless tail
+          %th Total:
+          %td.num.total= total_sum.to_perty
+
+
+        

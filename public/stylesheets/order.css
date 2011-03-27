@@ -1,33 +1,26 @@
-h1 {
-  find-size: 1.2em;
-  margin: 0;
-  margin-top: 1em;
-  margin-bottom: 0.5em;
-  border-bottom: medium solid black;
-}
-
-h2 { clear: both; }
-
+/* Global */
 div#content {
-  padding: 1em;
+    padding-top: 1em;
+}
+div#main {
+    padding: 1em;
+    padding-top: 0;
 }
 
-table td {
+table td, table th {
   vertical-align: top;
 }
 
+/* Form Entry */
 table.form th {
   padding-left: 1em;
   text-align: right;
-  vertical-align: top;
   background-color: #EEE;
   font-weight: normal;
 }
-
 table.form tr.required th {
   font-weight: bold;
 }
-
 table.form caption {
   font-size: 1.2em;
   font-weight: bold;
@@ -36,53 +29,34 @@ table.form caption {
   margin-top: 1.0em;
 }
 
-img.right {
-  float: right;
-}
-
-/* Upload Progress */
-div.uploadStatus {
-  margin: 5px;
-}
-
-div.progressBar {
-  margin: 5px;
-}
-
-div.progressBar div.border {
-  background-color: #fff;
-  border: 1px solid grey;
-  width: 100%;
-}
-
-div.progressBar div.background {
-  background-color: #333;
-  height: 18px;
-  width: 0%;
-}
-
+/* Status Page */
 table#status {
   border-spacing: 0.2em;
 }
-
 table#status td {
   padding: 0.2em;
   border: thin solid grey;
 }
-
 table#status td.header {
 	border: none;
 	text-align: center;
-	vertical-align: bottom;
 }
-
 div#key span {
     padding: 0.5em;
     border: thin solid black;
     line-height: 2.5em;
     white-space: nowrap; 
 }
+div.time {
+    font-size: 0.8em;
+    float: right;
+}
+.pending { background-color: #F0F0FF; }
+.complete { background-color: #E0FFE0; }
+.ready { background-color: #FFFFE0; }
+.late { color: red; }
 
+/* Artwork Page */
 .message {
     font-size: 0.8em;
 }
@@ -92,60 +66,64 @@ div#key span {
     margin-bottom: 0.4em;
 }
 
-.pending {
-	background-color: #F0F0FF;
-}
-
-.complete {
-	background-color: #E0FFE0;
-}
-
-.ready {
-	background-color: #FFFFE0;
-}
-
-.late {
-	color: red;	
-}
-
-div.time {
-	font-size: 0.8em;
-	float: right;
-}
-
-table.spacer {
-	width: 100%;
-	padding: 0;
-}
-
-table.spacer td { text-align: center;}
-
-div.invoice { border: thin solid black; padding: 0; margin-bottom: 1em; page-break-inside: avoid; }
-div.invoice h3 { font-family: sans-serif;  background-color: black; color: white; margin: 0; padding-left: 0.5em; }
-div.invoice div.date { float: right; color: white; margin-right: 0.5em; margin-top: 0.25em;}
-div.invoice div.entry { margin: 1em; }
-div.invoice td.total { font-weight: bold; }
-div.invoice div.total { font-weight: bold; font-size: 1.2em; text-align: right; margin-right: 1em; }
-
-
-
-/* Quote */
+/* Item Page and Order Acknowledge Page */
 .num {
   text-align: right;
 }
 
-table thead {
+table#items_table td {
+    padding: 0;
+}
+table#items_table table {
+    margin: 0;
+    width: 100%;
+}
+
+table#items_table tr.spacer {
+    height: 1em;
+}
+
+table#items_table td.thumb {
+  text-align: center;
+}
+table#items_table textarea {
+    width: 100%;
+}
+table#items_table tbody th,table#items_table tfoot th  {
+    text-align: right;
+}
+table#items_table tfoot tr.total {
+    text-align: right;
+    font-size: 1.2em;
+    font-weight: bold;
+}
+table#items_table tfoot tr.total td {
+    border-top: medium solid black;
+}
+
+table thead, table tr.thead {
   text-align: center;
   font-weight: bold;
 }
 
-table thead td {
+table thead td, table tr.thead td {
   border-bottom: medium solid black;
 }
 
-tr.total td {
-  border-top: thin solid black;
+tr.total td, tr td.total {
+    border-top: thin solid black;
 }
+tr td.total, td.subtotal {
+    font-weight: bold;
+}
+
+
+/* Acknowledge Page */
+div.invoice { border: thin solid black; padding: 0; margin-bottom: 1em; page-break-inside: avoid; }
+div.invoice > h3 { font-family: sans-serif;  background-color: black; color: white; margin: 0; padding-left: 0.5em; }
+div.invoice div.date { float: right; color: white; margin-right: 0.5em; margin-top: 0.25em;}
+div.invoice table, div.invoice div.block { margin-left: 1em; margin-right: 1em; }
+
 
 div.item {
   clear: both;
@@ -161,10 +139,6 @@ div.group {
 div.group table.head {
   width: 100%;
   border-bottom: medium solid #400000;
-}
-
-div.group table.head td {
-  vertical-align: top;
 }
 
 div.group > table td:first-child {
@@ -193,11 +167,23 @@ div.group div.item {
   margin: 0.5em;
 }
 
-div.item .block {
-  float: left;
-  margin-right: 1.0em;
-  height: 100%;
-  margin-bottom: 0.5em;
+div.decorations {
+  min-height: 2em;
+  background-color: #F0F0FF;
+}
+
+div.decoration {
+  width: 1;
+  display: inline-block;
+  border: thin solid black;
+  background-color: white;
+  margin: 0.5em;
+}
+
+div.decoration h3 {
+  margin: 0;
+  padding: 0;
+  border-bottom: thin solid black;
 }
 
 div.item h3 {
@@ -206,14 +192,6 @@ div.item h3 {
   font-size: 1.0em;
   text-align: center;
   border-bottom: medium solid black;
-}
-
-div.thumb {
-  text-align: center;
-  float: left;
-  margin-left: 0.5em;
-  padding: 4px;
-/*  overflow: none;*/
 }
 
 div.item dl {
@@ -235,35 +213,6 @@ div.item dd {
   padding: 0;
   margin-bottom: 0.25em;
 }
-
-hr {
-  clear: both;
-}
-
-
-div.decorations {
-  min-height: 2em;
-  background-color: #F0F0FF;
-}
-
-div.decoration {
-  width: 1;
-  display: inline-block;
-  border: thin solid black;
-  background-color: white;
-  margin: 0.5em;
-}
-
-div.decoration table td {
-  vertical-align: top;
-}
-
-div.decoration h3 {
-  margin: 0;
-  padding: 0;
-  border-bottom: thin solid black;
-}
-
 
 /* Variants dupes from products.css */
 dl.variants dt {  
@@ -306,6 +255,7 @@ dl.variants span {
 
 dl.variants span.even { background-color: #F4F4FF; }
 
+/* Payment */
 div.lowlight {
   background-color: #F0F0F0;
 }
@@ -315,6 +265,7 @@ div.lowlight h1 {
   color: red;
 }
 
+/* Acknowledge */
 div#ack {
   text-align:center;
   background-color: #FCC;

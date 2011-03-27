@@ -668,7 +668,7 @@ class Product < ActiveRecord::Base
        end.group_by(&:first).collect do |properties, list|
          [properties, list.collect { |e| e.last }]
        end.sort_by do |n, vars|
-         next [] unless v = n.compact.first.translate
+         next [] unless n.compact.first && v = n.compact.first.translate
          res = v.split(/(\d+)/).collect do |s|
            next if s.empty?
            i = s.to_i

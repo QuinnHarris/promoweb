@@ -1,5 +1,3 @@
-= render :partial => 'menu'
-
 - if allowed?('items_edit')
   = render :partial => 'admin/orders/items_menu'
 
@@ -10,35 +8,44 @@
     = observe_field 'postalcode', { :function => 'change_postalcode(value)', :frequency => 0.25 }
     %hr
 
-  %table
-    
-  - items = @order.items.to_a.sort_by { |i| [i.product.supplier.name, i.id] }
-  = render :partial => 'order_item', :collection => items, :locals => { :static => @static, :absolute => false, :invoice => false }
-  - unless (entries = @order.po_entries + @order.entries).empty?
-    %table.block
-      %thead
+  %table#items_table
+    %tbody
+      - for order_item in @order.items
         %tr
-          %td Description
-          %td Price
-          %td Quantity
-          %td Total
-      %tbody
+          %td.item{ :colspan => 4 }
+            = render :partial => 'order_item', :locals => { :order_item => order_item, :static => @static, :absolute => false, :invoice => false }
+            %tr.spacer
+
+      - unless (entries = @order.po_entries + @order.entries).empty?
+        - qty_col = entries.find { |e| e.quantity > 1 }
+        %tr.thead
+          %td{ :colspan => qty_col ? 1 : 3 } Description
+          - if qty_col
+            %td Price
+            %td{ :style => 'max-width: 2em;' } Quantity
+          %td Amount
         - for entry in entries
           - next unless entry.price
           %tr
-            %td= entry.description
-            %td= entry.price.to_perty
-            %td= entry.quantity
-            %td= (entry.price * entry.quantity).to_perty
+            %td{ :colspan => qty_col ? 1 : 3 }= entry.description
+            - if qty_col
+              %td.num= entry.price.to_perty
+              %td= entry.quantity
+            %td.num.subtotal= (entry.price * entry.quantity).to_perty
 
-  - if @order.tax_rate > 0.0
-    %div.total
-      #{@order.tax_type} Sales Tax:
-      %span.money= @order.total_tax.to_perty
+      - if !entries.empty? || @order.tax_rate > 0.0
+        %tfoot
+          %tr.spacer
+          - if @order.tax_rate > 0.0
+            %tr
+              %th{ :colspan => 3 } Sub Total:
+              %td.num.total= @order.total_item_price.to_perty
+            %tr
+              %th{ :colspan => 3 } #{@order.tax_type} Sales Tax (#{@order.tax_rate * 100.0}%):
+              %td.num= @order.total_tax.to_perty
+          %tr.total
+            %th{ :colspan => 3 } Total:
+            %td.num= @order.total_price.to_perty
   
-  - if !entries.empty? || @order.tax_rate > 0.0
-    %div.total
-      Grand Total:
-      %span.money= @order.total_price.to_perty
-
+  %hr
   = submit_options

@@ -1,5 +1,3 @@
-= render :partial => 'menu'
-
 = error_messages_for :order
 
 - if @user and @static
@@ -41,6 +39,7 @@
         %td
           = order.check_box(:delivery_date_not_important)
           Delivery Date Not Essential
+          
     %tr
       %th Event Nature:
       %td= @static ? @order.event_nature : order.text_field(:event_nature)

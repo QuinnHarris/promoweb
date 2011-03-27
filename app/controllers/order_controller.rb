@@ -155,6 +155,7 @@ end
 
 class OrderController < ApplicationController 
   include OrderModule
+  layout 'order'
   
   before_filter :setup_order, :except => [:auth, :logout, :add_item]
 
