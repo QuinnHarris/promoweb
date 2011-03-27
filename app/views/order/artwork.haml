@@ -73,7 +73,7 @@
       = render :partial => 'artwork_decoration', :locals => { :group => nil, :item_decorations => @order_item_decorations, :dragable => true }
     = drop_receiving_element("artwork-group=", { :onDrop => 'moveItem', :accept => 'decoration' } )
 
-  - if allowed?('Art')
+  - if allowed?('Art') && !@static
     = link_to image_tag('add.png') + "New Artwork Group", { :controller => 'admin/orders', :action => 'artwork_group_new', :customer_id => @order.customer }, { :class => 'button', :confirm => "Create a new artwork group for #{@order.customer.person_name}" }
 
   %hr
