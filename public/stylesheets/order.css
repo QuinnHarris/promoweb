@@ -29,6 +29,10 @@ table.form caption {
   margin-top: 1.0em;
 }
 
+div.block {
+    float: left;
+}
+
 /* Status Page */
 table#status {
   border-spacing: 0.2em;

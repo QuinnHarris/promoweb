@@ -94,7 +94,7 @@
             - for item in purchase.items
               = render :partial => 'order_item', :locals => { :item => item, :purchase_lock => purchase_lock }
           - unless purchase.new_record?
-            .block.notes
+            .notes
               %strong Notes for Supplier:
               = text_field_tag "Purchase-#{purchase.id}-comment", purchase.comment, :size => 80, :readonly => purchase_lock
             = render :partial => 'order', :locals => { :order => purchase, :purchase_lock => purchase_lock }

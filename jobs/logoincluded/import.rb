@@ -18,7 +18,7 @@ class LogoIncludedXML < GenericImport
         puts "** No update **"
         return
       end
-      ftp.getbinaryfile(remove_file, @src_file)
+      ftp.getbinaryfile(remote_file, @src_file)
     end
     puts "Fetched"
   end
