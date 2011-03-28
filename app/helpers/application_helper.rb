@@ -104,7 +104,7 @@ module ApplicationHelper
   end
   
   def path_name(category = @category)
-    return '!!! PRODUCT NO LONGER AVAILIBLE !!!' unless category
+    return '!!! CHECK AVAILABILITY AND PRICE !!!' unless category
 
     text = []
 

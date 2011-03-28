@@ -1,4 +1,7 @@
-= path_text
+- if @product.deleted
+  %h1#path !!! PRODUCT NO LONGER AVAILIBLE !!!
+- else
+  = path_text
 
 %table.layout
   %tr
