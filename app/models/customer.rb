@@ -65,8 +65,9 @@ class Customer < ActiveRecord::Base
     if default_address &&
         (default_address.state.downcase == 'colorado' ||
          default_address.state.downcase == 'co')
-      ['Colorado', 0.029]
+      return ['Colorado', 0.029]
     end
+    [nil, 0.0]
   end
 end
 
