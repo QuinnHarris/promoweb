@@ -38,6 +38,10 @@ class Money
   def max
     self
   end
+
+  def abs
+    Money.new(@units.abs, @currency, @bank, @multiplier)
+  end
     
   def to_perty
     negative = (@units < 0)

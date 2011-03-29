@@ -111,11 +111,11 @@ class Admin::OrdersController < Admin::BaseController
     @title = "Orders #{ready_orders.length} of #{@count}"
   end
     
-  def payment_charge
+  def payment_apply
     # Validate format of amount
-    amount = Money.new(Float(params[:transaction][:amount]))
+    amount = Money.new(Float(params[:transaction][:amount])).round_cents
     if amount.to_s != params[:transaction][:amount]
-      render :inline => "Invalid entry #{params[:transaction][:amount]} must be of form d+.dd as in 125.25."
+      render :inline => "Invalid entry #{params[:transaction][:amount].inspect} must be of form d+.dd as in 125.25."
       return
     end
     
@@ -125,27 +125,39 @@ class Admin::OrdersController < Admin::BaseController
     # Must wrap required payment read in transaction
     PaymentTransaction.transaction do
       if params[:commit] == 'Charge'
+        raise "Unexpected Charge" if payment_method.creditable?
         max = @order.total_billable
+        raise "Expected positive billable for Charge" unless max.to_i > 0
         if @order.invoices.last.new_record?
           @order.save_price!
           @order.invoices.last.save!
         end
       elsif params[:commit] == 'Credit'
-        charge_transaction = PaymentTransaction.find(params[:txn_id])
-        max = charge_transaction.amount
+        if params[:txn_id]
+          charge_transaction = PaymentTransaction.find(params[:txn_id])
+          payment_method.credit_to(charge_transaction)
+          max = charge_transaction.amount
+        else
+          charge_transaction = true
+        end
+        raise "Unexpected Credit" unless payment_method.creditable?
+        max = -@order.total_billable
+        raise "Expected negative billable for Credit" unless max.to_i > 0
       else
         raise "Unknown Action: #{params[:commit].inspect}"
       end
 
       max *= 1.1 if payment_method.is_a?(PaymentSendCheck)
 
-      if amount.cents < 500 or amount > max
-        render :inline => "Charge must be between $5.00 $#{max}"
+      if amount > max
+        render :inline => "Charge must be less than $#{max}"
         return
       end
     
       unless charge_transaction
         transaction = payment_method.charge(@order, amount, params[:transaction][:comment])
+
+        logger.info("Trans: #{transaction.inspect}")
         
         unless transaction.is_a?(PaymentError) or @order.task_completed?(FirstPaymentOrderTask)
           task_complete({}, PaymentInfoOrderTask) unless @order.task_completed?(PaymentInfoOrderTask)

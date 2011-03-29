@@ -17,6 +17,13 @@ class Invoice < ActiveRecord::Base
     total_item_price + total_tax
   end
 
+  def qb_sales_tax_id
+    if tax_type == 'Colorado'
+      return '80000476-1300837712'
+    end
+    nil
+  end
+
   before_destroy :destroy_children
   def destroy_children
     entries.each { |e| e.destroy }

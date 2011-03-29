@@ -130,7 +130,9 @@ xml.QBXML do
       #xml.PONumber?
       #xml.TermsRef
       xml.DueDate invoice.order.delivery_date if invoice.order.delivery_date
-      #xml.SalesRepRef do
+      xml.SalesRepRef do
+        xml.ListID invoice.qb_sales_tax_id
+      end if invoice.tax_type
       #xml.FOB
       #xml.ShipDate
       #xml.ShipMethodRef do

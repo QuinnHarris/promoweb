@@ -788,21 +788,26 @@ public
       next
     end
     
-    if @user
-      @javascripts << 'admin_orders'
-      @transaction = PaymentTransaction.find(params[:txn_id]) if params[:txn_id]
-    end
+    @javascripts << 'admin_orders' if @user
     
     apply_calendar_header
     
     determine_pending_tasks
 
-    @payment_methods = @customer.payment_methods
+    @payment_methods = @customer.payment_methods.find(:all, :include => :transactions)
     if @payment_methods.empty?
       @address = @customer.default_address
       @options = Struct.new(:different).new nil
       @credit_card = ActiveMerchant::Billing::CreditCard.new
       next
+    elsif @user and params[:txn_id]
+      # If this is a refund setup the refund method
+      txn_id = Integer(params[:txn_id])
+      @payment_methods.each do |method|
+        method.transactions.each do |transaction|
+          method.credit_to(transaction) if transaction.id == txn_id
+        end
+      end
     end
   end
 
@@ -831,7 +836,7 @@ public
           payment_method.address.destroy
         end
 
-        unless payment_method.customer.payment_methods.to_a.find { |m| m.chargeable? }
+        unless payment_method.customer.payment_methods.to_a.find { |m| m.useable? } or @order.task_completed?(FirstPaymentOrderTask)
           @order.task_revoke([PaymentInfoOrderTask])
         end
       end
@@ -902,11 +907,11 @@ public
 #        raise "Send Check Payment method can only be added once per customer"
 #      end
     
-      payment = PaymentSendCheck.create({
+      klass = PaymentSendCheck
+      klass = PaymentRefundCheck if @user && params[:refund]
+      payment = klass.create({
         :customer => @customer,
         :address => @address,
-        :name => "Mailed Check",
-        :display_number => '',
       })
       
 #      task_complete({ :data => { :id => payment.id } },

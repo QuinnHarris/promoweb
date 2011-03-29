@@ -6,16 +6,8 @@ class PaymentMethod < ActiveRecord::Base
   
 #  validates_uniqueness_of :display_number, :scope => :customer_id
   
-  def revokable?; false; end
-  def chargeable?
-    transactions.empty?
-  end
   def creditable?; false; end
-  
-  def self.gateway
-    secrets = YAML.load_file(RAILS_ROOT + '/config/secrets')
-    ActiveMerchant::Billing::TrustCommerceGateway.new(secrets['trust_commerce'][RAILS_ENV].symbolize_keys)
-  end
+  def type_notes; nil; end
   
   PaymentTransaction
   def authorize(order, comment = nil)
@@ -41,22 +33,27 @@ class PaymentMethod < ActiveRecord::Base
     PaymentCredit.create({
       :method => self,
       :order => order,
-      :amount => amount,
+      :amount => -amount,
       :comment => comment,
       :data => data
-    })    
+    })   
   end
 
   def revoke!; end;
   def fee; 0.0; end
 end
 
-class PaymentCreditCard < PaymentMethod
+class OnlineMethod < PaymentMethod
+  def self.gateway
+    secrets = YAML.load_file(RAILS_ROOT + '/config/secrets')
+    ActiveMerchant::Billing::TrustCommerceGateway.new(secrets['trust_commerce'][RAILS_ENV].symbolize_keys)
+  end
+end
+
+class PaymentCreditCard < OnlineMethod
   def type_name; "Credit Card"; end
-  def type_notes; nil; end
   def has_name?; true; end
   def has_number?; true; end
-  def creditable?; true; end
   
   def self.store(order, creditcard, address)
     payment = nil
@@ -78,7 +75,7 @@ class PaymentCreditCard < PaymentMethod
   def revokable?
     billing_id
   end
-  def chargeable?
+  def useable?
     revokable?
   end
 
@@ -133,6 +130,14 @@ public
       store_error(order, response, comment)
     end
   end
+
+  def refundable?; true; end
+  def credit_to(transaction)
+    @transaction = transaction
+  end
+  def creditable?
+    @transaction
+  end
   
   def credit(order, amount, comment, charge_transaction)
     logger.info("CreditCard Credit: #{order.id} = #{amount} for #{id} : #{charge_transaction.id}")
@@ -148,13 +153,9 @@ public
   end
 end
 
-class PaymentACHCheck < PaymentMethod
+class PaymentACHCheck < OnlineMethod
   def type_name
     "ACH Check"
-  end
-  
-  def type_notes
-    nil
   end
   
   def has_name?
@@ -166,10 +167,23 @@ class PaymentACHCheck < PaymentMethod
   end
 end
 
-class PaymentSendCheck < PaymentMethod
-  def type_name
-    "Mailed Check"
+class PaymentCheck < PaymentMethod
+  before_create :setup_vals
+  def setup_vals
+    self.name = type_name
+    self.display_number = ''
   end
+
+  def revokable?; false; end
+  def useable?; transactions.empty?; end
+  def refundable?; false; end
+
+  def has_name?; nil; end
+  def has_number?; false; end
+end
+
+class PaymentSendCheck < PaymentCheck
+  def type_name; "Mailed Check"; end
   
   def type_notes
     %q(Please mail check to:<br/>
@@ -177,12 +191,10 @@ Mountain Xpress Promotions, LLC<br/>
 954 E. 2nd Ave, Ste 206<br/>
 Durango, CO. 81301<br/>)
   end
-  
-  def has_name?
-    nil
-  end
-  
-  def has_number?
-    false
-  end
+end
+
+class PaymentRefundCheck < PaymentCheck
+  def type_name; "Refund Check"; end
+
+  def creditable?; true; end
 end
