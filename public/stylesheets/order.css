@@ -126,7 +126,7 @@ tr td.total, td.subtotal {
 div.invoice { border: thin solid black; padding: 0; margin-bottom: 1em; page-break-inside: avoid; }
 div.invoice > h3 { font-family: sans-serif;  background-color: black; color: white; margin: 0; padding-left: 0.5em; }
 div.invoice div.date { float: right; color: white; margin-right: 0.5em; margin-top: 0.25em;}
-div.invoice table, div.invoice div.block { margin-left: 1em; margin-right: 1em; }
+div.invoice table, div.invoice div.notes { margin-left: 1em; margin-right: 1em; }
 
 
 div.item {

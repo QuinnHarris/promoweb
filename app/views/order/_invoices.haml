@@ -137,7 +137,7 @@
               %th{ :colspan => 3 } Total:
               %td.num= invoice.total_price.to_perty
 
-      .block
+      .notes
         - if !static and @user and invoice.new_record?
           %h3 Notes
           - form_for :invoice, invoice, :url => { :action => :create_invoice, :order_id => @order } do |inv|
