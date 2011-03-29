@@ -7,7 +7,7 @@
   }
 
 %h2 Order Items
-= render :partial => '/order/order_item', :collection => @order.items, :locals => { :static => true, :absolute => true, :shipping => true, :invoice => false }
+= render :partial => '/order/items', :locals => { :static => true, :absolute => true }
 
 %h2 Order Information
 %table.info

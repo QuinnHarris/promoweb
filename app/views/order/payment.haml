@@ -81,7 +81,7 @@
                       %td TODAY
                       %td= link_to session[:order_id], :action => :status, :order_id => session[:order_id]
                       %td
-                        = method.creditable? && '-'
+                        = method.creditable? ? '-' : ''
                         = text_field :transaction, :amount, :value => @order.total_billable.abs, :size => 8, :class => 'money negative', :onkeypress => 'input_press(event)'
                       %td
                         = text_field :transaction, :comment
