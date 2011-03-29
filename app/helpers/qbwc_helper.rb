@@ -154,7 +154,7 @@ module QbwcHelper
   def sub_items_invoice(xml, items, new_item, qb_type, negate = false, tax = nil)
     items.each do |item|
       if item.is_a?(InvoiceOrderItem)
-        sub_item(xml, item.order_item, new_item, qb_type, 'price', negate)
+        sub_item(xml, item.order_item, new_item, qb_type, 'price', negate, nil, tax)
         
         correction = item.total_price - item.order_item.total_price
         unless correction.zero?
