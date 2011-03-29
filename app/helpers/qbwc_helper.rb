@@ -176,6 +176,9 @@ module QbwcHelper
           sub_item_aspect(xml, item, new_item, qb_type) do
             xml.Desc "Adjustment for past invoice(s)"
             xml.Amount(negate ? -correction : correction)
+            xml.SalesTaxCodeRef do
+              xml.FullName 'Tax'
+            end if tax
           end
         end
       else

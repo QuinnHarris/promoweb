@@ -124,7 +124,7 @@
               %tr= entry.html_row(self, absolute)
               %tr.spacer
 
-        - if entries.length > 1
+        - if entries.length > 1 || invoice.tax_rate > 0.0
           %tfoot
             - if invoice.tax_rate > 0.0
               %tr
