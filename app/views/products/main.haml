@@ -20,7 +20,7 @@
       #prod
         #prod_title
           %span#prod_num
-            %em= link_to_unless(@user.nil?, "#{@product.supplier.name}: #{@product.supplier_num}", @product.supplier_url)
+            %em= link_to("#{@product.supplier.name}: #{@product.supplier_num}", @product.supplier_url)
             %strong= "(M#{@product.id})"
           %h1= @product.name
           = path_tail_list
