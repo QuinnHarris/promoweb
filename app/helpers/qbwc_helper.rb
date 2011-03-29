@@ -66,7 +66,7 @@ module QbwcHelper
     end
   end
   
-  def sub_item(xml, item, new_item, qb_type, character, negate = nil, bill_po = nil)
+  def sub_item(xml, item, new_item, qb_type, character, negate = nil, bill_po = nil, tax = nil)
     price = item.send("list_#{character}")
 
     (item.respond_to?(:order_item_variants) ? item.order_item_variants : [item]).each do |oiv|
@@ -85,7 +85,9 @@ module QbwcHelper
         end
         #xml.Amount
         #xml.ServiceDate
-        #xml.SalesTaxCodeRef do
+        xml.SalesTaxCodeRef do
+          xml.FullName 'Tax'
+        end if tax
         #xml.OverrideItemAccountRef
         unless bill_po
           if oiv.respond_to?(:variant) and oiv.variant
@@ -149,7 +151,7 @@ module QbwcHelper
     end
   end
     
-  def sub_items_invoice(xml, items, new_item, qb_type, negate = false)
+  def sub_items_invoice(xml, items, new_item, qb_type, negate = false, tax = nil)
     items.each do |item|
       if item.is_a?(InvoiceOrderItem)
         sub_item(xml, item.order_item, new_item, qb_type, 'price', negate)
@@ -162,7 +164,7 @@ module QbwcHelper
           end
         end
       else
-        sub_item(xml, item, new_item, qb_type, 'price', negate)
+        sub_item(xml, item, new_item, qb_type, 'price', negate, nil, tax)
       end      
     end
   end

@@ -142,11 +142,11 @@ xml.QBXML do
       xml.IsToBePrinted 0
       #xml.IsToBeEmailed
       xml.CustomerSalesTaxCodeRef do
-        xml.FullName 'Non'
+        xml.FullName invoice.tax_type ? 'Tax' : 'Non'
       end
       #xml.Other
       #xml.LinkToTxnIDList  
-      sub_items_invoice(xml, invoice.entries, new_item, qb_type, negate)
+      sub_items_invoice(xml, invoice.entries, new_item, qb_type, negate, invoice.tax_type)
       #xml.InvoiceLineGroupAdd do
       #xml.IncludeRetElementList
     end
