@@ -130,13 +130,13 @@ xml.QBXML do
       #xml.PONumber?
       #xml.TermsRef
       xml.DueDate invoice.order.delivery_date if invoice.order.delivery_date
-      xml.SalesRepRef do
-        xml.ListID invoice.qb_sales_tax_id
-      end if invoice.tax_type
+      #xml.SalesRepRef do
       #xml.FOB
       #xml.ShipDate
       #xml.ShipMethodRef do
-      #xml.ItemSalesTaxRef do
+      xml.ItemSalesTaxRef do
+        xml.ListID invoice.qb_sales_tax_id
+      end if invoice.tax_type
       xml.Memo "Order #{invoice.order.id}"
       #xml.CustomerMsgRef do
       xml.IsToBePrinted 0
