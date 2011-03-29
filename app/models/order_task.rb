@@ -212,8 +212,13 @@ Customer Comments:
 
     order.items.each do |item|
       item.order_item_variants.to_a.find do |oiv|
-        if oiv.quantity > 0 and oiv.variant_id.nil?
-          problems << "Quantity in Not Specified variant"
+        if oiv.quantity > 0
+          if oiv.variant_id.nil?
+            problems << "Quantity in Not Specified variant"
+          end
+          if oiv.imprint.blank?
+            problems << "Imprint color not specified"
+          end
         end
       end
     end
