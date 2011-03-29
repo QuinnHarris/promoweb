@@ -46,7 +46,7 @@
         - if @purchase.order.rush
           %br
           %strong RUSH ORDER
-      - else
+      - elsif @purchase.ship_by_date
         %strong Ship by Date:
         = format_time_abs(@purchase.ship_by_date, false)
       - if @purchase.order.user
