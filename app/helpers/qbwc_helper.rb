@@ -109,6 +109,9 @@ module QbwcHelper
 #      xml.ClassRef do
 #        xml.ListID @qb_list_id['Class']
 #      end
+      xml.SalesTaxCodeRef do
+        xml.FullName 'Tax'
+      end if tax
     end
   
     item.sub_items.each do |sub|
@@ -132,11 +135,17 @@ module QbwcHelper
           xml.Desc "|- #{sub.description}#{sufix && ' Unit'}"
           xml.Quantity item.quantity
           xml.tag!(bill_po ? 'Cost' : 'Rate', negate ? -price.marginal : price.marginal)
+          xml.SalesTaxCodeRef do
+            xml.FullName 'Tax'
+          end if tax
         end
         
         sub_item_aspect(xml, sub, new_item, qb_type, bill_po, 'fixed', no_fixed) do
           xml.Desc(no_marginal ? "|- #{sub.description}#{sufix && ' Setup'}" : "|  * Setup")
           xml.Amount(negate ? -price.fixed : price.fixed)
+          xml.SalesTaxCodeRef do
+            xml.FullName 'Tax'
+          end if tax
         end
       end
     end
@@ -147,6 +156,9 @@ module QbwcHelper
       sub_item_aspect(xml, item, new_item, qb_type, bill_po, 'shipping', ship_price.nil? || ship_price.zero?) do
         xml.Desc "Shipping: #{item.shipping_description}"
         xml.Amount(negate ? -ship_price : ship_price)
+        xml.SalesTaxCodeRef do
+          xml.FullName 'Tax'
+        end if tax
       end
     end
   end
