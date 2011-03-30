@@ -148,7 +148,13 @@ class GemlineXML < GenericImport
         end
 
         if image_node = item.get_elements('images/zoomed').first
-          val['images'] = ImageNodeFetch.new(val['num'], "#{image_node.attributes['path']}#{image_node.attributes['name']}")
+          val['images'] = [ImageNodeFetch.new(val['num'], "#{image_node.attributes['path']}#{image_node.attributes['name']}")]
+
+          item.get_elements('images/alternate-images/').first.each_element do |alt|
+            if /zoomed(\d)/ === alt.name
+              val['images'] << ImageNodeFetch.new("#{val['num']}-#{$1}", "#{alt.attributes['path']}#{alt.attributes['name']}")
+            end
+          end
         end
 
         prices = []
