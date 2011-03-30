@@ -7,6 +7,30 @@ require File.dirname(__FILE__) + '/categories'
 
 JOBS_DATA_ROOT = RAILS_ROOT + "/jobs/data"
 
+def apply_decorations(supplier_name)
+  supplier = Supplier.find_by_name(supplier_name)
+  raise "Unknown Supplier: #{supplier_name}" unless supplier
+  
+  Supplier.transaction do
+    # Remove all old records
+    supplier.decoration_price_groups.each do |grp|
+      grp.entries.each do |entry|
+        fixed = entry.fixed
+        marginal = entry.marginal
+        
+        entry.destroy
+        
+        fixed.destroy if fixed and fixed.decoration_price_entry_fixed.empty?
+        marginal.destroy if marginal and marginal.decoration_price_entry_marginal.empty?
+      end
+      grp.destroy
+    end
+    
+    yield supplier
+  end
+end
+
+
 class XLSFile
   def initialize(file)
     book = Spreadsheet.open(file)

@@ -15,7 +15,8 @@ class GemlineXML < GenericImport
   'Gemphoto' => ['Photo Transfer', nil],
   'Print (one color only)' => ['Screen Print', 1],
   "Print (case only \342\200\223 one color print)" => ['Screen Print', 1],
-  'Initials' => ['Personalization', nil]}
+  'Initials' => ['Personalization', nil],
+  'Laser Engraving' => ['Laser Engrave', 1]}
 
   def initialize(file_name)
     @src_file = File.join(JOBS_DATA_ROOT,file_name)

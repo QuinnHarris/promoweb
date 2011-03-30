@@ -173,7 +173,7 @@ public
       return
     end
     
-    if (RAILS_ENV != "production") or
+    if (RAILS_ENV != "production") or @user or
        stale?(:last_modified => @product.updated_at.utc, :etag => @product)
      
       @categories = @product.categories.collect { |cat| Category.find_by_id(cat.id) }
