@@ -28,6 +28,7 @@ class Variant < ActiveRecord::Base
                                  :image => img.get,
                                  :product => product)
       pi.image.reprocess!
+      pi.image.save
     end
 
     orig.each do |pi|

@@ -767,6 +767,7 @@ class Product < ActiveRecord::Base
       pi = product_images.create(:supplier_ref => img.id,
                                  :image => img.get)
       pi.image.reprocess!
+      pi.image.save
     end
 
     orig.each do |pi|

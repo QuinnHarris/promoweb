@@ -802,7 +802,7 @@ class Admin::OrdersController < Admin::BaseController
     redirect_to :back
 
     if @order.user_id
-      return if @order.user_id = @user.id
+      return if @order.user_id == @user.id
       raise "permission denied" unless OwnershipOrderTask.allowed?(@permissions)
     end
 
