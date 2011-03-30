@@ -27,7 +27,7 @@ class Variant < ActiveRecord::Base
       pi = product_images.create(:supplier_ref => img.id,
                                  :image => img.get,
                                  :product => product)
-      pi.image.save
+      pi.image.reprocess!
     end
 
     orig.each do |pi|
