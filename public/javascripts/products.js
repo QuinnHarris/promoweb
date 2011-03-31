@@ -49,21 +49,22 @@ function unselect(ul) {
     ul.childNodes[i].className = ''
 }
 
-var tech_limit
-var tech_default = ''
-var tech_value = ''
+var tech_limit;
+var tech_value = '';
 function apply_tech(li) {
     var ul = li.parentNode;
     unselect(ul);
     li.className = 'sel';
 
-    for (var i=0; i < decorations.length; i++)
-	if (decorations[i][0] == technique) {
-	    var locations = decorations[i][3];
-	    tech_default = decorations[i][2];
-	    tech_value = tech_default;
-	    break;
-	}
+    var decoration = $A(decorations).find(function(dec) {
+	    return dec[0] == technique;
+	});
+
+    if (!decoration)
+	return;
+
+    tech_value = decoration[2];
+    var locations = decoration[3];
     
     var ul = $('locations');
     var dd = ul.parentNode;
@@ -92,11 +93,10 @@ function apply_tech(li) {
 	var dd = inp.parentNode;
 	var dt = dd.previousSibling;
         
-	if (decorations[i][1].length > 0) {
-	    dt.innerHTML = '<span>Number of ' + decorations[i][1] + '(s):</span>';
+	if (decoration[1].length > 1) {
+	    dt.innerHTML = '<span>Number of ' + decoration[1] + '(s):</span>';
 	    dt.style.display = '';
 	    dd.style.display = '';
-	    $('submit').rowSpan = 4;
 	    if (tech_value) {
 		inp.value = tech_value;
 		/*$('dec_desc').innerHTML += " for <span id='units'>" + tech_value + "</span> " + decorations[i][1] + '(s)';*/
@@ -104,7 +104,6 @@ function apply_tech(li) {
 	} else {
 	    dt.style.display = 'none';
 	    dd.style.display = 'none';
-	    $('submit').rowSpan = 2;
 	}
     }
 
@@ -315,14 +314,15 @@ function calc_prices() {
 	$('dec_total_price').innerHTML = range_to_string(total);
 	$('dec_fixed_price').innerHTML = range_to_string(price.fixed);
 	total = range_add(total, price.fixed);
+	$('submit').rowSpan = 4;
     } else {
-	$('submit').rowSpan = 2;
 	var total = { min: 0.0, max: 0.0 };
     }
 
     $A($('prices').getElementsByClassName('dec')).each(function(row) {
 	    row.style.display = (total.max == 0.0) ? 'none' : '';
 	});
+    $('submit').rowSpan = (total.max == 0.0) ? 2 : 4;
 
 
     var groups = get_groups();
@@ -704,11 +704,17 @@ var Protocycle = Class.create({
 --------------------------------------------------------------------------------*/
 function set_layout() {
     var image = $('prod_img');
-    var price = $('price_calc');
     var content = $('content');
     var prices = $('prices');
 
-    prices.style.minWidth = price.offsetWidth + image.offsetWidth + (price.offsetLeft - prices.offsetLeft) + 4 + 'px';
+    var offset = 0;
+    $A([$('price_calc'), $('price_list')]).each(function(elem) {
+	    var o = elem.offsetWidth + elem.offsetLeft;
+	    if (o > offset)
+		offset = o;
+	});
+
+    prices.style.minWidth = (offset + image.offsetWidth - prices.offsetLeft + 4) + 'px';
 
     var bottom = image.offsetTop + image.offsetHeight;
     var pos = $('static').offsetTop;
