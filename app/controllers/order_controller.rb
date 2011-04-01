@@ -335,6 +335,10 @@ public
   
 public
   def orders
+    if params[:customer_id]
+      @customer = Customer.find(params[:customer_id])
+      @order = @customer.orders.find(:first, :order => 'id DESC')
+    end
   end
 
   def_tasked_action :items, ItemNotesOrderTask, 'Art' do
@@ -461,7 +465,7 @@ public
       @reassoc = true
     else
       @customer = @order.customer
-      unless (@user and @customer.empty?) # @naked = 
+      unless (@naked = @user and @customer.empty?)
         unless @static = (@order.task_completed?(AcknowledgeOrderTask) and !params[:unlock])
           @similar = Customer.find(:first,
             :conditions => ['(' +

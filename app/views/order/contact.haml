@@ -21,6 +21,16 @@
   We will not contact you or send you an email for any reason not directly related to an order unless you select to be added to our email list.  More information on how we use your information can be found on our TRUSTe verified
   = link_to 'privacy policy.', :controller => :static, :action => :privacy
 
+- if @reassoc
+  .admin
+    %h3
+      = link_to "Associate this order #{@order.id} with customer below", { :controller => '/admin/orders', :action => :contact_merge, :order_id => @order.id, :keep_customer_id => @customer.id, :discard_customer_id => @order.customer }
+      %br
+      = link_to "View Customer Orders", :controller => :order, :action => :orders, :customer_id => @customer.id
+      %br
+      = link_to "OOPS Go back and don't associate", { :customer_id => nil }
+
+
 - form_for :customer, @customer, :url => { :order_id => @order } do |cust|
   = hidden_field_tag 'customer_id', @customer.id
   %table.form
@@ -84,7 +94,5 @@
           %td= @static ? @ship_address.name : text_field(:ship_address, :name, :disabled => !@options.different)
         = render :partial => 'address_edit', :locals => { :field_name => :ship_address, :disabled => !@options.different}
       
-  - if @reassoc
-    = link_to "Associate with Order #{@order.id}", { :controller => '/admin/orders', :action => :contact_merge, :order_id => @order.id, :keep_customer_id => @customer.id, :discard_customer_id => @order.customer }
-  - elsif !@search
+  - unless @search or @reassoc
     = submit_options
