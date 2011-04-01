@@ -53,7 +53,7 @@ helper OrderHelper
     else
       send.from = primary_email
       send.reply_to = [primary_email, secondary_email] if secondary_email
-      send.to = purchase.supplier.send_email
+      send.to = purchase.send_email
     end
     send.to = SEND_EMAIL unless RAILS_ENV == "production"
     send.subject = "PO-#{purchase.purchase_order.quickbooks_ref} / Mountain Xpress Promotions"

@@ -57,6 +57,6 @@ class Supplier < ActiveRecord::Base
   end
 
   def send_email(sample = false)
-    (sample && samples_email) || po_email
+    (sample && !samples_email.blank?) ? samples_email : po_email
   end
 end
