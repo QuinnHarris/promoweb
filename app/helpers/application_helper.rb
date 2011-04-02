@@ -97,10 +97,11 @@ module ApplicationHelper
   end
   
   def category_path(category)
-    full = ''
-    category.path_obj_list.collect do |comp|
+    res = category.path_obj_list.collect do |comp|
       link_to_category(comp)
     end.join(' > ')
+    res += link_to image_tag('remove.png'), { :controller => '/admin/categories', :action => :remove_product, :id => @product, :category => category.id }, :confirm => "Remove #{@product.name} from #{category.path}" if @user and @product
+    res
   end
   
   def path_name(category = @category)

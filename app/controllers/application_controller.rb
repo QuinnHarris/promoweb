@@ -21,7 +21,7 @@ public
   
   before_filter :set_link_context
   def set_link_context
-#    Category.reload  # Kludgy shit!!!
+    Category.refresh  # Kludgy shit!!!
     user_agent = request.env['HTTP_USER_AGENT'] ? request.env['HTTP_USER_AGENT'].downcase : 'unknown'
     @robot = @@robot_str.find { |str| user_agent.index(str) }
     @robot = true if /^65\.55/ =~ request.remote_ip # Microsoft bot that doesn't claim to be a bot

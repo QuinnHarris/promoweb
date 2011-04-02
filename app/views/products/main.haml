@@ -284,6 +284,10 @@
 
       - if @user
         .admin
+          - form_for :product, @product, { :url => { :controller => '/admin/categories', :action => :add_product, :id => @product } } do |prod|
+            = text_field_with_auto_complete nil, :path, {}, :url => { :controller => '/admin/categories', :action => :auto_complete_for_path }
+            = submit_tag 'Add to Category'
+        .admin
           %br
           - unless @sessions.empty?
             %table#access
