@@ -216,7 +216,7 @@ Customer Comments:
           if oiv.variant_id.nil?
             problems << "Quantity in Not Specified variant"
           end
-          if oiv.imprint_colors.blank?
+          if oiv.imprint_colors.blank? and !item.task_completed?(ArtExcludeItemTask)
             problems << "Imprint color not specified"
           end
         end
