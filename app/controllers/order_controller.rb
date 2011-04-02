@@ -590,7 +590,7 @@ public
     @javascripts = ['autosubmit.js'] #, 'upload_progress.js']
     @javascripts += ['effects.js', 'dragdrop.js'] if @user
 
-    task_complete({}, VisitArtworkOrderTask) unless @order.task_completed?(VisitArtworkOrderTask)
+    task_complete({}, VisitArtworkOrderTask) unless @order.closed or @order.task_completed?(VisitArtworkOrderTask)
     
     next unless session[:user_id]
     

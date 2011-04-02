@@ -314,7 +314,6 @@ function calc_prices() {
 	$('dec_total_price').innerHTML = range_to_string(total);
 	$('dec_fixed_price').innerHTML = range_to_string(price.fixed);
 	total = range_add(total, price.fixed);
-	$('submit').rowSpan = 4;
     } else {
 	var total = { min: 0.0, max: 0.0 };
     }
@@ -322,7 +321,7 @@ function calc_prices() {
     $A($('prices').getElementsByClassName('dec')).each(function(row) {
 	    row.style.display = (total.max == 0.0) ? 'none' : '';
 	});
-    $('submit').rowSpan = (total.max == 0.0) ? 2 : 4;
+    $('addtoorder').rowSpan = (total.max == 0.0) ? 2 : 4;
 
 
     var groups = get_groups();

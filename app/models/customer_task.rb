@@ -412,4 +412,5 @@ end
 
 class CustomerMergeTask < CustomerTask
   self.completed_name = 'Merged Customer'
+  self.roles = %w(Orders)
 end

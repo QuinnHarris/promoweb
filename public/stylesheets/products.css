@@ -286,11 +286,11 @@ div#prod_img {
     border-radius: 1em;
 }
 
-td#submit {
+td#addtoorder {
     padding-left: 0.5em;
 }
 
-td#submit a {
+td#addtoorder a {
     display: block;
     color: black;
     border: thin solid black;
@@ -305,11 +305,11 @@ td#submit a {
     background: linear-gradient(top, white, #E8E0E0 50%, #D8D0D0 50%, #E8E0E0);
 }
 
-td#submit a span {
+td#addtoorder a span {
     font-weight: bold;
 }
 
-td#submit a:hover {
+td#addtoorder a:hover {
     background-color: #D8D0D0;
     background: -moz-linear-gradient(bottom, white, #E8E0E0 50%, #D8D0D0 50%, #E8E0E0);
     background: -webkit-linear-gradient(bottom, white, #E8E0E0 50%, #D8D0D0 50%, #E8E0E0);
