@@ -106,3 +106,13 @@ div.action a, div.action span {
 div#header {
   background-image: none;
 }
+
+
+/* Order Artwork */
+span.checkbox {
+    display: inline-block;
+    vertical-align: top;
+    width: 22px;
+    height: 22px;
+    border: thin solid #DDD;
+}

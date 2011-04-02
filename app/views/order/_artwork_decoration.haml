@@ -36,7 +36,6 @@
                       %strong Update Quickbooks for PO number
                     - else
                       = submit_tag("Send Art for #{purchase.purchase_order.quickbooks_ref}")
-                    - if allowed?('Super')
                       = submit_tag("Mark as Sent for #{purchase.purchase_order.quickbooks_ref}")
                   - else
                     = link_to "Create PO to send artwork", { :controller => '/admin/orders', :action => :items_edit }
