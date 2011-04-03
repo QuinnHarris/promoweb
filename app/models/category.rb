@@ -51,15 +51,13 @@ private
 
 public
   @@root = nil
-  @@root_time = nil
-  @@root_count = nil
   @@id_map = {}
 
   def self.refresh
     return unless @@root
 
-    category = Category.find_by_sql("SELECT count(*), max(updated_at) AS updated_at FROM categories").first
-    if category.updated_at >= @@root_time || category.count.to_i != @@root_count
+    root = Category.find(1)
+    if root.updated_at != @@root.updated_at || root.rgt != @@root.rgt
       reload
     end
   end
@@ -76,10 +74,8 @@ public
     logger.info("Loading Categories")
 
     @@root = Category.find_by_name('root')
-    @@root_time = Time.local(1900,1,1)
     
     list = @@root.all_children
-    @@root_count = list.length
     by_parent_id = {}
     by_parent_id.default = []
       
@@ -88,9 +84,6 @@ public
     list.each do |record|
       @@id_map[record.id] = record
       by_parent_id[record[record.parent_col_name]] += [record]
-      if record.updated_at > @@root_time
-        @@root_time = record.updated_at
-      end
     end
       
     children_recursive_private(by_parent_id, @@root)

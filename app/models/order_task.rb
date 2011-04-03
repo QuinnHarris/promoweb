@@ -291,7 +291,7 @@ class PaymentNoneOrderTask < OrderTask
 #  self.waiting_name = 'Mark as no Payment necissary'
   self.completed_name = 'Payment not neeeded'
   self.action_name = 'mark as <strong>no payment necassary</strong>'
-  self.roles = %w(Super)
+  self.roles = %w(Orders)
 
   def self.blocked(object)
     super || (object.task_completed?(PaymentInfoOrderTask) && "payment information received") ||
