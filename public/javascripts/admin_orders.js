@@ -201,7 +201,8 @@ function input_press(event)
       (event.target.hasClassName('money') || event.target.hasClassName('num')) &&
       ( (("0123456789").indexOf(keychar) < 0 ) &&
         !(event.target.hasClassName('money') && keychar == '.') &&
-        !(event.target.hasClassName('negative') && keychar == '-')
+        !(event.target.hasClassName('negative') && keychar == '-') &&
+	!event.ctrlKey
       )
      ) {
     event.preventDefault();

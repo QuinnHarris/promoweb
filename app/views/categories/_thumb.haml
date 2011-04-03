@@ -1,4 +1,4 @@
-- if @user
+- if @user && category
   = link_to image_tag('remove.png'), { :controller => '/admin/categories', :action => :remove_product, :id => product.id, :category => category.id }, :confirm => "Remove #{product.name} from #{category.path}"
 %a.thumb{ :href => url_for_product(product, category, context) }
   = image_tag product.image_path_relative('thumb'), :alt => "#{product.name} Thumbnail"
