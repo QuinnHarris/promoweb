@@ -265,16 +265,18 @@ public
         :price_group_id => price_group.id
       }
 
-      if technique.id == 1
-        blank = true
-        technique = nil
-      end
+      if technique
+        if technique.id == 1
+          blank = true
+          technique = nil
+        end
 
-      technique_params = {
+        technique_params = {
           :technique_id => technique.id,
           :count => unit_count,
           :decoration_id => decoration && decoration.id,
-      } if technique
+        }
+      end
 
       if (!@user and
           (item = @order.items.find(:first, :conditions => item_params)) and

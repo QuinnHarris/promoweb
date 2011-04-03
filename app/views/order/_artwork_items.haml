@@ -64,7 +64,7 @@
                               - if tags.include?(name)
                                 = image_tag 'check.png'
                             = name.capitalize
-                      - elsif req or tags.include?(name)
+                      - elsif (req and !static) or tags.include?(name)
                         %div
                           %span.checkbox
                             - if tags.include?(name)

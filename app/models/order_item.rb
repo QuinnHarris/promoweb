@@ -22,12 +22,10 @@ class OrderItem < ActiveRecord::Base
 
 
   def active_images
-    variants = order_item_variants.collect { |oiv| oiv.quantity != 0 ? oiv.variant : nil }.compact
-    if variants.empty? or (variants.include?(nil) and variants.length == 1)
-      product.product_images.to_a
-    else
-      variants.compact.collect { |v| v.product_images.to_a }.flatten.uniq
-    end
+    variants = order_item_variants.find_all { |oiv| oiv.quantity != 0 }.collect { |oiv| oiv.variant }.flatten.compact
+    images = variants.collect { |v| v.product_images.to_a }.flatten.uniq
+    return images unless images.empty?
+    product.product_images.to_a
   end
   
 

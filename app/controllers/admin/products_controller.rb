@@ -102,6 +102,19 @@ class Admin::ProductsController < Admin::BaseController
       price_group.price_entries.create(:minimum => 1, :fixed => Money.new(0), :marginal => Money.new(20000))
       price_group.price_entries.create(:minimum => 1000)
 
+      unless params[:product_image][:image].blank? and params[:product_image][:url].blank?
+        pi = product.product_images.create(:supplier_ref => params[:product][:supplier_num])
+        unless params[:product_image][:url].blank?
+          require 'open-uri'
+          pi.image = URI.parse(params[:product_image][:url]).open
+        else
+          pi.image = params[:product_image][:image]
+        end
+
+        pi.image.save
+        pi.save!
+      end        
+
       redirect_to :controller => '/order', :action => :add_item, :product => product, :quantity => 100, :price_group => price_group
     end
   end
