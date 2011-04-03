@@ -153,7 +153,7 @@ class BulletLine < GenericImport
 
       # Pricing
       last_minimum = nil
-      prices = (1...5).collect do |num|
+      prices = (1..5).collect do |num|
         minimum = Integer(@data.get(row, "PriceQtyCol#{num}"))
         minimum = 1 if minimum < 1
         raise "Last Max doesn't match this min: #{maximum} + 1 != #{minimum} for #{supplier_num}" if last_minimum and minimum < last_minimum

@@ -8,7 +8,7 @@ xml.rss :version => '2.0', 'xmlns:g' => 'http://base.google.com/ns/1.0' do
     @products.each do |product|
       next if product.price_max_cache.nil?
       xml.item do
-        xml.tag!('guid', product.id)
+        xml.tag!('id', product.id)
 
 	description = ''
 
@@ -42,7 +42,7 @@ xml.rss :version => '2.0', 'xmlns:g' => 'http://base.google.com/ns/1.0' do
 	xml.description description.gsub(/[\x80-\xff]/, "")
         
         prop = product.properties_get
-        %w(color material).each do |name|
+        %w(color).each do |name|
           xml.tag!("g:#{name}", prop[name].join(',')) if prop[name]
         end
         if prop['dimension']
@@ -62,7 +62,7 @@ xml.rss :version => '2.0', 'xmlns:g' => 'http://base.google.com/ns/1.0' do
         xml.tag!('g:image_link', "http://www.mountainofpromos.com/data/product/#{product.id}/#{product.id}_large_1.jpg")
         
         xml.tag!('g:brand', product.supplier.name)
-#        xml.tag!('g:manufacturer', product.supplier.name)
+#        xml.tag!('g:mpn', product.supplier.name)
         xml.tag!('g:mpn', product.supplier_num)
         
         xml.tag!('g:price', product.price_comp_cache)
