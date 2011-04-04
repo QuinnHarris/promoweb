@@ -14,7 +14,6 @@ table.block thead th.admin {
   background-color: #F0E0E0;
 }
 
-
 table.form th {
   padding-left: 1em;
   text-align: right;
@@ -217,4 +216,8 @@ div.auto_complete ul strong.highlight {
 
 div.hide {
     display: none;
+}
+
+td.description input {
+    width: 92%;
 }

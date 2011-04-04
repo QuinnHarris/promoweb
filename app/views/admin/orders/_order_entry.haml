@@ -1,4 +1,4 @@
-%td
+%td.description
   - unless @price_lock
     = link_to_remote image_tag("remove.png"), :complete => "entry_remove(request, '#{entry.class}-#{entry.id}-price')", :confirm => "Remove item?", :url => { :action => :order_item_remove, :id => entry.id, :klass => entry.class.to_s }
   = text_field_tag "#{entry.class}-#{entry.id}-description", entry.description, :size => 32, :readonly => @price_lock

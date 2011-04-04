@@ -79,6 +79,7 @@
           = text_field_tag "profit-#{item.id}", "???", :class => 'money null profit', :readonly => @price_lock
         %td.num.admin
           = text_field_tag "margin-#{item.id}", "???", :class => 'money null margin', :readonly => @price_lock
+        %td.admin
           \%
 
       - for decoration in item.decorations.find(:all, :include => [:technique, :decoration])
