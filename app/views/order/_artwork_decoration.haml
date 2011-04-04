@@ -9,7 +9,11 @@
               = image_tag(product.image_path_relative('thumb'), :alt => "#{product.name} Thumbnail")
           %td
             %h3= "#{item_decoration.order_item.product.name} (#{item_decoration.order_item.quantity})"
-            %div= item_decoration.description
+            %div
+              = item_decoration.description
+              - if item_decoration.has_dimension?
+                \-
+                = link_to "Inkscape Template", { :controller => '/admin/orders', :action => :inkscape, :id => item_decoration.id }
 
             - decorations = product.decorations.find(:all, :conditions => { :technique_id => item_decoration.technique })
             - if dragable

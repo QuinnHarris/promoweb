@@ -1153,4 +1153,9 @@ public
                                    :conditions =>
                                    "user_id IS NULL AND id IN (SELECT session_access_id FROM order_session_accesses WHERE order_id = #{@order.id})")
   end
+
+  def inkscape
+    @oid = OrderItemDecoration.find(params[:id])
+    render :layout=>false, :content_type => 'application/inkscape'
+  end
 end
