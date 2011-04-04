@@ -61,9 +61,9 @@
                       %span{ :class => cycle('odd', 'even') }<
                       %a{ :href => '#', :onclick => "variant_change(this);" }= (oiv.variant && (p = oiv.variant.properties.to_a.find { |p| p.name == name })) ? p.value : 'Not Specified'
                     %span{ :class => cycle('odd', 'even') }<
-                      = text_field_tag "#{oiv.class}-#{oiv.id}-quantity", oiv.quantity, :class => 'num shipset', :readonly => (@price_lock || purchase_lock)
+                      = text_field_tag "#{oiv.class}-#{oiv.id}-quantity", oiv.quantity, :class => 'num shipset', :readonly => (@price_lock || purchase_lock), :tabindex => item.id*2
                     %span{ :class => cycle('odd', 'even') }<
-                      = text_field_tag "#{oiv.class}-#{oiv.id}-imprint_colors", oiv.imprint_colors, :class => 'imprint', :readonly => (@price_lock || purchase_lock)
+                      = text_field_tag "#{oiv.class}-#{oiv.id}-imprint_colors", oiv.imprint_colors, :class => 'imprint', :readonly => (@price_lock || purchase_lock), :tabindex => item.id*2+1
       %tr.defined
         - if item.shipping_rates
           %td.shipping= render :partial => 'order_item_shipping', :locals => { :item => item }
