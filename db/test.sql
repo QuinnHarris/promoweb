@@ -30,7 +30,7 @@ update order_items set price_group_id = 17942 where id in (3765, 3592, 1613, 233
 BEGIN;
 create temp table cust as select * from customers where (updated_at < '2010-09-01' and person_name = '' and company_name = '') or email ~ 'qutek.net' or company_name ~ 'Mountain Express';
 
-create temp table cust as select * from customers where id in (1463,2600);
+create temp table cust as select * from customers where id in (3389, 3391, 3393, 3394, 3399);
 
 delete from order_item_decorations using order_items join orders on order_items.order_id = orders.id join customers on orders.customer_id = customers.id
   where order_item_decorations.order_item_id = order_items.id and customers.id in (select id from cust);

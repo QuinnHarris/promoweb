@@ -62,10 +62,6 @@
 
             %div
               = image_tag('credit_cards.png')
-            %div
-              = image_tag('asi.png', :alt => 'ASI: Promotion Products Resource Professional')
-              %br
-              ASI: 278067
           - if @user
             = link_to "Logout", { :controller => '/admin/login', :action => 'logout' }
         %td.layout
@@ -101,6 +97,9 @@
                     = @order.customer.person_name
                     \:
                     = @order.customer.phone
+                  - if (addr = (@order.customer.ship_address || @order.customer.default_address)) and !addr.postalcode.blank?
+                    \:
+                    = addr.postalcode
                     \:
                   = mail_to "#{@order.customer.person_name} <#{@order.customer.email}>", @order.customer.email
                 %div
