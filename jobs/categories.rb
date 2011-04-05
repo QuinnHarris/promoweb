@@ -1525,7 +1525,8 @@ private
        supplier('Bullet Line',
                 category('Keytags & Badge Holders', 'Badge Holders') ) ]],
      ['Lanyards',
-      [supplier('Lanco',
+      [match('name', 'lanyard'),
+       supplier('Lanco',
                 category('Badge Holders / Ribbons', 'Badge Holder Accessories') ),
        supplier('High Caliber Line',
                 category('Lanyards') )
