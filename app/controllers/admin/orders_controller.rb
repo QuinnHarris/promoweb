@@ -465,7 +465,7 @@ class Admin::OrdersController < Admin::BaseController
       imprint_height = oid.height * 72
     end
 
-    product_name = oid.order_item.product.name
+    product_name = oid.order_item.product.name.gsub('”','"')
     if oid.order_item.product.product_images.empty?
       product_image = oid.order_item.product.image_path_absolute('main', 'jpg')
     else
