@@ -129,7 +129,10 @@ class HighCaliberLine < GenericImport
       # factory
       %w(stock).each do |price_type|
         range = row.get_elements("#{price_type[0..0]}range").first.get_text.to_s.strip
-        next if range.empty?
+        if range.empty?
+          puts "No Range"
+          next
+        end
         raise "Unknown Range: #{range.inspect}" unless /^([\d,-]+).*?(?:\((.+?)\))?$/ =~ range
         codes = convert_pricecodes($2 || "5R")
         brks = $1.scan(/[\d,]+/).collect { |s| s.gsub(',','').to_i }
@@ -149,7 +152,7 @@ class HighCaliberLine < GenericImport
           type = $1.strip
           # Put a # because of F up
           list = $2.scan(/(?:(?:\$|#)?\s*(\d+\.\d{2}))|(?:Free[^\*])|((?:\$?N\/A)|(?:QUR))/).collect { |n, o| n.to_f unless o }
-          #          puts " List: #{type} : #{st.inspect} => #{list.inspect}"
+          #puts " List: #{type} : #{$2.inspect} => #{list.inspect}"
           
           if price_breaks.length > list.length
             puts " !!! Mismatch index #{price_breaks.inspect} <=> #{list.inspect}"
@@ -219,11 +222,14 @@ class HighCaliberLine < GenericImport
           end
         end
 
-        price_breaks.delete_if { |b| b[:marginal].nil? or b[:fixed].nil? }
+        price_breaks.delete_if { |b| b[:marginal].nil? }
         #        price_breaks.delete_if { |b| b[:minimum] <= price_list.last[:minimum] or b[:marginal] >= price_list.last[:marginal] } if price_list.last
         
         #next unless cost_column = price_breaks.last # price_breaks.zip(codes).reverse.find { |b, m| b[:marginal] and !b[:marginal].nil?  and m }
-        next if price_breaks.empty?
+        if price_breaks.empty?
+          puts "Empty Price Breaks"
+          next
+        end
 
         # Less Than Minimum
         price_list << {
@@ -248,7 +254,10 @@ class HighCaliberLine < GenericImport
         }
       end
       
-      next if price_list.empty?
+      if price_list.empty?
+        puts "Empty Price List"
+        next 
+      end
       
       cost_list << {
         :minimum => (price_list.last[:minimum] * 1.5).to_i,
