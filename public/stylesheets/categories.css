@@ -1,6 +1,6 @@
 /* On list page */
 div#list { padding: 1em; }
-div#list table { background-color: #EEE; }
+div#list table { clear: both; background-color: #EEE; }
 
 /* On all pages */
 table.list { 
@@ -190,4 +190,10 @@ div#reviews table td.name {
   vertical-align: top;
   text-align: right;
   font-weight: bold;
+}
+
+div#gridsel {
+    float: right;
+    margin-top: 0.5em;
+    margin-right: 0.5em;
 }
