@@ -1,3 +1,11 @@
+#gridsel
+  - form_tag do
+    - for name in %w(columns rows)
+      = name.capitalize
+      %select{ :onchange => 'location = this.options[this.selectedIndex].value;' }
+        - for num in [4,5,6,7,8,9,10,name == 'rows' ? 100 : nil].compact
+          <option value='#{url_for(params.merge(name => num))}'#{instance_variable_get("@#{name}") == num ? ' selected' : ''}>#{num}</option>
+
 = will_paginate @products, @paginate_options
 
 #list
