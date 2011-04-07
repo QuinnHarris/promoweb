@@ -71,8 +71,12 @@ class OrderItem < ActiveRecord::Base
     order.updated_at_will_change!
     order.save!
     if purchase
-      purchase.updated_at_will_change!
-      purchase.save! 
+      if purchase.items.empty?
+        purchase.destroy
+      else
+        purchase.updated_at_will_change!
+        purchase.save! 
+      end
     end
   end
 

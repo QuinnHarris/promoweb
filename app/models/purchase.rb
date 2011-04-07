@@ -94,4 +94,11 @@ class Purchase < ActiveRecord::Base
 
     order.push_quickbooks!
   end
+
+  before_destroy :destroy_children
+  def destroy_children
+    purchase_order.destroy if purchase_order
+    bill.destroy if bill
+  end
+    
 end
