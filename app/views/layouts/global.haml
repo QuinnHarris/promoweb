@@ -122,7 +122,7 @@
                 %span#phone
                   1-877-686-5646
                   - if @order and @order.user
-                    x#{@order.user.extension}
+                    #{@order.user.extension_s}
                 %span#email
                   - if @real_user
                     - unless @order and @order.user

@@ -13,9 +13,13 @@ class User < ActiveRecord::Base
     self['email'] || (!new_record? && "#{login}@mountainofpromos.com")
   end
 
+  def extension_s
+    "x9#{extension}"
+  end
+
   def phone
     return self['phone'] if self['phone']
-    return "970-375-1900 x#{extension}" if extension
+    return "970-375-1900 #{extension_s}" if extension
     nil
   end
 

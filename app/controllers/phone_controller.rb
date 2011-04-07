@@ -170,4 +170,11 @@ class PhoneController < ActionController::Base
                             :incoming_phone_name => event_params['CallingPartyName'],
                             :incoming_phone_time => Time.now)
   end
+
+  
+  # XML Directory for polycoms
+  def contacts
+    @users = User.find(:all, :conditions => 'extension IS NOT NULL')
+    @suppliers = Supplier.find(:all, :conditions => 'phone IS NOT NULL', :order => 'name')
+  end
 end
