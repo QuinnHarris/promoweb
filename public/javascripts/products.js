@@ -497,12 +497,11 @@ function num_keypress(myfield, e, post_func) {
 
 function order_submit(dispos, pedantic) {
     var msg = [];
-    if (pedantic) {
-	if (!(parseInt(quantity) > 0))
-	    msg.push('quantity (enter number to right of Quantity:)');
-	else if (parseInt(quantity) < minimums[0] && technique != 1)
-	    msg.push('miminum quantity of ' + minimums[0]);
-    }
+
+    if (!(parseInt(quantity) > 0))
+	msg.push('quantity (enter number to right of Quantity:)');
+    else if (pedantic && parseInt(quantity) < minimums[0] && technique != 1)
+	msg.push('miminum quantity of ' + minimums[0]);
 
     var groups = get_groups();
     if (groups.length != 1)
