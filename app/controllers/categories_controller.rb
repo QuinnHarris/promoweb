@@ -80,7 +80,6 @@ public
 
   end
 
-
   @@columns = 4
   @@rows = 5
 #  if RAILS_ENV != "production"
@@ -155,8 +154,10 @@ public
        
     @title = "Custom #{@category.name} - Logo Imprinted Promotional Products"
     
-    @columns = params[:columns] ? params[:columns].to_i : @@columns
-    @rows = params[:rows] ? params[:rows].to_i : @@rows
+    @columns = [params[:columns] && params[:columns].to_i, session[:columns], @@columns].compact.first
+    session[:columns] = @columns if session[:columns] || @columns != @@columns
+    @rows = [params[:rows] && params[:rows].to_i, session[:rows], @@rows].compact.first
+    session[:rows] = @rows if session[:rows] || @rows != @@rows
     @per_page = @columns * @rows
 
     @context = {
