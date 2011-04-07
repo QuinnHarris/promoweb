@@ -139,9 +139,13 @@ class EstimatedItemTask < OrderItemTask
   self.roles = %w(Orders)
   
   def apply(params)
-    self[:data] = { :ship_date => Date.parse(params[:data][:ship_date]),
-      :ship_days => Integer(params[:data][:ship_days]),
-      :ship_saturday => params[:data][:ship_saturday] == "1"}
+    date = Date.parse(params[:data][:ship_date])
+    raise "Date out of range: #{date}" if date < (Date.today-14) || date > (Date.today + 60)
+    days = Integer(params[:data][:ship_days])
+    raise "Days out of range: #{days}" if days <= 0 || days > 5
+    self[:data] = { :ship_date => date,
+      :ship_days => days,
+      :ship_saturday => params[:data][:ship_saturday] == "1" }
   end
   
   def ship_date
