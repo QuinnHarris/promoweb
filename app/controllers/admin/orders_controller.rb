@@ -371,6 +371,18 @@ class Admin::OrdersController < Admin::BaseController
     redirect_to :back
   end
 
+  def order_remove
+    return "Permission Denied" unless @permissions.include?('Super')
+    Order.transaction do
+      order = Order.find(params[:id])
+      fall = order.customer.orders.find(:first, :conditions => "id != #{order.id}", :order => 'id DESC')
+      @user.current_order = fall
+      @user.save!
+      order.destroy
+    end
+    redirect_to :action => :index, :order_id => @user.current_order
+  end
+
   def invoice_remove
     raise "Permission Denied" unless @permissions.include?('Super')
     Invoice.transaction do
@@ -1147,11 +1159,13 @@ public
   end
 
   def paths
-    @stylesheets = ['access']
+    @stylesheets = ['order', 'access']
 
     @sessions = SessionAccess.find(:all, :include => [:pages, :orders],
                                    :conditions =>
                                    "user_id IS NULL AND id IN (SELECT session_access_id FROM order_session_accesses WHERE order_id = #{@order.id})")
+
+    render :layout => 'order'
   end
 
   def inkscape

@@ -210,6 +210,12 @@ class Order < ActiveRecord::Base
     self.quickbooks_id = 'BLOCKED'
   end
 
+  before_destroy :destroy_children
+  def destroy_children
+    items.each { |i| i.destroy }
+    (tasks_active + tasks_inactive).each { |t| t.destroy }
+  end
+
   def apply_sales_tax
     unless tax_type
       self.tax_type, self.tax_rate = customer.sales_tax
