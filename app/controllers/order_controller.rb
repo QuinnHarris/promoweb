@@ -68,7 +68,7 @@ private
   end
 
   def redirect_to_next(inject = [], params = {})
-    next_task = @order.task_next(@permissions, inject) { |t| t.uri }
+    next_task = @order.task_next(@permissions, inject) { |t| t.uri && !t.uri[:controller].include?('admin') }
     redirect_to ((next_task and next_task.uri) ? next_task.uri : { :controller => '/order', :action => :status }).merge({:order_id => @order.id}).merge(params)
   end
   
