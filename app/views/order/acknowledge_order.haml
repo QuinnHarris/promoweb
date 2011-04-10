@@ -12,7 +12,7 @@
       = ak.hidden_field :comment, :rows => 4
       - if @order_task.comment and !@order_task.comment.empty?
         %p= "Customer Comment: #{@order_task.comment}"
-      = submit_tag('I authorize Mountain Xpress Promotions, LLC to proceed with this order')
+      = submit_tag('I authorize Mountain Xpress Promotions, LLC to proceed with this order', :class => 'button', :id => 'submitbtn')
       - if @user
         = submit_tag('Confirm (Without Email)')
 
@@ -29,8 +29,8 @@
     - form_for :order_task, @order_task, :url => { :order_id => @order } do |ak|
       = ak.text_area :comment, :rows => 4
       %br
-      = submit_tag('Acknowledge Order')
-      = submit_tag('Reject Order')
+      = submit_tag('Acknowledge Order', :class => 'button', :id => 'submitbtn')
+      = submit_tag('Reject Order', :class => 'button', :id => 'rejectbtn')
   - elsif task = @order.task_completed?(AcknowledgeOrderTask)
     %h3
       Order was acknowledged at
