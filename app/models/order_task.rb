@@ -39,7 +39,7 @@ class ItemNotesOrderTask < OrderTask
 end
 
 class InformationOrderTask < OrderTask
-  self.status_name = 'Order Info'
+  self.status_name = 'Order Information'
   self.waiting_name = 'Provide Order Information'
   self.completed_name = 'Order Information Provided'
   self.customer = true
@@ -53,7 +53,7 @@ end
 
 # Placed after VisitArtworkOrderTask for proper "Next" sequence
 class CustomerInformationTask < CustomerTask  
-  self.status_name = 'Contact Info'
+  self.status_name = 'Contact Information'
   self.waiting_name = 'Provide Contact Information'
   self.completed_name = 'Contact Information Provided'
   self.customer = true

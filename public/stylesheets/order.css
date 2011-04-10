@@ -275,3 +275,27 @@ div#ack {
   background-color: #FCC;
   padding: 0.5em;
 }
+
+input.button {
+    font-size: 1.0em;
+    font-weight: bold;
+    padding-left: 28px;
+    background-repeat: no-repeat;
+    background-position: 2px 2px;
+    min-height: 28px;
+}
+
+input#submitbtn {
+    color: #006000;
+    background-image: url('/images/submit.png');
+}
+
+input#nextbtn {
+    color: #000080;
+    background-image: url('/images/forward.png');
+}
+
+input#addbtn {
+    color: #006000;
+    background-image: url('/images/addbtn.png');
+}
