@@ -152,7 +152,7 @@
                     - for tech in @techniques
                       %li{ :class => (tech == @techniques.first) && 'sel', :id => "tech-#{tech.id}" }
                         %a{ :href => "#", :onclick => "return sel_tech(this)", :title => "Click to select #{tech.name}" }
-                          %span= tech.name
+                          %span= tech.friendly_name
 
               %dl#sub
                 - display = @techniques.first.unit_name

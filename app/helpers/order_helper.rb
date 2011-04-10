@@ -13,7 +13,8 @@ module OrderHelper
       output << submit_tag(text, :id => 'submitbtn', :class => 'button')
     end
     
-    if task = @order.task_next(@permissions, inject) { |t| t.uri }
+    inject << RequestOrderTask
+    if task = @order.task_next(@permissions, inject.uniq) { |t| t.uri } and
       output << submit_tag("Continue to #{task.status_name}", :id => 'nextbtn', :class => 'button')
     elsif commit and (!@static or @user)
       output << submit_tag("Commit")

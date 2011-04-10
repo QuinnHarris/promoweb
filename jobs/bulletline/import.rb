@@ -200,8 +200,11 @@ class BulletLine < GenericImport
       decorations = [{ 'technique' => 'None', 'location' => '' }]
 
       placement = @data.get(row, 'LogoPlacement')
+
+      decoration_level = @data.get(row, 'CatalogRuncharges')
+      decoration_level = decoration_level[-1..-1].to_i if decoration_level
       
-      (1...6).each do |num|
+      (1..6).each do |num|
         dec_string = @data.get(row, "Deco#{num}Location")
         next unless dec_string and !dec_string.blank?
         unless /^((?:Silkscreened)|(?:Laser Engraved)|(?:Debossed)|(?:Heat Transferred)),?\s*(.*?)\s*\:\s*(.+?)(?:\((.+)\))?$/i === dec_string
@@ -217,6 +220,8 @@ class BulletLine < GenericImport
           next
         end
         location ||= placement
+
+        technique = technique + " - Level #{decoration_level}" if decoration_level
 
         decorations << {
           'technique' => technique,
