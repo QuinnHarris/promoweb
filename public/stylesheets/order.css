@@ -299,3 +299,9 @@ input#addbtn {
     color: #006000;
     background-image: url('/images/addbtn.png');
 }
+
+input#rejectbtn {
+    color: #600000;
+    padding-left: 50px;
+    background-image: url('/images/reject.png');
+}
