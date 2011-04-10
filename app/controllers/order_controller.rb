@@ -944,23 +944,28 @@ public
     @order_task = OrderTask.new(params[:order_task])
     
     if params[:commit]
-      case params[:commit]
-        when 'Acknowledge Order'
-          @second_phase = true
-          next
-        when 'Confirm (Without Email)', 'I authorize Mountain Xpress Promotions, LLC to proceed with this order'
-          Order.transaction do
-            (invoice = @order.generate_invoice) && invoice.save!
-            task_complete({:data => { :email_sent => !params[:commit].include?('Without Email'), :customer_comment => @order_task.comment }}, AcknowledgeOrderTask)
-            if @order.total_item_price.zero? and !@order.task_completed?(PaymentInfoOrderTask)
-              task_complete({}, PaymentNoneOrderTask)
-            end
-          end
-        when 'Reject Order'
-           Order.transaction do
-            task = @order.task_revoke(RevisedOrderTask, { :customer_comment => @order_task.comment })
-          end     
+      if @order.items.to_a.find { |i| !i.task_completed?(ArtExcludeItemTask) } and
+          params[:commit] == 'Acknowledge Order'
+        @second_phase = true
+        next
       end
+
+      if params[:commit] == 'Reject Order'
+        Order.transaction do
+          @order.task_revoke(RevisedOrderTask, { :customer_comment => @order_task.comment })
+        end
+      elsif ['Confirm (Without Email)', 'I authorize Mountain Xpress Promotions, LLC to proceed with this order', 'Acknowledge Order'].include?(params[:commit])
+        Order.transaction do
+          (invoice = @order.generate_invoice) && invoice.save!
+          task_complete({:data => { :email_sent => !params[:commit].include?('Without Email'), :customer_comment => @order_task.comment }}, AcknowledgeOrderTask)
+          if @order.total_item_price.zero? and !@order.task_completed?(PaymentInfoOrderTask)
+            task_complete({}, PaymentNoneOrderTask)
+          end
+        end
+      else
+        raise "Unknown Action"
+      end
+
       redirect_to_next [AcknowledgeOrderTask], { :task => 'AcknowledgeOrder' }
     end
   end
