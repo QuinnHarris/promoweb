@@ -73,6 +73,20 @@ class VisitArtworkOrderTask < OrderTask
   self.roles = %w(Customer Orders Art)
 end
 
+# Before Request to allow payment on production for next task
+class PaymentInfoOrderTask < OrderTask
+  self.status_name = 'Payment Information'
+  self.waiting_name = 'Provide Payment Information'
+  self.completed_name = 'Payment Information Provided'
+  self.customer = true
+  self.roles = %w(Customer Orders)
+  self.notify = true
+  
+  def status
+    true
+  end
+end
+
 class RequestOrderTask < OrderTask
   set_depends_on AddItemOrderTask, InformationOrderTask, CustomerInformationTask
   self.status_name = 'Order Request'
@@ -254,20 +268,6 @@ class AcknowledgeOrderTask < OrderTask
 
   def execute_duration
     1.day
-  end
-end
-
-# Was "Before Request" why?
-class PaymentInfoOrderTask < OrderTask
-  self.status_name = 'Payment Information'
-  self.waiting_name = 'Provide Payment Information'
-  self.completed_name = 'Payment Information Provided'
-  self.customer = true
-  self.roles = %w(Customer Orders)
-  self.notify = true
-  
-  def status
-    true
   end
 end
 
