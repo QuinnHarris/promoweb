@@ -76,6 +76,10 @@ private
     @order.task_complete({ :user_id => session[:user_id],
                            :host => request.remote_ip }.merge(params),
                          task_class, revokable, revoked)
+    if @order.user_id.nil? and @user
+      @order.user = @user
+      @order.save!
+    end
   end
   
   def task_request(params = {})

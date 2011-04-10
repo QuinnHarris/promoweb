@@ -10,16 +10,16 @@ module OrderHelper
       text = @user ? "Submit Revised" : "Submit"
       text += (@order.task_completed?(PaymentInfoOrderTask) ? ' Order' : ' Quote Request')
       text += ' Again' if @order.task_performed?(RequestOrderTask)
-      output << submit_tag(text)
+      output << submit_tag(text, :id => 'submitbtn', :class => 'button')
     end
     
     if task = @order.task_next(@permissions, inject) { |t| t.uri }
-      output << submit_tag("Next (#{task.status_name})")
+      output << submit_tag("Continue to #{task.status_name}", :id => 'nextbtn', :class => 'button')
     elsif commit and (!@static or @user)
       output << submit_tag("Commit")
     end
     
-    output.join('<br/>or<br/>')
+    output.join('<br/>or to submit as a complete order<br/>')
   end
   
   def task_button(object, hash)
