@@ -221,7 +221,7 @@ class BulletLine < GenericImport
         end
         location ||= placement
 
-        technique = technique + " - Level #{decoration_level}" if decoration_level
+        technique = technique + " - Level #{decoration_level}" if decoration_level and technique == 'Screen Print'
 
         decorations << {
           'technique' => technique,
