@@ -228,6 +228,10 @@ public
                                        "page_accesses.action_id = #{@product.id} AND " +
                                        "page_accesses.created_at > NOW() - '3 month'::interval",
                                        :order => "page_accesses.id DESC")
+
+        @customers = Customer.find(:all, :include => { :orders => :items}, :limit => 20,
+                             :conditions => "customers.person_name != '' AND " +
+                             "order_items.product_id = #{@product.id}")
       end
       
       render :layout => 'simple' if params[:layout] == 'false'

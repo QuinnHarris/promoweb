@@ -316,6 +316,23 @@
                       %td{ :colspan => 4 } Unkown
             %hr
 
+          - unless @customers.empty?
+            %table#orders
+              %thead
+                %tr
+                  %td Order
+                  %td Company
+                  %td Person
+                  %td Phone
+              %tbody
+                - for customer in @customers
+                  %tr
+                    %td= customer.orders.collect { |o| link_to o.id, :controller => '/order', :action => 'status', :order_id => o.id }.join(', ')
+                    %td= customer.company_name
+                    %td= customer.person_name
+                    %td= customer.phone
+            %hr
+
           %table
             %thead
               %tr
