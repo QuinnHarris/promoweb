@@ -1,5 +1,10 @@
 require '../generic_import'
 
+t = DecorationTechnique.find_by_name('Screen Print')
+(1..3).each do |level|
+  t.children.create(:name => "Screen Print - Level #{level}", :unit_name => 'color')
+end
+
 apply_decorations('Bullet Line') do |supplier|
   dec_grp = supplier.decoration_price_groups.create(
     { :technique => DecorationTechnique.find_by_name("None") })
