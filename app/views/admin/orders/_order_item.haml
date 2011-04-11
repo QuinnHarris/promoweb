@@ -11,6 +11,9 @@
           - if item.sample_requested
             .late
               SAMPLE REQ
+          - elsif item.task_completed?(ArtExcludeItemTask)
+            .late
+              BLANK ITEM
         %th.head{ :colspan => "3" } Price (Invoice)
         %th.admin{ :colspan => "3" } Cost (Purchase Order)
         - if item.our_notes.blank?
