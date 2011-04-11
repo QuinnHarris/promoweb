@@ -163,10 +163,13 @@ class PhoneController < ActionController::Base
     #    CallingPartyName => "WIRELESS CALLER"
     #    MACAddress => "0004f212bd80"
 
-    user = User.find_by_login(params[:id])
     event_params = params['PolycomIPPhone']['IncomingCallEvent']
     /^sip:\+?(\d+)\@/ === event_params['CallingPartyNumber']
-    user.update_attributes!(:incoming_phone_number => $1,
+    number = $1
+    return unless number.length >= 7
+
+    user = User.find_by_login(params[:id])
+    user.update_attributes!(:incoming_phone_number => number,
                             :incoming_phone_name => event_params['CallingPartyName'],
                             :incoming_phone_time => Time.now)
   end
