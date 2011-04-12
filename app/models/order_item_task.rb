@@ -260,6 +260,10 @@ class ReconciledItemTask < OrderItemTask
   def execute_duration
     2.days
   end
+
+  def complete_estimate
+    depends_on.first.ship_date ? depends_on.first.ship_date.add_workday(2.days) : super
+  end
 end
 
 class ReceivedItemTask < OrderItemTask
