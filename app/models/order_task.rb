@@ -172,7 +172,7 @@ class RevisedOrderTask < OrderTask
   def email_complete
     subject = if active
                 "Order Reviewed, Ready for Acknowledgment" + 
-                  (!object.task_completed?(PaymentInfoOrderTask) && " and Payment").to_s
+                  (!object.task_completed?(PaymentInfoOrderTask) ? " and Payment" : '')
     else
       "Order Rejected"
     end

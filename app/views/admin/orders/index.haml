@@ -36,8 +36,12 @@
               %br
               %strong= link_to order.urgent_note, :controller => '/order', :action => :info, :order_id => order.id
           %td
-            - for product in order.items.collect { |i| i.product }.uniq[0..1]
-              = link_to(image_tag(product.image_path_relative('thumb')), { :controller => '/products', :action => 'main', :id => product })
+            - images = order.items[0..1].collect do |item|
+              - if item.product.product_images.empty?
+                = link_to(image_tag(item.product.image_path_relative('thumb')), { :controller => '/products', :action => 'main', :id => item.product })
+              - else
+                = link_to(image_tag(item.active_images.first.image.url(:thumb)), { :controller => '/products', :action => 'main', :id => item.product })
+
           %td
             = link_to_unless !allowed?('CustomerInformationTask'), "#{order.customer.company_name}<br/>#{order.customer.person_name}", :controller => '/order', :action => :contact, :order_id => order
           - if allowed?('CustomerInformationTask')
