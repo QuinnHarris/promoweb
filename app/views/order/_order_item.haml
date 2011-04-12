@@ -19,7 +19,7 @@
     - unit_entries << entry
   - elsif list.fixed
     - fixed_entries << entry
-- rows += 1 if additional_setup = (unit_entries.empty? and !invoice and order_item.decorations.empty?)
+- rows += 1 if additional_setup = (unit_entries.empty? and !invoice and order_item.decorations.empty? and !order_item.task_completed?(ArtExcludeItemTask))
 - rows += unit_entries.length
 - rows += fixed_entries.length
 
@@ -147,12 +147,15 @@
       - for entry in unit_entries
         %tr
           - list = entry.send(aspect)
+          - blank = (list.marginal.zero? && list.fixed.zero?) ? '' : nil
           %td= entry.description
           - unit_sum += list.marginal
-          %td.num= list.marginal.to_perty
-          - unless list.fixed.nil?
-            - total_sum += list.fixed
-            %td.num= list.fixed.to_perty
+          %td.num= blank || list.marginal.to_perty
+          %td.num
+            - unless list.fixed.nil?
+              - total_sum += list.fixed
+              = blank || list.fixed.to_perty
+          %td.num= blank || (list.marginal * order_item.quantity + list.fixed).to_perty
       %tr.num.total
         %th
         %td= unit_sum.to_perty
