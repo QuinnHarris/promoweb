@@ -337,7 +337,7 @@ class Admin::OrdersController < Admin::BaseController
              when 'EOD'
                Time.now.beginning_of_day + 17.hours
              when /^(\d{1})d$/
-               Time.now.beginning_of_day + 17.hours + Integer($1).days
+               (Time.now.beginning_of_day + 17.hours).add_workday(Integer($1).days)
              else
                params[:task][:expected_at]
              end
