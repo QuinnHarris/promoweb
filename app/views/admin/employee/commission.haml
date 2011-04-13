@@ -1,7 +1,9 @@
 - if @employees
   - for employee in @employees
     %ul
-      %li= link_to "#{employee.name} : #{'%0.0f%' % (employee.commission * 100.0)}", :id => employee.id
+      %li
+        = link_to "#{employee.name} : #{'%0.0f%' % (employee.commission * 100.0)}", :id => employee.id
+        \: #{employee.orders.count(:include => :customer, :conditions => "orders.closed = false AND customers.person_name != ''")} Open Orders
 
 %h1= "Commissions for #{@user.name}"
 
