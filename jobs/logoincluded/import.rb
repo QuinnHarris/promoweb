@@ -180,7 +180,7 @@ class LogoIncludedXML < GenericImport
           costs << { :minimum => prices.last[:minimum] * 2 }
 
           prices.each do |p|
-            p[:marginal] = p[:marginal] / 0.6;
+            p[:marginal] = (p[:marginal] / 0.6).round_cents;
           end
         end
 
