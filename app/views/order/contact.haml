@@ -68,9 +68,10 @@
       %tr.required
         %th Email:
         = customer_field :email
-        %td
-          = check_box :customer, :solicit
-          Put me on the email list.
+        - unless @search
+          %td
+            = check_box :customer, :solicit
+            Put me on the email list.
       %tr.required
         %th Phone Number:
         = customer_field :phone, { :min_chars => 3 }
