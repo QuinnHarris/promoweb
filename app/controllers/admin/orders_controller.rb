@@ -623,6 +623,11 @@ class Admin::OrdersController < Admin::BaseController
     
     doc.moveto :x => center_x + imprint_width / 2 + tick_offset + tick_length / 2, :y => center_y - 4
     doc.show "#{imprint_height / 72.0} in", :with => :label_font
+
+    # Links
+    url_prefix = "http://www.mountainofpromos.com/order/acknowledge_artwork?auth=#{@order.customer.uuid}&order_id=#{@order.id}&"
+    doc.text_link "Accept", :url => url_prefix + "accept=true", :color => :blue, :x => center_x- 100, :y => page_margin + 48, :tag => :action_font
+    doc.text_link "Reject", :url => url_prefix + "reject=true", :color => :blue, :x => center_x + 50, :y => page_margin + 48, :tag => :action_font
     
     # Scale
     apply_scale = params[:scale]
@@ -646,11 +651,6 @@ class Admin::OrdersController < Admin::BaseController
 
     # Insert eps
     doc.image imprint_file, :x => (center_x - imprint_width/2 + offset_x)/scale, :y => (center_y - imprint_height/2 + offset_y)/scale
-
-    # Links
-    url_prefix = "http://www.mountainofpromos.com/order/acknowledge_artwork?auth=#{@order.customer.uuid}&order_id=#{@order.id}&"
-    doc.text_link "Accept", :url => url_prefix + "accept=true", :color => :blue, :x => center_x- 100, :y => page_margin + 48, :tag => :action_font
-    doc.text_link "Reject", :url => url_prefix + "reject=true", :color => :blue, :x => center_x + 50, :y => page_margin + 48, :tag => :action_font
     
     # Write File
     dst_name = artwork.filename_pdf
