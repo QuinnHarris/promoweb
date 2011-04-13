@@ -169,16 +169,19 @@ class LogoIncludedXML < GenericImport
           warning "No Prices"
         else
           # EQP
-          costs = prices.collect do |p|
-            { :fixed => p[:fixed],
-              :marginal => p[:marginal],
-              :minimum => p[:minimum] }
-          end
-#          costs = [{ :fixed => Money.new(0),
-#                     :marginal => prices.last[:marginal] * 0.6,
-#                     :minimum => prices.first[:minimum] }]
+          costs = [{ :fixed => Money.new(0),
+                     :marginal => prices.first[:marginal],
+                     :minimum => prices.first[:minimum] }]
+
+          costs << { :fixed => Money.new(0),
+                     :marginal => prices.last[:marginal],
+                     :minimum => prices[1][:minimum] } if prices.length > 1
 
           costs << { :minimum => prices.last[:minimum] * 2 }
+
+          prices.each do |p|
+            p[:marginal] = p[:marginal] / 0.6;
+          end
         end
 
         data = { 'prices' => prices, 'costs' => costs }
