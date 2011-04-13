@@ -69,8 +69,9 @@ class Purchase < ActiveRecord::Base
       "http://my2.leedsworld.com/"
       when "Lanco"
       "http://www.lancopromo.com/orderstatus?refonetype=CSTPONBR&refone=#{purchase_order.quickbooks_ref}&reftwotype=custnmbr&reftwo=#{supplier.account_number}"
-      #when "Prime Line"
-      #""
+      when "Prime Line"
+      sample = items.to_a.find { |i| i.task_completed?(ArtExcludeItemTask) }
+      "http://www.primeline.com/Distributor/orders/QuickOrderList.aspx?ponumber='#{purchase_order.quickbooks_ref}'&pordernumber=&issample=#{sample ? 'True' : 'False'}&custno=&bzipcode='81301'&formState=OrderStatus&Mode=Open"
       when "High Caliber Line"
       "http://icheck.highcaliberline.com/partqtypopup/PartQtyPopup.aspx?Action=OrderStatus&CustNbr=#{supplier.account_number}&ASI=&SO=&PO=#{purchase_order.quickbooks_ref}"
       when "Bullet Line"
