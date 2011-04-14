@@ -171,7 +171,7 @@
                         %a{ :href => '#', :onclick => 'return sel_loc(this)' }
                           %span= dec.display
 
-          - if true #@category
+          - unless @product.deleted
             - form_tag({ :controller => :order, :action => :add_item }, {:name => "productform", :onsubmit => 'return order_submit(this, true);' }) do
               #prices.box
                 %p

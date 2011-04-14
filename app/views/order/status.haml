@@ -56,7 +56,7 @@
               - else
                 = format_time(td.complete_at)
 
-              - if td.allowed?(@permissions) and td.revokable?
+              - if @user and td.allowed?(@permissions) and td.revokable?
                 = link_to image_tag('remove.png'), { :controller => '/admin/orders', :action => :task_revoke, :id => td, :class => td.class, :order_id => @order }, { :confirm => "Revoke #{td.status_name} task?" }
             .name                
               = image_tag td.active ? 'check.png' : (td.customer ? 'there_task.png' : 'our_task.png')

@@ -27,7 +27,7 @@ class HighCaliberLine < GenericImport
       
       product_data['supplier_num'] = product_data['supplier_num'].split(' ').first
 
-      next if product_data['supplier_num'] == 'S-606' # Patent issue
+      next if %w(S-606 T-818).include?(product_data['supplier_num'])
       
       next if product_data['name'].empty?
 

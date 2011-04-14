@@ -23,9 +23,6 @@
           = @static ? @order.rush : order.check_box(:rush)
           Adjust Ship Date as Rush
       %tr.admin
-        %th Shipping Method:
-        %td= @static ? @order.ship_method : order.text_field(:ship_method)
-      %tr.admin
         %th FOB:
         %td= @static ? @order.fob : order.text_field(:fob)
     %tr.required

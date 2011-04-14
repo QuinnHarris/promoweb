@@ -45,9 +45,6 @@
         Payment:
         = valid?(@order, :terms) ? @order.terms : "Pre-Paid"
         %br
-        Ship Method:
-        = @order.ship_method
-        %br
         - unless @order.fob.blank?
           FOB:
           = @order.fob
