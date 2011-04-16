@@ -202,7 +202,7 @@ class PhoneController < ActionController::Base
         @order = po.purchase.order
         @supplier = po.purchase.supplier
         texts << "Order #{@order.id}"
-        uri = url_for(:controller => '/admin/orders', :action => :items_edit, :order_id => @order)
+        uri = { :controller => '/admin/orders', :action => :items_edit, :order_id => @order }
       end
     end
     
@@ -212,7 +212,7 @@ class PhoneController < ActionController::Base
         texts << "ORDER CUSTOMER MISMATCH" unless emails.empty? or emails.find { |a| @order.customer.email.downcase.include?(a.address.downcase) }
         texts << (@order.user_id ? @order.user.name : "UNASSIGNED")
         texts << "Order #{@order.id}"
-        uri = url_for(:controller => '/admin/orders', :action => :items_edit, :order_id => @order, :own => true) if @order.user_id.nil?
+        uri = { :controller => '/admin/orders', :action => :items_edit, :order_id => @order, :own => true } if @order.user_id.nil?
       else
         customers = emails.collect do |addr|
           Customer.find(:all, :conditions => ["lower(email) ~ ?", addr.address.downcase], :order => 'id DESC')
@@ -232,7 +232,7 @@ class PhoneController < ActionController::Base
           if !emails.empty? && recipients.find { |r| r.address == MAIN_EMAIL }
             texts << "NEW CUSTOMER"
             /M(\d{4,5})/ === subject
-            uri = url_for(:controller => '/admin/orders', :action => :new_order, :email => author.address || '', :name => author.name, :product => $1)
+            uri = { :controller => '/admin/orders', :action => :new_order, :email => author.address || '', :name => author.name, :product => $1}
           else
             texts << "UNKNOWN"
           end
@@ -244,9 +244,9 @@ class PhoneController < ActionController::Base
     if @order
       texts << @order.customer.company_name unless @order.customer.company_name.blank?
       texts << @order.customer.person_name
-      uri = url_for(:controller => '/order', :action => :status, :order_id => @order) unless uri
+      uri = { :controller => '/order', :action => :status, :order_id => @order } unless uri
     end
 
-    render :json => { :text => texts.join(' - '), :uri => uri }
+    render :json => { :text => texts.join(' - '), :uri => uri && url_for(uri.merge({ :protocol => (RAILS_ENV == "production" ? 'https://' : 'http://') })) }
   end
 end
