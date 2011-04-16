@@ -109,4 +109,7 @@ class Admin::LoginController < ApplicationController
     class << @user; def old_password; end; end
   end
 
+  def other
+
+  end
 end

@@ -37,7 +37,7 @@ end
 # Used as place holder for empty OrderItemVariants
 class OrderItemVariantMeta
   def self.fetch(order_item)
-    all_variants = order_item.product.variants.to_a
+    all_variants = order_item.price_group.variants.to_a
     our_variants = order_item.order_item_variants.to_a
 
     variants = our_variants + all_variants.collect do |variant|

@@ -1172,6 +1172,10 @@ public
     @list = imap.fetch(ids, "(UID RFC822.SIZE BODY.PEEK[]<0.8192>)").reverse.collect do |msg|
       [msg.attr['RFC822.SIZE'], TMail::Mail.parse(msg.attr['BODY[]<0>'])]      
     end unless ids.empty?
+
+    @stylesheets = ['order']
+
+    render :layout => 'order'
   end
 
   def paths

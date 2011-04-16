@@ -88,6 +88,7 @@
                       = li_to 'Users', {:controller => '/admin/login', :action => 'index'}
                       = li_to 'Quickbooks', {:controller => '/admin/system/quickbooks_blocked', :action => 'index'}
                     = li_to 'Password', {:controller => '/admin/login', :action => :password }
+                    = li_to 'Other', { :controller => '/admin/login', :action => :other }
               - elsif @order
                 #custinfo
                   - link_to({ :controller => '/order', :action => 'status', :order_id => @order }) do
