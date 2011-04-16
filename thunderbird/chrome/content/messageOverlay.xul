@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/css" href="chrome://mop/skin/messageOverlay.css"?>
+<!DOCTYPE overlay SYSTEM "chrome://mop/locale/messageOverlay.dtd">
+<overlay id="mop-message-header-overlay"
+  xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+
+  <script type="application/javascript" src="chrome://mop/content/messageOverlay.js"/>
+
+<!--  <vbox id="expandedHeaderView">
+    <hbox id="mop-header-view">
+      <label class="headerName" value="&header.title;" />
+      <description id="mop-status-text">&header.description;</description>
+    </hbox>
+  </vbox>-->
+
+  <rows id="expandedHeader2Rows">
+    <row id="mop-header-row">
+      <label class="headerName" value="&header.title;" />
+      <mail-headerfield id="mop-status-text">UNKNOWN</mail-headerfield>
+    </row>
+  </rows>
+</overlay>

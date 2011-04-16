@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 require 'rghost'
 class EPSInfo
   def initialize(file_name)
@@ -682,20 +683,26 @@ class Admin::OrdersController < Admin::BaseController
 
   def new_order
     Customer.transaction do
+      if params[:email] and
+          customer = Customer.find(:first, :conditions => ['lower(email) ~ ?', params[:email].downcase])
+        order = customer.orders.find(:first, :conditions => 'user_id IS NOT NULL', :order => 'id DESC')
+        render :inline => "Customer already serviced by #{order.user.name}"
+        return
+      end
+
       if params[:customer_id]
         @customer = Customer.find(params[:customer_id])
       else
         @customer = Customer.new({
             :company_name => '',
-            :person_name => '',
-            :email => '',
+            :person_name => params[:name] || '',
+            :email => params[:email] || '',
             :phone => ''})
       end
 
       @customer.save_with_validation(false)
       
       @order = @customer.orders.create(:user_id => session[:user_id])
-      
       session[:order_id] = @order.id
     end
 
@@ -934,6 +941,15 @@ private
 public
   
   def_tasked_action :items_edit, RequestOrderTask, RevisedOrderTask, QuoteOrderTask, OrderSentItemTask, ReconciledItemTask do
+    if params[:own]
+      if @order.user
+        render :inline => "Customer already serviced by #{@order.user.name}"
+        next
+      end
+      @order.user = @user
+      @order.save!
+    end
+
     @stylesheets = ['order']
     @javascripts = ['autosubmit.js', 'admin_orders', 'effects', 'controls']
     apply_calendar_header

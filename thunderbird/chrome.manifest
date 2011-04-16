@@ -1,0 +1,5 @@
+content	mop		chrome/content/
+skin	mop classic/1.0	chrome/skin/
+locale	mop en-US	chrome/locale/en-US/
+
+overlay	chrome://messenger/content/msgHdrViewOverlay.xul	chrome://mop/content/messageOverlay.xul

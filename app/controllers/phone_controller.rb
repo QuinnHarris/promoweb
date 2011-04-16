@@ -180,4 +180,73 @@ class PhoneController < ActionController::Base
     @users = User.find(:all, :conditions => 'extension IS NOT NULL')
     @suppliers = Supplier.find(:all, :conditions => 'phone IS NOT NULL', :order => 'name')
   end
+
+
+  def email_status
+    author = TMail::Address.parse(params[:author])
+    recipients = params[:recipients].split(',').collect { |r| TMail::Address.parse(r) }
+    subject = params[:subject]
+
+    emails = [author, recipients].flatten.find_all { |addr| addr.domain != 'mountainofpromos.com' }
+
+    uri = nil
+    texts = []
+
+    emails.find do |addr|
+      @supplier = Supplier.find(:first, :conditions => ["lower(po_email) ~ ?", addr.domain.downcase], :order => 'parent_id DESC')
+    end
+    if @supplier or emails.empty?
+      texts << @supplier.name if @supplier
+      if /(Q\d{4})/ === subject and
+          po = PurchaseOrder.find_by_quickbooks_ref($1)
+        @order = po.purchase.order
+        @supplier = po.purchase.supplier
+        texts << "Order #{@order.id}"
+        uri = url_for(:controller => '/admin/orders', :action => :items_edit, :order_id => @order)
+      end
+    end
+    
+    unless @supplier
+      if /\(#(\d{4,5})\)/ === subject and
+          @order = Order.find_by_id($1)
+        texts << "ORDER CUSTOMER MISMATCH" unless emails.empty? or emails.find { |a| @order.customer.email.downcase.include?(a.address.downcase) }
+        texts << (@order.user_id ? @order.user.name : "UNASSIGNED")
+        texts << "Order #{@order.id}"
+        uri = url_for(:controller => '/admin/orders', :action => :items_edit, :order_id => @order, :own => true) if @order.user_id.nil?
+      else
+        customers = emails.collect do |addr|
+          Customer.find(:all, :conditions => ["lower(email) ~ ?", addr.address.downcase], :order => 'id DESC')
+        end.flatten
+
+        unless customers.empty?
+          texts << "MULTIPLE CUSTOMERS" if customers.length > 1
+          orders = customers.collect do |customer|
+            ret = customer.orders.find(:all, :conditions => { :closed => false }, :order => 'id')
+            ret.empty? ? customer.orders : ret
+          end.flatten
+          orders.collect { |o| o.user }.uniq.each do |user|
+            texts << (user ? user.name : "UNASSIGNED")
+          end
+          @order = orders.last
+        else
+          if !emails.empty? && recipients.find { |r| r.address == MAIN_EMAIL }
+            texts << "NEW CUSTOMER"
+            /M(\d{4,5})/ === subject
+            uri = url_for(:controller => '/admin/orders', :action => :new_order, :email => author.address || '', :name => author.name, :product => $1)
+          else
+            texts << "UNKNOWN"
+          end
+        end
+      end
+    end
+    
+
+    if @order
+      texts << @order.customer.company_name unless @order.customer.company_name.blank?
+      texts << @order.customer.person_name
+      uri = url_for(:controller => '/order', :action => :status, :order_id => @order) unless uri
+    end
+
+    render :json => { :text => texts.join(' - '), :uri => uri }
+  end
 end
