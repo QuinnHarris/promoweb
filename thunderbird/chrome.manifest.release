@@ -1,5 +1,0 @@
-content	mop		jar:chrome/mop.jar!/content/
-skin	mop classic/1.0	jar:chrome/mop.jar!/skin/
-locale	mop en-US	jar:chrome/mop.jar!/locale/en-US/
-
-overlay	chrome://messenger/content/msgHdrViewOverlay.xul	chrome://mop/content/messageOverlay.xul
