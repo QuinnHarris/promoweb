@@ -6,6 +6,10 @@ class Supplier < ActiveRecord::Base
   has_many :warehouses
   belongs_to :address
 
+  def standard_colors
+    attributes['standard_colors'] && attributes['standard_colors'].split(',')
+  end
+
   validates_numericality_of :phone, :fax, :allow_nil => true
 #  validates_as_email :artwork_email, :po_email
 

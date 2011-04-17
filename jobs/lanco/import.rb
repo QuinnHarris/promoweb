@@ -18,6 +18,10 @@ class LancoSOAP < GenericImport
     
     super "Lanco"
   end
+
+  def imprint_colors
+    %w(340 3305 Process\ Blue Reflex\ Blue 2935 116 021 186 209 320 2597 871 Black White 877 876 281 CoolGray\ 7 476 190)
+  end
   
   @@overrides = {
     'SBF397' => { 'Alt_Name' => ['McKinley Embossed Mint Tin (empty)', 'McKinley Embossed Mint Tin'] },

@@ -43,6 +43,10 @@ class PrimeLineWeb < GenericImport
     super "Prime Line"
   end
 
+  def imprint_colors
+    %w(Yellow 116 1235 021 1787 199 202 208 225 267 2925 287 281 Process\ Blue Reflex\ Blue 327 Green 347 343 4635 423 877 873 Black White)
+  end
+
   def process_root
     fetch = WebFetch.new('http://www.primeline.com/')
     doc = Hpricot(open(fetch.get_path))

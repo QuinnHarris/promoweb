@@ -113,6 +113,10 @@ class BulletLine < GenericImport
     super "Bullet Line"
   end
 
+  def imprint_colors
+    %w(Black 289 Process\ Blue Reflex\ Blue 300 161 222 123 874 430 357 354 202 021 210 Violet Rhodamine\ Red Rubine\ Red WarmRed 877 320 White 116)
+  end
+
   @@decoration_replace = {
     'silkscreened' => ['Screen Print', 6],
     'laser engraved' => ['Laser Engrave', 1],

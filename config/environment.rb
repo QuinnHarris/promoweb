@@ -85,6 +85,7 @@ require 'uuid22'
 require 'shipping'
 require 'access_parser'
 require 'pdf_helper'
+require 'pantone'
 
 require 'net/geoip'
 GEOIP = Net::GeoIP.new("/usr/share/GeoIP/GeoLiteCity.dat")

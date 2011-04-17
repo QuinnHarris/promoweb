@@ -254,6 +254,16 @@ class GenericImport
     @product_list = []
     @invalid_prods = []
   end
+
+  def set_standard_colors(colors = nil)
+    colors = imprint_colors unless colors
+    if @supplier_record.standard_colors != colors
+      color = colors.find { |e| !PantoneColor.find(e) }
+      raise "Unknown color: #{color}" if color
+      @supplier_record['standard_colors'] = colors.join(',')
+      @supplier_record.save!
+    end
+  end
   
   def get_id(supplier_num)
     product_record = @supplier_record.get_product(supplier_num)
