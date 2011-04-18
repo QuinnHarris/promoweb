@@ -142,7 +142,7 @@ class EstimatedItemTask < OrderItemTask
     date = Date.parse(params[:data][:ship_date])
     raise "Date out of range: #{date}" if date < (Date.today-14) || date > (Date.today + 60)
     days = Integer(params[:data][:ship_days])
-    raise "Days out of range: #{days}" if days <= 0 || days > 5
+    raise "Days out of range: #{days}" if days <= 0 || days > 7
     self[:data] = { :ship_date => date,
       :ship_days => days,
       :ship_saturday => params[:data][:ship_saturday] == "1" }

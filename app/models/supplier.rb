@@ -7,7 +7,7 @@ class Supplier < ActiveRecord::Base
   belongs_to :address
 
   def standard_colors
-    attributes['standard_colors'] && attributes['standard_colors'].split(',')
+    attributes['standard_colors'] ? attributes['standard_colors'].split(',') : (parent ? parent.standard_colors : nil)
   end
 
   validates_numericality_of :phone, :fax, :allow_nil => true

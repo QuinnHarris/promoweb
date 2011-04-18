@@ -52,7 +52,7 @@ end
 list.each do |file, name, c|
   import = NorwoodXML.new("norwood/#{year} #{file}.xml", name)
   import.set_standard_colors(c || colors)
-#  import.run_parse_cache
-#  import.run_transform
-#  import.run_apply_cache
+  import.run_parse_cache
+  import.run_transform
+  import.run_apply_cache
 end

@@ -25,7 +25,16 @@ class EPSInfo
   public
   # llx lly urx ury
   def bounding_box
-    format_bounding @declares["HiResBoundingBox"] ||  @declares["BoundingBox"]
+    return @bounding_box if @bounding_box
+    @bounding_box = format_bounding @declares["HiResBoundingBox"] || @declares["BoundingBox"]
+  end
+
+  def width
+    bounding_box[0] + bounding_box[2]
+  end
+
+  def height
+    bounding_box[1] + bounding_box[3]
   end
 
   def page_bounding_box
@@ -46,6 +55,111 @@ end
 
 class RGhost::Document
   attr_reader :paper
+end
+
+class EPSPlacement < EPSInfo
+  @@tick_offset = 6
+  @@tick_length = 24
+  cattr_reader :tick_length, :tick_offset
+
+  attr_accessor :scale
+
+  attr_reader :diameter
+  def diameter=(val)
+    width = height = @diameter = Float(val)
+  end
+
+  %w(width height).each do |name|
+    define_method "#{name}_imprint" do
+      instance_variable_get("@#{name}_imprint") || super
+    end
+
+    define_method "#{name}_imprint=" do |val|
+      val = Float(val)
+      if !@scale && send(name) > val
+        raise "EPS #{name} of #{send(name)} > #{val}"
+      end
+      instance_variable_set("@#{name}_imprint", val)
+    end
+    
+    define_method "#{name}_full" do
+      send("#{name}_imprint") + 2*(@@tick_offset + @@tick_length)
+    end
+  end
+
+  def draw(doc, center_x, center_y)
+    # Crop marks
+    doc.graphic do |g|
+      g.line_width 0.5
+      (0..3).each do |n|
+        x_dir = (n&1 == 1) ? -1 : 1
+        y_dir = (n&2 == 2) ? -1 : 1
+        
+        g.moveto :x => center_x + x_dir*width_imprint/2, :y => center_y + y_dir*(height_imprint/2 + @@tick_offset)
+        g.rlineto :x => 0, :y => y_dir*@@tick_length
+        
+        g.moveto :x => center_x + x_dir*(width_imprint/2 + @@tick_offset), :y => center_y + y_dir*height_imprint/2
+        g.rlineto :x => x_dir*@@tick_length, :y => 0
+      end
+      g.stroke
+    end
+
+    # Outline
+    if diameter
+      doc.circle :x => center_x, :y => center_y, :radius => diameter / 2.0, :content => {:fill => false}, :border => { :color => :yellow, :width => 0.25 }
+    else
+      doc.graphic do |g|
+          g.line_width 0.25
+          g.border :color => :yellow
+          g.moveto :x => center_x - width_imprint/2, :y => center_y - height_imprint/2
+          g.rlineto :x => width_imprint, :y => 0
+          g.rlineto :x => 0, :y => height_imprint
+          g.rlineto :x => -width_imprint, :y => 0
+          g.rlineto :x => 0, :y => -height_imprint
+        g.stroke
+      end
+    end
+
+    # Crop mark Label
+    doc.moveto :x => center_x, :y => center_y - height_imprint / 2 - @@tick_offset - @@tick_length
+    doc.show "#{width_imprint / 72.0} in", :with => :label_font, :align => :show_center
+    
+    doc.moveto :x => center_x + width_imprint / 2 + @@tick_offset + @@tick_length / 2, :y => center_y - 4
+    doc.show "#{height_imprint / 72.0} in", :with => :label_font
+    
+    # Scale
+    offset_x = offset_y = 0
+    scale_note = nil
+    s = scale ? [width_imprint/width, height_imprint/height].min : 1.0
+    if !scale || (s == width_imprint/width)
+      offset_y = (height_imprint - height*s)/2
+      scale_note = "width"
+    end
+    if !scale || (s == height_imprint/height)
+      offset_x = (width_imprint - width*s)/2
+      scale_note = "height"
+    end
+
+    unless s == 1.0
+      doc.moveto :x => center_x, :y => center_y - height_imprint / 2 - @@tick_offset - @@tick_length - 16
+      doc.show "Scaled #{'%0.2f' % (s * 100)}% (by #{scale_note})", :align => :show_center
+      doc.scale(s, s)
+    end
+
+    # Insert eps
+    doc.image @file_name, :x => (center_x - width_imprint/2 + offset_x)/s, :y => (center_y - height_imprint/2 + offset_y)/s
+  end
+end
+  
+
+class ProofGenerate
+  def initialize
+    @doc = RGhost::Document.new :paper => paper, :landscape => landscape
+  end
+
+  def place_image(center_x, center_y, eps)
+    
+  end
 end
 
 class Admin::OrdersController < Admin::BaseController
@@ -467,16 +581,18 @@ class Admin::OrdersController < Admin::BaseController
     # Setup variables for order
     company_name = artwork.customer.company_name.strip.empty? ? artwork.customer.person_name : artwork.customer.company_name
 
-    imprint_file = artwork.art.path
+    # EPS info
+    eps = EPSPlacement.new(artwork.art.path)
 
     oid = artwork.group.order_item_decorations.first
     if diameter = oid.diameter
-      diameter *= 72
-      imprint_width= imprint_height = diameter
+      eps.diameter = diameter * 72
     else
-      imprint_width = oid.width * 72
-      imprint_height = oid.height * 72
+      eps.width_imprint = oid.width * 72
+      eps.height_imprint = oid.height * 72
     end
+    
+    eps.scale = params[:scale]
 
     product_name = oid.order_item.product.name.gsub('”','"')
     if oid.order_item.product.product_images.empty?
@@ -484,7 +600,6 @@ class Admin::OrdersController < Admin::BaseController
     else
       product_images = oid.order_item.active_images.first.image.path(:medium)
     end
-
       
 
     props = {}
@@ -500,16 +615,11 @@ class Admin::OrdersController < Admin::BaseController
       imprint << oiv.imprint_colors
     end
 
-    # EPS info
-    ei = EPSInfo.new(imprint_file)
-    lx, ly, rx, ry = ei.page_bounding_box
-    eps_width = (rx + lx)
-    eps_height = (ry + ly)
 
     availible_space = 0
 
     paper = :letter
-    landscape = (imprint_width > 7.5*72)
+    landscape = (eps.width_imprint > 7.5*72)
     logger.info("Landscape: #{landscape.inspect}")
 
     # Setup Document
@@ -518,15 +628,12 @@ class Admin::OrdersController < Admin::BaseController
     doc.info(:Title => 'Artwork Proof', :Author => @order.user && @order.user.name, :Subject => "#{product_name} on #{oid.decoration && oid.decoration.location}", :Producer => "Mountain Xpress Proof Creator using RGhost v#{RGhost::VERSION::STRING}")
 
     # Constants
-    tick_offset = 6
-    tick_length = 24
-
     paper_size = doc.paper.size
     paper_size = paper_size.reverse if landscape
     page_width, page_height = paper_size
 
-    needed_space = 36 + 12 + (landscape ? 3*14 : 6*14) + tick_length*2 + 14*2 + 32
-    availible_space = page_height - imprint_height
+    needed_space = 36 + 12 + (landscape ? 3*14 : 6*14) + EPSPlacement.tick_length*2 + 14*2 + 32
+    availible_space = page_height - eps.height
 
     page_margin = (availible_space - needed_space) / 2
     page_margin = 72/4 if page_margin < 72/4
@@ -574,7 +681,7 @@ class Admin::OrdersController < Admin::BaseController
     end
 
     center_y = (pos_y + page_margin + 48) / 2
-    max_center_y = pos_y - imprint_height/2 - 64
+    max_center_y = pos_y - eps.height/2 - 64
     center_y = max_center_y if center_y > max_center_y
     
     # Product
@@ -586,72 +693,18 @@ class Admin::OrdersController < Admin::BaseController
     doc.moveto :x => center_x, :y => page_margin
     doc.show "www.mountainofpromos.com  (877) 686-5646", :with => :subtitle_font, :align => :show_center
 
-    # Crop marks
-    doc.graphic do |g|
-      g.line_width 0.5
-      (0..3).each do |n|
-        x_dir = (n&1 == 1) ? -1 : 1
-        y_dir = (n&2 == 2) ? -1 : 1
-        
-        g.moveto :x => center_x + x_dir*imprint_width/2, :y => center_y + y_dir*(imprint_height/2 + tick_offset)
-        g.rlineto :x => 0, :y => y_dir*tick_length
-        
-        g.moveto :x => center_x + x_dir*(imprint_width/2 + tick_offset), :y => center_y + y_dir*imprint_height/2
-        g.rlineto :x => x_dir*tick_length, :y => 0
-      end
-      g.stroke
-    end
 
-    if diameter
-      doc.circle :x => center_x, :y => center_y, :radius => diameter / 2.0, :content => {:fill => false}, :border => { :color => :yellow, :width => 0.25 }
-    else
-      doc.graphic do |g|
 
-          g.line_width 0.25
-          g.border :color => :yellow
-          g.moveto :x => center_x - imprint_width/2, :y => center_y - imprint_height/2
-          g.rlineto :x => imprint_width, :y => 0
-          g.rlineto :x => 0, :y => imprint_height
-          g.rlineto :x => -imprint_width, :y => 0
-          g.rlineto :x => 0, :y => -imprint_height
-        g.stroke
-      end
-    end
 
-    # Crop mark Label
-    doc.moveto :x => center_x, :y => center_y - imprint_height / 2 - tick_offset - tick_length
-    doc.show "#{imprint_width / 72.0} in", :with => :label_font, :align => :show_center
-    
-    doc.moveto :x => center_x + imprint_width / 2 + tick_offset + tick_length / 2, :y => center_y - 4
-    doc.show "#{imprint_height / 72.0} in", :with => :label_font
 
     # Links
     url_prefix = "http://www.mountainofpromos.com/order/acknowledge_artwork?auth=#{@order.customer.uuid}&order_id=#{@order.id}&"
     doc.text_link "Accept", :url => url_prefix + "accept=true", :color => :blue, :x => center_x- 100, :y => page_margin + 48, :tag => :action_font
     doc.text_link "Reject", :url => url_prefix + "reject=true", :color => :blue, :x => center_x + 50, :y => page_margin + 48, :tag => :action_font
     
-    # Scale
-    apply_scale = params[:scale]
-    offset_x = offset_y = 0
-    scale_note = nil
-    scale = apply_scale ? [imprint_width/eps_width, imprint_height/eps_height].min : 1.0
-    if !apply_scale || (scale == imprint_width/eps_width)
-      offset_y = (imprint_height - eps_height*scale)/2
-      scale_note = "width"
-    end
-    if !apply_scale || (scale == imprint_height/eps_height)
-      offset_x = (imprint_width - eps_width*scale)/2
-      scale_note = "height"
-    end
 
-    unless scale == 1.0
-      doc.moveto :x => center_x, :y => center_y - imprint_height / 2 - tick_offset - tick_length - 16
-      doc.show "Scaled #{'%0.2f' % (scale * 100)}% (by #{scale_note})", :align => :show_center
-      doc.scale(scale, scale)
-    end
+    eps.draw(doc, center_x, center_y)
 
-    # Insert eps
-    doc.image imprint_file, :x => (center_x - imprint_width/2 + offset_x)/scale, :y => (center_y - imprint_height/2 + offset_y)/scale
     
     # Write File
     dst_name = artwork.filename_pdf
