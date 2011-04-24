@@ -7,4 +7,16 @@ class ArtworkGroup < ActiveRecord::Base
     order_item_decorations.find(:all, :include => :order_item,
                                 :conditions => { 'order_items.order_id' => order.id })
   end
+
+  def pdf_artworks
+    artworks.to_a.find_all { |a| a.can_pdf? }
+  end
+
+  def pdf_filename
+    "#{name} Proof.pdf"
+  end
+
+  def pdf_exists?
+    artworks.to_a.find { |a| a.art.original_filename == pdf_filename }
+  end
 end

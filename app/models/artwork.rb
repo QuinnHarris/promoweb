@@ -20,8 +20,16 @@ class Artwork < ActiveRecord::Base
     %w(.ps .eps .ai).include?(File.extname(art.original_filename))
   end
 
+  def eps?
+    %w(.eps).include?(File.extname(art.original_filename))
+  end
+
+  def can_pdf?
+    eps? and has_tag?('supplier')
+  end
+
   def can_proof?(order)
-    return false unless %w(.eps).include?(File.extname(art.original_filename))
+    return false unless eps?
 
     decorations = group.decorations_for_order(order)
     return false if decorations.empty?

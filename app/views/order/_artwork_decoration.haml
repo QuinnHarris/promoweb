@@ -14,6 +14,15 @@
               - if @user and item_decoration.has_dimension?
                 \-
                 = link_to "Inkscape Template", { :controller => '/admin/orders', :action => :inkscape, :id => item_decoration.id }
+                \-
+                - if item_decoration.artwork_group
+                  - if item_decoration.artwork_group.pdf_artworks.empty?
+                    Mark "Supplier" to Proof
+                  - elsif item_decoration.artwork_group.pdf_exists?
+                    Proof already created
+                  - else
+                    = link_to "Proof", { :controller => '/admin/orders', :action => :artwork_generate_pdf, :decoration_id => item_decoration.id }
+                    = link_to "(Scale)", { :controller => '/admin/orders', :action => :artwork_generate_pdf, :decoration_id => item_decoration.id, :scale => true }
 
             - decorations = product.decorations.find(:all, :conditions => { :technique_id => item_decoration.technique })
             - if dragable

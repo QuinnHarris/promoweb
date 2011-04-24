@@ -30,15 +30,27 @@ class EPSInfo
   end
 
   def width
-    bounding_box[0] + bounding_box[2]
+    bounding_box[2] - bounding_box[0]
   end
 
   def height
-    bounding_box[1] + bounding_box[3]
+    bounding_box[3] - bounding_box[1]
+  end
+
+  def left
+    bounding_box[0]
+  end
+
+  def bottom
+    bounding_box[1]
   end
 
   def page_bounding_box
     format_bounding @declares["PageBoundingBox"] || @declares["HiResBoundingBox"] ||  @declares["BoundingBox"]
+  end
+
+  def inspect
+    "#{@file_name} : #{width}x#{height}"
   end
 end
 
@@ -58,8 +70,8 @@ class RGhost::Document
 end
 
 class EPSPlacement < EPSInfo
-  @@tick_offset = 6
-  @@tick_length = 24
+  @@tick_offset = 4
+  @@tick_length = 18
   cattr_reader :tick_length, :tick_offset
 
   attr_accessor :scale
@@ -128,15 +140,16 @@ class EPSPlacement < EPSInfo
     doc.show "#{height_imprint / 72.0} in", :with => :label_font
     
     # Scale
-    offset_x = offset_y = 0
+    offset_x = -left
+    offset_y = -bottom
     scale_note = nil
     s = scale ? [width_imprint/width, height_imprint/height].min : 1.0
     if !scale || (s == width_imprint/width)
-      offset_y = (height_imprint - height*s)/2
+      offset_y += (height_imprint - height*s)/2
       scale_note = "width"
     end
     if !scale || (s == height_imprint/height)
-      offset_x = (width_imprint - width*s)/2
+      offset_x += (width_imprint - width*s)/2
       scale_note = "height"
     end
 
@@ -149,15 +162,204 @@ class EPSPlacement < EPSInfo
     # Insert eps
     doc.image @file_name, :x => (center_x - width_imprint/2 + offset_x)/s, :y => (center_y - height_imprint/2 + offset_y)/s
   end
+
+  def inspect
+    super + " : #{width_full}x#{height_full}"
+  end
+end
+
+
+class ElementLayout
+  def initialize(hash)
+    @width = hash[:width]
+    @height = hash[:height]
+    @columns = hash[:columns]
+    @rows = hash[:rows]
+    @elements = hash[:elements]
+    @note = hash[:note]
+  end
+  attr_reader :width, :height, :columns, :rows, :elements, :note
+  
+  def score
+    Rails.logger.info("Score: #{width} #{height} #{columns} #{rows} #{note} #{elements.inspect}")
+    score = 0.0
+
+    @row_space = []
+    @col_space = []
+
+    # Score column spacing
+    (0...rows).each do |row|
+      w = (0...columns).inject(0) do |sum, col|
+        e = elements[row*columns + col]
+        sum + (e ? e.width_full : 0.0)
+      end
+      Rails.logger.info("Col: #{w} #{width}")
+      return nil if w > width
+      score += Math.log((width - w)/(columns + 1))
+      @row_space[row] = (width - w).to_f / (columns+1)
+    end
+
+    # Score row spacing
+    (0...columns).each do |col|
+      h = (0...rows).inject(0) do |sum, row|
+        e = elements[row*columns + col]
+        sum + (e ? e.height_full : 0.0)
+      end
+      Rails.logger.info("Row: #{h} #{height}")
+      return nil if h > height
+      score += Math.log((height - h)/(rows + 1))
+      @col_space[col] = (height - h).to_f / (rows + 1)
+    end
+
+    Rails.logger.info("NUM: #{score}")
+
+    return score
+  end
+
+  def draw(doc, center_x, center_y)
+    left = center_x - width / 2.0
+    bottom = center_y - height / 2.0
+
+    (0...rows).each do |row|
+      x = left
+      (0...columns).each do |col|
+        e = elements[row*columns + col]
+        return unless e
+        x += @row_space[row]
+        x += e.width_full / 2.0
+
+        y = bottom + @col_space[col]
+        (0...(rows-row-1)).each do |r|
+          y += @col_space[col]
+          y += e.height_full
+        end
+        y += e.height_full / 2.0
+        
+        Rails.logger.info("X: #{x} Y: #{y}")
+        e.draw(doc, x, y)
+
+        x += e.width_full / 2.0
+      end
+    end
+  end
+
+  def self.best(dims, elements)
+    Rails.logger.info("Dims: #{dims.inspect} #{elements.inspect}")
+    layouts = []
+    dims.each do |width, height, note|
+      (1..elements.length).each do |cols|
+        l = self.new(:width => width, :height => height, :note => note,
+                     :columns => cols, :rows => elements.length / cols, :elements => elements)
+        s = l.score
+        layouts << [s, l] if s
+      end
+    end
+
+    raise "Can't fit elements" if layouts.empty?
+
+    layouts.sort_by { |s, l| s }.last.last
+  end
 end
   
 
 class ProofGenerate
-  def initialize
-    @doc = RGhost::Document.new :paper => paper, :landscape => landscape
+  def initialize(elements, list)
+    @header_list = list
+    @margin = 72*3/4
+
+    @paper_type = :letter
+    paper_size = RGhost::Constants::Papers::STANDARD[:letter]
+    Rails.logger.info("Paper: #{paper_size.inspect}")
+    @header_size = 72*3/2
+    @footer_size = 34
+    header_footer_size = @header_size + @footer_size
+    
+    dims = [[paper_size[1] - 2*margin, paper_size[0] - 2*margin - footer_size - header_size(true), :landscape],
+            [paper_size[0] - 2*margin, paper_size[1] - 2*margin - footer_size - header_size(false), :portrait] ]
+    
+    @layout = ElementLayout.best(dims, elements)
+    Rails.logger.info(@layout.inspect)
+
+    if @layout.note == :landscape
+      paper_size = paper_size.reverse 
+      @landscape = true
+    end
+    @paper_width, @paper_height = paper_size
+    Rails.logger.info("XXXXXXX Widht: #{@paper_width} #{@paper_height} #{@layout.note}")
   end
 
-  def place_image(center_x, center_y, eps)
+  attr_reader :paper_type, :paper_width, :paper_height, :footer_size, :margin, :landscape
+
+  def center_x
+    paper_width / 2
+  end
+
+  def setup(info)
+    RGhost::Config::GS[:unit] = RGhost::Units::PSUnit
+    Rails.logger.info("LANDSCAPE: #{landscape} #{paper_width} #{paper_height}")
+    @doc = RGhost::Document.new :paper => paper_type, :landscape => landscape
+    @doc.info(info)
+    @doc.define_tags do
+      tag :title_font, :name => 'Helvetica-Bold', :size => 36
+      tag :subtitle_font, :name => 'Times', :size => 12
+      tag :bold_font, :name => 'Times-Bold', :size => 14
+      tag :label_font, :name => 'Helvetica', :size => 10
+      tag :action_font, :name => 'Helvetica-Bold', :size => 18, :color => :blue
+    end
+  end
+
+  def header_size(land = @landscape)
+    36 + (@header_list.length / (land ? 2.0 : 1).ceil) * 14 + 12
+  end
+
+  def draw_head(image = nil)
+    y = paper_height - margin - 36
+    doc.moveto :x => center_x, :y => y
+    doc.show "Artwork Proof", :with => :title_font, :align => :show_center
+
+    Rails.logger.info("Land: #{landscape}")
+
+    start_y = y - 6
+    x = margin*2 + 72
+    @header_list.in_groups_of( (@header_list.length / (landscape ? 2.0 : 1)).ceil ).each do |sub|
+      y = start_y
+      sub.each do |name|
+        y -= 14
+        doc.moveto :x => x, :y => y
+        doc.show name, :with => :subtitle_font, :align => :show_left
+      end
+      x += 72*3.75
+    end
+
+    doc.image image, :zoom => 20, :x => margin, :y => y if image
+  end
+
+  def draw_foot(order)
+    y = margin
+    
+    doc.moveto :x => center_x, :y => y
+    doc.show "www.mountainofpromos.com  (877) 686-5646", :with => :subtitle_font, :align => :show_center
+    y += 14
+
+    doc.moveto :x => center_x, :y => y
+    doc.show "Mountain Xpress Promotions, LLC", :with => :bold_font, :align => :show_center
+
+    # Links
+    url_prefix = "http://www.mountainofpromos.com/order/acknowledge_artwork?auth=#{order.customer.uuid}&order_id=#{order.id}&"
+    doc.text_link "Accept", :url => url_prefix + "accept=true", :color => :blue, :x => center_x - 200, :y => margin + 10, :tag => :action_font
+    doc.text_link "Reject", :url => url_prefix + "reject=true", :color => :blue, :x => center_x + 146, :y => margin + 10, :tag => :action_font
+
+    doc.border :color => :black
+  end
+
+  def draw(dst_path)
+    @layout.draw(@doc, center_x, (footer_size + (paper_height - header_size)) / 2)
+
+    @doc.render :pdf, :filename => dst_path
+  end
+  attr_reader :doc
+
+  def draw_header
     
   end
 end
@@ -574,38 +776,50 @@ class Admin::OrdersController < Admin::BaseController
     redirect_to :back
   end
 
-  def artwork_generate_proof
-    artwork = Artwork.find(params[:id])
-    raise "Wrong file type or unassociated decoration" unless artwork.can_proof?(@order)
-
-    # Setup variables for order
-    company_name = artwork.customer.company_name.strip.empty? ? artwork.customer.person_name : artwork.customer.company_name
-
-    # EPS info
-    eps = EPSPlacement.new(artwork.art.path)
-
-    oid = artwork.group.order_item_decorations.first
-    if diameter = oid.diameter
-      eps.diameter = diameter * 72
+  def artwork_generate_pdf
+    if params[:decoration_id]
+      decoration = OrderItemDecoration.find(params[:decoration_id], :include => :artwork_group)
+      group = decoration.artwork_group
+      artworks = group.pdf_artworks
+    elsif params[:artwork_id]
+      artwork = Artwork.find(params[:artwork_id])
+      artworks = [artwork]
+      group = artwork.group
+      decoration = group.order_item_decorations.first
     else
-      eps.width_imprint = oid.width * 72
-      eps.height_imprint = oid.height * 72
+      raise "Unknown Source"
     end
-    
-    eps.scale = params[:scale]
 
-    product_name = oid.order_item.product.name.gsub('”','"')
-    if oid.order_item.product.product_images.empty?
-      product_image = oid.order_item.product.image_path_absolute('main', 'jpg')
-    else
-      product_images = oid.order_item.active_images.first.image.path(:medium)
+    raise "No Artworks" if artworks.empty?
+
+    placements = artworks.collect do |artwork|
+      eps = EPSPlacement.new(artwork.art.path)
+      eps.scale = params[:scale]
+      logger.info("Width: #{eps.width} #{eps.height}")
+      if diameter = decoration.diameter
+        eps.diameter = diameter * 72
+      else
+        eps.width_imprint = decoration.width * 72
+        eps.height_imprint = decoration.height * 72
+      end
+      eps
     end
-      
+
+    # Header
+    product_name = decoration.order_item.product.name.gsub('”','"')
+
+    company_name = group.customer.company_name.strip.empty? ? group.customer.person_name : group.customer.company_name
+
+    info_list = ["Customer: #{company_name}",
+     "Product: #{product_name}",
+     decoration.decoration && (decoration.decoration.location.blank? ? nil : "Location: #{decoration.decoration.location}"),
+     @order.user && "Rep: #{@order.user.name} (#{@order.user.email})"
+    ].compact
 
     props = {}
     imprint = []
-    names = oid.order_item.product.property_group_names
-    oid.order_item.order_item_variants.each do |oiv|
+    names = decoration.order_item.product.property_group_names
+    decoration.order_item.order_item_variants.each do |oiv|
       next if oiv.quantity == 0
 
       names.each do |name|
@@ -615,118 +829,45 @@ class Admin::OrdersController < Admin::BaseController
       imprint << oiv.imprint_colors
     end
 
-
-    availible_space = 0
-
-    paper = :letter
-    landscape = (eps.width_imprint > 7.5*72)
-    logger.info("Landscape: #{landscape.inspect}")
-
-    # Setup Document
-    RGhost::Config::GS[:unit] = RGhost::Units::PSUnit
-    doc = RGhost::Document.new :paper => paper, :landscape => landscape
-    doc.info(:Title => 'Artwork Proof', :Author => @order.user && @order.user.name, :Subject => "#{product_name} on #{oid.decoration && oid.decoration.location}", :Producer => "Mountain Xpress Proof Creator using RGhost v#{RGhost::VERSION::STRING}")
-
-    # Constants
-    paper_size = doc.paper.size
-    paper_size = paper_size.reverse if landscape
-    page_width, page_height = paper_size
-
-    needed_space = 36 + 12 + (landscape ? 3*14 : 6*14) + EPSPlacement.tick_length*2 + 14*2 + 32
-    availible_space = page_height - eps.height
-
-    page_margin = (availible_space - needed_space) / 2
-    page_margin = 72/4 if page_margin < 72/4
-    page_margin = 72 if page_margin > 72
-
-    page_margin_left = 72*3/4
-
-    center_x = page_width / 2
-
-    # RGhost
-    doc.define_tags do
-      tag :title_font, :name => 'Helvetica-Bold', :size => 36
-      tag :subtitle_font, :name => 'Times', :size => 12
-      tag :bold_font, :name => 'Times-Bold', :size => 14
-      tag :label_font, :name => 'Helvetica', :size => 10
-      tag :action_font, :name => 'Helvetica-Bold', :size => 18, :color => :blue
-    end
-
-    # Title
-    doc.moveto :x => center_x, :y => page_height - page_margin - 36
-    doc.show "Artwork Proof", :with => :title_font, :align => :show_center
-
-    pos_y = page_height - page_margin - 36 - 12
-    info_list = ["Customer: #{company_name}",
-     "Product: #{product_name}",
-     oid.decoration && (oid.decoration.location.blank? ? nil : "Location: #{oid.decoration.location}"),
-     @order.user && "Rep: #{@order.user.name} (#{@order.user.email})"
-    ].compact
-
     props.each do |key, list|
       info_list << "#{key.capitalize}: #{list.join(', ')}"
     end
-    info_list << "Imprint: #{imprint.join(', ')}"
+    info_list << "Imprint: #{imprint.join(', ')}" unless imprint.empty?
 
-    pos_x = page_margin_left*2 + 72
-    start_y = pos_y
-    info_list.in_groups_of( (info_list.length / (landscape ? 2.0 : 1)).ceil ).each do |list|
-      list.each do |name|
-        pos_y -= 14
-        doc.moveto :x => pos_x, :y => pos_y
-        doc.show name, :with => :subtitle_font, :align => :show_left
-      end
-      pos_x += 72*3.75
-      pos_y = start_y
+    if decoration.order_item.product.product_images.empty?
+      product_image = decoration.order_item.product.image_path_absolute('main', 'jpg')
+    else
+      product_image = decoration.order_item.active_images.first.image.path(:medium)
     end
 
-    center_y = (pos_y + page_margin + 48) / 2
-    max_center_y = pos_y - eps.height/2 - 64
-    center_y = max_center_y if center_y > max_center_y
-    
-    # Product
-#    doc.image product_image, :zoom => 20, :x => page_margin_left*2, :y => page_height - page_margin - 36 - 36 - 36 - 8
+    proof = ProofGenerate.new(placements, info_list)
+    proof.setup(:Title => 'Artwork Proof',
+                :Author => @order.user && @order.user.name,
+                :Subject => "#{product_name} on #{decoration.decoration && decoration.decoration.location}",
+                :Producer => "Mountain Xpress Proof Creator using RGhost v#{RGhost::VERSION::STRING}")
 
-    doc.moveto :x => center_x, :y => page_margin + 14
-    doc.show "Mountain Xpress Promotions, LLC", :with => :bold_font, :align => :show_center
+    proof.draw_head(product_image)
+    proof.draw_foot(@order)
 
-    doc.moveto :x => center_x, :y => page_margin
-    doc.show "www.mountainofpromos.com  (877) 686-5646", :with => :subtitle_font, :align => :show_center
-
-
-
-
-
-    # Links
-    url_prefix = "http://www.mountainofpromos.com/order/acknowledge_artwork?auth=#{@order.customer.uuid}&order_id=#{@order.id}&"
-    doc.text_link "Accept", :url => url_prefix + "accept=true", :color => :blue, :x => center_x- 100, :y => page_margin + 48, :tag => :action_font
-    doc.text_link "Reject", :url => url_prefix + "reject=true", :color => :blue, :x => center_x + 50, :y => page_margin + 48, :tag => :action_font
-    
-
-    eps.draw(doc, center_x, center_y)
-
-    
-    # Write File
-    dst_name = artwork.filename_pdf
     dst_path = "/tmp/rghost-#{Process.pid}.pdf"
+    proof.draw(dst_path)
 
-    doc.render :pdf, :filename => dst_path
-
+    dst_name = params[:artwork_id] ? artwork.filename_pdf : group.pdf_filename
     art_file = File.open(dst_path)
     eval "def art_file.original_filename; #{dst_name.inspect}; end"
 
     # Generate Artwork
     Artwork.transaction do
-      proof_art = Artwork.find(:first, :include => :group, :conditions => ["artwork_groups.customer_id = ? AND artworks.art_file_name = ?", artwork.customer.id, dst_name])
+      proof_art = Artwork.find(:first, :include => :group, :conditions => ["artwork_groups.customer_id = ? AND artworks.art_file_name = ?", group.customer_id, dst_name])
       raise "File already exists" if proof_art
 
-      proof_art = Artwork.create({ :group => artwork.group,
+      proof_art = Artwork.create({ :group => group,
                                    :user => @user, :host => request.remote_ip,
-                                   :customer_notes => "Proof generated from #{artwork.art.original_filename}",
+                                   :customer_notes => "Proof generated from #{artworks.collect { |a| a.art.original_filename }.join(', ')}",
                                    :art => art_file })
       proof_art.tags.create(:name => 'proof')
 
-      unless artwork.tags.find_by_name('supplier')
+      if params[:artwork_id] && !artwork.tags.find_by_name('supplier')
         artwork.tags.create(:name => 'supplier')
       end
     end
