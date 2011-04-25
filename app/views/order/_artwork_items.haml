@@ -26,7 +26,7 @@
 
     .items
       - for artwork in group.artworks
-        - next if filter_tag and !artwork.tags.to_a.find { |t| t.name == filter_tag }
+        - next if filter_tag and !artwork.has_tag?(filter_tag)
         .item{ :id => "artwork=#{artwork.id}" }
           .block.thumb
             - if File.exists?(artwork.art.path(:thumb))

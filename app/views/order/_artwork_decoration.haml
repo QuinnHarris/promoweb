@@ -15,7 +15,7 @@
                 \-
                 = link_to "Inkscape Template", { :controller => '/admin/orders', :action => :inkscape, :id => item_decoration.id }
                 \-
-                - if item_decoration.artwork_group
+                - if !@static && item_decoration.artwork_group
                   - if item_decoration.artwork_group.pdf_artworks.empty?
                     Mark "Supplier" to Proof
                   - elsif item_decoration.artwork_group.pdf_exists?

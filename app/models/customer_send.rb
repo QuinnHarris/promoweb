@@ -60,10 +60,16 @@ class CustomerSend < ActionMailer::Base
            :body => render_message("quote_html", :task => task, :order => order, :user => task.user, :header_text => header_text, :waiting_tasks => waiting_tasks)
     end
 
-#    unless order.invoices_ref.empty?
+    if task.is_a?(ArtPrepairedOrderTask)
+      order.artwork_proofs.each do |artwork|
+        next if artwork.art.size > 128*1024
+        attachment :content_type => "application/pdf", :filename => artwork.art.original_filename,
+        :body => File.read(artwork.art.path)
+      end
+    elsif !order.invoices_ref.empty?
       @order = order
       attachment :content_type => "application/pdf", :filename => (order.invoices_ref.empty? ? "MOP Quote" : "MOP Invoice (#{order.id}-#{order.invoices_ref.count}).pdf"),
       :body => WickedPdf.new.pdf_from_string(render(:file => '/order/invoices', :layout => 'print', :body => { } ))
-#    end
+    end
   end
 end

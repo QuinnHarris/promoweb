@@ -247,4 +247,13 @@ class Order < ActiveRecord::Base
   def payable
     (total_profit_cache * commission).round_cents
   end
+
+  def artwork_proof_groups
+    return @artwork_proof_groups if @artwork_proof_groups
+    @artwork_proof_groups = ArtworkGroup.find(:all, :conditions => { 'order_items.order_id' => id, 'artwork_tags.name' => 'proof' }, :include => [{ :order_item_decorations => :order_item }, { :artworks => :tags }])
+  end
+
+  def artwork_proofs
+    @artwork_proof_groups.collect { |ag| ag.artworks.find_all { |a| a.has_tag?('proof') } }.flatten
+  end
 end
