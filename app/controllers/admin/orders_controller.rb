@@ -326,6 +326,7 @@ class ProofGenerate
       sub.each do |name|
         y -= 14
         doc.moveto :x => x, :y => y
+        Rails.logger.info("Name: #{name.inspect}")
         doc.show name, :with => :subtitle_font, :align => :show_left
       end
       x += 72*3.75
@@ -810,9 +811,10 @@ class Admin::OrdersController < Admin::BaseController
 
     company_name = group.customer.company_name.strip.empty? ? group.customer.person_name : group.customer.company_name
 
+    decoration_location = decoration.decoration && (decoration.decoration.location.blank? ? nil : decoration.decoration.location.gsub(/(\W|[^[:print:]])+/, ' '))
     info_list = ["Customer: #{company_name}",
      "Product: #{product_name}",
-     decoration.decoration && (decoration.decoration.location.blank? ? nil : "Location: #{decoration.decoration.location}"),
+     decoration_location && "Location: #{decoration_location}",
      @order.user && "Rep: #{@order.user.name} (#{@order.user.email})"
     ].compact
 
@@ -843,7 +845,7 @@ class Admin::OrdersController < Admin::BaseController
     proof = ProofGenerate.new(placements, info_list)
     proof.setup(:Title => 'Artwork Proof',
                 :Author => @order.user && @order.user.name,
-                :Subject => "#{product_name} on #{decoration.decoration && decoration.decoration.location}",
+                :Subject => "#{product_name} on #{decoration_location}",
                 :Producer => "Mountain Xpress Proof Creator using RGhost v#{RGhost::VERSION::STRING}")
 
     proof.draw_head(product_image)
