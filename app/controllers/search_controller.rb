@@ -58,7 +58,7 @@ class SearchController < ApplicationController
     if @categories.empty?
       if @products.empty?
         render :action => 'notfound'
-      elsif @products.size == 1
+      elsif @products.size == 1 && @page == 1
         redirect_to({ :controller => '/products', :action => 'main', :id => @products.first.web_id })
       end
     end
