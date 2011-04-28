@@ -80,24 +80,18 @@
                       %li.active{ :class => (images == @product.product_images.first) ? 'sel' : nil, 'data-variants' => images.variants.collect { |v| v.id }.join(' ') }= image_tag images.image.url(:thumb)          
 
           :javascript
-            var prices = [
-            #{@prices.price_sets.collect do |set|
-                props = set.group.variants.collect { |v| v.properties.collect { |p| p.id } }.flatten.uniq
-      
-                "[#{set.group.id},#{set.const.to_i},#{set.exp},[" +
-                set.breaks.collect do |brk|
-                "[#{brk.minimum},#{brk.fixed.to_i},#{brk.marginal.to_i} ]"
-                end.join(',') +
-                "],[" +
-                @properties.collect do |names, properties|
-                "['#{names.join(',')}'," +
-                properties.collect { |p, v| (p.first && props.index(p.first.id)) ? p.first.id : nil }.compact.join(',') +
-                "]"
-                end.join(',') +
-                "]]"
-                end.join(",\n") }
-                ]
-
+             var price_groups = #{@prices.price_sets.collect do |set|
+               { :id => set.group.id,
+                 :const => set.const.to_i,
+                 :exp => set.exp,
+                 :breaks => set.breaks.collect do |brk|
+                   { :minimum => brk.minimum,
+                     :fixed => brk.fixed.to_i,
+                     :marginal => brk.marginal.to_i }
+                 end,
+                 :variants => set.group.variants.collect { |v| v.id }
+               }
+             end.to_json};
              var decorations = [
              #{@techniques.collect do |tech|
                  price_group = @product.supplier.find_decoration_price_group(tech)
@@ -118,9 +112,8 @@
                    end.join(',') : '') +
                    "]]"
                    end.join(",\n") }
-                   ]
-                   
-              var minimums = [#{@minimums.join(',')}]
+                   ];
+              var minimums = #{@minimums.to_json};
 
           - unless @properties.empty?
             #variants.box
@@ -177,7 +170,7 @@
                 %p
                   = hidden_field_tag "product", @product.id
                   = hidden_field_tag "price_group", @prices.price_sets.first && @prices.price_sets.first.group.id
-                  = hidden_field_tag "properties", ''
+                  = hidden_field_tag "variants", ''
                   = hidden_field_tag "technique", @techniques.first ? @techniques.first.id : ''
                   = hidden_field_tag "decoration", ''
                   = hidden_field_tag "unit_count", (@techniques.first and @techniques.first.unit_name) ? @techniques.first.unit_default : ''

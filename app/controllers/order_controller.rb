@@ -213,16 +213,9 @@ public
     technique = DecorationTechnique.find(params[:technique]) unless !params[:technique] or params[:technique] == 'NaN' or params[:technique].empty?
     decoration = Decoration.find(params[:decoration]) unless !params[:decoration] or params[:decoration] == 'NaN' or params[:decoration].empty?
     unit_count = params[:unit_count].to_i != 0 ? params[:unit_count].to_i : nil
-    
-    unless !params[:properties] or params[:properties].empty?
-      variants = product.variants.find(:all, :include => :properties)
-      params[:properties].split(',').each do |id_str|
-        id = id_str.to_i
-        variants.delete_if do |variant|
-          not variant.properties.to_a.find { |p| p.id == id } #or
-        end
-      end
-      variant = variants.empty? ? nil : variants.first
+
+    unless params[:variants].empty?
+      variant = Variant.find(params[:variants].split(',').first)
     else
       variant = price_group.variants.first if price_group.variants.length == 1
     end

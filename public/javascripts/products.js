@@ -34,10 +34,9 @@ function deleteCookie( name, path, domain ) {
 
 
 
-var prop_selected = []
-var quantity = ''
-var technique = ''
-var decoration = ''
+var quantity = '';
+var technique = '';
+var decoration = '';
 
 function id_parse(str) {
   var arr = str.split('-')
@@ -216,15 +215,20 @@ function sel_loc(a) {
   return false
 }
 
+function get_selected_variants() {
+    var variants = null;
+    $A($('variants').getElementsByClassName('sel')).each(function(li) {
+	    var list = li.getAttribute('data-variants').split(' ').collect(function(str) {
+		    return parseInt(str);
+		});
+	    variants = variants ? variants.intersect(list) : list;
+	});
+    return variants;
+}
+
 function set_cycler() {
-    if (cycler) {
-	var variants = null;
-	$A($('variants').getElementsByClassName('sel')).each(function(li) {
-		var list = li.getAttribute('data-variants').split(' ');
-		variants = variants ? variants.intersect(list) : list;
-	    });
-	cycler.setVariants(variants);
-    }
+    if (cycler)
+	cycler.setVariants(get_selected_variants());
 }
 
 function sel_opt(a) {
@@ -235,7 +239,6 @@ function sel_opt(a) {
   
     var grp_id = id_parse(ul.id);
     var prop_id = id_parse(li.id);
-    prop_selected[grp_id] = prop_id;
   
     calc_prices();
 
@@ -248,7 +251,6 @@ function clear_opt(a) {
     unselect(ul);
   
     var grp_id = id_parse(ul.id);
-    prop_selected[grp_id] = NaN;
   
     calc_prices();
 
@@ -257,60 +259,43 @@ function clear_opt(a) {
 
 function get_groups() {
     var sets = [];
-  
-    if (prop_selected.length == 0)
-	return prices;
-  
-    for (var i = 0; i < prices.length; i++) {
-	var entry = prices[i];
-	var count = 0;
-	for (var j = 0; j < entry[4].length; j++) {
-	    var predicate = entry[4][j];
-	    var val = prop_selected[j];
-	    if (!val || (predicate.indexOf(val) != -1))
-		count += 1;
-	}
 
-	if (count == entry[4].length)
-	    sets.push(entry);
-    }
-  
-    return sets;
+    var variants = get_selected_variants();
+    if (!variants)
+	return price_groups;
+
+    return price_groups.findAll(function(entry) {
+	    return entry.variants.intersect(variants).length > 0
+	});
 }
 
 function calc_price_single(grp, n) {
-    var id = grp[0];
-    var connst = grp[1];
-    var exp = grp[2];
-    var fixed;
-    var marginal;
-
-    if (grp[3][0][0] > n)
-	return { fixed: NaN, marginal: NaN };
+    var fixed = NaN;
+    var marginal = NaN;
     
-    for (var i = 1; i < grp[3].length; i++)
-	if (grp[3][i][0] > n) {
-	    fixed = grp[3][i-1][1];
-	    marginal = grp[3][i-1][2];
-	    break;
-	}
+    grp.breaks.find(function(brk) {
+	    if (brk.minimum > n)
+		return true;
+	    fixed = brk.fixed;
+	    marginal = brk.marginal;
+	});
     
     if (!marginal)
 	return { fixed: 2147483647, marginal: 2147483647 };
   
     return { fixed: 0.0,
-	    marginal: Math.round(fixed/(n*10.0))*10 + Math.round((marginal + connst * Math.pow(n, exp))/10.0)*10 };
+	    marginal: Math.round(fixed/(n*10.0))*10 + Math.round((marginal + grp.const * Math.pow(n, grp.exp))/10.0)*10 };
 }
 
 function calc_price_group(groups, qty) {
     var fixed = { min: 2147483647, max: 0 };
     var marginal = { min: 2147483647, max: 0 };
-    
-    for (var j = 0; j < groups.length; j++) {
-	var prices = calc_price_single(groups[j], qty);
-	fixed = { min: Math.min(fixed.min, prices.fixed), max: Math.max(fixed.max, prices.fixed) };
-	marginal = { min: Math.min(marginal.min, prices.marginal), max: Math.max(marginal.max, prices.marginal) };
-    }
+
+    groups.each(function(group) {
+	    var prices = calc_price_single(group, qty);
+	    fixed = { min: Math.min(fixed.min, prices.fixed), max: Math.max(fixed.max, prices.fixed) };
+	    marginal = { min: Math.min(marginal.min, prices.marginal), max: Math.max(marginal.max, prices.marginal) };	    
+	});
     
     return { min: marginal.min + (fixed.min / qty),
 	    max: marginal.max + (fixed.max / qty) };
@@ -524,7 +509,7 @@ function order_submit(dispos, pedantic) {
 
     var form = document.forms.productform;
     form.price_group.value = groups[0][0];
-    form.properties.value = prop_selected.join(',');
+    form.variants.value = get_selected_variants().join(',');
     form.quantity.value = quantity;
     form.technique.value = technique;
     form.decoration.value = decoration;
@@ -686,7 +671,10 @@ var Protocycle = Class.create({
 	{
 	    var count = 0;
 	    this.active = this.thumbs.collect(function(li) {
-		    if (li.getAttribute('data-variants').split(' ').intersect(variants).length > 0) {
+		    var vars = li.getAttribute('data-variants').split(' ').collect(function(str) {
+			    return parseInt(str);
+			});
+		    if (vars.intersect(variants).length > 0) {
 			li.addClassName('active');
 			count++;
 			return true;
