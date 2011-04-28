@@ -65,6 +65,18 @@ class ImageNode
   def to_s; id; end
 end
 
+class ImageNodeFile < ImageNode
+  def initialize(id, file)
+    super id
+    @file = file
+  end
+  attr_reader :file
+
+  def get
+    File.open(file)
+  end
+end
+
 class ImageNodeFetch < ImageNode
   def initialize(id, uri)
     super id
@@ -85,7 +97,7 @@ class ImageNodeFetch < ImageNode
 
   def get
     puts "GET: #{uri}"
-   unless File.exists?(path)
+    unless File.exists?(path)
       FileUtils.mkdir_p(File.split(path).first)
 
       begin
@@ -104,7 +116,6 @@ class ImageNodeFetch < ImageNode
           File.open(path, 'w') { |file| file.write(f.read) }
         end
         puts
-        return path
       rescue OpenURI::HTTPError, URI::InvalidURIError, Errno::ETIMEDOUT => e
         puts " * #{e.class} : #{@uri}"
         return nil
@@ -236,7 +247,7 @@ class HiResImageFetch < GenericImageFetch
 end
 
 class GenericImport
-  @@properties = %w(material color dimension fill container pieces shape size memory)
+  @@properties = %w(material color dimension thickness fill container pieces shape size memory)
 
   @@cache_dir = File.join(RAILS_ROOT, "jobs/cache")
   
@@ -674,7 +685,7 @@ public
         
         if recache_prices
           pc = PriceCollectionCompetition.new(product_record)
-          pc.calculate_price
+          pc.calculate_price(product_data['price_params'])
         end
 
         product_record.variants.target = variant_records

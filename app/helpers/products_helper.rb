@@ -75,7 +75,7 @@ module ProductsHelper
       
     @minimums = @prices.minimums
     return if @minimums.empty?
-    @minimums = @minimums[0...5]
+    @minimums = [@minimums.first] + @minimums[-5..-2] if @minimums.length > 5
     
     if @minimums.length < 5
       @minimums += @minimums[1..-1].zip(@minimums).collect do |cur, lst|

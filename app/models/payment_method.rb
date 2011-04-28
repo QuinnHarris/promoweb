@@ -143,10 +143,8 @@ public
     logger.info("CreditCard Credit: #{order.id} = #{amount} for #{id} : #{charge_transaction.id}")
     response = self.class.gateway.credit(amount, charge_transaction.data[:id])
     if response.success?
-      # Fix to not modify existring transaction
-#      charge_transaction.refunded!
-#      charge_transaction.save!
-      super order, amount * -1, comment
+      logger.info("Response: #{response.inspect}")
+      super order, amount, comment, { :id => response.params["transid"] }
     else
       store_error(order, response, comment)
     end    

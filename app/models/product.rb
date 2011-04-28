@@ -215,18 +215,28 @@ class PriceCollectionCompetition < PriceCollectionAll
     @product = product
   end
     
-  def default_price(cost_group, m1, m2, pmax1 = nil, pmin1 = nil)
+  def default_price(cost_group, params)
+    #m1, m2, pmax1 = nil, pmin1 = nil)
+    raise "m1 needed" unless m1 = params[:m1]
+    raise "m2 needed" unless m2 = params[:m2]
+    pmax1 = params[:pmax1]
+    pmin1 = params[:pmin1]    
+
     # Base costs
     cost_entries = cost_group.price_entries.to_a
     cost_first = cost_entries.find { |e| e.marginal and e.fixed.to_i == 0 }
     cost_last = cost_entries.reverse.find { |e| e.marginal }
                  
-    n1 = supplier_minimums.first
-    n2 = supplier_minimums.last
-    if supplier_minimums.size <= 2
-      n2 = [(2.029*n1**1.585).to_i, n2, 5].max
+    n1 = params[:n1] || supplier_minimums.first
+    if params[:n2]
+      n2 = params[:n2]
+    else
+      n2 = supplier_minimums.last
+      if supplier_minimums.size <= 2
+        n2 = [(2.029*n1**1.585).to_i, n2, 5].max
+      end
+      n2 *= 2 while n2 < 5*n1
     end
-    n2 *= 2 while n2 < 5*n1
     
     if pmax1 or pmin1
       n0 = minimums.first || 0
@@ -354,8 +364,8 @@ class PriceCollectionCompetition < PriceCollectionAll
     a.coef*(supplier_minimums.first**a.exp) > b.coef*(supplier_minimums.first**b.exp)
   end
   
-  def test_competative(cost_group, supplier_group)     
-    paramDefault = default_price(cost_group, 1.65, 1.35, PriceSet::required_profit * 3.5) #, PriceSet::required_profit*0.8)
+  def competative_price(cost_group, supplier_group, price_params = {})     
+    paramDefault = default_price(cost_group, { :m1 => 1.65, :m2 => 1.35, :pmax1 => PriceSet::required_profit * 3.5 }.merge(price_params)) #, PriceSet::required_profit*0.8)
     @price_bounds << PriceSet.new(cost_group, paramDefault.coef, paramDefault.exp, @count)
     
     paramMin = paramMax = nil
@@ -367,7 +377,7 @@ class PriceCollectionCompetition < PriceCollectionAll
 
       unless paramMin
         puts "Calculate MIN"
-        paramMin = default_price(cost_group, 1.50, 1.20, PriceSet::required_profit * 1.5)
+        paramMin = default_price(cost_group, { :m1 => 1.50, :m2 => 1.20, :pmax1 => PriceSet::required_profit * 1.5 })
         @price_bounds << PriceSet.new(cost_group, paramMin.coef, paramMin.exp, @count)
       end
 
@@ -380,7 +390,7 @@ class PriceCollectionCompetition < PriceCollectionAll
           paramMax = if price_nodes = low_price_nodes([supplier_group]) and price_nodes.length > 2
                        fit_curve_to_nodes(price_nodes, 0.9)
                      else
-                       default_price(cost_group, 2.4, 1.6)
+                       default_price(cost_group, { :m1 => 2.4, :m2 => 1.6 })
                      end 
           @price_bounds << PriceSet.new(cost_group, paramMax.coef, paramMax.exp, @count)
         end
@@ -422,11 +432,11 @@ class PriceCollectionCompetition < PriceCollectionAll
     [margin(param, cost, min), margin(param, cost, max)]
   end
 
-  def calculate_price
+  def calculate_price(price_params = {})
     @price_bounds = []
     
     @price_sets = @cost_groups.zip(@supplier_groups).collect do |cost_group, supplier_group|
-      param = test_competative(cost_group, supplier_group)
+      param = competative_price(cost_group, supplier_group, price_params)
       if param.exp < -1.0 or param.exp >= 0.0
         puts " OVERRIDE INVALID PRICE: #{param.inspect}"
         param.exp = 0.0
@@ -972,6 +982,8 @@ class Product < ActiveRecord::Base
         "http://www.bulletline.com/ViewItem.aspx?pn=#{supplier_num}"
       when "LogoIncluded"
       "http://www.logoincluded.com/products/#{data && data[:path]}"
+      when "DigiSpec"
+      data && data[:url]
       else
         "http://www.mountainofpromos.com/search/#{supplier.name}"
     end

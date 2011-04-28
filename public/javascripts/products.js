@@ -216,6 +216,17 @@ function sel_loc(a) {
   return false
 }
 
+function set_cycler() {
+    if (cycler) {
+	var variants = null;
+	$A($('variants').getElementsByClassName('sel')).each(function(li) {
+		var list = li.getAttribute('data-variants').split(' ');
+		variants = variants ? variants.intersect(list) : list;
+	    });
+	cycler.setVariants(variants);
+    }
+}
+
 function sel_opt(a) {
     var li = a.parentNode;
     var ul = li.parentNode;
@@ -228,12 +239,11 @@ function sel_opt(a) {
   
     calc_prices();
 
-    if (cycler)
-	cycler.setVariants(a.parentNode.getAttribute('data-variants'));
+    set_cycler();
 }
 
 function clear_opt(a) {
-    var div = a.parentNode.parentNode;
+    var div = a.parentNode.nextSibling.nextSibling;
     var ul = div.getElementsByTagName('ul')[0];
     unselect(ul);
   
@@ -241,8 +251,8 @@ function clear_opt(a) {
     prop_selected[grp_id] = NaN;
   
     calc_prices();
-  
-    cycler.setVariants('');
+
+    set_cycler();
 }
 
 function get_groups() {
@@ -672,10 +682,9 @@ var Protocycle = Class.create({
 	    this.setSlide(nextSlide);
         },
 
-	setVariants: function(string)
+	setVariants: function(variants)
 	{
 	    var count = 0;
-	    var variants = string.split(' ');
 	    this.active = this.thumbs.collect(function(li) {
 		    if (li.getAttribute('data-variants').split(' ').intersect(variants).length > 0) {
 			li.addClassName('active');

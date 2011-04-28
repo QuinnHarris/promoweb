@@ -102,13 +102,13 @@ class RequestOrderTask < OrderTask
       subject = "Order Confirmation"
       header = 
 %q(Thank you for placing an order with <a href='http://www.mountainofpromos.com/'>Mountain Xpress Promotions, LLC.</a>.
-Please allow 24 hours to process your order.  We will contact you at the number or email provided for final price and artwork approval.
+Please allow a few business hours to process your order.  We will contact you at the number or email provided for final price and artwork approval.
 We look forward to working with you for your promotional needs.)
     else
       subject = "Quote Request Confirmation"
       header =
 %q(Thank you for requesting a product quote from <a href='http://www.mountainofpromos.com/'>Mountain Xpress Promotions, LLC.</a>.
-Please allow 24 hours to validate your quote. If we have any questions, we will contact you at the number provided.
+Please allow a few business hours to receive a complete quote. If we have any questions, we will contact you at the number or email provided.
 We look forward to working with you for your promotional needs.)      
     end
     CustomerSend.dual_send(self, subject, header)
@@ -416,7 +416,7 @@ Customer Comments:
   end
   
   def our_comment
-    (data && data[:our_comment]) || "The artwork for your order is ready for review.  Please click on the Artwork Acknowledgment link above to view and acknowledge your artwork.  If you approve please acknowledge the artwork so we can go into production."
+    (data && data[:our_comment]) || "The artwork for your order is ready for review.  A link to an artwork proof is provided below.  Please {click here to accept or reject this artwork}."
   end
   
   def status

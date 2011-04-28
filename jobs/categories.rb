@@ -1967,7 +1967,7 @@ private
           [match('name', 'light', 1),
            supplier('Bullet Line',
                     category('Writing Instruments', 'Light-Up Pens') ) ] ],
-         ['Pen Gift Boxs',
+         ['Pen Gift Boxes',
           [match('name', 'gift box', 1),
            supplier('Bullet Line',
                     category('Writing Instruments', 'Gift Boxes for Pens') ) ] ],
