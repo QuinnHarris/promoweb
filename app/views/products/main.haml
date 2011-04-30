@@ -92,27 +92,27 @@
                  :variants => set.group.variants.collect { |v| v.id }
                }
              end.to_json};
-             var decorations = [
-             #{@techniques.collect do |tech|
-                 price_group = @product.supplier.find_decoration_price_group(tech)
-                 
-                 "[#{tech.id},'#{tech.unit_name ? (tech.unit_name.capitalize) : nil}',#{tech.unit_default},[" +
-                 @decorations.collect do |d|
-                 (d.technique == tech and d.location and !d.location.empty?) ? "#{d.id},'#{d.display}',#{d.limit}" : nil
-                 end.compact.join(',') + 
-                 "],[" +
-                 (price_group ? price_group.entries.collect do |entry|
-                 "[" +
-                 %w(minimum
-                   fixed_price_fixed fixed_price_const fixed_price_exp fixed_price_marginal
-                   fixed_divisor fixed_offset marginal_divisor marginal_offset
-                   marginal_price_fixed marginal_price_const marginal_price_exp marginal_price_marginal
-                   ).collect { |a| entry[a] }.join(',') +
-                   "]"
-                   end.join(',') : '') +
-                   "]]"
-                   end.join(",\n") }
-                   ];
+             var decorations = #{@techniques.collect do |tech|
+                price_group = @product.supplier.find_decoration_price_group(tech)
+                { :id => tech.id,
+                  :unit_name => tech.unit_name && tech.unit_name.capitalize,
+                  :unit_default => tech.unit_default,
+                  :decorations => @decorations.collect do |dec|
+                    next unless dec.technique == tech and !dec.location.blank?
+                    { :id => dec.id, :display => dec.display, :limit => dec.limit }
+                  end.compact,
+                  :entries => price_group && price_group.entries.collect do |entry|
+                    { :minimum => entry.minimum }.merge(
+                        %w(fixed marginal).inject({}) do |hash, aspect|
+                          hash[aspect] = %w(price_fixed price_const price_exp price_marginal divisor offset).inject({}) do |h, prop|
+                            h[prop] = entry["#{aspect}_#{prop}"]
+                            h
+                          end
+                          hash
+                        end)
+                  end
+                }
+              end.to_json};
               var minimums = #{@minimums.to_json};
 
           - unless @properties.empty?

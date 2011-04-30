@@ -55,51 +55,42 @@ function apply_tech(li) {
     unselect(ul);
     li.className = 'sel';
 
-    var decoration = $A(decorations).find(function(dec) {
-	    return dec[0] == technique;
-	});
-
-    if (!decoration)
+    var dec = decorations.find(function(dec) { return dec.id == technique; });
+    if (!dec)
 	return;
 
-    tech_value = decoration[2];
-    var locations = decoration[3];
+    tech_value = dec.unit_default;
     
     var ul = $('locations');
     var dd = ul.parentNode;
     var dt = dd.previousSibling;
-    var display = "none";
     
     tech_limit = NaN;
-    if (locations.length > 0) {
+    if (dec.decorations.length > 0) {
 	var elems = [];
-	for (var j=0; j < locations.length; j += 3) {
-	    elems.push('<li id="dec-' + locations[j] + '"><a href="#" onclick="return sel_loc(this)"><span>' + locations[j+1] + '</span></a></li>');
-	    
-	    if (locations[j+2] && !(tech_limit > locations[j+2]))
-		tech_limit = locations[j+2];
-	}
-	
+	dec.decorations.each(function(loc) {
+		elems.push('<li id="dec-' + loc.id + '"><a href="#" onclick="return sel_loc(this)"><span>' + loc.display + '</span></a></li>');		
+	    });
 	ul.innerHTML = elems.join('');
-	display = '';
+	dd.style.display = '';
+	dt.style.display = '';
+    } else {
+	dd.style.display = 'none';
+	dt.style.display = 'none';
     }
-    
-    dd.style.display = display;
-    dt.style.display = display;
+
     
     var inp = $('unit_value');
     if (inp) {
 	var dd = inp.parentNode;
 	var dt = dd.previousSibling;
-        
-	if (decoration[1].length > 1) {
-	    dt.innerHTML = '<span>Number of ' + decoration[1] + '(s):</span>';
+	
+	if (dec.unit_name && dec.unit_name.length > 0) {
+	    dt.innerHTML = '<span>Number of ' + dec.unit_name + '(s):</span>';
 	    dt.style.display = '';
 	    dd.style.display = '';
-	    if (tech_value) {
+	    if (tech_value)
 		inp.value = tech_value;
-		/*$('dec_desc').innerHTML += " for <span id='units'>" + tech_value + "</span> " + decorations[i][1] + '(s)';*/
-	    }
 	} else {
 	    dt.style.display = 'none';
 	    dd.style.display = 'none';
@@ -111,62 +102,51 @@ function apply_tech(li) {
 }
 
 
-function price_multiplier(params, value, mult) {
-  var num = Math.floor((value - 1 - params[1]) / params[0])
-  return num ? (num * mult) : 0
+function decoration_price_mult(entry, value, mult) {
+    var num = Math.floor((value - 1 - entry.offset) / entry.divisor);
+    return num ? (num * mult) : 0;
 }
 
-
-function price_proc(params, qty) {
-  var cons = params[0]
-  var exp = params[1]
-  var marginal = params[2]
-  
-  return Math.round(marginal * (1 + cons * Math.pow(qty, exp)))
+function decoration_price_func(entry, qty) {
+    return Math.round(entry.price_marginal * (1 + entry.price_const * Math.pow(qty, entry.price_exp)))
 }
 
 function price_tech(qty) {
-    for (var i=0; i < decorations.length; i++)
-	if (decorations[i][0] == technique) {
-	    var ret_min_fixed = 2147483647;
-	    var ret_max_fixed = 0;
-	    var ret_min_marginal = 2147483647;
-	    var ret_max_marginal = 0;
-	    var breaks = decorations[i][4];
-	    for (var j=breaks.length-1; j >= 0; j--) {
-		if (!tech_value || breaks[j][0] <= tech_value) {
-		    var params = breaks[j];
+    var dec = decorations.find(function(dec) { return dec.id == technique; });
+    if (!dec)
+	return NaN;
 
-		    var min_fixed = params[1];
-		    var min_marginal = price_proc(params.slice(2,5), qty);
-          
-		    var value = tech_value ? tech_value : tech_limit;
-		    if (value > (breaks[j+1] || [])[0])
-			value = breaks[j+1][0];
-          
-		    var max_fixed = min_fixed;
-		    var max_marginal = min_marginal;
-		    if (value) {
-			max_fixed += price_multiplier(params.slice(5,7), value, params[9]);
-			max_marginal += price_multiplier(params.slice(7,9), value, price_proc(params.slice(10,13), qty));
-		    }
-          
-		    if (tech_value)
-			return { fixed : { min: max_fixed, max: max_fixed },
-				marginal : { min: max_marginal, max: max_marginal } };
-            
-		    ret_min_fixed = Math.min(ret_min_fixed, min_fixed);
-		    ret_max_fixed = Math.max(ret_max_fixed, max_fixed);
-		    ret_min_marginal = Math.min(ret_min_marginal, min_marginal);
-		    ret_max_marginal = Math.max(ret_max_marginal, max_marginal);
-		}
+    var fixed = { min: 2147483647, max: 0 };
+    var marginal = { min: 2147483647, max: 0 };
+    
+    dec.entries.reverse().find(function(entry) {
+	    if (tech_value && entry.minimum > tech_value)
+		return;
+	    
+	    var fixed_val = entry.fixed.price_fixed;
+	    var marginal_val = decoration_price_func(entry.fixed, qty);
+	    if (!tech_value) {
+		range_apply(fixed, fixed_val);
+		range_apply(marginal, marginal_val);
 	    }
-    
-	    return { fixed : { min: ret_min_fixed, max: ret_max_fixed },
-		    marginal : { min: ret_min_marginal, max: ret_max_marginal } };
-	}
-    
-    return NaN;
+	    
+	    var value = tech_value ? tech_value : tech_limit;
+	    // Limit ?
+	    // if (value > (breaks[j+1] || [])[0])
+	    // 	 value = breaks[j+1][0];
+	    
+	    if (value) {
+		fixed_val += decoration_price_mult(entry.fixed, value, entry.marginal.price_fixed);
+		marginal_val += decoration_price_mult(entry.marginal, value, decoration_price_func(entry.marginal, qty));
+
+		range_apply(fixed, fixed_val);
+		range_apply(marginal, marginal_val);
+	    }		    
+	    
+	    return tech_value;
+	});
+
+    return { fixed: fixed, marginal: marginal };
 }
 
 
@@ -436,6 +416,12 @@ function range_multiply(range, n) {
 
 function range_add(a, b) {
     return { min: a.min + b.min, max: a.max + b.max };
+}
+
+function range_apply(range, val) {
+    range.min = Math.min(range.min, val);
+    range.max = Math.max(range.max, val);
+    return range
 }
 
 function change_quantity() {
