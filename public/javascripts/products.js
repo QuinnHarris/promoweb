@@ -32,339 +32,466 @@ function deleteCookie( name, path, domain ) {
 }
 
 
+var PricingBase = Class.create({
+	initialize: function(data) {
+	    this.data = data;
+	},
+
+	_decorationFind: function(id) {
+	    return this.data.decorations.find(function(dec) { return dec.id == id });
+	},
+
+	_decorationPriceFunc: function(entry, quantity) {
+	    return Math.round(entry.price_marginal * (1 + entry.price_const * Math.pow(quantity, entry.price_exp)))
+	},
+
+	_decorationPriceMult: function(entry, value, mult) {
+	    var num = Math.floor((value - 1 - entry.offset) / entry.divisor);
+	    return num ? (num * mult) : 0;
+	},
+
+	_decorationCountLimit: function(params, dec) {
+	    if (params.location_id)
+		return dec.locations.find(function(e) { return e.id == params.location_id}).limit;
+	    else
+		return dec.locations.collect(function(e) { return e.limit }).min();
+	},
+
+	decorationCountLimit: function(params) {
+	    var dec = this._decorationFind(params.technique_id);
+	    if (!dec)
+		return null;
+	    return this._decorationCountLimit(params, dec);
+	},
+
+	decorationPrice: function(params) {
+	    var dec = this._decorationFind(params.technique_id);
+	    if (!dec)
+		return NaN;
+
+	    var fixed = { min: 2147483647, max: 0 };
+	    var marginal = { min: 2147483647, max: 0 };
+
+	    var count_limit = this._decorationCountLimit(params, dec);
+    
+	    dec.entries.reverse().find(function(entry) {
+		    if (params.dec_count && entry.minimum > params.dec_count)
+			return;
+	    
+		    var fixed_val = entry.fixed.price_fixed;
+		    var marginal_val = this._decorationPriceFunc(entry.fixed, params.quantity);
+		    if (!params.dec_count) {
+			range_apply(fixed, fixed_val);
+			range_apply(marginal, marginal_val);
+		    }
+		    
+		    var value = params.dec_count ? params.dec_count : count_limit;
+		    // Limit ?
+		    // if (value > (breaks[j+1] || [])[0])
+		    // 	 value = breaks[j+1][0];
+		    
+		    if (value) {
+			fixed_val += this._decorationPriceMult(entry.fixed, value, entry.marginal.price_fixed);
+			marginal_val += this._decorationPriceMult(entry.marginal, value, this._decorationPriceFunc(entry.marginal, params.quantity));
+			
+			range_apply(fixed, fixed_val);
+			range_apply(marginal, marginal_val);
+		    }		    
+		    
+		    return params.dec_count;
+		}.bind(this));
+
+	    return { fixed: fixed, marginal: marginal };
+	},
+
+	_priceSingle: function(grp, n) {
+	    var fixed = NaN;
+	    var marginal = NaN;
+    
+	    grp.breaks.find(function(brk) {
+		    if (brk.minimum > n)
+			return true;
+		    fixed = brk.fixed;
+		    marginal = brk.marginal;
+		});
+    
+	    if (!marginal)
+		return { fixed: 2147483647, marginal: 2147483647 };
+  
+	    return { fixed: 0.0,
+		    marginal: Math.round(fixed/(n*10.0))*10 + Math.round((marginal + grp.const * Math.pow(n, grp.exp))/10.0)*10 };
+	},
+
+	_priceGroup: function(groups, qty) {
+	    var fixed = { min: 2147483647, max: 0 };
+	    var marginal = { min: 2147483647, max: 0 };
+
+	    groups.each(function(group) {
+		    var prices = this._priceSingle(group, qty);
+		    range_apply(fixed, prices.fixed);
+		    range_apply(marginal, prices.marginal);
+		}.bind(this));
+    
+	    return { min: marginal.min + (fixed.min / qty),
+		    max: marginal.max + (fixed.max / qty) };
+	},
+
+	_getGroups: function(params) {
+	    if (!params.variants)
+		return this.data.groups;
+	    return this.data.groups.findAll(function(entry) {
+		    return entry.variants.intersect(params.variants).length > 0;
+		});
+	},
+
+	variantPrice: function(params) {
+	    var groups = this._getGroups(params);
+	    var quantity = (params.technique_id == 1) ? Math.max(this.data.minimums[0], params.quantity) : params.quantity;
+	    return this._priceGroup(groups, quantity);
+	}	
+    });
+
+var ProductPricing = Class.create(PricingBase, {
+	initialize: function($super, data) {
+	    $super(data);
+
+	    this.params = {  };
+
+	    this.quantity = $('quantity');
+	    this.unit = $('unit_value');
+
+	    // Setup Quantity
+	    var quantity = parseInt(getCookie('quantity'));
+	    if (quantity) {
+		this.quantity.value = quantity;
+		this.params.quantity = quantity;
+	    }
+
+	    // Setup Decoration Technique
+	    var technique_id = parseInt(getCookie('technique'));
+	    var li = null;
+	    if (technique_id) {
+		li = $('tech-' + technique_id);
+		if (li)
+		    this.params.dec_count = parseInt(getCookie('count'));
+	    }
+
+	    if (!li) {
+		li = $$('#techniques .sel')[0];
+		if (li) technique_id = id_parse(li.id);
+	    }
+
+	    this.params.technique_id = technique_id;
+	    if (li) { 
+		this.applyTechnique(li);
+		Event.observe(this.unit, 'keydown', this.onKeyPress.bindAsEventListener(this, this.changeCount));
+	    }
+		
+	    this.applyPrices();
+
+	    
+	    Event.observe(this.quantity, 'keydown', this.onKeyPress.bindAsEventListener(this, this.changeQuantity));
+
+	    $$('#variants dt a').each(function(a) {
+		    Event.observe(a, 'mousedown', this.onMouseClrVariant.bindAsEventListener(this));
+		}.bind(this));
+	    
+	    $$('#variants dd a').each(function(a) {
+		    Event.observe(a, 'mousedown', this.onMouseSelVariant.bindAsEventListener(this));
+		}.bind(this));
+
+	    $$('#techniques a').each(function(a) {
+		    Event.observe(a, 'mousedown', this.onMouseTechnique.bindAsEventListener(this));
+		}.bind(this));
+
+	    $$('a.submit').each(function(a) {
+		    Event.observe(a, 'mousedown', this.orderSubmit.bindAsEventListener(this));
+		}.bind(this));
+
+	},
+
+	_unselectVariants: function(ul) {
+	    $A(ul.childNodes).each(function(li) {
+		    li.className = '';
+		});
+	},
 
 
-var quantity = '';
-var technique = '';
-var decoration = '';
+	applyTechnique: function(li) {
+	    var ul = li.parentNode;
+	    this._unselectVariants(ul);
+	    li.className = 'sel';
+
+	    var dec = this._decorationFind(this.params.technique_id);
+	    if (!dec)
+		return;
+
+	    var ul = $('locations');
+	    var dd = ul.parentNode;
+	    var dt = dd.previousSibling;
+    
+	    if (dec.locations.length > 0) {
+		var elems = [];
+		dec.locations.each(function(loc) {
+			elems.push('<li id="dec-' + loc.id + '"><a href="#"><span>' + loc.display + '</span></a></li>');		
+		    });
+		ul.innerHTML = elems.join('');
+		dd.style.display = '';
+		dt.style.display = '';
+
+		$$('#locations li a').each(function(li) {
+			Event.observe(li, 'mousedown', this.onMouseLocation.bindAsEventListener(this));
+		    }.bind(this));
+	    } else {
+		dd.style.display = 'none';
+		dt.style.display = 'none';
+	    }
+
+    
+	    var inp = $('unit_value');
+	    if (inp) {
+		if (!this.params.dec_count)
+		    this.params.dec_count = dec.unit_default;
+
+		var dd = inp.parentNode;
+		var dt = dd.previousSibling;
+		
+		if (dec.unit_name && dec.unit_name.length > 0) {
+		    dt.innerHTML = '<span>Number of ' + dec.unit_name + '(s):</span>';
+		    dt.style.display = '';
+		    dd.style.display = '';
+		    if (this.params.dec_count)
+			inp.value = this.params.dec_count;
+		} else {
+		    dt.style.display = 'none';
+		    dd.style.display = 'none';
+		}
+	    }
+
+	    $('dec_desc').innerHTML = li.getElementsByTagName('span')[0].innerHTML;
+	    $('sample').style.display = (technique == 1) ? 'none' : ''
+	},
+
+	onMouseTechnique: function(event) {
+	    var li = event.currentTarget.parentNode;
+	    this.params.technique_id = id_parse(li.id);
+	    setCookie('technique', this.params.technique_id);
+
+	    this.applyTechnique(li);
+	    this.applyPrices();
+
+	    return true;
+	},
+
+	onMouseLocation: function(event) {
+	    var li = event.currentTarget.parentNode;
+	    var ul = li.parentNode;
+	    this._unselectVariants(ul);
+	    li.className = 'sel';
+  
+	    this.params.location_id = id_parse(li.id)
+	},
+
+	setVariants: function() {
+	    var variants = null;
+	    $$('#variants .sel').each(function(li) {
+		    var list = li.getAttribute('data-variants').split(' ').collect(function(str) {
+			    return parseInt(str);
+			});
+		    variants = variants ? variants.intersect(list) : list;
+		});
+	    this.params.variants = variants;
+
+	    if (cycler)
+		cycler.setVariants(variants);
+	},
+
+	onMouseSelVariant: function(event) {
+	    var li = event.currentTarget.parentNode;
+	    var ul = li.parentNode;
+	    this._unselectVariants(ul);
+	    li.className = 'sel';
+
+	    this.setVariants();
+	    this.applyPrices();
+	},
+
+	onMouseClrVariant: function(event) {
+	    var dd = event.currentTarget.parentNode.nextSibling.nextSibling;
+	    var ul = dd.getElementsByTagName('ul')[0];
+	    this._unselectVariants(ul);
+
+	    this.setVariants();
+	    this.applyPrices();
+	},
+
+	onKeyPress: function(event, after_func) {
+	    var keychar = String.fromCharCode(event.keyCode);
+	    if (keychar == '0' && event.target.value.length == 0) {
+		event.preventDefault();
+		return false;
+	    }
+
+	    if ((("0123456789").indexOf(keychar) > -1) ||
+		(event.keyCode == Event.KEY_BACKSPACE) ||
+		(event.keyCode == Event.KEY_TAB) ||
+		(event.keyCode == Event.KEY_RETURN) ||
+		(event.keyCode == Event.KEY_ESC) ||
+		(event.keyCode == Event.KEY_LEFT) ||
+		(event.keyCode == Event.KEY_UP) ||
+		(event.keyCode == Event.KEY_RIGHT) ||
+		(event.keyCode == Event.KEY_DOWN) ||
+		(event.keyCode == Event.KEY_DELETE) ||
+		(event.keyCode == Event.KEY_HOME) ||
+		(event.keyCode == Event.KEY_END) ||
+		(event.keyCode == Event.KEY_PAGEUP) ||
+		(event.keyCode == Event.KEY_PAGEDOWN) ||
+		(event.keyCode == Event.KEY_INSERT) ) {
+		after_func.bind(this).defer();
+		return true;
+	    }
+
+	    event.preventDefault();
+	    return false;
+	},
+
+	changeQuantity: function(event) {
+	    this.params.quantity = parseInt(this.quantity.value);
+	    setCookie('quantity', this.params.quantity);
+	    this.applyPrices();
+	    
+	},
+	
+	changeCount: function(event) {
+	    var count_limit = this.decorationCountLimit(this.params);
+	    this.params.dec_count = parseInt(this.unit.value);
+	    if (this.params.dec_count > count_limit) {
+		this.params.dec_count = count_limit;
+		this.unit.value = this.params.dec_count;
+	    }
+	    setCookie('count', this.params.dec_count);
+	    
+	    this.applyPrices();
+	},
+
+	applyPrices: function() {
+	    var dec_price = this.decorationPrice(this.params);
+	    if (dec_price) {
+		$('dec_unit_price').innerHTML = range_to_string(dec_price.marginal);
+		var total = range_multiply(dec_price.marginal, this.params.quantity);
+		$('dec_total_price').innerHTML = range_to_string(total);
+		$('dec_fixed_price').innerHTML = range_to_string(dec_price.fixed);
+		total = range_add(total, dec_price.fixed);
+	    } else
+		var total = { min: 0.0, max: 0.0 };
+	    
+	    $$('#prices .dec').each(function(row) {
+		    row.style.display = (total.max == 0.0) ? 'none' : '';
+		});
+	    $('addtoorder').rowSpan = (total.max == 0.0) ? 2 : 4;
+
+	    var unit = this.variantPrice(this.params);
+	    $('item_unit_price').innerHTML = range_to_string(unit);
+	    var sub_total = range_multiply(unit, this.params.quantity);
+	    total = range_add(total, sub_total);
+	    $('item_total_price').innerHTML = range_to_string(sub_total);
+
+	    $('total_price').innerHTML = range_to_string(total);
+
+
+	    if (this.params.technique_id != 1)
+		if (this.params.quantity < this.data.minimums[0])
+		    $('info').innerHTML = "Minimum quantity of " + this.data.minimums[0] + " for imprinted items.";
+		else
+		    $('info').innerHTML = '';
+	    else
+		$('info').innerHTML = "No minimum for blank items." ;
+
+	    
+	    var mymins = [];
+    
+	    if (!this.params.quantity) {
+		mymins = this.data.minimums;
+	    } else if (this.params.quantity < this.data.minimums[0]) {      
+		mymins = [this.params.quantity].concat(this.data.minimums.slice(0,4));
+	    } else if (this.params.quantity > this.data.minimums.last()) {
+		mymins = this.data.minimums.slice(1, 5).concat([this.params.quantity]);
+	    } else {
+		mymins[0] = Math.round(this.params.quantity / 2);
+		if (mymins[0] < this.data.minimums[0])
+		    mymins[0] = this.data.minimums[0];
+		mymins[1] = Math.round((this.params.quantity + mymins[0]) / 2);
+		mymins[2] = this.params.quantity;
+		mymins[4] = Math.round(this.params.quantity * 2);
+		if (mymins[4] > this.data.minimums.last())
+		    mymins[4] = this.data.minimums.last();
+		mymins[3] = Math.round((mymins[4] + this.params.quantity) / 2);
+		var last = mymins[0];
+	
+		for (var i=1; i < mymins.length; i++)
+		    if (mymins[i] == last) {
+			mymins.splice(i,1);
+			i--;
+		    } else
+			last = mymins[i];
+	    }
+
+	    var qty_row = $('qty_row');
+	    var price_row = $('price_row');
+	
+	    var params = $H(this.params).clone();
+	    for (var i = 0; i < mymins.length; i++) {
+		var qty = mymins[i];
+
+		var unit = this.variantPrice(Object.extend(params, { quantity: qty }));
+		qty_row.childNodes[i+1].innerHTML = qty;
+		price_row.childNodes[i+1].innerHTML = range_to_string(unit);
+
+		var cls = (qty == this.params.quantity) ? 'sel' : '';
+		qty_row.childNodes[i+1].className = cls;
+		price_row.childNodes[i+1].className = cls;
+	    }
+	},
+
+	orderSubmit: function(event) {
+	    var btn = event.currentTarget;
+	    var pedantic = !btn.parentNode.hasClassName('admin');
+
+	    var msg = [];
+
+	    if (!(this.params.quantity > 0))
+		msg.push('quantity (enter number to right of Quantity:)');
+	    else if (pedantic && this.params.quantity < this.data.minimums[0] && this.params.technique_id != 1)
+		msg.push('miminum quantity of ' + this.data.minimums[0]);
+	    
+	    var groups = this._getGroups(this.params);
+	    if (groups.length != 1)
+		msg.push('a variant (Click on the appropriate box under Variants heading)');
+    
+	    if (msg.length != 0) {
+		alert("Must specify " + msg.join(' and '));
+		return;
+	    }
+
+	    var form = document.forms.productform;
+	    form.price_group.value = groups[0].id;
+	    form.variants.value = (this.params.variants || []).join(',');
+	    form.quantity.value = this.params.quantity;
+	    form.technique.value = this.params.technique_id || '';
+	    form.decoration.value = this.params.location_id || '';
+	    form.unit_count.value = this.params.dec_count || '';
+	    form.disposition.value = btn.id;
+	    form.submit();
+	}
+    });
+
+var CategoryPricing = Class.create(PricingBase, {
+	
+    });
 
 function id_parse(str) {
   var arr = str.split('-')
   return parseInt(arr[1])
-}
-
-function unselect(ul) {
-  for (var i=0; i<ul.childNodes.length; i++)
-    ul.childNodes[i].className = ''
-}
-
-var tech_limit;
-var tech_value = '';
-function apply_tech(li) {
-    var ul = li.parentNode;
-    unselect(ul);
-    li.className = 'sel';
-
-    var dec = decorations.find(function(dec) { return dec.id == technique; });
-    if (!dec)
-	return;
-
-    tech_value = dec.unit_default;
-    
-    var ul = $('locations');
-    var dd = ul.parentNode;
-    var dt = dd.previousSibling;
-    
-    tech_limit = NaN;
-    if (dec.decorations.length > 0) {
-	var elems = [];
-	dec.decorations.each(function(loc) {
-		elems.push('<li id="dec-' + loc.id + '"><a href="#" onclick="return sel_loc(this)"><span>' + loc.display + '</span></a></li>');		
-	    });
-	ul.innerHTML = elems.join('');
-	dd.style.display = '';
-	dt.style.display = '';
-    } else {
-	dd.style.display = 'none';
-	dt.style.display = 'none';
-    }
-
-    
-    var inp = $('unit_value');
-    if (inp) {
-	var dd = inp.parentNode;
-	var dt = dd.previousSibling;
-	
-	if (dec.unit_name && dec.unit_name.length > 0) {
-	    dt.innerHTML = '<span>Number of ' + dec.unit_name + '(s):</span>';
-	    dt.style.display = '';
-	    dd.style.display = '';
-	    if (tech_value)
-		inp.value = tech_value;
-	} else {
-	    dt.style.display = 'none';
-	    dd.style.display = 'none';
-	}
-    }
-
-    $('dec_desc').innerHTML = li.getElementsByTagName('span')[0].innerHTML;
-    $('sample').style.display = (technique == 1) ? 'none' : ''
-}
-
-
-function decoration_price_mult(entry, value, mult) {
-    var num = Math.floor((value - 1 - entry.offset) / entry.divisor);
-    return num ? (num * mult) : 0;
-}
-
-function decoration_price_func(entry, qty) {
-    return Math.round(entry.price_marginal * (1 + entry.price_const * Math.pow(qty, entry.price_exp)))
-}
-
-function price_tech(qty) {
-    var dec = decorations.find(function(dec) { return dec.id == technique; });
-    if (!dec)
-	return NaN;
-
-    var fixed = { min: 2147483647, max: 0 };
-    var marginal = { min: 2147483647, max: 0 };
-    
-    dec.entries.reverse().find(function(entry) {
-	    if (tech_value && entry.minimum > tech_value)
-		return;
-	    
-	    var fixed_val = entry.fixed.price_fixed;
-	    var marginal_val = decoration_price_func(entry.fixed, qty);
-	    if (!tech_value) {
-		range_apply(fixed, fixed_val);
-		range_apply(marginal, marginal_val);
-	    }
-	    
-	    var value = tech_value ? tech_value : tech_limit;
-	    // Limit ?
-	    // if (value > (breaks[j+1] || [])[0])
-	    // 	 value = breaks[j+1][0];
-	    
-	    if (value) {
-		fixed_val += decoration_price_mult(entry.fixed, value, entry.marginal.price_fixed);
-		marginal_val += decoration_price_mult(entry.marginal, value, decoration_price_func(entry.marginal, qty));
-
-		range_apply(fixed, fixed_val);
-		range_apply(marginal, marginal_val);
-	    }		    
-	    
-	    return tech_value;
-	});
-
-    return { fixed: fixed, marginal: marginal };
-}
-
-
-
-
-function sel_tech(a) {
-  var li = a.parentNode
-  
-  technique = id_parse(li.id)
-  setCookie('technique', technique)
-    
-  apply_tech(li)
-  
-  calc_prices()
-  
-  return false
-}
-
-function load_tech() {
-  technique = parseInt(getCookie('technique'))
-  var li
-  if (technique)
-    li = $('tech-' + technique)
-	
-  if (!li) {
-    var techniques = $('techniques')
-    if (techniques) {
-      li = techniques.getElementsByClassName('sel')[0]
-      technique = id_parse(li.id)
-    } else
-      technique = ''
-  }
-  
-  if (technique != '')
-    apply_tech(li)
-}
-
-function sel_loc(a) {
-  var li = a.parentNode
-  var ul = li.parentNode
-  unselect(ul)
-  li.className = 'sel' 
-  
-  decoration = id_parse(li.id)
-  
-  return false
-}
-
-function get_selected_variants() {
-    var variants = null;
-    $A($('variants').getElementsByClassName('sel')).each(function(li) {
-	    var list = li.getAttribute('data-variants').split(' ').collect(function(str) {
-		    return parseInt(str);
-		});
-	    variants = variants ? variants.intersect(list) : list;
-	});
-    return variants;
-}
-
-function set_cycler() {
-    if (cycler)
-	cycler.setVariants(get_selected_variants());
-}
-
-function sel_opt(a) {
-    var li = a.parentNode;
-    var ul = li.parentNode;
-    unselect(ul);
-    li.className = 'sel';
-  
-    var grp_id = id_parse(ul.id);
-    var prop_id = id_parse(li.id);
-  
-    calc_prices();
-
-    set_cycler();
-}
-
-function clear_opt(a) {
-    var div = a.parentNode.nextSibling.nextSibling;
-    var ul = div.getElementsByTagName('ul')[0];
-    unselect(ul);
-  
-    var grp_id = id_parse(ul.id);
-  
-    calc_prices();
-
-    set_cycler();
-}
-
-function get_groups() {
-    var sets = [];
-
-    var variants = get_selected_variants();
-    if (!variants)
-	return price_groups;
-
-    return price_groups.findAll(function(entry) {
-	    return entry.variants.intersect(variants).length > 0
-	});
-}
-
-function calc_price_single(grp, n) {
-    var fixed = NaN;
-    var marginal = NaN;
-    
-    grp.breaks.find(function(brk) {
-	    if (brk.minimum > n)
-		return true;
-	    fixed = brk.fixed;
-	    marginal = brk.marginal;
-	});
-    
-    if (!marginal)
-	return { fixed: 2147483647, marginal: 2147483647 };
-  
-    return { fixed: 0.0,
-	    marginal: Math.round(fixed/(n*10.0))*10 + Math.round((marginal + grp.const * Math.pow(n, grp.exp))/10.0)*10 };
-}
-
-function calc_price_group(groups, qty) {
-    var fixed = { min: 2147483647, max: 0 };
-    var marginal = { min: 2147483647, max: 0 };
-
-    groups.each(function(group) {
-	    var prices = calc_price_single(group, qty);
-	    fixed = { min: Math.min(fixed.min, prices.fixed), max: Math.max(fixed.max, prices.fixed) };
-	    marginal = { min: Math.min(marginal.min, prices.marginal), max: Math.max(marginal.max, prices.marginal) };	    
-	});
-    
-    return { min: marginal.min + (fixed.min / qty),
-	    max: marginal.max + (fixed.max / qty) };
-}
-
-function calc_prices() {
-    var price = price_tech(quantity);
-    if (price) {
-	$('dec_unit_price').innerHTML = range_to_string(price.marginal);
-	var total = range_multiply(price.marginal, quantity);
-	$('dec_total_price').innerHTML = range_to_string(total);
-	$('dec_fixed_price').innerHTML = range_to_string(price.fixed);
-	total = range_add(total, price.fixed);
-    } else {
-	var total = { min: 0.0, max: 0.0 };
-    }
-
-    $A($('prices').getElementsByClassName('dec')).each(function(row) {
-	    row.style.display = (total.max == 0.0) ? 'none' : '';
-	});
-    $('addtoorder').rowSpan = (total.max == 0.0) ? 2 : 4;
-
-
-    var groups = get_groups();
-    // Set to minimum if less than minimum and no imprint
-    var price_quantity = (technique == 1) ? Math.max(minimums[0], quantity) : quantity;
-    var unit = calc_price_group(groups, price_quantity);
-    $('item_unit_price').innerHTML = range_to_string(unit);
-    var sub_total = range_multiply(unit, quantity);
-    total = range_add(total, sub_total);
-    $('item_total_price').innerHTML = range_to_string(sub_total);
-    
-    $('total_price').innerHTML = range_to_string(total);
-
-
-    if (technique != 1)
-	if (quantity < minimums[0])
-	    $('info').innerHTML = "Minimum quantity of " + minimums[0] + " for imprinted items.";
-	else
-	    $('info').innerHTML = '';
-    else
-	$('info').innerHTML = "No minimum for blank items."  
-
-    var mymins = [];
-    
-    if (!quantity) {
-	mymins = minimums;
-    } else if (quantity < minimums[0]) {      
-	mymins = [quantity].concat(minimums.slice(0,4));
-    } else if (quantity > minimums.last()) {
-	mymins = minimums.slice(1, 5).concat([quantity]);
-    } else {
-	mymins[0] = Math.round(quantity / 2);
-	if (mymins[0] < minimums[0])
-	    mymins[0] = minimums[0];
-	mymins[1] = Math.round((quantity + mymins[0]) / 2);
-	mymins[2] = quantity;
-	mymins[4] = Math.round(quantity * 2);
-	if (mymins[4] > minimums.last())
-	    mymins[4] = minimums.last();
-	mymins[3] = Math.round((mymins[4] + quantity) / 2);
-	var last = mymins[0];
-
-	for (var i=1; i < mymins.length; i++)
-	    if (mymins[i] == last) {
-		mymins.splice(i,1);
-		i--;
-	    } else
-		last = mymins[i];
-    }
-
-    var qty_row = $('qty_row');
-    var price_row = $('price_row');
-    
-    for (var i = 0; i < mymins.length; i++) {
-	var qty = mymins[i];
-	var price_qty = (technique == 1) ? Math.max(minimums[0], qty) : qty;
-	
-	var total_unit = calc_price_group(groups, price_qty);
-    
-	qty_row.childNodes[i+1].innerHTML = qty;
-	price_row.childNodes[i+1].innerHTML = range_to_string(total_unit);
-
-	var cls = (qty == quantity) ? "sel" : "";
-	qty_row.childNodes[i+1].className = cls;
-	price_row.childNodes[i+1].className = cls;
-    }
-
-    set_layout();
 }
 
 function int_to_money(val) {
@@ -424,87 +551,6 @@ function range_apply(range, val) {
     return range
 }
 
-function change_quantity() {
-    var input = $('quantity').value;
-    quantity = parseInt(input);
-    setCookie('quantity', quantity);
-    calc_prices();
-}
-
-function change_units() {
-  var input = $('unit_value').value
-  tech_value = parseInt(input)
-  if (tech_value > tech_limit) {
-    tech_value = tech_limit
-    $('unit_value').value = tech_value
-  }
-    
-  calc_prices() 
-}
-
-function load_quantity() {
-  quantity = parseInt(getCookie('quantity'))
-  if (quantity)
-    $('quantity').value = quantity
-}
-
-function num_keypress(myfield, e, post_func) {
-  var key;
-  var keychar;
-
-  if (window.event)
-    key = window.event.keyCode;
-  else if (e)
-    key = e.which;
-  else
-    return true;
- 
-  keychar = String.fromCharCode(key);
-  
-  if (keychar == '0' && myfield.value.length == 0)
-    return false;
-    
-  if ((("0123456789").indexOf(keychar) > -1)) {
-    if (myfield.value.length > 5)
-      return false;
-  } else if (!((key==null) || (key==0) || (key==8) ||
-      (key==9) || (key==13) || (key==27)))
-      return false;
-  
-  setTimeout(post_func, 0);
-  
-  return true;
-}
-
-function order_submit(dispos, pedantic) {
-    var msg = [];
-
-    if (!(parseInt(quantity) > 0))
-	msg.push('quantity (enter number to right of Quantity:)');
-    else if (pedantic && parseInt(quantity) < minimums[0] && technique != 1)
-	msg.push('miminum quantity of ' + minimums[0]);
-
-    var groups = get_groups();
-    if (groups.length != 1)
-	msg.push('a variant (Click on the appropriate box under Variants heading)');
-    
-    if (msg.length != 0) {
-	alert("Must specify " + msg.join(' and '));
-	return;
-    }
-
-    var form = document.forms.productform;
-    form.price_group.value = groups[0][0];
-    form.variants.value = get_selected_variants().join(',');
-    form.quantity.value = quantity;
-    form.technique.value = technique;
-    form.decoration.value = decoration;
-    form.unit_count.value = tech_value;
-    form.disposition.value = dispos;
-    form.submit();
-
-    return;
-}
 
 
 /**
@@ -711,10 +757,8 @@ Event.observe(window, "load", function() {
 	var images = $('main_imgs');
 	if (images)
 	    cycler = new Protocycle(images, $$('ul.thumbs li'));
-
-	load_tech();
-	load_quantity();
-	calc_prices();
+	
+	set_layout();
     });
 
 window.onresize = set_layout;

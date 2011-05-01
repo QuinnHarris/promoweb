@@ -290,8 +290,7 @@ td#addtoorder {
     padding-left: 0.5em;
 }
 
-td#addtoorder a {
-    display: block;
+a.submit {
     color: black;
     border: thin solid black;
     padding: 0.15em 0.25em 0.15em 0.25em;
@@ -305,11 +304,15 @@ td#addtoorder a {
     background: linear-gradient(top, white, #E8E0E0 50%, #D8D0D0 50%, #E8E0E0);
 }
 
-td#addtoorder a span {
+td#addtoorder a.submit {
+    display: block;
+}
+
+td#addtoorder a.submit span {
     font-weight: bold;
 }
 
-td#addtoorder a:hover {
+a.submit:hover {
     background-color: #D8D0D0;
     background: -moz-linear-gradient(bottom, white, #E8E0E0 50%, #D8D0D0 50%, #E8E0E0);
     background: -webkit-linear-gradient(bottom, white, #E8E0E0 50%, #D8D0D0 50%, #E8E0E0);
@@ -370,22 +373,6 @@ div.box table#price_list thead {
 }
 div.box table#price_list td.sel {
     font-weight: bold;
-}
-
-
-span.action a {
-  color: white;
-  background-color: #2175bc;
-  padding: 0.5em;
-  border-left: 10px solid #1958b7;
-  border-right: 10px solid #508fc4;
-  font-weight: bold;
-}
-
-span.action a:hover {
- border-left: 10px solid #1c64d1;
- border-right: 10px solid #5ba3e0;
- background-color: #2586d7;
 }
 
 div#share {

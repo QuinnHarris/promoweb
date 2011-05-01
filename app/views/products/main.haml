@@ -30,16 +30,15 @@
 
         - if @user
           #actions.admin
-            %span.action
-              Add to
-              - if @order && @order.task_completed?(AcknowledgeOrderTask)
-                (Not Current Order: Acknowledged)
-              - else
-                = submit_tag "Current Order", :onclick => "order_submit('exist', false);"
-              or
-              = submit_tag "New Order", :onclick => "order_submit('order', false);"
-              or
-              = submit_tag "New Customer", :onclick => "order_submit('customer', false);"
+            Add to
+            - if @order && @order.task_completed?(AcknowledgeOrderTask)
+              (Not Current Order: Acknowledged)
+            - else
+              %a.submit#exist{ :href => '#' } Current Order
+            or
+            %a.submit#order{ :href => '#' } New Order
+            or
+            %a.submit#customer{ :href => '#' } New Customer
 
         - setup_main if @user
         - cache do
@@ -79,49 +78,13 @@
                     - for images in group.compact                  
                       %li.active{ :class => (images == @product.product_images.first) ? 'sel' : nil, 'data-variants' => images.variants.collect { |v| v.id }.join(' ') }= image_tag images.image.url(:thumb)          
 
-          :javascript
-             var price_groups = #{@prices.price_sets.collect do |set|
-               { :id => set.group.id,
-                 :const => set.const.to_i,
-                 :exp => set.exp,
-                 :breaks => set.breaks.collect do |brk|
-                   { :minimum => brk.minimum,
-                     :fixed => brk.fixed.to_i,
-                     :marginal => brk.marginal.to_i }
-                 end,
-                 :variants => set.group.variants.collect { |v| v.id }
-               }
-             end.to_json};
-             var decorations = #{@techniques.collect do |tech|
-                price_group = @product.supplier.find_decoration_price_group(tech)
-                { :id => tech.id,
-                  :unit_name => tech.unit_name && tech.unit_name.capitalize,
-                  :unit_default => tech.unit_default,
-                  :decorations => @decorations.collect do |dec|
-                    next unless dec.technique == tech and !dec.location.blank?
-                    { :id => dec.id, :display => dec.display, :limit => dec.limit }
-                  end.compact,
-                  :entries => price_group && price_group.entries.collect do |entry|
-                    { :minimum => entry.minimum }.merge(
-                        %w(fixed marginal).inject({}) do |hash, aspect|
-                          hash[aspect] = %w(price_fixed price_const price_exp price_marginal divisor offset).inject({}) do |h, prop|
-                            h[prop] = entry["#{aspect}_#{prop}"]
-                            h
-                          end
-                          hash
-                        end)
-                  end
-                }
-              end.to_json};
-              var minimums = #{@minimums.to_json};
-
           - unless @properties.empty?
             #variants.box
               %dl
                 - index = -1
                 - for names, properties in @properties
                   %dt
-                    %a{ :href => "#", :onclick => "return clear_opt(this);" }
+                    %a{ :href => "#" }
                       - reset_cycle
                       - for name in names
                         %span{ :class => cycle('odd', 'even') }= "#{name.capitalize}:"
@@ -129,7 +92,7 @@
                     %ul{ :id => "group-#{index += 1}" }
                       - for props, variants in properties
                         %li{ :id => props.compact.first && "prop-#{props.compact.first.id}", 'data-variants' => variants.collect { |v| v.id }.join(' ') }
-                          %a{ :href => "#", :onclick => "return sel_opt(this);", :title => props.first && "Click to select #{props.first.translate}" }
+                          %a{ :href => "#", :title => props.first && "Click to select #{props.first.translate}" }
                             - reset_cycle
                             - for prop in props
                               %span{ :class => cycle('odd', 'even') }
@@ -144,7 +107,7 @@
                   %ul
                     - for tech in @techniques
                       %li{ :class => (tech == @techniques.first) && 'sel', :id => "tech-#{tech.id}" }
-                        %a{ :href => "#", :onclick => "return sel_tech(this)", :title => "Click to select #{tech.name}" }
+                        %a{ :href => "#", :title => "Click to select #{tech.name}" }
                           %span= tech.friendly_name
 
               %dl#sub
@@ -152,7 +115,7 @@
                 %dt{ :style => !display && 'display:none;' }>
                   %span Number of #{display && @techniques.first.unit_name.capitalize}(s):
                 %dd{ :style => !display && 'display:none;' }>
-                  %input#unit_value{ :name => "unit_value", :onkeypress => "return num_keypress(this, event, change_units)", :type => "text", :value => @techniques.first.unit_default, :size => "6" }
+                  %input#unit_value{ :name => "unit_value", :type => "text", :value => @techniques.first.unit_default, :size => "6" }
 
                 - display = @techniques.first.name != "None"
                 %dt{ :style => !display && 'display:none;' }>
@@ -161,11 +124,11 @@
                   %ul#locations
                     - for dec in @decorations.find_all { |d| d.technique == @techniques.first }
                       %li{ :id => "dec-#{dec.id}" }
-                        %a{ :href => '#', :onclick => 'return sel_loc(this)' }
+                        %a{ :href => '#' }
                           %span= dec.display
 
           - unless @product.deleted
-            - form_tag({ :controller => :order, :action => :add_item }, {:name => "productform", :onsubmit => 'return order_submit(this, true);' }) do
+            - form_tag({ :controller => :order, :action => :add_item }, {:name => "productform" }) do
               #prices.box
                 %p
                   = hidden_field_tag "product", @product.id
@@ -180,7 +143,7 @@
                     %tr
                       %td
                         Quantity:
-                        %input#quantity{ :name => "quantity", :size => "4", :onkeypress => "return num_keypress(this, event, change_quantity)", :type => "text" }
+                        %input#quantity{ :name => "quantity", :size => "4", :type => "text" }
                       %td.num
                         &times;
                         %span#item_unit_price
@@ -189,13 +152,13 @@
                       %td.num#item_total_price
                         $???.??
                       %td#addtoorder{ :rowspan => 4 }
-                        %a{ :href => '#', :onclick => "order_submit('quote', true);", :title => "Click to Get Quote or Order" }
+                        %a.submit{ :href => '#', :title => "Click to Get Quote or Order" }
                           Get
                           %span Quote
                           %br
                           or
                           %span Order
-                        %a#sample{ :href => '#', :onclick => "order_submit('sample', true);", :title => "Click for sample with quote" }
+                        %a.submit#sample{ :href => '#', :title => "Click for sample with quote" }
                           with
                           %span Sample
                     %tr.dec
@@ -245,6 +208,43 @@
                         %th> Unit Price
                         - for qty in @minimums
                           %td>= @prices.price_range(qty).to_perty
+
+          :javascript
+            new ProductPricing(#{ {
+             :groups => @prices.price_sets.collect do |set|
+               { :id => set.group.id,
+                 :const => set.const.to_i,
+                 :exp => set.exp,
+                 :breaks => set.breaks.collect do |brk|
+                   { :minimum => brk.minimum,
+                     :fixed => brk.fixed.to_i,
+                     :marginal => brk.marginal.to_i }
+                 end,
+                 :variants => set.group.variants.collect { |v| v.id }
+               }
+             end,
+             :decorations => @techniques.collect do |tech|
+                price_group = @product.supplier.find_decoration_price_group(tech)
+                { :id => tech.id,
+                  :unit_name => tech.unit_name && tech.unit_name.capitalize,
+                  :unit_default => tech.unit_default,
+                  :locations => @decorations.collect do |dec|
+                    next unless dec.technique == tech and !dec.location.blank?
+                    { :id => dec.id, :display => dec.display, :limit => dec.limit }
+                  end.compact,
+                  :entries => price_group && price_group.entries.collect do |entry|
+                    { :minimum => entry.minimum }.merge(
+                        %w(fixed marginal).inject({}) do |hash, aspect|
+                          hash[aspect] = %w(price_fixed price_const price_exp price_marginal divisor offset).inject({}) do |h, prop|
+                            h[prop] = entry["#{aspect}_#{prop}"]
+                            h
+                          end
+                          hash
+                        end)
+                  end
+                }
+              end,
+              :minimums => @minimums}.to_json});
 
           #static
             - if @product.lead_time_normal_min
