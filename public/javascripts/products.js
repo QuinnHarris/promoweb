@@ -119,7 +119,7 @@ var PricingBase = Class.create({
 		return { fixed: 2147483647, marginal: 2147483647 };
   
 	    return { fixed: 0.0,
-		    marginal: Math.round(fixed/(n*10.0))*10 + Math.round((marginal + grp.const * Math.pow(n, grp.exp))/10.0)*10 };
+		    marginal: Math.round(fixed/(n*10.0))*10 + Math.round((marginal + grp.constant * Math.pow(n, grp.exp))/10.0)*10 };
 	},
 
 	_priceGroup: function(groups, qty) {
@@ -269,11 +269,11 @@ var ProductPricing = Class.create(PricingBase, {
 	    }
 
 	    $('dec_desc').innerHTML = li.getElementsByTagName('span')[0].innerHTML;
-	    $('sample').style.display = (technique == 1) ? 'none' : ''
+	    $('sample').style.display = (this.params.technique_id == 1) ? 'none' : ''
 	},
 
 	onMouseTechnique: function(event) {
-	    var li = event.currentTarget.parentNode;
+	    var li = event.findElement('li');
 	    this.params.technique_id = id_parse(li.id);
 	    setCookie('technique', this.params.technique_id);
 
@@ -284,7 +284,7 @@ var ProductPricing = Class.create(PricingBase, {
 	},
 
 	onMouseLocation: function(event) {
-	    var li = event.currentTarget.parentNode;
+	    var li = event.findElement('li');
 	    var ul = li.parentNode;
 	    this._unselectVariants(ul);
 	    li.className = 'sel';
@@ -307,7 +307,7 @@ var ProductPricing = Class.create(PricingBase, {
 	},
 
 	onMouseSelVariant: function(event) {
-	    var li = event.currentTarget.parentNode;
+	    var li = event.findElement('li');
 	    var ul = li.parentNode;
 	    this._unselectVariants(ul);
 	    li.className = 'sel';
@@ -317,7 +317,7 @@ var ProductPricing = Class.create(PricingBase, {
 	},
 
 	onMouseClrVariant: function(event) {
-	    var dd = event.currentTarget.parentNode.nextSibling.nextSibling;
+	    var dd = event.findElement('dt').nextSiblings().first();
 	    var ul = dd.getElementsByTagName('ul')[0];
 	    this._unselectVariants(ul);
 

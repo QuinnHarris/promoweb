@@ -213,7 +213,7 @@
             new ProductPricing(#{ {
              :groups => @prices.price_sets.collect do |set|
                { :id => set.group.id,
-                 :const => set.const.to_i,
+                 :constant => set.const.to_i,
                  :exp => set.exp,
                  :breaks => set.breaks.collect do |brk|
                    { :minimum => brk.minimum,
