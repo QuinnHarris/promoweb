@@ -1,1 +1,2 @@
+<%= link_to "#{params[:ppc] ? 'No ' : ''}Pay Per Click Only", { :ppc => !params[:ppc] } %>
 <%= render :partial => 'paths', :locals => { :sessions => @sessions } %>

@@ -94,9 +94,7 @@
     - if invoice.is_a?(Invoice)
       %h3
         - if invoice.quickbooks_ref
-          Invoice
-          - if !static and @user
-            %span= "(QB# #{invoice.quickbooks_ref})"
+          Invoice (#{invoice.quickbooks_ref})
         - else
           Quote
 
