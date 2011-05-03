@@ -2,7 +2,7 @@
   - if @order.closed
     .admin= link_to "Open Order", { :controller => '/admin/orders', :action => 'restore', :id => @order }, { :confirm => "Unclose order #{@order.id}" }
   - else
-    %h3 Availible Tasks
+    %h3 Available Tasks
     = render :partial => 'pending_tasks'
   - if allowed?('Super') and @order.task_ready?(CancelOrderTask) and !@order.task_completed?(RequestOrderTask) and @order.customer.orders.length > 1
     = link_to "Remove Order", :controller => '/admin/orders', :action => :order_remove, :id => @order.id

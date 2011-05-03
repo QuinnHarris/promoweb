@@ -85,12 +85,12 @@ private
 
 public
   def set_featured
-    return unless session[:user]
+    raise "Permission denied" unless @user
   
     @product = Product.find(params[:id])
     expire_category(@product.featured_id) if @product.featured_id
         
-    @product.featured_id = params[:category]
+    @product.featured_id = Integer(params[:category])
     @product.featured_at = Time.now
     @product.save!
     

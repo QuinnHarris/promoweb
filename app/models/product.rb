@@ -365,7 +365,7 @@ class PriceCollectionCompetition < PriceCollectionAll
   end
   
   def competative_price(cost_group, supplier_group, price_params = {})     
-    paramDefault = default_price(cost_group, { :m1 => 1.65, :m2 => 1.35, :pmax1 => PriceSet::required_profit * 3.5 }.merge(price_params || {})) #, PriceSet::required_profit*0.8)
+    paramDefault = default_price(cost_group, { :m1 => 1.65, :m2 => 1.35, :pmax1 => PriceSet::required_profit * 3.5 }.merge(price_params)) #, PriceSet::required_profit*0.8)
     @price_bounds << PriceSet.new(cost_group, paramDefault.coef, paramDefault.exp, @count)
     
     paramMin = paramMax = nil

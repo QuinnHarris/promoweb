@@ -685,7 +685,7 @@ public
         
         if recache_prices
           pc = PriceCollectionCompetition.new(product_record)
-          pc.calculate_price(product_data['price_params'])
+          pc.calculate_price(product_data['price_params'] || {})
         end
 
         product_record.variants.target = variant_records

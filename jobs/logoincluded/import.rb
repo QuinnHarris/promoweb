@@ -148,10 +148,16 @@ class LogoIncludedXML < GenericImport
  
       colors = product.get_elements('ColorOptions/Color/Description').collect { |n| n.text }
 
+      nums = []
+      min_units = 10000000
+      max_units = 0
+
       product_data['variants'] = product.get_elements('Pricing/LineItem').collect do |li|
         last_maximum = nil
         prices = li.get_elements('UnitPriceBreaks/Quantity').collect do |qty|
           min, max = %w(minimum maximum).collect { |n| qty.attributes[n].blank? ? nil : Integer(qty.attributes[n]) }
+          min_units = [min_units, min].min if min
+          max_units = [max_units, max].max if max
 #          puts "Min: #{min} #{max}"
 #          raise "Non sequential quantity" if last_maximum and (last_maximum == min - 1)
           last_maximum = max
@@ -200,6 +206,12 @@ class LogoIncludedXML < GenericImport
           end
         end
 
+        if nums.include?(data['supplier_num'])
+          warning "Duplicate supplier_num: #{data['supplier_num']}"
+          next 
+        end
+        nums << data['supplier_num']
+
         next data if colors.empty?
 
         colors.collect do |color|
@@ -207,6 +219,8 @@ class LogoIncludedXML < GenericImport
                      'color' => color)
         end
       end.flatten.compact
+
+      product_data['price_params'] = { :n1 => min_units, :m1 => 1.5, :n2 => max_units, :m2 => 1.2 }
 
       add_product(product_data)
     end
