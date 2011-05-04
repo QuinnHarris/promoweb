@@ -798,15 +798,17 @@ class Product < ActiveRecord::Base
         added << category
       end
     end
+
+    src.delete_if do |s|
+       Category.find_by_sql("SELECT * FROM categories_products WHERE category_id = #{s.id} AND product_id = #{id}").first.pinned
+    end
     
     src.each do |s|
       if self['featured_id'] == s.id
         self['featured_id'] = nil
         save!
       end
-      unless Category.find_by_sql("SELECT * FROM categories_products WHERE category_id = #{s.id} AND product_id = #{id}").first.pinned
-        categories.delete(s)
-      end
+      categories.delete(s)
     end
     
     str = ''
