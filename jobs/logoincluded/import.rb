@@ -156,8 +156,8 @@ class LogoIncludedXML < GenericImport
         last_maximum = nil
         prices = li.get_elements('UnitPriceBreaks/Quantity').collect do |qty|
           min, max = %w(minimum maximum).collect { |n| qty.attributes[n].blank? ? nil : Integer(qty.attributes[n]) }
-          min_units = [min_units, min].min if min
-          max_units = [max_units, max].max if max
+          min_units = [min_units, max].min
+          max_units = [max_units, max].max
 #          puts "Min: #{min} #{max}"
 #          raise "Non sequential quantity" if last_maximum and (last_maximum == min - 1)
           last_maximum = max
@@ -221,6 +221,7 @@ class LogoIncludedXML < GenericImport
       end.flatten.compact
 
       product_data['price_params'] = { :n1 => min_units, :m1 => 1.5, :n2 => max_units, :m2 => 1.2 }
+      puts product_data['price_params'].inspect
 
       add_product(product_data)
     end

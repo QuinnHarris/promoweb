@@ -377,6 +377,6 @@ public
 private 
   after_destroy :destroy_parent_if_empty
   def destroy_parent_if_empty
-    parent.destroy if parent and parent.children_count == 0
+    parent.destroy if parent and parent.children_count == 0 and parent.pinned == false
   end
 end

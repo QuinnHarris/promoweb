@@ -457,7 +457,7 @@ var ProductPricing = Class.create(PricingBase, {
 	},
 
 	orderSubmit: function(event) {
-	    var btn = event.currentTarget;
+	    var btn = event.findElement('a');
 	    var pedantic = !btn.parentNode.hasClassName('admin');
 
 	    var msg = [];

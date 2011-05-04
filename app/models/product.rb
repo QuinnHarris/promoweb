@@ -804,7 +804,9 @@ class Product < ActiveRecord::Base
         self['featured_id'] = nil
         save!
       end
-      categories.delete(s)
+      unless Category.find_by_sql("SELECT * FROM categories_products WHERE category_id = #{s.id} AND product_id = #{id}").first.pinned
+        categories.delete(s)
+      end
     end
     
     str = ''
