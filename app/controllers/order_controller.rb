@@ -214,7 +214,7 @@ public
     decoration = Decoration.find(params[:decoration]) unless !params[:decoration] or params[:decoration] == 'NaN' or params[:decoration].empty?
     unit_count = params[:unit_count].to_i != 0 ? params[:unit_count].to_i : nil
 
-    unless params[:variants].empty?
+    unless params[:variants].blank?
       variant = Variant.find(params[:variants].split(',').first)
     else
       variant = price_group.variants.first if price_group.variants.length == 1

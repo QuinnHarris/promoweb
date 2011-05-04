@@ -436,8 +436,11 @@ var ProductPricing = Class.create(PricingBase, {
 			last = mymins[i];
 	    }
 
-	    var qty_row = $('qty_row');
+	    var qty_row = $('qty_row');	
 	    var price_row = $('price_row');
+	    if (!qty_row || !price_row)
+		return;
+
 	
 	    var params = $H(this.params).clone();
 	    for (var i = 0; i < mymins.length; i++) {
