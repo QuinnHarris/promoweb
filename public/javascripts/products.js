@@ -326,13 +326,14 @@ var ProductPricing = Class.create(PricingBase, {
 	},
 
 	onKeyPress: function(event, after_func) {
-	    var keychar = String.fromCharCode(event.keyCode);
-	    if (keychar == '0' && event.target.value.length == 0) {
+	    if ((event.keyCode == 48 || event.keyCode ==96) &&
+		event.target.value.length == 0) {
 		event.preventDefault();
 		return false;
 	    }
 
-	    if ((("0123456789").indexOf(keychar) > -1) ||
+	    if ((event.keyCode >= 48 && event.keyCode <= 57) ||
+		(event.keyCode >= 96 && event.keyCode <= 105) ||
 		(event.keyCode == Event.KEY_BACKSPACE) ||
 		(event.keyCode == Event.KEY_TAB) ||
 		(event.keyCode == Event.KEY_RETURN) ||
