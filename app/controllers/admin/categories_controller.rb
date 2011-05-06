@@ -64,6 +64,7 @@ public
         return
       end
       
+      category.pinned = true
       product.categories << category
     end
     redirect_to :back

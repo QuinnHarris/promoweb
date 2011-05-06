@@ -24,11 +24,17 @@ class Variant < ActiveRecord::Base
     end
 
     images.each do |img|
-      pi = product_images.create(:supplier_ref => img.id,
-                                 :image => img.get,
-                                 :product => product)
-      pi.image.reprocess!
-      pi.image.save
+      unless pi = ProductImage.find(:first, :conditions => { :product_id => product.id, :supplier_ref => img.id })
+        pi = product_images.create(:supplier_ref => img.id,
+                                   :image => img.get,
+                                   :product => product)
+        pi.image.reprocess!
+        pi.image.save
+      else
+        unless pi.variants.find_by_id(id)
+          pi.variants << self
+        end
+      end
     end
 
     orig.each do |pi|

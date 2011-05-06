@@ -28,24 +28,7 @@ class LancoSOAP < GenericImport
     'MB200' => { 'Prod_Name' => ['Mesh Bags w/ AL100', 'Mesh Bag w/ AL100'] },
     'TG194' => { 'Prod_Name' => ['Tins Empty', 'Tin Empty'] },
   }
-  
-#  def parse_info(string)
-#    string.gsub!('&nbsp;', ' ')
-#    if i = (/(Imprinting(?: Information)?:\s*\r((?:\s+(?:.+?):.+?)+))/ =~ string)
-#      imprint_str = $2.strip
-#      string[i...(i+$1.length)] = ""
-#      puts " Impr: #{imprint_str.inspect}"
-#      imprint_type = {}
-#      imprint_str.split(/\s*\n\s*/).each do |line|
-#        raise "Unkown" unless /^(.+?):\s*(.+?)\s*$/ =~ line
-#        imprint_type[$1] = $2
-#      end
-#      puts "       #{imprint_type.inspect}"
-#    end
-#
-#    string.strip
-#  end
-
+ 
   @@image_path = "http://www.lancopromo.com/images/products/"
 
   def image_path(web_id)
@@ -183,39 +166,13 @@ class LancoSOAP < GenericImport
 
       product_data['lead_time_rush_charge']
       
-#      puts "#{product['Prod_Name']} - #{product['Alt_Name'].inspect} (#{product['Web_Id']})"
-#      puts " Orig: #{product['Order_Info'].inspect}"
-#      puts " Rema: #{parse_info(product['Order_Info']).inspect}"
-#      sub.each do |prod|
-#        puts "  #{prod['Prod_Name']} - #{prod['Alt_Name'].inspect} (#{prod['Web_Id']})"
-#      end
-      
-      
-#      unless sub.empty?
-#        puts "    #{common}: #{parts.inspect}"
-        
-#        except = %w(Alt_Name Prod_Name Prod_Id update_dt INX Web_Id ParentItem)
-#        sub.each do |prod|
-#          prod.each do |key, value|
-#            if !except.include?(key) and product[key] != value
-#              puts "  -#{prod['Web_Id']}- #{key}: #{product[key].inspect} != #{value.inspect}"
-#            end
-#          end
-#        end
-#      end
-
-#      if product['HiRes'].include?('.tif')
-#        product_data['image-thumb'] = product_data['image-main'] = product_data['image-large'] = HiResImageFetch.new(product['HiRes'])
-#      end
-
-#      product_data['image-thumb'] = product_data['image-main'] = product_data['image-large'] = HiResImageFetch.new("http://www.lancopromo.com/images/hires/#{product_data['supplier_num'].downcase}.tif")
       product_data['image-thumb'] = product_data['image-main'] = product_data['image-large'] = HiResImageFetch.new("http://www.lancopromo.com/images/products/#{product_data['supplier_num'].downcase}/#{product_data['supplier_num'].downcase}.jpg")
             
       puts
 
       image_list = get_images(product['Web_Id'])
       puts "List #{product['Web_Id']}: #{image_list.inspect}"
-      image_list = image_list.collect { |img| ImageNode.new(img, "#{image_path(product['Web_Id'])}#{img}") }
+      image_list = image_list.collect { |img| ImageNodeFetch.new(img, "#{image_path(product['Web_Id'])}#{img}") }
 
       used_image_list = []
 
@@ -235,7 +192,7 @@ class LancoSOAP < GenericImport
           img.id.include?(color.gsub("Translucent ", '').downcase)
         end
         if images.length > 0
-          puts "MATCH: #{color} : #{images.join(', ')}"
+#          puts "MATCH: #{color} : #{images.join(', ')}"
           used_image_list += images
           color_image[color] = images
         else
@@ -254,7 +211,7 @@ class LancoSOAP < GenericImport
         price_data.merge!('fill' => fill_name ) unless sub.empty?
         
         color_image.collect do |color, images|
-          puts "Color: #{color}  Img: #{images && images.join(', ')}"
+#          puts "Color: #{color}  Img: #{images && images.join(', ')}"
           # For Each Variant
           { 'supplier_num' => prod['Web_Id'] + (color && "-#{color}").to_s,
             'color' => color,
@@ -271,8 +228,6 @@ class LancoSOAP < GenericImport
       end
       
       add_product(product_data)
-      
-#      puts "Variants: #{variants.inspect}"
     end
   end
   

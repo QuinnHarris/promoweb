@@ -774,10 +774,12 @@ class Product < ActiveRecord::Base
     end
 
     images.each do |img|
-      pi = product_images.create(:supplier_ref => img.id,
-                                 :image => img.get)
-      pi.image.reprocess!
-      pi.image.save
+      unless product_images.find_by_supplier_ref(img.id)
+        pi = product_images.create(:supplier_ref => img.id,
+                                   :image => img.get)
+        pi.image.reprocess!
+        pi.image.save
+      end
     end
 
     orig.each do |pi|
@@ -794,13 +796,18 @@ class Product < ActiveRecord::Base
         src.delete(match)
       else
         category = Category.get(d)
+#        unless Category.find_by_sql("SELECT * FROM categories_products WHERE category_id = #{d.id} AND product_id = #{id} AND pinned = 'false'").empty?
+          # Don't add pinned false products
+#          next
+#        end
+        category.pinned = nil # Effects product category many_many attribute
         categories << category
         added << category
       end
     end
 
     src.delete_if do |s|
-       Category.find_by_sql("SELECT * FROM categories_products WHERE category_id = #{s.id} AND product_id = #{id}").first.pinned
+      Category.find_by_sql("SELECT * FROM categories_products WHERE category_id = #{s.id} AND product_id = #{id}").first.pinned
     end
     
     src.each do |s|

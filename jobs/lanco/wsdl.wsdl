@@ -133,7 +133,7 @@
       <output message="typens:getCategoryResponse"/>
     </operation>
     <operation name="getSubCategory">
-      <documentation>This function will return a Given Category given a category_id</documentation>
+      <documentation>This function will return a Given SUB-Category given a subcategory_id</documentation>
       <input message="typens:getSubCategory"/>
       <output message="typens:getSubCategoryResponse"/>
     </operation>

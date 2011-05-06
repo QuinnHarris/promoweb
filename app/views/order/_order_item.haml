@@ -212,7 +212,7 @@
             %div= order_item.our_notes.gsub("\n", "<br/>")
           %div
             - if static
-              - unless order_item.blank?
+              - unless order_item.blank? || aspect == :cost
                 = order_item.customer_notes 
             - else
               = text_area "order_items[#{order_item.id}]", :customer_notes, { :cols => 60, :rows => 2, :value => order_item.customer_notes }
