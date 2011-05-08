@@ -229,7 +229,7 @@
                   :unit_name => tech.unit_name && tech.unit_name.capitalize,
                   :unit_default => tech.unit_default,
                   :locations => @decorations.collect do |dec|
-                    next unless dec.technique == tech and !dec.location.blank?
+                    next unless dec.technique == tech and !dec.display.blank?
                     { :id => dec.id, :display => dec.display, :limit => dec.limit }
                   end.compact,
                   :entries => price_group && price_group.entries.collect do |entry|

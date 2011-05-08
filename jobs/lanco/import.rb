@@ -91,6 +91,50 @@ class LancoSOAP < GenericImport
     
     { 'prices' => prices, 'costs' => costs }
   end
+
+  def decorations(product)
+    sizes = [product['Imprint_Size'], product['Imprint_Size2']].uniq.collect do |str|
+      parse_area(str)
+    end.compact
+    sizes = [{}] if sizes.empty?
+
+    product['Order_Info'].gsub('&nbsp;', ' ').scan(/(?:\n)?([\w\s]+)::?\s*\s*(.+?)(?:\r|$)/im).each do |name, str|
+      matches = [/add $(\d{2,3})(?:\(\w\))? +per color,? up to (\d) colors/im,
+                 /Set-? ?up +(?:charges?:?)? *(?:is )?\$ ?(\d{2,3})(?:\(\w\))?(?: per color,? up to +(\d) +colors)?/im,
+                 /\$(\d{2,3})(?:\(\w\))? +per +color,? up to +(\d) +colors/im,
+                 /Set-? ?up +charge:? +(?:per +color)?(?:\/?(?:per +)?location)? +\$(\d{2,3})/,
+                 /\$(\d{2,3})(?:\(\w\))? +set-up (?:charge)?(?: per color,? up to (\d) colors)?/im,
+                 /(?:re-?order)|(?:repeat)/im
+                ].collect do |regex|
+        whole, price, count = regex.match(str).to_a
+        whole && [str.index(whole), price, count]
+      end.compact.sort_by { |i, p, c| i }
+
+      unless matches.empty? or !matches.first[1]
+        setup = Float(matches.first[1])
+        limit = matches.first[2] && Integer(matches.first[2])
+      end
+
+      case str
+      when /running charge \$(\d{0,1}\.\d{2})/im 
+        running = Float($1)
+      when /\$(\d{0,1}\.\d{2})(?:\(\w\))? +running +charge/im
+        running = Float($1)
+      end
+
+      if setup == 45.0 && (limit == 1 || running == 0.2)
+        return [{'technique' => 'None',
+                  'location' => ''
+                }] + sizes.collect do |s|
+          s.merge({'technique' => 'Screen Print',
+                    'limit' => limit || 4,
+                    'location' => ''})
+        end
+      end
+    end
+
+    return []
+  end
   
   def process_products(products)
     supplier_nums = {} # Web_Id => (our ID) mapping
@@ -111,7 +155,7 @@ class LancoSOAP < GenericImport
       sub = sub_products[product['Web_Id']]
       common, parts = find_common_list(([product] + sub).collect { |p| p['Prod_Name'].gsub(/(?:w\/)|(?:with)/i,'') })
       
-      description = product['Prod_Description'] + "\n" + product['Order_Info']
+      description = product['Prod_Description'].strip + "\n" + product['Order_Info'].strip
       description.gsub!('&nbsp;',' ')
       description.gsub!(/\s*\n\s*/,"\n")
       
@@ -184,6 +228,10 @@ class LancoSOAP < GenericImport
       end
 
 
+      # Decorations
+      product_data['decorations'] = decorations(product)
+
+
       colors = product['ExtColors'].collect { |c| c.split(',') }.flatten.compact.collect { |c| c.strip }.sort
       puts "Colors: #{colors.inspect}"
       color_image = {}
@@ -206,7 +254,6 @@ class LancoSOAP < GenericImport
       
       product_data['variants'] = ([product] + sub).zip(parts).collect do |prod, fill_name|
         price_data = process_prices(prod)
-        puts "Prices: #{price_data.inspect}"
         price_data.merge!('dimension' => parse_volume(prod['Size_Description']))
         price_data.merge!('fill' => fill_name ) unless sub.empty?
         

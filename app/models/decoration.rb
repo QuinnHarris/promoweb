@@ -16,4 +16,8 @@ class Decoration < ActiveRecord::Base
   def display
     "#{location} (#{dimension_s})"
   end
+
+  def blank?
+    location.blank? && width.blank? && height.blank? && diameter.blank?
+  end
 end
