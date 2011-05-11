@@ -47,6 +47,7 @@ public
             if gi = GEOIP[request.remote_ip]
               attributes.merge!(:area_code => gi.area_code)
             end
+          rescue Net::GeoIP::RecordNotFoundError
           rescue
             # Rescue Everything
           end
