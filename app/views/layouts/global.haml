@@ -166,6 +166,8 @@
               = link_to "&#169;#{Time.now.year}, Mountain Xpress Promotions", { :controller => 'static', :action => 'copyright' }, :rel => 'nofollow'
 
     - unless @user
+      :plain
+        <!-- start RatePoint Site Seal - Please, do not change --><div id="ratepoint_dyn_seal"><a target="_blank" href="http://www.ratepoint.com/business-reviews.html?id=77047"><img src="//siteseal.ratepoint.com/77047/seal.png" width="0" height="0" border="0" alt="RatePoint Business Reviews"/></a></div><script type="text/javascript" src="//siteseal.ratepoint.com/77047/seal.js"></script><!-- end RatePoint Site Seal - Please, do not change -->
       %script{ :src => "http#{(request.protocol == 'https://') ? 's://ssl' : '://www'}.google-analytics.com/ga.js", :type => "text/javascript" }
       %script{ :type => "text/javascript" }
         var pageTracker = _gat._getTracker("UA-497959-1");
