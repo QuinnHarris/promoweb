@@ -444,7 +444,7 @@ var ProductPricing = Class.create(PricingBase, {
 
 	
 	    var params = $H(this.params).clone();
-	    for (var i = 0; i < mymins.length; i++) {
+	    for (var i = 0; i < Math.min(mymins.length, qty_row.childNodes.length-1); i++) {
 		var qty = mymins[i];
 
 		var unit = this.variantPrice(Object.extend(params, { quantity: qty }));
