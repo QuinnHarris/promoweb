@@ -280,10 +280,10 @@ div.tabs ul li {
 }
 div#header div.tabs ul li {
     background-color: #ccc0ce;
-    background: -moz-linear-gradient(top, rgba(237,229,239,32), #ccc0ce);
-    background: -webkit-linear-gradient(top, rgba(237,229,239,32), #ccc0ce);
-    background: -o-linear-gradient(top, rgba(237,229,239,32), #ccc0ce);
-    background: linear-gradient(top, rgba(237,229,239,32), #ccc0ce);
+    background: -moz-linear-gradient(top, rgba(237,229,239,1), #ccc0ce);
+    background: -webkit-linear-gradient(top, rgba(237,229,239,1), #ccc0ce);
+    background: -o-linear-gradient(top, rgba(237,229,239,1), #ccc0ce);
+    background: linear-gradient(top, rgba(237,229,239,1), #ccc0ce);
     border: none;
 }
 
@@ -294,10 +294,10 @@ div.tabs ul li.sel {
 
 div#header div.tabs ul li.sel, div#header div.tabs ul li:hover {
     background-color: #ded8df;
-    background: -moz-linear-gradient(top, rgba(242,236,242,32), #ded8df);
-    background: -webkit-linear-gradient(top, rgba(242,236,242,32), #ded8df);
-    background: -o-linear-gradient(top, rgba(242,236,242,32), #ded8df);
-    background: linear-gradient(top, rgba(242,236,242,32), #ded8df);
+    background: -moz-linear-gradient(top, rgba(242,236,242,1), #ded8df);
+    background: -webkit-linear-gradient(top, rgba(242,236,242,1), #ded8df);
+    background: -o-linear-gradient(top, rgba(242,236,242,1), #ded8df);
+    background: linear-gradient(top, rgba(242,236,242,1), #ded8df);
 }
 
 div.tabs ul li.active, div.tabs ul li:hover {

@@ -24,6 +24,7 @@ Rails::Initializer.run do |config|
 #  config.gem 'money'
   config.gem 'uuidtools'
   config.gem 'haml'
+  config.gem 'sass'
   config.gem 'activemerchant', :lib => 'active_merchant'
   config.gem 'foreigner'
   config.gem 'acts_as_tree'
