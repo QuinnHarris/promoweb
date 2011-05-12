@@ -322,7 +322,7 @@ class GenericImport
   def cache_marshal(name, predicate = nil)
     file_name = cache_file(name)
     if cache_exists(file_name)
-      unless predicate and File.mtime(predicate) > File.mtime(file_name)
+      unless predicate and [predicate].flatten.find { |p| File.mtime(p) > File.mtime(file_name) }
         return cache_read(file_name)
       end
     end
@@ -333,7 +333,7 @@ class GenericImport
   end
   
   def run_parse_cache
-    @product_list = cache_marshal("#{@supplier_record.name}_parse", @src_file) do
+    @product_list = cache_marshal("#{@supplier_record.name}_parse", @src_file || @src_files) do
       run_parse
       @product_list
     end  

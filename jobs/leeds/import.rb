@@ -317,6 +317,7 @@ end
 class LeedsXLS < GenericImport
   def initialize(files, decoration)
     @prod_files, @dec_file = files, decoration
+    @src_files = files + [decoration]
     super "Leeds"
   end
   
