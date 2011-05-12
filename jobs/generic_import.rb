@@ -372,11 +372,15 @@ private
     end  
   end
   
-public 
+public
+  def run_apply_single(supplier_num)
+    product = @product_list.find { |prod| prod['supplier_num'] == supplier_num }
+    apply_product(product)
+  end
+
   def run_apply(cleanup = true)
     product_ids = @product_list.collect { |prod| apply_product(prod).id }
     run_cleanup(product_ids) if cleanup
-    self.class.write_ids
   end
   
   def run_transform

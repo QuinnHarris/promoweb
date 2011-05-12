@@ -281,7 +281,11 @@ class HighCaliberLine < GenericImport
       elsif row.get_elements('desp1').first.get_text.to_s.strip.include?('19 Standard Neoprene')
         color_list = %w(Maroon Red Grey Orange Gold Yellow Teal Bright\ Pink Bright\ Green Pink Bright\ Orange Purple Green Deep\ Royal Royal Navy White Charcoal Black)
       else
-        color_list = color_str.split(/\s*(?:(?:\s+or\s+)|(?:\s+and\s+)|,|\.|(?:Trims?\.?))\s*/)
+        if color_str.include?('and') and color_str.include?('or')
+          color_list = color_str.split(/\s*(?:(?:\s+or\s+)|,|\.|(?:Trims?\.?))\s*/)
+        else
+          color_list = color_str.split(/\s*(?:(?:\s+or\s+)|(?:\s+and\s+)|,|\.|(?:Trims?\.?))\s*/)
+        end
         #      puts " Color: #{color_str.inspect} => #{color_list.inspect}"
       
         color_list << nil if color_list.empty? # Always need one variant

@@ -932,7 +932,7 @@ class Product < ActiveRecord::Base
       
       diff_prices = src_group.diff_prices(dst_data)
 
-      next unless diff_prices or !src_only.empty? or !src_only.empty?
+      next unless diff_prices or !src_only.empty? or !dst_only.empty?
       
       product_log << "  #{source ? source.name : 'Cost'} Changed: "
       product_log << "-(" + src_only.collect { |s| s.supplier_num }.join(',') + ") " unless src_only.empty?
