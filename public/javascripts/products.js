@@ -74,7 +74,7 @@ var PricingBase = Class.create({
 
 	    var count_limit = this._decorationCountLimit(params, dec);
     
-	    dec.entries.reverse().find(function(entry) {
+	    (dec.entries || []).reverse().find(function(entry) {
 		    if (params.dec_count && entry.minimum > params.dec_count)
 			return;
 	    

@@ -258,7 +258,7 @@ class ReconciledItemTask < OrderItemTask
 #  def status; false; end
 #  def admin; true; end
   def execute_duration
-    2.days
+    5.days
   end
 
   def complete_estimate
