@@ -9,8 +9,9 @@
 - product_list = order_item.send("list_#{aspect}")
 - rows += 1 unless product_list.fixed.nil? or product_list.fixed.zero?
 
+- fixed = 0
 - decorations = order_item.decorations.find_all { |d| list = d.send("list_#{aspect}"); !(d.technique_id == 1 && list.marginal.zero? && list.fixed.zero?) }
-- rows += decorations.length
+- rows += decorations.collect { |d| decoration_list = d.send("list_#{aspect}"); f = ((decoration_list.fixed.nil? or decoration_list.fixed.zero?) ? 0 : 1); fixed += f; [f, ((decoration_list.marginal.nil? or decoration_list.marginal.zero?) ? 0 : 1)] }.flatten.sum
 
 - unit_entries = []; fixed_entries = []
 - order_item.entries.each do |entry|
@@ -22,6 +23,8 @@
 - rows += 1 if additional_setup = (unit_entries.empty? and !invoice and order_item.decorations.empty? and !order_item.task_completed?(ArtExcludeItemTask))
 - rows += unit_entries.length
 - rows += fixed_entries.length
+- fixed += fixed_entries.find_all { |e| e.send(aspect).marginal }.length
+- fixed = (fixed > 1)
 
 - list_shipping = order_item.send("list_shipping_#{aspect}")
 - has_shipping = order_item.shipping_type && !((order_item.shipping_type == 'NONE') and list_shipping.zero?)
@@ -39,7 +42,8 @@
             = link_to(image_tag('remove.png') + "Remove", { :action => :item_remove, :id => order_item }, :confirm => "Remove #{order_item.product.name}")
         %td Description
         %td Unit
-        %td Fixed
+        - if fixed
+          %td Fixed
         %td Total
     %tbody
       %tr
@@ -77,12 +81,13 @@
             = order_item.quantity
             units)
         %td.num= (unit_sum = MyRange.new(product_list.marginal)).to_perty
-        %td
+        - if fixed
+          %td
         %td.num= (unit_sum * order_item.quantity).to_perty
 
       - unless oivs.empty?
         %tr
-          %td{ :colspan => 7 }
+          %td{ :colspan => fixed ? 7 : 6 }
             %dl.variants
               %dt
                 - reset_cycle
@@ -114,34 +119,52 @@
               Charge for less than
               = order_item.price_group.minimum
               units
-          %td
+          - if fixed
+            %td
           %td.num= total_sum.to_perty
           %td.num= total_sum.to_perty
       - for decoration in decorations
-        %tr
-          %td
-            = decoration.description
-            - if decoration.count
-              for
-              = decoration.count
-              - if decoration.technique.unit_name
-                = decoration.count > 1 ? decoration.technique.unit_name.pluralize : decoration.technique.unit_name
-          %td.num
-            - decoration_list = decoration.send("list_#{aspect}")
-            - unit_sum += decoration_list.marginal unless unit_sum.nil?
-            = decoration_list.marginal.to_perty
-          %td.num
+        - decoration_list = decoration.send("list_#{aspect}")
+        - unit_sum += decoration_list.marginal unless unit_sum.nil?
+        - unless decoration_list.marginal.nil? or decoration_list.marginal.zero?
+          %tr
+            %td
+              = decoration.description
+              - if decoration.count
+                for
+                = decoration.count
+                - if decoration.technique.unit_name
+                  = decoration.count > 1 ? decoration.technique.unit_name.pluralize : decoration.technique.unit_name
+              Unit
+            %td.num= decoration_list.marginal.to_perty
+            - if fixed
+              %td
+            %td.num= (decoration_list.marginal * order_item.quantity).to_perty
+        - unless decoration_list.fixed.nil? or decoration_list.fixed.zero?
+          %tr
+            %td
+              = decoration.description
+              - if decoration.count
+                for
+                = decoration.count
+                - if decoration.technique.unit_name
+                  = decoration.count > 1 ? decoration.technique.unit_name.pluralize : decoration.technique.unit_name
+              Setup
+            %td
             - total_sum += decoration_list.fixed unless total_sum.nil?
-            = decoration_list.fixed.to_perty
-          %td.num= (decoration_list.marginal * order_item.quantity + decoration_list.fixed).to_perty
+            - if fixed
+              %td.num= decoration_list.fixed.to_perty
+            %td.num= decoration_list.fixed.to_perty
+            /%td.num= (decoration_list.marginal * order_item.quantity + decoration_list.fixed).to_perty
       - if additional_setup
         %tr
           %td
             %strong Additional imprint charges WILL apply!
           %td.num
             %strong $**.**
-          %td.num
-            %strong $**.**
+          - if fixed
+            %td.num
+              %strong $**.**
           %td.num
             %strong $**.**
       - for entry in unit_entries
@@ -151,27 +174,29 @@
           %td= entry.description
           - unit_sum += list.marginal
           %td.num= blank || list.marginal.to_perty
-          %td.num
-            - unless list.fixed.nil?
-              - total_sum += list.fixed
-              = blank || list.fixed.to_perty
+          - if fixed
+            %td.num
+              - unless list.fixed.nil?
+                - total_sum += list.fixed
+                = blank || list.fixed.to_perty
           %td.num= blank || (list.marginal * order_item.quantity + list.fixed).to_perty
       %tr.num.total
         %th
         %td= unit_sum.to_perty
-        %td= total_sum.to_perty
+        - if fixed
+          %td= total_sum.to_perty
         - total_sum += unit_sum * order_item.quantity
         %td= total_sum.to_perty
       - for entry in fixed_entries
         - list = entry.send(aspect)
         %tr
-          %td{ :colspan => 3 }= entry.description
+          %td{ :colspan => fixed ? 3 : 2 }= entry.description
           - total_sum += list.fixed
           %td.num= list.fixed.to_perty
           
       - if has_shipping
         %tr
-          %td{ :colspan => 3 }
+          %td{ :colspan => fixed ? 3 : 2 }
             - unless aspect == :cost
               Estimated
             Shipping:
@@ -183,29 +208,34 @@
           %td
             %strong Additional shipping charges WILL apply!
           %td
-          %td
+          - if fixed
+            %td
           %td.num
             %strong $**.**
       - if tail
         %tr
-          %th{ :colspan => 3 } Sub Total:
+          %th{ :colspan => fixed ? 3 : 2 } Sub Total:
           %td.num= total_sum.to_perty
         %tr
-          %th{ :colspan => 3 }= tail.first
+          %th{ :colspan => fixed ? 3 : 2 }= tail.first
           %td.num.total= tail.last
-      %tr
-        %td{ :colspan => tail ? 3 : 2 }
-          - unless static
-            = check_box "order_items[#{order_item.id}]", :sample_requested, :checked => order_item.sample_requested
-            Request Sample
-        - unless tail
-          %td.num= (total_sum / order_item.quantity).to_perty
+      - unless tail
+        %tr
+          %td{ :colspan => (tail ? 3 : 2) + (fixed ? 1 : 0) }
+            - unless static
+              = check_box "order_items[#{order_item.id}]", :sample_requested, :checked => order_item.sample_requested
+              Request Sample
           %th Total:
           %td.num.total= total_sum.to_perty
+        - if !total_sum.zero? and order_item.quantity > 1
+          %tr
+            %td{ :colspan => (tail ? 1 : 0) + (fixed ? 1 : 0) }
+            %th{ :colspan => fixed ? 3 : 2 } Total per Unit:
+            %td.num= (total_sum / order_item.quantity).to_perty
 
 
       %tr
-        %td{ :colspan => tail ? 6 : 5 }
+        %td{ :colspan => (tail ? 5 : 6) + (fixed ? 1 : 0) }
           - unless static and order_item.our_notes.blank?
             %h3 Notes
           - unless order_item.our_notes.blank?

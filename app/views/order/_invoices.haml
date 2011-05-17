@@ -141,7 +141,8 @@
         - else
           - if invoice.comment and !invoice.comment.empty?
             %h3 Notes
-            %p= invoice.comment
+            - for line in invoice.comment.split("\n").compact
+              %p= line
     - else
       %h3
         Payment:
