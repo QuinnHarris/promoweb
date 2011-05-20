@@ -20,7 +20,7 @@ class Admin::SuppliersController < Admin::BaseController
     end
 
     @title = "Supplier: #{@supplier.name}"
-    @static = !@permissions.include?('Super')
+    @static = false #!@permissions.include?('Super')
     
     if request.post?
       Supplier.transaction do
