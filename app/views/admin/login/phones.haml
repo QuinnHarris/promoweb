@@ -1,0 +1,22 @@
+%h1 Phones for #{@user.name}
+
+- [ProvSIPPhone, ExternalPhone, CustSIPPhone].each do |type|
+  %div= link_to "Add #{type.common_name}", :action => :phone, :type => type
+
+%table
+  %thead
+    %tr
+      %td Type
+      %td Name
+      %td Identifier
+      %td Options
+  %tbody
+    - for phone in @user.phones
+      %tr
+        %td= phone.common_name
+        %td= phone.friendly
+        %td= phone.identifier
+        %td= [phone.direct_only ? 'Direct Only' : nil, phone.timeout && "Timeout: #{phone.timeout}"].compact.join(',')
+        %td= link_to 'Edit', { :action => :phone, :id => phone }
+
+        
