@@ -1,11 +1,5 @@
 [USER_ACCOUNT]
-Displayname = 
-Phone_Number =
-User_ID =
-User_Password =
-
-[SERVER_SETTINGS]
-1st_Proxy =
-2nd_Proxy =
-Domain_Realm =
-Register_Expire = 3600
+Displayname = <%= @phone.user.name %>
+Phone_Number = <%= @phone.user.phone %>
+User_ID = <%= @phone.username %>
+User_Password = <%= @phone.password %>

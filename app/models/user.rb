@@ -8,6 +8,7 @@ class User < ActiveRecord::Base
   belongs_to :current_order, :class_name => 'Order', :foreign_key => 'current_order_id'
   has_many :orders
   has_many :commissions
+  has_many :phones
 
   def email
     self['email'] || (!new_record? && "#{login}@mountainofpromos.com")
@@ -21,6 +22,11 @@ class User < ActiveRecord::Base
     return self['phone'] if self['phone']
     return "970-375-1900 #{extension_s}" if extension
     nil
+  end
+
+  def phone_id
+    return self['phone'] if self['phone']
+    "9703751900"
   end
 
   # Please change the salt to something else, 

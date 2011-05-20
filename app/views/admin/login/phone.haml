@@ -1,10 +1,12 @@
-%h1 #{@phone.new_record? ? 'Add' : 'Change'} #{@phone.common_name} Phone
+%h1 #{@phone.new_record? ? 'Add' : 'Change'} #{@phone.common_name} Phone for #{@user.name}
 
 = error_messages_for :phone
 
 - form_for :phone, @phone do |phone|
   - if @phone.new_record?
     %input{ :type => 'hidden', :name => 'type', :value => params[:type] }
+  - if params[:user_id]
+    %input{ :type => 'hidden', :name => 'user_id', :value => params[:user_id] }
   - if @phone.is_a?(CustSIPPhone)
     = phone.hidden_field(:password, :value => @phone.password)
 

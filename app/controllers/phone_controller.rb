@@ -249,4 +249,17 @@ class PhoneController < ActionController::Base
 
     render :json => { :text => texts.join(' - '), :uri => uri && url_for(uri.merge({ :protocol => (RAILS_ENV == "production" ? 'https://' : 'http://') })) }
   end
+
+  Phone
+  def unidata
+    raise "Unknown name" unless /e1_([0-9a-f]{12})\.ini/ === params[:name]
+    @phone = ProvSIPPhone.find_by_identifier($1)
+  end
+
+  def directory
+    @users = User.find(:all, :include => :phones,
+                       :conditions => "extension IS NOT NULL")
+
+    @active = @users.collect { |u| u.phones }.flatten.find_all { |p| !p.direct_only }
+  end
 end

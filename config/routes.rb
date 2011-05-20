@@ -52,4 +52,7 @@ ActionController::Routing::Routes.draw do |map|
   # Install the default route as the lowest priority.
   map.connect ':controller/:action/:id.:format'
   map.connect ':controller/:action/:id'
+
+  # Unidata Provisioning
+  map.connect ':name', :controller => '/phone', :action => 'unidata', :name => /e1_[0-9a-f]{12}.ini/, :conditions => { :method => :get }
 end

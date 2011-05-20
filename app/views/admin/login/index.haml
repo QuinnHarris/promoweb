@@ -12,7 +12,10 @@
   %tbody
     - for user in @users
       %tr
-        %td= link_to 'Edit', :action => :edit, :id => user
+        %td
+          = link_to 'Edit', :action => :edit, :id => user
+          ,
+          = link_to 'Phone', :action => :phones, :id => user
         %td= user.login
         %td= user.name
         %td= user.email

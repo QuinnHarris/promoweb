@@ -87,6 +87,7 @@
                     - if allowed?('Super')
                       = li_to 'Users', {:controller => '/admin/login', :action => 'index'}
                       = li_to 'Quickbooks', {:controller => '/admin/system/quickbooks_blocked', :action => 'index'}
+                    = li_to 'Phones', {:controller => '/admin/login', :action => :phones }
                     = li_to 'Password', {:controller => '/admin/login', :action => :password }
                     = li_to 'Other', { :controller => '/admin/login', :action => :other }
               - elsif @order

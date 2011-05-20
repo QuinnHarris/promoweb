@@ -4,12 +4,14 @@ class Phone < ActiveRecord::Base
 
   validates_uniqueness_of :friendly, :scope => :user_id
   validates_length_of :friendly, :minimum => 3
+
+  def username
+    "#{user.login}#{id}"
+  end
+
 end
 
 class SIPPhone < Phone
-  def username
-    "#{user.login}-#{id}"
-  end
 end
 
 class CustSIPPhone < SIPPhone
@@ -38,7 +40,7 @@ class ProvSIPPhone < SIPPhone
 
   before_save :normalize_mac
   def normalize_mac
-    attributes['identifier'].upcase!
+    self.identifier.downcase!
   end
 end
 

@@ -100,7 +100,7 @@
                       - if @user and transaction.method.refundable?
                         - if method.creditable? == transaction
                           %td Refunding
-                        - elsif transaction.is_a?(PaymentCharge)
+                        - elsif transaction.is_a?(PaymentCharge) and @order.total_billable.to_i > 0
                           %td= link_to "Refund", { :order_id => @order, :txn_id => transaction.id }
 
   %hr

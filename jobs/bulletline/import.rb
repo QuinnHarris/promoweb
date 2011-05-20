@@ -211,7 +211,7 @@ class BulletLine < GenericImport
       (1..6).each do |num|
         dec_string = @data.get(row, "Deco#{num}Location")
         next unless dec_string and !dec_string.blank?
-        unless /^((?:Silkscreened)|(?:Laser Engraved)|(?:Debossed)|(?:Heat Transferred)),?\s*(.*?)\s*\:\s*(.+?)(?:\((.+)\))?$/i === dec_string
+        unless /^((?:Silkscreened)|(?:Laser Engraved)|(?:Debossed)|(?:Heat Transferred)),?\s*(.*?)\s*\:\s*(.+?)\v?(?:\((.+)\))?\s*$/i === dec_string
           puts "Unkown Dec: #{dec_string.inspect}"
           next
         end
@@ -219,6 +219,7 @@ class BulletLine < GenericImport
         technique_str, location, area_str, misc = $1, $2, $3, $4
         technique, limit = @@decoration_replace[technique_str.downcase]
         raise "Unknown Technique: #{technique_str} : #{dec_string.inspect}" unless technique
+        area_str.gsub(/\\v$/,'')
         unless area = parse_area2(area_str)
           puts "Unkown Area: #{product['supplier_num']}: #{dec_string.inspect}"
           next
@@ -226,6 +227,8 @@ class BulletLine < GenericImport
         location ||= placement
 
         technique = technique + " - Level #{decoration_level}" if decoration_level and technique == 'Screen Print'
+
+        puts "Prod: #{product['supplier_num']}: #{technique}"
 
         decorations << {
           'technique' => technique,
