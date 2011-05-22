@@ -12,8 +12,6 @@ table.list td {
   background-color: white;
   text-align: center;
   width: 1%; /* Make all columns same width */
-  -moz-border-radius: 1em;
-  border-radius: 1em;
 }
 
 span#order { margin-left: 1em; font-weight: normal; font-size: 0.8em; }
@@ -34,15 +32,8 @@ div.pagination a.sel, div.pages a:hover { background-color: #E0E0EF; }
 div.category {
   margin: 1em;
   border: none;
-
-  background-color: #816f86;
-  background-image: url('/images/grads/head.png');
-  background-repeat: repeat-x;
-
+  background-color: #332717;
   padding: 0 0.2em 0.2em 0.2em;
-
-  -moz-border-radius: 1.2em;
-  border-radius: 1.2em;
 }
 
 div.category tr td { padding: 0; margin: 0; }
@@ -53,20 +44,16 @@ div.category table td { border: none; }
 
 div.category a.title {
   display: block;
-  color: #332735;
+  color: white;
   font-size: 1.2em;
   font-weight: bold;
   white-space: nowrap;
 
   padding: 0.25em;
   padding-left: 20px;
-
-  background-color: none;
-  background-image: url('/images/grads/head-main.png');
-  background-repeat: repeat-y;
 }
 div.category a.title:hover {
-  background-image: url('/images/grads/head-main-hover.png');
+  background-color: #524430;
 }
 
 div.category div.tags {
@@ -77,35 +64,42 @@ div.category div.tags {
   white-space: nowrap;
   margin-left: 16em;
   margin-bottom: 0.5em;
+
 }
 div.category div.tags a {
-    color: black; padding: 0.25em;   
-    border: thin solid #666;
-    -moz-border-radius: 0.6em;
-    border-radius: 0.6em;
+    color: black;
+    padding: 0.25em;   
 
-  background-color: #a293a6;
-  background-image: url('/images/grads/head-link.png');
-  background-repeat: repeat-x;
+  -moz-border-radius: 0.6em;
+  border-radius: 0.6em;
+  
+    background-color: #E0E0E0;
+    background: -moz-linear-gradient(top, white, #E0E0E0 50%, #D0D0D0 50%, #E0E0E0);
+    background: -webkit-linear-gradient(top, white, #E0E0E0 50%, #D0D0D0 50%, #E0E0E0);
+    background: -o-linear-gradient(top, white, #E0E0E0 50%, #D0D0D0 50%, #E0E0E0);
+    background: linear-gradient(top, white, #E0E0E0 50%, #D0D0D0 50%, #E0E0E0);
+
 }
 div.category div.tags a:hover {
-  background-image: url('/images/grads/head-link-hover.png');
+    background-color: #D0D0D0;
+    background: -moz-linear-gradient(bottom, white, #E0E0E0 50%, #D0D0D0 50%, #E0E0E0);
+    background: -webkit-linear-gradient(bottom, white, #E0E0E0 50%, #D0D0D0 50%, #E0E0E0);
+    background: -o-linear-gradient(bottom, white, #E0E0E0 50%, #D0D0D0 50%, #E0E0E0);
+    background: linear-gradient(bottom, white, #E0E0E0 50%, #D0D0D0 50%, #E0E0E0);
+
 }
 div.category div.tags img { margin: 0 0.25em -3px 0; }
 
 table.breaks { width: 100%; }
-table.breaks tr td { background-color: #F0F0FF; white-space: nowrap; text-align: center; font-size: 0.9em; }
-table.breaks tr td a { display: block; color: #000060; padding: 0.25em 0.5em 0.25em 0.5em; }
-table.breaks tr td a:hover { background-color: #E0E0FF; }
+table.breaks tr td { background-color: #c7e7e1; white-space: nowrap; text-align: center; font-size: 0.9em; }
+table.breaks tr td a { display: block; color: #20190f; padding: 0.25em 0.5em 0.25em 0.5em; }
+table.breaks tr td a:hover { background-color: #c7e7e1; }
 
 
 div#description {
   margin-left: 1em;
   margin-right: 1em;
-  border: thin solid #916877;
   padding: 0.5em 1em 0.5em 1em;
-  border-radius: 1em;
-  -moz-border-radius: 1em;
   font-size: small;
 }
 
@@ -115,14 +109,11 @@ div#virtues {
   margin-right: 1em;
 }
 div#virtues div {
-  border-left: medium solid #916877;
-  border-right: medium solid #916877;
-  border-bottom: medium solid #916877;
+  border-left: medium solid #332717;
+  border-right: medium solid #332717;
+  border-bottom: medium solid #332717;
   margin: 0;
   margin-bottom: 0.5em;
-  -moz-border-radius: 0 0 1em 1em;
-  border-bottom-left-radius: 1em;
-  border-bottom-right-radius: 1em;
 }
 div#virtues div h2 {
   text-align: center;
@@ -131,10 +122,7 @@ div#virtues div h2 {
   padding-left: 0.25em;
 
   color: white;
-  background-color: #916877;
-  background-image: url('/images/grads/home.png');
-  background-repeat: repeat-y;
-  background-position: center;
+  background-color: #332717;
 }
 div#virtues div p {
   font-size: small;
@@ -150,9 +138,6 @@ div#reviews {
   padding-right: 0.5em;
   padding-bottom: 0.5em;
   background-color: #916877;
-  -moz-border-radius: 0 0 1em 1em;
-  border-bottom-left-radius: 1em;
-  border-bottom-right-radius: 1em;
 }
 div#reviews h2 {
   text-align: center;
@@ -162,15 +147,11 @@ div#reviews h2 {
 
   color: white;
   background-color: #916877;
-  background-image: url('/images/grads/home.png');
-  background-repeat: repeat-y;
   background-position: center;
 }
 div#reviews table {
   background-color: white;
   border: medium solid #916877;
-  -moz-border-radius: 1em;
-  border-radius: 1em;
   width: 100%;
 }
 div#reviews table td {
