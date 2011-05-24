@@ -9,10 +9,6 @@ div#header {
     display: block;
     position: relative;
     padding: 0;
-    background: -moz-linear-gradient(left, white, #f1f1ff, white);
-    background: -webkit-linear-gradient(left, white, #f1f1ff, white);
-    background: -o-linear-gradient(left, white, #f1f1ff, white);
-    background: linear-gradient(left, white, #f1f1ff, white);
     min-width: 40em;
 }
 
@@ -33,7 +29,7 @@ div#leftbar div {
  margin-bottom: 1em;
  font-family: Verdana, Lucida, Geneva, Helvetica, Arial, sans-serif;
  font-size: 0.8em;
- background-color: #e9e0ea;
+ background-color: white;
  color: #333;
 }
 
@@ -44,9 +40,7 @@ div#leftbar div .head {
   padding-left: 0.5em;
   padding-top: 0.25em;
   padding-bottom: 0.25em;
-  background-color: #9b929d;
-  background-image: url('/images/grads/top.png');
-  background-repeat: repeat-y;
+  background-color: #332717;
   color: white;
   margin-bottom: 0.5em;
 }
@@ -56,8 +50,7 @@ div#leftbar div .head {
 }
 
 div#leftbar div a.head:hover {
-  background-color: #a79fa9;
-  background-image: url('/images/grads/top-hover.png');
+  background-color: #524430;
 }
 
 
@@ -74,8 +67,6 @@ div#leftbar div > ul {
 
  
 div#leftbar div ul li {
- border-bottom: 1px solid #e9e0ea;
- margin-top: 1px;
  margin: 0;
  position: relative;
 }
@@ -103,20 +94,16 @@ div#leftbar div li:hover > ul {
  
 div#leftbar div li a {
   display: block;
+  border-left: 2px solid #9dbcbc;
   padding: 0px 5px 2px 5px;
-  border-left: 5px solid #6d5771;
-  background-color: #ccc0ce;
-  background-image: url('/images/grads/link.png');
-  background-repeat: repeat-y;
+  background-color: #c7e7e1;
   color: black;
   text-decoration: none;
   white-space: nowrap;
 }
 
  div#leftbar div li a:hover, div#leftbar div li.sel > a {
-  border-left: 5px solid #7f6c82;
-  background-color: #d4cad6;
-  background-image: url('/images/grads/link-hover.png');
+  background-color: #eaf9fa;
   background-repeat: repeat-y;
   color: #black;
 }
@@ -124,7 +111,7 @@ div#leftbar div li a {
 a { text-decoration: none;}
 a.thumb { text-align: center; font-size: 0.8em; }
 a.thumb span { display: block; color: black; }
-a.thumb span.price { font-size: 0.9em; color: #600000; }
+a.thumb span.price { font-size: 0.9em; color: #6c1b0a; }
 a.thumb:hover span { text-decoration: underline; }
 
 /* Content */
@@ -132,23 +119,21 @@ div#content {
   display: block;
   clear: both;
   position: relative;
-  border-top: medium solid #d4cad6;
-  border-left: medium solid #d4cad6;
-  border-bottom: medium solid #d4cad6;
 }
 
 h1#path {
-  background-color: #6d5771;
-  background-image: url('/images/grads/title.png');
-  background-repeat: repeat-y;
+  background-color: #332717;
+  color: white;
   font-size: 1.0em;
   margin: 0 0 0.5em 0;
   padding: 0.2em 0 0.2em 0.5em;
-  color: black;
+}
+
+h1#path a {
+	color: white;
 }
 
 h1#path a:hover, h1#path a.sel {
-  background-image: url('/images/grads/title-hover.png');
   background-repeat: repeat-x;
 }
 
@@ -158,11 +143,8 @@ span#num {
   margin-right: 0.25em;
   padding-left: 0.5em;
   padding-right: 0.5em;
-  color: #6d5771;
-  background-color: white;
+  color: white;
   font-weight: bold;
-  -moz-border-radius: 1em;
-  border-radius: 1em; 
 }
 
 /* from scaffold */
@@ -279,12 +261,11 @@ div.tabs ul li {
   border-top-right-radius: 1em;
 }
 div#header div.tabs ul li {
-    background-color: #ccc0ce;
-    background: -moz-linear-gradient(top, rgba(237,229,239,1), #ccc0ce);
-    background: -webkit-linear-gradient(top, rgba(237,229,239,1), #ccc0ce);
-    background: -o-linear-gradient(top, rgba(237,229,239,1), #ccc0ce);
-    background: linear-gradient(top, rgba(237,229,239,1), #ccc0ce);
+    background-color: #ff370f;
     border: none;
+}
+div#header div.tabs ul li a {
+	color: white;
 }
 
 div.tabs ul li.sel {
@@ -293,11 +274,7 @@ div.tabs ul li.sel {
 }
 
 div#header div.tabs ul li.sel, div#header div.tabs ul li:hover {
-    background-color: #ded8df;
-    background: -moz-linear-gradient(top, rgba(242,236,242,1), #ded8df);
-    background: -webkit-linear-gradient(top, rgba(242,236,242,1), #ded8df);
-    background: -o-linear-gradient(top, rgba(242,236,242,1), #ded8df);
-    background: linear-gradient(top, rgba(242,236,242,1), #ded8df);
+    background-color: #f45434;
 }
 
 div.tabs ul li.active, div.tabs ul li:hover {
@@ -369,8 +346,7 @@ div#search {
     width: 18em;
 
     background-color: white;
-    border: medium solid #d4cad6;
-    border-bottom: none;
+    border: medium solid #332717;
 
     -moz-border-radius: 0.5em 0.5em 0 0;
     border-top-left-radius: 1em;
@@ -402,19 +378,19 @@ div#search input#submit {
     border: #D0FFD0;
     -moz-border-radius: 0.5em;
     border-radius: 0.5em;
-    background-color: #E8E0E0;
-    background: -moz-linear-gradient(top, white, #E8E0E0 50%, #D8D0D0 50%, #E8E0E0);
-    background: -webkit-linear-gradient(top, white, #E8E0E0 50%, #D8D0D0 50%, #E8E0E0);
-    background: -o-linear-gradient(top, white, #E8E0E0 50%, #D8D0D0 50%, #E8E0E0);
-    background: linear-gradient(top, white, #E8E0E0 50%, #D8D0D0 50%, #E8E0E0);
+    background-color: #E0E0E0;
+    background: -moz-linear-gradient(top, white, #E0E0E0 50%, #D0D0D0 50%, #E0E0E0);
+    background: -webkit-linear-gradient(top, white, #E0E0E0 50%, #D0D0D0 50%, #E0E0E0);
+    background: -o-linear-gradient(top, white, #E0E0E0 50%, #D0D0D0 50%, #E0E0E0);
+    background: linear-gradient(top, white, #E0E0E0 50%, #D0D0D0 50%, #E0E0E0);
 }
 
 div#search input#submit:hover {
-    background-color: #D8D0D0;
-    background: -moz-linear-gradient(bottom, white, #E8E0E0 50%, #D8D0D0 50%, #E8E0E0);
-    background: -webkit-linear-gradient(bottom, white, #E8E0E0 50%, #D8D0D0 50%, #E8E0E0);
-    background: -o-linear-gradient(bottom, white, #E8E0E0 50%, #D8D0D0 50%, #E8E0E0);
-    background: linear-gradient(bottom, white, #E8E0E0 50%, #D8D0D0 50%, #E8E0E0);
+    background-color: #D0D0D0;
+    background: -moz-linear-gradient(bottom, white, #E0E0E0 50%, #D0D0D0 50%, #E0E0E0);
+    background: -webkit-linear-gradient(bottom, white, #E0E0E0 50%, #D0D0D0 50%, #E0E0E0);
+    background: -o-linear-gradient(bottom, white, #E0E0E0 50%, #D0D0D0 50%, #E0E0E0);
+    background: linear-gradient(bottom, white, #E0E0E0 50%, #D0D0D0 50%, #E0E0E0);
 }
 
 div#search form {

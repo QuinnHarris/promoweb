@@ -12,35 +12,6 @@
       %h2 Rush
       %p Need a product right away?  We can ship many of our products imprinted within 24 hours after you order.  And many at no additional charge.
 
-  #reviews
-    %h2 Customer Reviews
-    - for review in @reviews[0..4]
-      %table
-        %tr
-          - if review.show_products
-            - for product in review.object.items.collect { |i| i.product }
-              %td{ :rowspan => '2' }
-                %a.thumb{ :href => url_for_product(product) }
-                  = image_tag product.image_path_relative('thumb'), :alt => "#{product.name} Thumbnail"
-
-          %td.rating{ :rowspan => '2' }
-            - for name, method in ReviewOrderTask.aspect_names.zip(ReviewOrderTask.aspect_methods)
-              - if rate = review.send(method)
-                %div
-                  - rate.times do
-                    = image_tag('star_full.png')
-                  - (5 - rate).times do
-                    = image_tag('star_empty.png')
-                  = name
-          %td.comment
-            = review.comment
-
-        - if review.show_company || review.show_person
-          %tr
-            %td.name
-              &#8212;
-              = %w(person company).collect { |n| review.send("show_#{n}") ? review.object.customer.send("#{n}_name") : nil }.compact.join(', ')
-
   #categories
     - for category, tag, count in @categories
       = render :partial => 'categories/category', :locals => { :category => category, :display_name => category.name_web, :path => category.path_web, :to_list => true, :context => { :children => true, :tag => tag } }

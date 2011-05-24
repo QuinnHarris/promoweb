@@ -20,8 +20,6 @@ div#prod_list div.current {
   padding-right: 0;
   z-index: 100;
   margin-right: -1px;
-  -moz-border-radius: 2em 0 0 2em;
-  border-radius: 2em 0 0 2em;
 }
 
 div#prod {
@@ -34,19 +32,13 @@ div#prod {
   font-size: 1.5em;
   margin: 0;
   padding-left: 0.5em;
-  background-color: #F0F0F8;
-  background: -moz-linear-gradient(top, #D0D0D8, white);
-  background: -webkit-linear-gradient(top, #D0D0D8, white);
-  background: -o-linear-gradient(top, #D0D0D8, white);
-  background: linear-gradient(top, #D0D0D8, white);
 }
 #prod_title #prod_num {
   float: right;
   font-size: 1em;
   padding: 0.1em 0.5em 0.1em 0.5em;
   margin: 0.2em;
-  background-color: #FFFFE0;
-  background: rgba(255,255,225,0.6);
+  background-color: #ffffca;
   -moz-border-radius: 1em;
   border-radius: 1em;
 }
@@ -68,11 +60,18 @@ div#prod {
   float: right;
   margin-right: 0.5em;
   margin-top: -0.25em;
-  background-color: #FFE0E0;
+
   padding: 0.25em 0.5em 0.25em 0.5em;
   clear: both;
   -moz-border-radius: 1em;
   border-radius: 1em;
+  
+   background-color: #E0E0E0;
+    background: -moz-linear-gradient(top, white, #E0E0E0 50%, #D0D0D0 50%, #E0E0E0);
+    background: -webkit-linear-gradient(top, white, #E0E0E0 50%, #D0D0D0 50%, #E0E0E0);
+    background: -o-linear-gradient(top, white, #E0E0E0 50%, #D0D0D0 50%, #E0E0E0);
+    background: linear-gradient(top, white, #E0E0E0 50%, #D0D0D0 50%, #E0E0E0);
+
 }
 #tags img {
     margin-bottom: -3px;
@@ -88,7 +87,7 @@ div.box, div.desc {
   margin-left: 1em;
   margin-top: 0.8em;
   font-size: 0.8em;
-  box-shadow: #AAA 0.3em 0.3em 0.2em;
+ /* box-shadow: #AAA 0.3em 0.3em 0.2em;*/ 
 }
 
 div#static {
@@ -96,30 +95,17 @@ div#static {
     margin-bottom: 1em;
 }
 div#static div#features {
-    background-color: #E8F0E8;
-    background: -moz-radial-gradient(ellipse, white, #E0E8E0);
-    background: -webkit-radial-gradient(ellipse, white, #E0E8E0);
-    background: radial-gradient(ellipse, white, #E0E8E0);
+    
 }
 div#static div#leadtime {
-    background-color: #F0E8E8;
-    background: -moz-radial-gradient(ellipse, white, #E8E0E0);
-    background: -webkit-radial-gradient(ellipse, white, #E8E0E0);
-    background: radial-gradient(ellipse, white, #E8E0E0);
+
 }
 div#static div#attributes {
-    background-color: #E8E8F0;
-    background: -moz-radial-gradient(ellipse, white, #E0E0E8);
-    background: -webkit-radial-gradient(ellipse, white, #E0E0E8);
-    background: radial-gradient(ellipse, white, #E0E0E8);
+
 }
 
 div.desc {
     display: inline-block;
-    margin-left: 0.5em;
-    background-color: #F0F0F0;
-    -moz-border-radius: 1em;
-    border-radius: 1em;
     padding: 0.5em;
     vertical-align: top;
 }
@@ -188,8 +174,6 @@ div.box dl dd ul li {
   padding: 0;
   text-align: center;
   border: thin solid #808080;
-  -moz-border-radius: 0.5em;
-  border-radius: 0.5em;
   background-color: #E0E0E8;
   background: -moz-linear-gradient(top, white, #E0E0E8 50%, #D0D0D8 50%, #E0E0E8);
   background: -webkit-linear-gradient(top, white, #E0E0E8 50%, #D0D0D8 50%, #E0E0E8);
@@ -227,37 +211,25 @@ div.box dl dd ul li.sel {
 div.box dl dd ul li.sel span.even { background-color: #F4F4E0; }
 
 div#variants {
-    background-color: #E8E0D8;
-    -moz-border-radius: 0.5em;
-    border-radius: 0.5em;
+
 }
 
 div#decorations {
-    -moz-border-radius: 0 0 0 2.5em;
-    border-bottom-left-radius: 2.5em;
+	margin-bottom: 0;
 }
 
 div#decorations dl#sub {
-    background-color: #E0E0D8;
-    margin-left: 1em;
+    background-color: #c7e7e1;
+    margin-left: 0;
     padding-left: 0.5em;
-    -moz-border-radius: 1em;
-    border-radius: 1em;
-    display: block;
 }
 div#decorations dl#sub dt, div#decorations dl#sub dd {
     padding-top: 0.2em;
     padding-bottom: 0.2em;
 }
 div#decorations dd#techniques {
-    -moz-border-radius: 0.5em 1.5em 0 0;
-    border-radius: 0.5em 1.5em 0 0;
     padding-right: 1em;
-    background-color: #E0E0D8;
-    background: -moz-linear-gradient(top, white, #E0E0D8);
-    background: -webkit-linear-gradient(top, white, #E0E0D8);
-    background: -o-linear-gradient(top, white, #E0E0D8);
-    background: linear-gradient(top, white, #E0E0D8);
+    background-color: #c7e7e1;
 }
 
 div#prod_img {
@@ -269,21 +241,12 @@ div#prod_img {
   padding: 0;
   padding-left: 1.5em;
   margin-bottom: 0.5em;
-  background: -moz-linear-gradient(left, rgba(255,255,255,0), white 1.6em, white);
-  background: -webkit-linear-gradient(left, rgba(255,255,255,0), white 1.6em, white);
-  background: -o-linear-gradient(left, rgba(255,255,255,0), white 1.6em, white);
-  background: linear-gradient(left, rgba(255,255,255,0), white 1.6em, white);
 }
 
 /* Price Box */
 #prices {
-    background-color: #D8E0E0;
-    background: -moz-linear-gradient(left, #D8E0E0, white);
-    background: -webkit-linear-gradient(left, #D8E0E0, white);
-    background: -o-linear-gradient(left, #D8E0E0, white);
-    background: linear-gradient(left, #D8E0E0, white);
-    -moz-border-radius: 1em;
-    border-radius: 1em;
+	margin-top: 0;
+    background-color: #c7e7e1;
 }
 
 td#addtoorder {
@@ -295,8 +258,6 @@ a.submit {
     border: thin solid black;
     padding: 0.15em 0.25em 0.15em 0.25em;
     margin: 0.15em;
-    -moz-border-radius: 0.5em;
-    border-radius: 0.5em;
     background-color: #E8E0E0;
     background: -moz-linear-gradient(top, white, #E8E0E0 50%, #D8D0D0 50%, #E8E0E0);
     background: -webkit-linear-gradient(top, white, #E8E0E0 50%, #D8D0D0 50%, #E8E0E0);
@@ -334,7 +295,7 @@ div.box table#price_calc td.num {
     text-align: right;
 }
 div.box table#price_calc tr.dec {
-    background-color: #E0E0D8;
+    background-color: #d6ede9;
 }
 div.box table#price_calc #item_unit_price {
     font-weight: bold;

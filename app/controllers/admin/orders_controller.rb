@@ -246,12 +246,12 @@ class ElementLayout
   def self.best(dims, elements)
     Rails.logger.info("Dims: #{dims.inspect} #{elements.inspect}")
     layouts = []
-    dims.each do |width, height, note|
+    dims.each do |width, height, note, bias|
       (1..elements.length).each do |cols|
         l = self.new(:width => width, :height => height, :note => note,
                      :columns => cols, :rows => elements.length / cols, :elements => elements)
         s = l.score
-        layouts << [s, l] if s
+        layouts << [s+bias, l] if s
       end
     end
 
@@ -274,8 +274,8 @@ class ProofGenerate
     @footer_size = 34
     header_footer_size = @header_size + @footer_size
     
-    dims = [[paper_size[1] - 2*margin, paper_size[0] - 2*margin - footer_size - header_size(true), :landscape],
-            [paper_size[0] - 2*margin, paper_size[1] - 2*margin - footer_size - header_size(false), :portrait] ]
+    dims = [[paper_size[1] - 2*margin, paper_size[0] - 2*margin - footer_size - header_size(true), :landscape, 0],
+            [paper_size[0] - 2*margin, paper_size[1] - 2*margin - footer_size - header_size(false), :portrait, 100.0] ]
     
     @layout = ElementLayout.best(dims, elements)
     Rails.logger.info(@layout.inspect)

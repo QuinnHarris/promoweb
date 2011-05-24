@@ -128,8 +128,8 @@
                           %span= dec.display
 
           - unless @product.deleted
-            - form_tag({ :controller => :order, :action => :add_item }, {:name => "productform" }) do
-              #prices.box
+            #prices.box
+              - form_tag({ :controller => :order, :action => :add_item }, {:name => "productform" }) do
                 %p
                   = hidden_field_tag "product", @product.id
                   = hidden_field_tag "price_group", @prices.price_sets.first && @prices.price_sets.first.group.id
