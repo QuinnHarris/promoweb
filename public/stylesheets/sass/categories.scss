@@ -1,3 +1,8 @@
+$head-color: #332717;
+$text-color: #274842;
+$highlight-color: #d2633a;
+
+
 /* On list page */
 div#list { padding: 1em; }
 div#list table { clear: both; background-color: #EEE; }
@@ -32,7 +37,7 @@ div.pagination a.sel, div.pages a:hover { background-color: #E0E0EF; }
 div.category {
   margin: 1em;
   border: none;
-  background-color: #332717;
+  background-color: $head-color;
   padding: 0 0.2em 0.2em 0.2em;
 }
 
@@ -51,9 +56,9 @@ div.category a.title {
 
   padding: 0.25em;
   padding-left: 20px;
-}
-div.category a.title:hover {
-  background-color: #524430;
+  &:hover {
+      background-color: lighten($head-color, 10%);
+  }
 }
 
 div.category div.tags {
@@ -90,10 +95,22 @@ div.category div.tags a:hover {
 }
 div.category div.tags img { margin: 0 0.25em -3px 0; }
 
-table.breaks { width: 100%; }
-table.breaks tr td { background-color: #c7e7e1; white-space: nowrap; text-align: center; font-size: 0.9em; }
-table.breaks tr td a { display: block; color: #20190f; padding: 0.25em 0.5em 0.25em 0.5em; }
-table.breaks tr td a:hover { background-color: #c7e7e1; }
+table.breaks { 
+    width: 100%;
+    tr td {
+	background-color: white;
+	white-space: nowrap;
+	text-align: center;
+	font-size: 0.9em;
+	
+	a {
+	    display: block;
+	    color: $text-color;
+	    padding: 0.25em 0.5em 0.25em 0.5em;
+	    &:hover {  background-color: lighten($highlight-color, 35%); }
+	}
+    }
+}
 
 
 div#description {
@@ -105,72 +122,33 @@ div#description {
 
 /* Home Page */
 div#virtues {
-  margin-left: 1em;
-  margin-right: 1em;
-}
-div#virtues div {
-  border-left: medium solid #332717;
-  border-right: medium solid #332717;
-  border-bottom: medium solid #332717;
-  margin: 0;
-  margin-bottom: 0.5em;
-}
-div#virtues div h2 {
-  text-align: center;
-  font-size: medium;
-  margin-bottom: 0;
-  padding-left: 0.25em;
+    margin-left: 1em;
+    margin-right: 1em;
 
-  color: white;
-  background-color: #332717;
-}
-div#virtues div p {
-  font-size: small;
-  margin-top: 0.5em;
-  margin-left: 1.0em;
-  margin-right: 1.0em;
-}
+    div {
+	border-left: medium solid $head-color;
+	border-right: medium solid $head-color;
+	border-bottom: medium solid $head-color;
+	margin: 0;
+	margin-bottom: 0.5em;
 
-div#reviews {
-  margin-left: 1em;
-  margin-right: 1em;
-  padding-left: 0.5em;
-  padding-right: 0.5em;
-  padding-bottom: 0.5em;
-  background-color: #916877;
-}
-div#reviews h2 {
-  text-align: center;
-  font-size: large;
-  margin-bottom: 0;
-  padding-left: 0.25em;
+	h2 {
+	    text-align: center;
+	    font-size: medium;
+	    margin-bottom: 0;
+	    padding-left: 0.25em;
+	    
+	    color: white;
+	    background-color: $head-color;
+	}
 
-  color: white;
-  background-color: #916877;
-  background-position: center;
-}
-div#reviews table {
-  background-color: white;
-  border: medium solid #916877;
-  width: 100%;
-}
-div#reviews table td {
-  padding-left: 0.5em;
-  padding-right: 0.5em;
-}
-div#reviews table td.rating {
-  white-space: nowrap;
-
-}
-div#reviews table td.comment {
-  vertical-align: middle;
-  font-style: italic;
-  width: 100%; 
-}
-div#reviews table td.name {
-  vertical-align: top;
-  text-align: right;
-  font-weight: bold;
+	p {
+	    font-size: small;
+	    margin-top: 0.5em;
+	    margin-left: 1.0em;
+	    margin-right: 1.0em;
+	}
+    }
 }
 
 div#gridsel {
