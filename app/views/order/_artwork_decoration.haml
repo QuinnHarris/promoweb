@@ -11,7 +11,7 @@
             %h3= "#{item_decoration.order_item.product.name} (#{item_decoration.order_item.quantity})"
             %div
               = item_decoration.description
-              - if @user and item_decoration.has_dimension?
+              - if @user and !@static and item_decoration.has_dimension?
                 \-
                 = link_to "Inkscape Template", { :controller => '/admin/orders', :action => :inkscape, :id => item_decoration.id }
                 \-

@@ -127,6 +127,7 @@ module QbwcHelper
         # Just a Comment
         sub_item_aspect(xml, sub, new_item, qb_type, bill_po, 'fixed') do
           xml.Desc "|- #{sub.description}"
+          xml.Amount '0.00'
           xml.SalesTaxCodeRef do
             xml.FullName 'Tax'
           end if tax
