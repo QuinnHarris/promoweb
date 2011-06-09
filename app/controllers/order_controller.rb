@@ -444,8 +444,17 @@ private
   # Customer Specific
 public
   # Duplicated in orders controller
-  %w(company_name person_name email phone).each do |field|
-    auto_complete_for :customer, field
+  %w(company_name person_name email phone).each do |method|
+    define_method("auto_complete_for_customer_#{method}") do
+      find_options = { 
+        :conditions => [ "LOWER(#{method}) LIKE ? AND id != ?", '%' + params[:customer][method].downcase + '%', Integer(params[:customer_id]) ], 
+        :order => "#{method} ASC",
+        :limit => 10 }
+      
+      @items = Customer.find(:all, find_options)
+      
+      render :inline => "<%= auto_complete_result @items, '#{method}' %>"
+    end
   end
 
   def_tasked_action :contact, CustomerInformationTask do
@@ -504,13 +513,11 @@ public
           @customer.ship_address = nil
         end
   
-        if @customer.update_attributes?(params[:customer])
-          @customer.attributes = params[:customer]
-          update = true
-        end
+        @customer.attributes = params[:customer]
+        changed = @customer.changed? || @customer.phone_numbers.to_a.find { |p| p.changed? || p.marked_for_destruction? }
 
         if @customer.valid?
-          if update or @customer.changed?
+          if changed
             @customer.updated_at_will_change!
             @customer.save!
             @customer.task_complete({ :user_id => session[:user_id],
@@ -519,7 +526,7 @@ public
                                     CustomerInformationTask, [CustomerInformationTask, RequestOrderTask, RevisedOrderTask], false)
           end
         else
-          if @customer.changed?
+          if changed
             @customer.save_with_validation(false) #unless @customer.task_completed?(CustomerInformationTask)
             #@order.task_revoke([CustomerInformationTask, RequestOrderTask, RevisedOrderTask])
           end
@@ -532,7 +539,7 @@ public
           @customer.shipping_rates_clear!
         end
 
-        @order.save! if update && @order.apply_sales_tax
+        @order.save! if changed || @order.apply_sales_tax
         
         if @customer.valid?
           render_edit

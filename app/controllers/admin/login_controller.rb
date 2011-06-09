@@ -115,11 +115,21 @@ class Admin::LoginController < ApplicationController
 
   Phone
   def phones
-    @user = UserPass.find(params[:id]) if params[:id] and @permissions.include?('Super')
+    @user = User.find(params[:id]) if params[:id] and @permissions.include?('Super')
+
+    if params[:phone]
+      @phone = @user.phones.new(params[:phone])
+      return unless @phone.valid?
+      @phone.save!
+    elsif params[:user]
+      @user.attributes = params[:user]
+      return unless @user.valid?
+      @user.save!
+    end
   end
 
-  def phone
-    @user = UserPass.find(params[:user_id]) if params[:user_id] and @permissions.include?('Super')
+  def phone_add
+    @user = User.find(params[:user_id]) if params[:user_id] and @permissions.include?('Super')
     if params[:type]
       klass = Kernel.const_get(params[:type])
       @phone = klass.new(:user => @user)

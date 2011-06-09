@@ -114,6 +114,11 @@ class PhoneController < ActionController::Base
               params[:number] || ' ']
   end
 
+  def prov
+    @phone = Phone.find_by_identifier(params[:id])
+    @user = @phone.user
+  end
+
   def polycom
     user = User.find_by_login(params[:id])
     order = user.current_order
@@ -177,7 +182,12 @@ class PhoneController < ActionController::Base
   
   # XML Directory for polycoms
   def contacts
-    @users = User.find(:all, :conditions => 'extension IS NOT NULL')
+    phone = nil
+    if /^([0-9a-f]{12})-directory$/ === params[:id]
+      phone = Phone.find_by_identifier($1)
+    end
+
+    @users = User.find(:all, :conditions => 'extension IS NOT NULL' + (phone ? " AND id <> #{phone.user_id}" : ''))
     @suppliers = Supplier.find(:all, :conditions => 'phone IS NOT NULL', :order => 'name')
   end
 
@@ -253,13 +263,28 @@ class PhoneController < ActionController::Base
   Phone
   def unidata
     raise "Unknown name" unless /e1_([0-9a-f]{12})\.ini/ === params[:name]
-    @phone = ProvSIPPhone.find_by_identifier($1)
+    @phone = Phone.find_by_identifier($1)
   end
 
   def directory
-    @users = User.find(:all, :include => :phones,
-                       :conditions => "extension IS NOT NULL")
+    if user_string = params[:user]
+      user_int = user_string.to_i
+      if user_string == user_int.to_s
+        user = User.find_by_direct_phone_number(user_int, :include => :phones)
+        @no_internal = user
+      else
+        user = User.find_by_login(user_string, :include => :phones)
+        @no_external = user
+      end
+    end
 
-    @active = @users.collect { |u| u.phones }.flatten.find_all { |p| !p.direct_only }
+    @users = user ? [user] : User.find(:all, :include => :phones,
+                                       :conditions => "extension IS NOT NULL")
+
+    @active = @users
+  end
+
+  def cdr
+    render :inline => ''
   end
 end

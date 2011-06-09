@@ -80,7 +80,7 @@ module OrderHelper
       instance_variable_get("@#{object_name}").send(method).to_s
     else
       if @search or @naked
-        text_field_with_auto_complete object_name, method, {}, complete_options.merge(:after_update_element => 'on_select')
+        text_field_with_auto_complete object_name, method, {}, complete_options.merge({ :after_update_element => 'on_select', :url => { :action => "auto_complete_for_#{object_name}_#{method}", :customer_id => @order.customer } } )
       else
         text_field object_name, method
       end
@@ -141,5 +141,32 @@ Calendar.setup({
 </script>)
     
     "#{tft}#{imt}#{script}"
+  end
+
+
+  # Lifted from https://github.com/alloy/complex-form-examples/blob/master/app/helpers/projects_helper.rb
+  # CHANGE FOR RAILS 3
+  def remove_link(fields)
+    out = ''
+    out << fields.hidden_field(:_destroy)
+    out << link_to_function(image_tag('remove.png'), "$(this).up('.#{fields.object.class.name.underscore}').hide(); $(this).previous().value = '1'")
+    out
+  end
+  
+  # These use the current date, but they could be lots easier.
+  # Maybe just keep a global counter which starts at 10 or so.
+  # That would be good enough if we only build 1 new record in the controller.
+  #
+  # And this of course is only needed because Ryan's example uses JS to add new
+  # records. If you just build a new one in the controller this is all unnecessary.
+  
+  def add_phone_link(cust)
+    link_to_function "#{image_tag 'add.png'} Add Phone Number" do |page|
+      temp = render(:partial => 'phone_number', :locals => { :customer => cust, :phone_number => PhoneNumber.new })
+      logger.info "Temp: #{temp}"
+      page << %{var new_id = "new_" + new Date().getTime();
+$('phone_numbers').insert({ bottom: "#{escape_javascript temp}".replace(/new_\\d+/g, new_id) });
+}
+    end
   end
 end

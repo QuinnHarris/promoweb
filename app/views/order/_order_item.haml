@@ -18,6 +18,7 @@
   - list = entry.send(aspect)
   - if list.marginal
     - unit_entries << entry
+    - fixed += 1 if list.fixed
   - elsif list.fixed
     - fixed_entries << entry
 - rows += 1 if additional_setup = (unit_entries.empty? and !invoice and order_item.decorations.empty? and !order_item.task_completed?(ArtExcludeItemTask))
@@ -171,7 +172,8 @@
         %tr
           - list = entry.send(aspect)
           - blank = (list.marginal.zero? && list.fixed.zero?) ? '' : nil
-          %td= entry.description
+          %td
+            = entry.description
           - unit_sum += list.marginal
           %td.num= blank || list.marginal.to_perty
           - if fixed

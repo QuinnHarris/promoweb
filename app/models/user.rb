@@ -15,7 +15,7 @@ class User < ActiveRecord::Base
   end
 
   def extension_s
-    "x9#{extension}"
+    "x#{extension}"
   end
 
   def phone
@@ -24,10 +24,24 @@ class User < ActiveRecord::Base
     nil
   end
 
-  def phone_id
-    return self['phone'] if self['phone']
-    "9703751900"
+  def phone_i
+    return self.direct_phone_number if self.direct_phone_number
+    9703751900
   end
+
+  validates_format_of :external_phone_number, :direct_phone_number, :with => /^1?[-\. ]?\d{3}[-\. ]?\d{3}[-\. ]?\d{4}$/, :allow_blank => true, :allow_nil => true
+
+  before_save :normalize_phone
+  def normalize_phone
+    %w(external_phone_number direct_phone_number).each do |method|
+      if /^1?[-\. ]?(\d{3})[-\. ]?(\d{3})[-\. ]?(\d{4})$/ === self.send(method).to_s
+        self.send("#{method}=", ($1+$2+$3).to_i)
+      end
+    end
+  end
+
+  validates_numericality_of :external_phone_timeout, :greater_than => 2, :less_than => 60
+
 
   # Please change the salt to something else, 
   # Every application should use a different one 

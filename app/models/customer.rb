@@ -13,6 +13,10 @@ class Customer < ActiveRecord::Base
   belongs_to :default_address, :class_name => 'Address', :foreign_key => 'default_address_id'
   belongs_to :ship_address, :class_name => 'Address', :foreign_key => 'ship_address_id'
   belongs_to :bill_address, :class_name => 'Address', :foreign_key => 'bill_address_id'
+  has_many :phone_numbers
+  accepts_nested_attributes_for :phone_numbers, :allow_destroy => true, :reject_if => :all_blank
+
+
   has_many :payment_methods, :order => 'id DESC'
   has_many :shipping_rates
   def shipping_rates_clear!

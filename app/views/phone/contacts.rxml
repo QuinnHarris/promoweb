@@ -4,7 +4,7 @@ xml.directory do
     for user in @users
       xml.item do
         xml.fn user.name
-	xml.ct "%04d" % user.extension
+	xml.ct user.login
 	xml.sd user.extension
 	xml.rt 12
 	xml.bw 1

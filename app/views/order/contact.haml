@@ -75,6 +75,16 @@
       %tr.required
         %th Phone Number:
         = customer_field :phone, { :min_chars => 3 }
+      %tr
+        %th Phone Number:
+        %td
+          %div#phone_numbers
+            - @customer.phone_numbers << PhoneNumber.new if @customer.phone_numbers.empty?
+            = render :partial => 'phone_number', :locals => { :customer => cust }
+        %td
+          &nbsp;
+          = add_phone_link(cust)
+
       - unless @search
         = render :partial => 'address_edit', :locals => { :field_name => :default_address, :disabled => false }
 
