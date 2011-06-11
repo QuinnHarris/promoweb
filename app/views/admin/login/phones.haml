@@ -43,7 +43,7 @@
         %tr
           %td= phone.name
           %td= phone.identifier
-          %td= link_to 'Remove', { :action => :phone_remove, :id => phone, :user_id => @user }
+          %td= link_to 'Remove', { :action => :phone_remove, :id => phone, :user_id => @user }, { :confirm => "Remove #{phone.name}" }
     %tfoot
       %tr
         %td= ph.text_field(:name)
@@ -65,7 +65,7 @@
 %table
   %tr
     %th User Name:
-    %td= @user.extension
+    %td= @user.login
   %tr
     %th Password:
     %td= @user.phone_password

@@ -152,6 +152,6 @@ class Admin::LoginController < ApplicationController
 
   def phone_remove
     Phone.find(params[:id]).destroy
-    redirect_to :action => :phones
+    redirect_to :action => :phones, :id => params[:user_id]
   end
 end

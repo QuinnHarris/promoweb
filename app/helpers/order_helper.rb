@@ -149,7 +149,7 @@ Calendar.setup({
   def remove_link(fields)
     out = ''
     out << fields.hidden_field(:_destroy)
-    out << link_to_function(image_tag('remove.png'), "$(this).up('.#{fields.object.class.name.underscore}').hide(); $(this).previous().value = '1'")
+    out << link_to_function(image_tag('remove.png'), "if (confirm('Remove Item')) { $(this).up('.#{fields.object.class.name.underscore}').hide(); $(this).previous().value = '1'; }")
     out
   end
   
