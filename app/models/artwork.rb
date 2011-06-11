@@ -24,10 +24,6 @@ class Artwork < ActiveRecord::Base
     %w(.eps).include?(File.extname(art.original_filename))
   end
 
-  def can_pdf?
-    eps? and has_tag?('supplier')
-  end
-
   def can_proof?(order)
     return false unless eps?
 

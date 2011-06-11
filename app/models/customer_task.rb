@@ -29,6 +29,10 @@ module ObjectTaskMixin
   def task_performed?(task_class)
     task_completed?(task_class) || tasks_inactive.find(:first, :conditions => "type = '#{task_class}'")
   end
+
+  def task_revokable?(task_class)
+    tasks_context.find { |t| t.is_a?(task_class) }.revokable?
+  end
   
   def task_next(permissions, reject = [])
     tasks_context.find do |t|

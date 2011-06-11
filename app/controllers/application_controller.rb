@@ -116,8 +116,10 @@ public
             if params[:controller].include?('admin')
               redirect_to :controller => '/admin', :action => ''
             else
-              raise "Can't set order unless logged in or a customer order"
-            end            
+              @order = nil
+              render :action => :login
+              return false
+            end
           end
         end
       end

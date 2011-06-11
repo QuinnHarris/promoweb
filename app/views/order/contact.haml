@@ -65,25 +65,26 @@
       %tr.required
         %th Name:
         = customer_field :person_name
-      %tr.required
-        %th Email:
-        = customer_field :email
         - unless @search
           %td
             = check_box :customer, :solicit
             Put me on the email list.
       %tr.required
-        %th Phone Number:
-        = customer_field :phone, { :min_chars => 3 }
-      %tr
-        %th Phone Number:
-        %td
-          %div#phone_numbers
-            - @customer.phone_numbers << PhoneNumber.new if @customer.phone_numbers.empty?
-            = render :partial => 'phone_number', :locals => { :customer => cust }
+        %th Email:
+        %td#email_addresses
+          - @customer.email_addresses << EmailAddress.new if @customer.email_addresses.empty?
+          = render :partial => 'email_address', :locals => { :customer => cust }
         %td
           &nbsp;
-          = add_phone_link(cust)
+          = add_link(cust, 'email_address')
+      %tr.required
+        %th Phone Number:
+        %td#phone_numbers
+          - @customer.phone_numbers << PhoneNumber.new if @customer.phone_numbers.empty?
+          = render :partial => 'phone_number', :locals => { :customer => cust }
+        %td
+          &nbsp;
+          = add_link(cust, 'phone_number')
 
       - unless @search
         = render :partial => 'address_edit', :locals => { :field_name => :default_address, :disabled => false }

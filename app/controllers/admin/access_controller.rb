@@ -44,7 +44,8 @@ class Admin::AccessController < Admin::BaseController
 
   def phone
     @customer = Customer.find(:first,
-                              :conditions => ["regexp_replace(phone, '[^0-9]', '', 'g') ~ ?", @user.incoming_phone_number.to_s.gsub(/^1/,'')])
+                              :include => :phone_numbers,
+                              :conditions => { 'phone_numbers.number' => @user.incoming_phone_number.to_s.gsub(/^1/,'') } )
     return if @customer
 
     /^1?(\d{3})/ === @user.incoming_phone_number

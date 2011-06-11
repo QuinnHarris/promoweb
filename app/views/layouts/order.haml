@@ -1,5 +1,5 @@
-- content_for :content do
-  .tabs.nav
+- @order && content_for(:content) do
+  .tabs.nave
     - if @user
       - if @order.sample
         SAMPLE

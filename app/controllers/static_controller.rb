@@ -9,7 +9,8 @@ class StaticController < ApplicationController
   @@hidden_pages = [
    ['Internet Explorer', 'ie'],
    ['Copyright', 'copyright'],
-   ['Candy Fills', 'fills']
+   ['Candy Fills', 'fills'],
+   ['Must Login', 'login']
   ]
   
   cattr_reader :pages, :hidden_pages

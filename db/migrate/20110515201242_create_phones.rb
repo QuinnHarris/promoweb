@@ -14,29 +14,10 @@ class CreatePhones < ActiveRecord::Migration
       t.integer :external_phone_number, :limit => 8
       t.boolean :external_phone_enable, :null => false, :default => false
       t.boolean :external_phone_all, :null => false, :default => false
-      t.integer :external_phone_timeout
+      t.integer :external_phone_timeout, :null => false, :default => 15
       t.string :phone_password
     end
-    User.update_all("extension = extension + 100", '')
-
-    create_table :calls do |t|
-      t.string :uuid, :limit => 36
-
-      t.string :caller_number
-      t.string :called_number
-      t.boolean :inbound
-      t.references :customer
-
-      t.datetime :create_time, :null => false
-      t.datetime :ring_time
-      t.datetime :answered_time
-      t.references :user
-
-      t.string :end_reason, :null => false
-      t.datetime :end_time, :null => false
-    end
-    add_foreign_key(:calls, :customers)
-    add_foreign_key(:calls, :users)
+    User.update_all("extension = extension + 90", '')
 
     create_table :phone_numbers do |t|
       t.integer :customer_id
@@ -50,12 +31,27 @@ class CreatePhones < ActiveRecord::Migration
 
     create_table :email_addresses do |t|
       t.integer :customer_id
-      t.string :name
       t.string :address
       t.string :notes
     end
     add_foreign_key(:email_addresses, :customers)
     add_index(:email_addresses, :address)
+
+    Customer.find(:all).each do |customer|
+      unless customer.phone.blank?
+        PhoneNumber.create(:customer => customer,
+                           :number_string => customer.phone)
+      end
+
+      unless customer.email.blank?
+        customer.email.split(',').each do |email|
+          EmailAddress.create(:customer => customer,
+                              :address => email.strip)
+        end
+      end
+    end
+    remove_column :customers, :phone
+    remove_column :customers, :email
   end
 
   def self.down

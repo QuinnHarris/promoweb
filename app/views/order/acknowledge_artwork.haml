@@ -4,31 +4,21 @@
 = render :partial => 'acknowledge_artwork', :locals => { :artworks => @artworks, :static => true }
 
 %hr
-- task = @order.task_find(ArtAcknowledgeOrderTask)
-- if @order.task_ready?(ArtAcknowledgeOrderTask)
+.nav
+  - task = @order.task_find(ArtAcknowledgeOrderTask)
   - form_for :order_task, @order_task, :url => { :order_id => @order } do |ak|
-    - unless @second_phase
+    - if @order.task_ready?(ArtAcknowledgeOrderTask)
       = ak.text_area :comment, :rows => 4
       %br
-      - unless params[:reject]
-        = submit_tag('Accept Artwork')
-      = submit_tag('Reject Artwork')
-    - else
-      - if @order_task.comment and !@order_task.comment.empty?
-        %p= "Customer Comment: #{@order_task.comment}"
-        = ak.hidden_field :comment, :value => @order_task.comment
-      %p Please click below to accept this artwork and proceed with your order.
-      = submit_tag('Accept Artwork Confirm')
+      = submit_tag('Accept Artwork', :class => 'button', :id => 'submitbtn')
       - if @user
-        = submit_tag('Accept Artwork (Without Email)')
+        = submit_tag('Accept Artwork (Without Email)')      
+      = submit_tag('Reject Artwork', :class => 'button', :id => 'rejectbtn')
+    - else
+      - if @order.task_completed?(ArtAcknowledgeOrderTask)
+        %h3 Artwork was acknowledged at #{format_time(task.created_at)} from host #{task.host}.
+        - if @order.task_revokable?(ArtAcknowledgeOrderTask)
+          = submit_tag('Reject Artwork', :class => 'button', :id => 'rejectbtn')
 
-- elsif @order.task_completed?(ArtAcknowledgeOrderTask)
-  %h3
-    Artwork was acknowledged
-    = format_time(task.created_at)
-    from host
-    = task.host
-    \.
-
-- else
-  %h3 Artwork is not ready to be Acknowledged
+      %hr
+      = submit_options(false)

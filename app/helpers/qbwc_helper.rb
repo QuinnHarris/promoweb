@@ -249,10 +249,10 @@ module QbwcHelper
     
     bill_ship_address(xml, customer)
     
-    xml.Phone customer.phone[0...21]
+    xml.Phone customer.phone_numbers.first.number_string[0..21] if customer.phone_numbers.first
     #xml.AltPhone
     #xml.Fax
-    xml.Email customer.email
+    xml.Email customer.email_addresses.first.address if customer.email_addresses.first
     xml.Contact customer.person_name[0...41]
     #xml.AltContact
     #xml.CustomerTypeRef do

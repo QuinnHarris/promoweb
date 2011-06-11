@@ -473,13 +473,11 @@ public
             :conditions => ['(' +
                             (@customer.company_name.blank? ? '' : "regexp_replace(lower(company_name), ' |[0-9]', '', 'g') ~ ? OR ") +
                             (@customer.person_name.blank? ? '' : "regexp_replace(lower(person_name), ' |[0-9]', '', 'g') ~ ? OR ") + 
-                             "lower(email) ~ ? OR " +
-                             "regexp_replace(phone, '[^0-9]', '', 'g') ~ ?) AND " +
+                            "id IN (SELECT customer_id FROM email_addresses WHERE address IN (SELECT address FROM email_addresses WHERE customer_id = #{@customer.id}) ) OR " + 
+                            "id IN (SELECT customer_id FROM phone_numbers WHERE number IN (SELECT number FROM phone_numbers WHERE customer_id = #{@customer.id}) ) ) AND " +
                              "id != #{@customer.id}",
                 @customer.company_name.blank? ? nil : @customer.company_name.downcase.gsub(/ |[0-9]/,''),
-                @customer.person_name.blank? ? nil : @customer.person_name.downcase.gsub(/ |[0-9]/,''),
-                @customer.email.downcase,
-                @customer.phone.gsub(/[^0-9]/,'')].compact,
+                @customer.person_name.blank? ? nil : @customer.person_name.downcase.gsub(/ |[0-9]/,'')].compact,
             :order => 'id DESC') if session[:user_id]
         end
       end
@@ -936,31 +934,23 @@ public
   
   def_tasked_action :acknowledge_order, AcknowledgeOrderTask do
     @order_task = OrderTask.new(params[:order_task])
+
+    next unless params[:commit]
     
-    if params[:commit]
-      if @order.items.to_a.find { |i| !i.task_completed?(ArtExcludeItemTask) } and
-          params[:commit] == 'Acknowledge Order'
-        @second_phase = true
-        next
-      end
-
-      if params[:commit] == 'Reject Order'
-        Order.transaction do
-          @order.task_revoke(RevisedOrderTask, { :customer_comment => @order_task.comment })
+    Order.transaction do
+      if params[:commit].include?('Reject')
+        @order.task_revoke([AcknowledgeOrderTask, RevisedOrderTask], { :customer_comment => @order_task.comment })
+        redirect_to :action => :status
+      elsif params[:commit].include?('Acknowledge')
+        (invoice = @order.generate_invoice) && invoice.save!
+        task_complete({:data => { :email_sent => !params[:commit].include?('Without Email'), :customer_comment => @order_task.comment }}, AcknowledgeOrderTask)
+        if @order.total_item_price.zero? and !@order.task_completed?(PaymentInfoOrderTask)
+          task_complete({}, PaymentNoneOrderTask)
         end
-      elsif ['Confirm (Without Email)', 'I authorize Mountain Xpress Promotions, LLC to proceed with this order', 'Acknowledge Order'].include?(params[:commit])
-        Order.transaction do
-          (invoice = @order.generate_invoice) && invoice.save!
-          task_complete({:data => { :email_sent => !params[:commit].include?('Without Email'), :customer_comment => @order_task.comment }}, AcknowledgeOrderTask)
-          if @order.total_item_price.zero? and !@order.task_completed?(PaymentInfoOrderTask)
-            task_complete({}, PaymentNoneOrderTask)
-          end
-        end
+        redirect_to :task => 'AcknowledgeOrder'
       else
-        raise "Unknown Action"
+        redirect_to_next [AcknowledgeOrderTask]
       end
-
-      redirect_to_next [AcknowledgeOrderTask], { :task => 'AcknowledgeOrder' }
     end
   end
 
@@ -972,23 +962,18 @@ public
   def_tasked_action :acknowledge_artwork, ArtAcknowledgeOrderTask do
     @customer = @order.customer   
     @order_task = OrderTask.new(params[:order_task])
-    @second_phase = true if params[:accept]
 
-    if params[:commit]
-      case params[:commit]
-        when 'Accept Artwork'
-          @second_phase = true
-          next
-        when 'Accept Artwork (Without Email)'
-          task_complete({ :data => { :email_sent => false, :customer_comment => @order_task.comment } }, ArtAcknowledgeOrderTask)
-        when 'Accept Artwork Confirm'
-          task_complete({ :data => { :customer_comment => @order_task.comment }}, ArtAcknowledgeOrderTask)
-          redirect_to :action => :status, :order_id => @order
-        when 'Reject Artwork'
-          Order.transaction do
-            task = @order.task_revoke(ArtPrepairedOrderTask, { :customer_comment => @order_task.comment })
-          end
-          redirect_to :action => :status, :order_id => @order
+    next unless params[:commit]
+
+    Order.transaction do
+      if params[:commit].include?('Reject')
+        task = @order.task_revoke([ArtAcknowledgeOrderTask, ArtPrepairedOrderTask], { :customer_comment => @order_task.comment })
+        redirect_to :action => :status
+      elsif params[:commit].include?('Accept')
+        task_complete({ :data => { :email_sent => !params[:commit].include?('Without Email'), :customer_comment => @order_task.comment } }, ArtAcknowledgeOrderTask)
+        redirect_to :task => 'ArtAcknowledgeOrder'
+      else
+        redirect_to_next [ArtAcknowledgeOrderTask]
       end
     end
   end

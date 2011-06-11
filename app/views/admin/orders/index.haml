@@ -44,11 +44,11 @@
 
           %td
             = link_to_unless !allowed?('CustomerInformationTask'), "#{order.customer.company_name}<br/>#{order.customer.person_name}", :controller => '/order', :action => :contact, :order_id => order
-          - if allowed?('CustomerInformationTask')
-            %td
-              = mail_to "#{order.customer.person_name} <#{order.customer.email}>", order.customer.email
-              %br
-              = order.customer.phone
+            - if allowed?('CustomerInformationTask')
+              - for email in order.customer.email_addresses
+                %div= mail_to "#{order.customer.person_name} <#{email.address}>", email.address
+              - for pn in order.customer.phone_numbers
+                %div #{pn.name}: #{pn.number_string}
           %td
             - now = Time.now.utc
             - included = []

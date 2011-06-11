@@ -44,10 +44,15 @@
     %td= customer.person_name
   %tr
     %th Phone Number:
-    %td= customer.phone
+    %td
+      - for phone_number in customer.phone_numbers
+        %div #{phone_number.name}: #{phone_number.number_string}
   %tr
     %th Email:
-    %td= customer.email
+    %td
+      - for email_address in customer.email_addresses
+        = email_address.address
+
   - if address = (customer.ship_address || customer.default_address)
     - if valid?(address, :name)
       %tr

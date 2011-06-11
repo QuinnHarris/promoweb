@@ -1,0 +1,4 @@
+- customer.fields_for :email_addresses, email_address do |email|
+  .email_address
+    = email.text_field :address
+    = remove_link(email)

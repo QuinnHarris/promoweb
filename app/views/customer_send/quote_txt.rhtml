@@ -22,8 +22,14 @@ Notes:
 Contact Information:
   Company Name: <%= customer.company_name %>
   Contact Name: <%= customer.person_name %>
-  Phone Number: <%= customer.phone %>
-         Email: <%= customer.email %>
+  Phone Number: <%= customer.phone_numbers.first.name %>: <%= customer.phone_numbers.first.number_string %>
+<% for phone_number in customer.phone_numbers[1..-1] -%>
+                <%= phone_number.name %>: <%= phone_number.number_string %>
+<% end -%>
+         Email: <%= customer.email_addresses.first.address %>
+<% for email_address in customer.email_addresses[1..-1] -%>
+                <%= email_address.address %>
+<% end -%>
 <% if address = customer.ship_address -%>
 <%   if valid?(address, :name) -%>
   Address Name: <%= address.name %>

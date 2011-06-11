@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 require 'rghost'
+
+class EPSError < StandardError
+end
+
 class EPSInfo
   def initialize(file_name)
     @file_name = file_name
@@ -89,7 +93,7 @@ class EPSPlacement < EPSInfo
     define_method "#{name}_imprint=" do |val|
       val = Float(val)
       if !@scale && send(name) > val
-        raise "EPS #{name} of #{send(name)} > #{val}"
+        raise EPSError, "#{name} of #{send(name)}pt > #{val}pt (#{send(name)/72.0}in > #{val/72.0}in)"
       end
       instance_variable_set("@#{name}_imprint", val)
     end
@@ -255,7 +259,7 @@ class ElementLayout
       end
     end
 
-    raise "Can't fit elements" if layouts.empty?
+    raise EPSError, "Can't fit elements" if layouts.empty?
 
     layouts.sort_by { |s, l| s }.last.last
   end
@@ -842,7 +846,13 @@ class Admin::OrdersController < Admin::BaseController
       product_image = decoration.order_item.active_images.first.image.path(:medium)
     end
 
-    proof = ProofGenerate.new(placements, info_list)
+    proof = nil
+    begin
+      proof = ProofGenerate.new(placements, info_list)
+    rescue EPSError => e
+      @error = e
+      return
+    end
     proof.setup(:Title => 'Artwork Proof',
                 :Author => @order.user && @order.user.name,
                 :Subject => "#{product_name} on #{decoration_location}",
@@ -1361,7 +1371,7 @@ public
     imap.login("web", "d8f32lDvc0desMre")
     imap.select("user.archive")
 
-    addrs = @order.customer.email.split(/\s*,\s*/)
+    addrs = @order.customer.email_addresses
 
     ids = imap.search(((1...addrs.length).collect { "OR" } + addrs.collect { |addr| ["OR", "FROM", addr, "TO", addr] }).flatten)
     @list = []

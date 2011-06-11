@@ -2,20 +2,6 @@
 
 = link_to(image_tag('pdf.png') + " Print", { :action => :invoices, :order_id => @order.id }, { :class => 'nav', :style => 'float: right;' })
 
-- if ready = @order.task_ready?(AcknowledgeOrderTask) and @second_phase
-  #ack
-    %h2 Confirm Acknowledgment
-    %p
-      I understand after this order has shipped,
-      I will be billed or credited for any difference in the actual shipping price over the listed shipping estimate and for any overrun or underrun in the number of units shipped not to exceed 10%.
-    - form_for :order_task, @order_task, :url => { :order_id => @order } do |ak|
-      = ak.hidden_field :comment, :rows => 4
-      - if @order_task.comment and !@order_task.comment.empty?
-        %p= "Customer Comment: #{@order_task.comment}"
-      = submit_tag('I authorize Mountain Xpress Promotions, LLC to proceed with this order', :class => 'button', :id => 'submitbtn')
-      - if @user
-        = submit_tag('Confirm (Without Email)')
-
 = render :partial => 'invoices', :locals => { :static => false, :absolute => false }
 
 - if @order.task_completed?(AcknowledgeOrderTask)
@@ -25,15 +11,19 @@
 
 %hr
 .nav
-  - if ready and !@second_phase
-    - form_for :order_task, @order_task, :url => { :order_id => @order } do |ak|
+  - form_for :order_task, @order_task, :url => { :order_id => @order } do |ak|
+    - if @order.task_ready?(AcknowledgeOrderTask)
       = ak.text_area :comment, :rows => 4
       %br
       = submit_tag('Acknowledge Order', :class => 'button', :id => 'submitbtn')
+      - if @user
+        = submit_tag('Acknowledge (Without Email)')
       = submit_tag('Reject Order', :class => 'button', :id => 'rejectbtn')
-  - elsif task = @order.task_completed?(AcknowledgeOrderTask)
-    %h3
-      Order was acknowledged at
-      = format_time(task.created_at)
-      from host
-      = task.host
+    - else
+      - if task = @order.task_completed?(AcknowledgeOrderTask)
+        %h3 Order was acknowledged at #{format_time(task.created_at)} from host #{task.host}.
+        - if @order.task_revokable?(AcknowledgeOrderTask)
+          = submit_tag('Reject Order', :class => 'button', :id => 'rejectbtn')
+
+      %hr
+      = submit_options(false)

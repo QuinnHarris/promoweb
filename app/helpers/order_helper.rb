@@ -160,13 +160,16 @@ Calendar.setup({
   # And this of course is only needed because Ryan's example uses JS to add new
   # records. If you just build a new one in the controller this is all unnecessary.
   
-  def add_phone_link(cust)
-    link_to_function "#{image_tag 'add.png'} Add Phone Number" do |page|
-      temp = render(:partial => 'phone_number', :locals => { :customer => cust, :phone_number => PhoneNumber.new })
-      logger.info "Temp: #{temp}"
-      page << %{var new_id = "new_" + new Date().getTime();
-$('phone_numbers').insert({ bottom: "#{escape_javascript temp}".replace(/new_\\d+/g, new_id) });
+  def add_link(cust, name)
+    plural = name.pluralize
+    string = render(:partial => name, :locals => { :customer => cust, name.to_sym => Kernel.const_get(plural.classify).new })
+    string.gsub!(/_attributes_\d+_/, '_attributes__index__')
+    string.gsub!(/attributes\]\[(\d+)\]\[/,'attributes][_index_][')
+    index = $1
+    javascript_tag("var #{name}_index = #{index};") + 
+    (link_to_function("#{image_tag 'add.png'} Add #{name.split('_').collect { |s| s.capitalize}.join(' ') }") do |page|
+       page << %{$('#{plural}').insert({ bottom: "#{escape_javascript string}".replace(/_index_/g, #{name}_index++) });
 }
-    end
+    end)
   end
 end

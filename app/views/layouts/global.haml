@@ -98,12 +98,13 @@
                     \:
                     = @order.customer.person_name
                     \:
-                    = @order.customer.phone
+                    = @order.customer.phone_numbers.first.number_string
                   - if (addr = (@order.customer.ship_address || @order.customer.default_address)) and !addr.postalcode.blank?
                     \:
                     = addr.postalcode
+                  - for email in @order.customer.email_addresses
                     \:
-                  = mail_to "#{@order.customer.person_name} <#{@order.customer.email}>", @order.customer.email
+                    = mail_to "#{@order.customer.person_name} <#{email.address}>", email.address
                 %div
                   \-
                   = @order.user ? @order.user.name : '?'

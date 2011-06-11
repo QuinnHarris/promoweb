@@ -16,6 +16,8 @@ class Customer < ActiveRecord::Base
   has_many :phone_numbers
   accepts_nested_attributes_for :phone_numbers, :allow_destroy => true, :reject_if => :all_blank
 
+  has_many :email_addresses
+  accepts_nested_attributes_for :email_addresses, :allow_destroy => true, :reject_if => :all_blank
 
   has_many :payment_methods, :order => 'id DESC'
   has_many :shipping_rates
@@ -25,22 +27,11 @@ class Customer < ActiveRecord::Base
     end
   end
   
-  validates_presence_of :person_name, :email, :phone
-  
-  def valid_email?
-    email.split(',').collect do |e|
-      TMail::Address.parse(e.strip)
-    end
-    rescue TMail::SyntaxError
-    errors.add_to_base("Must be a valid email")
-  end
-  validate :valid_email?
+  validates_presence_of :person_name
 
   def empty?
     company_name == '' and
-    person_name == '' and
-    email == '' and
-    phone == ''
+    person_name == ''
   end
   
   before_save :strip_name
@@ -62,7 +53,7 @@ class Customer < ActiveRecord::Base
   end
     
   def email_string
-    email.split(',').collect { |e| "\"#{person_name}\" <#{e}>" }
+    email_addresses.collect { |e| "\"#{person_name}\" <#{e}>" }
   end
 
   def sales_tax

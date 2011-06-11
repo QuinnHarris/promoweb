@@ -55,8 +55,7 @@ class PhoneController < ActionController::Base
       @lines = [(params[:name] and params[:name].include?('NEW')) ? 
                 'DIALED NEW CUSTOMER' : '----- Customer -----',
                 customer.company_name,
-                customer.person_name,
-                customer.phone]
+                customer.person_name]
       orders = customer.orders.find(:all, :conditions => 'NOT closed').collect { |o| o.id }
       @lines << 'Orders: ' + orders.join(',') unless orders.empty?
       return

@@ -1,0 +1,6 @@
+- customer.fields_for :phone_numbers, phone_number do |phone|
+  .phone_number
+    = phone.select(:name, PhoneNumber.types)
+    = phone.text_field :number_string, :size => 19
+    = remove_link(phone)
+

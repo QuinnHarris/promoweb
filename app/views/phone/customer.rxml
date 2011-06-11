@@ -2,7 +2,7 @@ xml.AastraIPPhoneFormattedTextScreen(:destroyOnExit => 'yes') do
   xml.Line "----- Customer -----"
   xml.Line @customer.company_name
   xml.Line @customer.person_name
-  xml.Line @customer.phone
+  xml.Line @customer.phone_numbers.first.number_string
   orders = @customer.orders.find(:all, :conditions => 'NOT closed').collect { |o| o.id }
   unless orders.empty?  
     xml.Line 'Orders: ' + orders.join(',')
@@ -10,7 +10,7 @@ xml.AastraIPPhoneFormattedTextScreen(:destroyOnExit => 'yes') do
 
   xml.SoftKey(:index => 1) do
     xml.Label 'Dial'
-    xml.URI "Dial:#{@customer.phone.gsub(/[^0-9]/,'')}"
+    xml.URI "Dial:#{@customer.phone_numbers.first.number}"
   end
 
   if @list
