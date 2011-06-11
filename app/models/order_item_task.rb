@@ -166,8 +166,8 @@ class EstimatedItemTask < OrderItemTask
 
   def email_complete
     subject = "Estimated Ship Date: #{ship_date.strftime("%A %b %d, %Y")}"
-    header = %(Hi #{object.order.customer.person_name}
-Your order is currently in production and has an estimated ship date of #{ship_date.strftime("%A %b %d, %Y")}
+    header = %(Hi #{object.order.customer.person_name},
+Your order is currently in production and has an estimated ship date of #{ship_date.strftime("%A %b %d, %Y")}.
 Once you order ships I will be forwarding a tracking number for your order.
 Please let me know if you have any questions.)
     CustomerSend.dual_send(self, subject, header)
@@ -214,7 +214,7 @@ class ShipItemTask < OrderItemTask
 
   def email_complete
     subject = "Order Shipped with Tracking Number"
-    header = %(Hi #{object.order.customer.person_name}
+    header = %(Hi #{object.order.customer.person_name},
 Your order has shipped.
 Please find your tracking number for #{carrier} below.
 <a href="#{tracking_url}">#{tracking}</a>)
@@ -291,7 +291,7 @@ class ReceivedItemTask < OrderItemTask
 
   def email_complete
     subject = "Order Delivered"
-    header = %(Hi #{object.order.customer.person_name}
+    header = %(Hi #{object.order.customer.person_name},
 It looks like your order has been delivered.
 Please let us know if the product has arrived as expected.
 <a href="http://ratepoint.com/tellus/77047">You can review our service by clicking on this link.</a>

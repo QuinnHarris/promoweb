@@ -82,12 +82,12 @@ class EPSPlacement < EPSInfo
 
   attr_reader :diameter
   def diameter=(val)
-    width = height = @diameter = Float(val)
+    @width_imprint = @height_imprint = @diameter = Float(val)
   end
 
   %w(width height).each do |name|
     define_method "#{name}_imprint" do
-      instance_variable_get("@#{name}_imprint") || super
+      instance_variable_get("@#{name}_imprint")
     end
 
     define_method "#{name}_imprint=" do |val|
