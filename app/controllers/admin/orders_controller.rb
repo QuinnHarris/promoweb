@@ -901,9 +901,7 @@ class Admin::OrdersController < Admin::BaseController
       else
         @customer = Customer.new({
             :company_name => '',
-            :person_name => params[:name] || '',
-            :email => params[:email] || '',
-            :phone => ''})
+            :person_name => params[:name] || '' })
       end
 
       @customer.save_with_validation(false)

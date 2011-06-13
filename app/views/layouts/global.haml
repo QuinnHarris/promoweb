@@ -97,8 +97,9 @@
                       = @order.customer.company_name
                     \:
                     = @order.customer.person_name
-                    \:
-                    = @order.customer.phone_numbers.first.number_string
+                    - for pn in @order.customer.phone_numbers
+                      \:
+                      = pn.number_string
                   - if (addr = (@order.customer.ship_address || @order.customer.default_address)) and !addr.postalcode.blank?
                     \:
                     = addr.postalcode

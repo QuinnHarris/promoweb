@@ -218,7 +218,7 @@ class PhoneController < ActionController::Base
     unless @supplier
       if /\(#(\d{4,5})\)/ === subject and
           @order = Order.find_by_id($1)
-        texts << "ORDER CUSTOMER MISMATCH" unless emails.empty? or emails.find { |a| @order.customer.email.downcase.include?(a.address.downcase) }
+        texts << "ORDER CUSTOMER MISMATCH" unless emails.empty? or emails.find { |a| @order.customer.email_addresses.to_a.find { |b| b.address.downcase.include?(a.address.downcase) } }
         texts << (@order.user_id ? @order.user.name : "UNASSIGNED")
         texts << "Order #{@order.id}"
         uri = { :controller => '/admin/orders', :action => :items_edit, :order_id => @order, :own => true } if @order.user_id.nil?
