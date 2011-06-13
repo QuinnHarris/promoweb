@@ -26,6 +26,7 @@ class CustomerSend < ActionMailer::Base
     
     customer_email = order.customer.email_string
     customer_email = SEND_EMAIL unless RAILS_ENV == "production"
+    logger.info("CUST EMAIL: #{customer_email.inspect}")
   
     # To Customer
     send = CustomerSend.create_quote(order, task, subject, header)

@@ -53,7 +53,7 @@ class Customer < ActiveRecord::Base
   end
     
   def email_string
-    email_addresses.collect { |e| "\"#{person_name}\" <#{e}>" }
+    email_addresses.collect { |e| "\"#{person_name}\" <#{e.address}>" }
   end
 
   def sales_tax

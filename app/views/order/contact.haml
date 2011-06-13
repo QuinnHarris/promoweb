@@ -73,7 +73,7 @@
         %th Email:
         %td#email_addresses
           - @customer.email_addresses << EmailAddress.new if @customer.email_addresses.empty?
-          = render :partial => 'email_address', :locals => { :customer => cust }
+          = render :partial => '/order/email_address', :locals => { :customer => cust }
         %td
           &nbsp;
           = add_link(cust, 'email_address')
@@ -84,7 +84,7 @@
           = render :partial => 'phone_number', :locals => { :customer => cust }
         %td
           &nbsp;
-          = add_link(cust, 'phone_number')
+          = add_link(cust, '/order/phone_number')
 
       - unless @search
         = render :partial => 'address_edit', :locals => { :field_name => :default_address, :disabled => false }

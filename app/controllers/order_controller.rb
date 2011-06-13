@@ -241,9 +241,7 @@ public
         unless @customer
           @customer = Customer.new({
             :company_name => '',
-            :person_name => '',
-            :email => '',
-            :phone => ''})
+            :person_name => ''})
           @customer.save_with_validation(false)
         end
 
