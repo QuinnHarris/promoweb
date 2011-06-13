@@ -160,9 +160,9 @@ Calendar.setup({
   # And this of course is only needed because Ryan's example uses JS to add new
   # records. If you just build a new one in the controller this is all unnecessary.
   
-  def add_link(cust, name)
+  def add_link(cust, name, klass)
     plural = name.pluralize
-    string = render(:partial => name, :locals => { :customer => cust, name.to_sym => Kernel.const_get(plural.classify).new })
+    string = render(:partial => name, :locals => { :customer => cust, name.to_sym => klass.new })
     string.gsub!(/_attributes_\d+_/, '_attributes__index__')
     string.gsub!(/attributes\]\[(\d+)\]\[/,'attributes][_index_][')
     index = $1
