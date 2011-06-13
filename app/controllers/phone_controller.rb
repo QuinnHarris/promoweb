@@ -224,7 +224,7 @@ class PhoneController < ActionController::Base
         uri = { :controller => '/admin/orders', :action => :items_edit, :order_id => @order, :own => true } if @order.user_id.nil?
       else
         customers = emails.collect do |addr|
-          Customer.find(:all, :conditions => ["lower(email) ~ ?", addr.address.downcase], :order => 'id DESC')
+          Customer.find(:all, :include => :email_addresses, :conditions => ["lower(email_addresses.address) ~ ?", addr.address.downcase], :order => 'customers.id DESC')
         end.flatten
 
         unless customers.empty?
