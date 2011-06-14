@@ -40,7 +40,7 @@
       %tr
         %th
           - if !static and RemoveItemOrderTask.allowed?(@permissions)
-            = link_to(image_tag('remove.png') + "Remove", { :action => :item_remove, :id => order_item }, :confirm => "Remove #{order_item.product.name}")
+            = link_to(image_tag('remove.png') + "Remove", { :action => :item_remove, :id => order_item, :order_id => @order }, :confirm => "Remove #{order_item.product.name}")
         %td Description
         %td Unit
         - if fixed

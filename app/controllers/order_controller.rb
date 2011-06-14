@@ -510,7 +510,7 @@ public
         end
   
         @customer.attributes = params[:customer]
-        changed = @customer.changed? || @customer.phone_numbers.to_a.find { |p| p.changed? || p.marked_for_destruction? }
+        changed = @customer.changed? || @customer.phone_numbers.to_a.find { |p| p.changed? || p.marked_for_destruction? } || @customer.email_addresses.to_a.find { |p| p.changed? || p.marked_for_destruction? }
 
         if @customer.valid?
           if changed
