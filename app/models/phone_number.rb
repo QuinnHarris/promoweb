@@ -8,6 +8,7 @@ class PhoneNumber < ActiveRecord::Base
 
   before_save :set_number
   def set_number
+    return unless number_string
     self.number = number_string.gsub(/^1/,'').gsub(/[^0-9]+/,'')[0..9]
   end
 end

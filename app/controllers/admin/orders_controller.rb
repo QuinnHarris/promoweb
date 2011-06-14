@@ -1371,7 +1371,7 @@ public
 
     addrs = @order.customer.email_addresses
 
-    ids = imap.search(((1...addrs.length).collect { "OR" } + addrs.collect { |addr| ["OR", "FROM", addr, "TO", addr] }).flatten)
+    ids = imap.search(((1...addrs.length).collect { "OR" } + addrs.collect { |addr| ["OR", "FROM", addr.address, "TO", addr.address] }).flatten)
     @list = []
     @list = imap.fetch(ids, "(UID RFC822.SIZE BODY.PEEK[]<0.8192>)").reverse.collect do |msg|
       [msg.attr['RFC822.SIZE'], TMail::Mail.parse(msg.attr['BODY[]<0>'])]      

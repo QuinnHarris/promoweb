@@ -317,13 +317,19 @@
                   %td Company
                   %td Person
                   %td Phone
+                  %td Email
               %tbody
                 - for customer in @customers
                   %tr
                     %td= customer.orders.collect { |o| link_to o.id, :controller => '/order', :action => 'status', :order_id => o.id }.join(', ')
                     %td= customer.company_name
                     %td= customer.person_name
-                    %td= customer.phone
+                    %td
+                      - for pn in customer.phone_numbers
+                        %div= pn.number_string
+                    %td
+                      - for email in customer.email_addresses
+                        %div= mail_to email.address
             %hr
 
           %table

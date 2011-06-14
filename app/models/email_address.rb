@@ -2,6 +2,7 @@ class EmailAddress < ActiveRecord::Base
   belongs_to :customer
 
   def valid_email?
+    return nil unless address
     begin
       TMail::Address.parse(address.strip)
     rescue TMail::SyntaxError
