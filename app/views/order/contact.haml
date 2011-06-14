@@ -54,7 +54,7 @@
       - if @search
         %tr
           %th Order #
-          %td= text_field :order, :id
+          %td= text_field :order, :id, :value => ''
         %tr
           %th Purchase #
           %td= text_field :purchase_order, :quickbooks_ref
@@ -65,26 +65,34 @@
       %tr.required
         %th Name:
         = customer_field :person_name
-        - unless @search
+        - unless @static or @search
           %td
             = check_box :customer, :solicit
             Put me on the email list.
       %tr.required
         %th Email:
         %td#email_addresses
-          - @customer.email_addresses << EmailAddress.new if @customer.email_addresses.empty?
-          = render :partial => '/order/email_address', :locals => { :customer => cust }
-        %td
-          &nbsp;
-          = add_link(cust, 'email_address', EmailAddress)
+          - unless @search
+            - @customer.email_addresses << EmailAddress.new if @customer.email_addresses.empty?
+            = render :partial => '/order/email_address', :locals => { :customer => cust }
+          - else
+            = text_field_predicated(:customer, :email_addresses)
+        - unless @static or @search
+          %td
+            &nbsp;
+            = add_link(cust, 'email_address', EmailAddress)
       %tr.required
         %th Phone Number:
         %td#phone_numbers
-          - @customer.phone_numbers << PhoneNumber.new if @customer.phone_numbers.empty?
-          = render :partial => '/order/phone_number', :locals => { :customer => cust }
-        %td
-          &nbsp;
-          = add_link(cust, 'phone_number', PhoneNumber)
+          - unless @search
+            - @customer.phone_numbers << PhoneNumber.new if @customer.phone_numbers.empty?
+            = render :partial => '/order/phone_number', :locals => { :customer => cust }
+          - else
+            = text_field_predicated(:customer, :phone_numbers)
+        - unless @static or @search
+          %td
+            &nbsp;
+            = add_link(cust, 'phone_number', PhoneNumber)
 
       - unless @search
         = render :partial => 'address_edit', :locals => { :field_name => :default_address, :disabled => false }

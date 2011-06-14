@@ -162,7 +162,7 @@ Calendar.setup({
   
   def add_link(cust, name, klass)
     plural = name.pluralize
-    string = render(:partial => name, :locals => { :customer => cust, name.to_sym => klass.new })
+    string = render(:partial => "/order/#{name}", :locals => { :customer => cust, name.to_sym => klass.new })
     string.gsub!(/_attributes_\d+_/, '_attributes__index__')
     string.gsub!(/attributes\]\[(\d+)\]\[/,'attributes][_index_][')
     index = $1
