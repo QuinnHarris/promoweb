@@ -493,7 +493,7 @@ class Admin::OrdersController < Admin::BaseController
     redirect_to :controller => '/order', :action => :payment
   end
 
-  %w(company_name person_name email phone).each do |field|
+  %w(company_name person_name).each do |field|
     auto_complete_for :customer, field
   end
     auto_complete_for :order, :id
