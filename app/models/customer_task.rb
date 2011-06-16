@@ -387,7 +387,7 @@ module TaskMixin
       return depend_max_at.add_workday(execute_duration)
     end
 #    nil
-    dependants && dependants.first.depends_on.collect { |t| (t != self) ? t.complete_at : nil }.compact.max
+    dependants && dependants.first.depends_on.collect { |t| (t != self && !t.new_record? && t.active) ? t.created_at : nil }.compact.max
   end
   def complete_at
     return expected_at if expected_at
