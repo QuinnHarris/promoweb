@@ -11,7 +11,7 @@
 
 - fixed = 0
 - decorations = order_item.decorations.find_all { |d| list = d.send("list_#{aspect}"); !(d.technique_id == 1 && list.marginal.zero? && list.fixed.zero?) }
-- rows += decorations.collect { |d| decoration_list = d.send("list_#{aspect}"); f = ((decoration_list.fixed.nil? or decoration_list.fixed.zero?) ? 0 : 1); fixed += f; [f, ((decoration_list.marginal.nil? or decoration_list.marginal.zero?) ? 0 : 1)] }.flatten.sum
+- rows += decorations.collect { |d| decoration_list = d.send("list_#{aspect}"); f = ((decoration_list.fixed.nil? or decoration_list.fixed.zero?) ? 0 : 1); fixed += f; [f, ((decoration_list.marginal.nil? or decoration_list.marginal.zero?) ? ((f == 1) ? 0 : 1) : 1)] }.flatten.sum
 
 - unit_entries = []; fixed_entries = []
 - order_item.entries.each do |entry|
@@ -127,7 +127,7 @@
       - for decoration in decorations
         - decoration_list = decoration.send("list_#{aspect}")
         - unit_sum += decoration_list.marginal unless unit_sum.nil?
-        - unless decoration_list.marginal.nil? or decoration_list.marginal.zero?
+        - unless dec_marginal = (decoration_list.marginal.nil? or decoration_list.marginal.zero?)
           %tr
             %td
               = decoration.description
@@ -141,7 +141,7 @@
             - if fixed
               %td
             %td.num= (decoration_list.marginal * order_item.quantity).to_perty
-        - unless decoration_list.fixed.nil? or decoration_list.fixed.zero?
+        - unless (decoration_list.fixed.nil? or decoration_list.fixed.zero?) and !dec_marginal
           %tr
             %td
               = decoration.description
