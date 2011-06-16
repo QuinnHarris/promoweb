@@ -127,7 +127,7 @@
                         %a{ :href => '#' }
                           %span= dec.display
 
-          - unless @product.deleted
+          - unless false #@product.deleted
             #prices.box
               - form_tag({ :controller => :order, :action => :add_item }, {:name => "productform" }) do
                 %p
