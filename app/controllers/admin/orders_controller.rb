@@ -890,7 +890,7 @@ class Admin::OrdersController < Admin::BaseController
   def new_order
     Customer.transaction do
       if params[:email] and
-          customer = Customer.find(:first, :conditions => ['lower(email) ~ ?', params[:email].downcase])
+          customer = Customer.find(:first, :include => :email_addresses, :conditions => ['lower(email_addresses.address) ~ ?', params[:email].downcase])
         order = customer.orders.find(:first, :conditions => 'user_id IS NOT NULL', :order => 'id DESC')
         render :inline => "Customer already serviced by #{order.user.name}"
         return
@@ -905,6 +905,8 @@ class Admin::OrdersController < Admin::BaseController
       end
 
       @customer.save_with_validation(false)
+      EmailAddress.create(:customer => @custoemr,
+                          :address => params[:email])
       
       @order = @customer.orders.create(:user_id => session[:user_id])
       session[:order_id] = @order.id
