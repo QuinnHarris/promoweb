@@ -496,12 +496,41 @@ class Admin::OrdersController < Admin::BaseController
   %w(company_name person_name).each do |field|
     auto_complete_for :customer, field
   end
-    auto_complete_for :order, :id
+  auto_complete_for :order, :id
+
+  %w(phone_number email_address).each do |method|
+    define_method("auto_complete_for_customer_#{method.pluralize}") do
+      klass = method.camelize.constantize
+      column = klass.main_column
+      find_options = { 
+        :conditions => [ "customer_id != ? AND LOWER(#{column}) LIKE ?", params[:customer_id], '%' + params[:customer][method.pluralize].downcase + '%' ], 
+        :order => "#{column} ASC",
+        :limit => 10 }
+        
+      @items = method.camelize.constantize.find(:all, find_options)
+
+      render :inline => "<%= auto_complete_result @items, '#{column}' %>"
+    end
+  end
   
   # Contact Search/Merge
   def contact_search
-    customer = Customer.find(:first,
-      :conditions => ["#{params[:customer].keys.first} = ?", params[:customer].values.first])
+    field = params[:customer].keys.first
+    value = params[:customer].values.first
+
+    if %w(phone_numbers email_addresses).include?(field)
+      column = field.singularize.camelize.constantize.main_column
+      find_options = {
+        :include => field,
+        :conditions => ["#{field}.#{column} = ?", value]
+      }
+    else
+      find_options = {
+        :conditions => ["#{field} = ?", value] 
+      }
+    end
+    
+    customer = Customer.find(:first, find_options)
       
     if params[:order_id]
       redirect_to :controller => '/order', :action => :contact, :order_id => @order.id, :customer_id => customer.id

@@ -6,6 +6,8 @@ class PhoneNumber < ActiveRecord::Base
 
   #validates_format_of :number_string, :with => /^1?[- \.]?\d{3}[- \.]?\d{3}[- \.]\d{4}/
 
+  def self.main_column; 'number_string'; end
+
   before_save :set_number
   def set_number
     return unless number_string
