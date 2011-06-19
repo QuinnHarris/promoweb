@@ -145,5 +145,7 @@
               %p= line
     - else
       %h3
-        Payment:
-        = invoice.amount.to_perty
+        - if invoice.amount.to_i >= 0
+          Payment Tendered: #{invoice.amount.to_perty}
+        - else
+          Credit: #{(-invoice.amount).to_perty}
