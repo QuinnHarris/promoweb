@@ -47,7 +47,7 @@
         - for user in users
           %li= link_to user.name, { :controller => '/admin/orders', :action => :task_execute, :order_id => @order, :delegate_perm => user.delegatables.first.name, :user_id => user.id }, :class => 'action'
 
-    - if task.complete_estimate
+    - if !blocked and task.complete_estimate
       - form_for :task, task, :url =>  { :controller => '/admin/orders', :action => :task_comment, :id => task.object, :class => tasks.last.class } do |t|
         %hr
         = t.text_area :comment, 'cols' => 120, 'rows' => 2         
