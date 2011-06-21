@@ -285,5 +285,68 @@ class PhoneController < ActionController::Base
 
   def cdr
     render :inline => ''
+
+    doc = Nokogiri::XML(params[:cdr])
+    
+    return if doc.at_xpath('/cdr/callflow/caller_profile/source/text()').to_s == 'src/switch_ivr_originate.c'
+
+    attr = {}
+
+    { 'caller_number' => 'callflow[last()]/caller_profile/caller_id_number',
+      'caller_name' => 'callflow[last()]/caller_profile/caller_id_name',
+      'called_number' => 'callflow[last()]/caller_profile/destination_number',
+    }.each do |name, path|
+      attr[name] = doc.at_xpath("/cdr/#{path}/text()").to_s
+    end
+
+    attr['inbound'] = (doc.at_xpath('/cdr/callflow[last()]/caller_profile/context/text()').to_s == 'public')
+    
+    call_record = Call.find_by_uuid(params[:uuid])
+    if call_record
+      attr.each do |name, value|
+        raise "Mismatch: #{call_record.send(name)} != #{value}" if call_record.send(name) != value
+      end
+    else
+      call_record = Call.new
+    end
+
+    system_answer = (doc.at_xpath("(/cdr/app_log/application[@app_name='answer' or @app_name='bridge'])[last()]")['app_name'] == 'answer')
+    logger.info("System Answer: #{system_answer.inspect}")
+    logger.info("Hang: #{doc.at_xpath('/cdr/variables/sip_hangup_disposition/text()').to_s}")
+
+    mapping = { 'create_time' => 'callflow[last()]/times/created_time' }
+    if attr['inbound']
+      if doc.xpath('/cdr/callflow').length == 2
+        mapping.merge!('ring_time' => 'callflow/times/profile_created_time')
+        if doc.at_xpath('/cdr/callflow/caller_profile/originatee')
+          mapping.merge!('answered_time' => 'callflow/times/progress_time')
+        end
+      end
+    else
+      mapping.merge!( 'ring_time' => 'callflow/times/progress_media_time',
+                      'answered_time' => 'callflow/times/answered_time'
+                      )
+    end
+    
+    mapping.each do |name, path|
+      i = doc.at_xpath("/cdr/#{path}/text()").to_s.to_i
+      next if i == 0
+      attr[name] = Time.at(i/1000000.0)
+    end
+
+    %w(hangup resurrect transfer).each do |name|
+      i = doc.at_xpath("/cdr/callflow/times/#{name}_time/text()").to_s.to_i
+      next if i == 0
+      raise "Duplicate reason" if attr['end_reason']
+      attr['end_reason'] = name
+      attr['end_time'] = Time.at(i/1000000.0)
+    end
+
+    attr['end_reason'] = 'unknown' unless attr['end_reason']
+
+    logger.info("Attr: #{attr.inspect}")
+
+    call_record.update_attributes(attr)
+
   end
 end

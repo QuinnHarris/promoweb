@@ -91,6 +91,9 @@ class HighCaliberLine < GenericImport
       
       product_data['image-thumb'] = CopyImageFetch.new(
     "http://#{@domain}/admin/productimage/auto/#{file_name}")
+
+
+      no_less_than_min = no_blank = categories.find { |c| c.include?('Neoprene') }
       
       # Decorations
       decorations = []
@@ -99,7 +102,7 @@ class HighCaliberLine < GenericImport
       imprint_area = parse_area2(imprint_str.gsub('”', '"').gsub('&quot;', '"'))
       puts "Imprint: #{imprint_str.inspect} => #{imprint_area.inspect}" unless imprint_area
       if imprint_area
-        decorations << { 'technique' => 'None', 'location' => '' }
+        decorations << { 'technique' => 'None', 'location' => '' } unless no_blank
         decorations << {
           'technique' => 'Screen Print',
           'limit' => 4,
@@ -234,17 +237,19 @@ class HighCaliberLine < GenericImport
         end
 
         # Less Than Minimum
-        price_list << {
-          :minimum => price_breaks.first[:minimum] / 2,
-          :fixed => Money.new(25.00),
-          :marginal => price_breaks.first[:marginal]
-        }
-        
-        cost_list << {
-          :minimum => price_breaks.first[:minimum] / 2,
-          :fixed => Money.new(25.00),
-          :marginal => (price_breaks.first[:marginal] * (1.0 - codes.last)).round_cents
-        }
+        unless no_less_than_min
+          price_list << {
+            :minimum => price_breaks.first[:minimum] / 2,
+            :fixed => Money.new(25.00),
+            :marginal => price_breaks.first[:marginal]
+          }
+          
+          cost_list << {
+            :minimum => price_breaks.first[:minimum] / 2,
+            :fixed => Money.new(25.00),
+            :marginal => (price_breaks.first[:marginal] * (1.0 - codes.last)).round_cents
+          }
+        end
         
         # Other Price
         price_list += price_breaks
