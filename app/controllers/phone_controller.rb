@@ -314,18 +314,21 @@ class PhoneController < ActionController::Base
     logger.info("System Answer: #{system_answer.inspect}")
     logger.info("Hang: #{doc.at_xpath('/cdr/variables/sip_hangup_disposition/text()').to_s}")
 
+    user_id = nil
     mapping = { 'create_time' => 'callflow[last()]/times/created_time' }
     if attr['inbound']
       if doc.xpath('/cdr/callflow').length == 2
         mapping.merge!('ring_time' => 'callflow/times/profile_created_time')
-        if doc.at_xpath('/cdr/callflow/caller_profile/originatee')
+        if node = doc.at_xpath('/cdr/callflow/caller_profile/originatee/originatee_caller_profile/destination_number/text()')
           mapping.merge!('answered_time' => 'callflow/times/progress_time')
+          user_id = node.to_s
         end
       end
     else
       mapping.merge!( 'ring_time' => 'callflow/times/progress_media_time',
                       'answered_time' => 'callflow/times/answered_time'
                       )
+      user_id = doc.at_xpath('/cdr/variables/user_name/text()').to_s
     end
     
     mapping.each do |name, path|
@@ -343,6 +346,23 @@ class PhoneController < ActionController::Base
     end
 
     attr['end_reason'] = 'unknown' unless attr['end_reason']
+
+    if attr['end_reason'] == 'hangup'
+      last_app = doc.at_xpath('/cdr/app_log/application[last()]')['app_name']
+      attr['end_reason'] = 'voicemail' if %w(voicemail playback).include?(last_app)
+      
+      if hangup_dispos = doc.at_xpath('/cdr/variables/sip_hangup_disposition/text()').to_s
+        idx = %w(recv_bye send_bye).index(hangup_dispos)
+        res = %w(inside outside)
+        res.reverse! if attr['inbound']
+        attr['end_reason'] << "-#{idx ? res[idx] : 'unknown'}"
+      end
+    end
+
+    if user_id and user = User.find_by_login(user_id)
+      logger.info("User: #{user.login}")
+      attr['user_id'] = user.id
+    end
 
     logger.info("Attr: #{attr.inspect}")
 
