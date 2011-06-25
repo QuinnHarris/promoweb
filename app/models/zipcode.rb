@@ -1,5 +1,5 @@
 class Zipcode < ActiveRecord::Base
-  establish_connection("constants")
+  set_table_name 'constants.zipcodes'
 
   def tz_name
     case timezone
