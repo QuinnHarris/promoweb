@@ -6,8 +6,8 @@ xml.svg('xmlns:dc' => 'http://purl.org/dc/elements/1.1/',
 	'xmlns' => 'http://www.w3.org/2000/svg',
 	'xmlns:sodipodi' => 'http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd',
 	'xmlns:inkscape' => 'http://www.inkscape.org/namespaces/inkscape',
-	'width' => "#{(@oid.width * 72).to_i}pt",
-	'height' => "#{(@oid.height * 72).to_i}pt",
+	'width' => "#{((@oid.width || @oid.diameter) * 72).to_i}pt",
+	'height' => "#{((@oid.height || @oid.diameter) * 72).to_i}pt",
 	'id' => 'svg2',
 	'version' => '1.1') do
   xml.tag!('sodipodi:namedview',
@@ -30,7 +30,7 @@ xml.svg('xmlns:dc' => 'http://purl.org/dc/elements/1.1/',
 
   if @colors
     xml.g do
-      total_height = [@oid.width, @oid.height].max * 72
+      total_height = [@oid.width, @oid.height, @oid.diameter].compact.max * 72
       box_height = total_height / @colors.length
       text_shrink = 0.8
 

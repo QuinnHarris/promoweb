@@ -14,7 +14,7 @@ class LogoIncludedXML < GenericImport
     remote_file = 'feed.xml'
     Net::FTP.open('ftp.logoincluded.com') do |ftp|
       ftp.login('mountainofpromos', 'Br3S9Ebr')
-      if ftp.mtime(remote_file) < File.mtime(@src_file)
+      if File.exists?(@src_file) and (ftp.mtime(remote_file) < File.mtime(@src_file))
         puts "** No update **"
         return
       end

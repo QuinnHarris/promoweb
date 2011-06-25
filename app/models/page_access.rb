@@ -1,5 +1,5 @@
 class PageAccess < ActiveRecord::Base
-  establish_connection("access")
+  set_table_name 'access.page_accesses'
 
   belongs_to :session, :class_name => 'SessionAccess', :foreign_key => 'session_access_id'
   serialize :params

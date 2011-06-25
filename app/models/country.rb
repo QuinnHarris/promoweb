@@ -1,4 +1,4 @@
 class Country < ActiveRecord::Base
+  set_table_name 'constants.countries'
 end
 
-Country.establish_connection("constants")

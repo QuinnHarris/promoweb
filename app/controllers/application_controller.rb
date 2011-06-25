@@ -33,7 +33,7 @@ public
     if (RAILS_ENV == "production") and @real_user
       unless session[:ses_id]
         session_record = SessionAccess.find(:first, :conditions => 
-          ["user_agent = ? AND id IN (SELECT session_access_id FROM page_accesses WHERE address = ? AND created_at > NOW() - '3 month'::interval )",
+          ["user_agent = ? AND id IN (SELECT session_access_id FROM access.page_accesses WHERE address = ? AND created_at > NOW() - '3 month'::interval )",
            request.env['HTTP_USER_AGENT'], request.remote_ip])
 
         unless session_record
@@ -127,7 +127,7 @@ public
       session[:tz] = nil if params[:order_id] and session[:order_id] != params[:order_id]
       if !session[:tz] and @order.customer.default_address and @order.customer.default_address.postalcode
         list = Zipcode.find_by_sql(["SELECT z.*, r.name as state "+
-                                    "FROM zipcodes z, regions r " +
+                                    "FROM constants.zipcodes z, constants.regions r " +
                                     "WHERE z.region = r.id AND z.country = 229 AND z.zip = ?",
                                     @order.customer.default_address.postalcode[0..4]])
         if list.length == 1
