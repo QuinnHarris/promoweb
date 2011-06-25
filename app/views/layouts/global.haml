@@ -111,7 +111,7 @@
                   = @order.user ? @order.user.name : '?'
                   - if @order.user_id.nil? or (@order.user_id != @user.id and allowed?('Super'))
                     = link_to "Own", { :controller => '/admin/orders', :action => :order_own }, (@order.user_id ? { :class => 'admin', :confirm => "Take ownership of order from #{@order.user.name}" } : nil)
-                  - elsif allowed?('Super')
+                  - else
                     = link_to "UnOwn", { :controller => '/admin/orders', :action => :order_own, :unown => true }, { :class => 'admin', :confirm => "UnOwn order from #{@order.user.name}" }
                   \-
                   - if @customer_zone

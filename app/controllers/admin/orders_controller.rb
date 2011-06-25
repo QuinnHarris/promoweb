@@ -1057,7 +1057,7 @@ class Admin::OrdersController < Admin::BaseController
 
     if @order.user_id
       return if !params[:unown] and (@order.user_id == @user.id)
-      raise "permission denied" unless OwnershipOrderTask.allowed?(@permissions)
+      raise "permission denied" unless params[:unown] or OwnershipOrderTask.allowed?(@permissions)
     end
 
     Order.transaction do
