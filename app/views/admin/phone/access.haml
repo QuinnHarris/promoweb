@@ -1,0 +1,36 @@
+- for call_log, data in @calls
+  %div
+    - if data.is_a?(Customer)
+      %h2 Customer
+      #{format_phone(call_log.caller_number)} : #{call_log.caller_name} @ #{format_time(call_log.create_time)}
+      %table.form
+        %tr
+          %th Company:
+          %td= data.company_name
+        %tr
+          %th Name:
+          %td= data.person_name
+        %tr
+          %th Email:
+          %td
+            - for ea in data.email_addresses
+              %div= mail_to ea.address
+        %tr
+          %th Phone:
+          %td
+            - for p in data.phone_numbers
+              %div #{p.name}: #{p.number_string}
+        %tr
+          %th Orders
+          %td= data.orders.collect { |o| link_to o.id, :controller => '/order', :action => :status, :order_id => o.id }.join(', ')
+    - else
+      %h2 Product Views
+      #{format_phone(call_log.caller_number)} : #{call_log.caller_name} @ #{format_time(call_log.create_time)}
+      - for access in data
+        - product = Product.find(access.action_id)
+        %a.thumb{ :href => url_for_product(product) }
+        /= image_tag product.image_path_relative('thumb'), :alt => "#{product.name} Thumbnail"
+        %br
+        %span.name= product.respond_to?(:name_headline) ? product.name_headline : product.name
+        %br
+        %strong M#{access.action_id}

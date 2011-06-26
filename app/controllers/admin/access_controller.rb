@@ -41,18 +41,4 @@ class Admin::AccessController < Admin::BaseController
             "ORDER BY order_session_accesses.order_id, page_accesses.created_at",
        @tasks.collect { |t| t.order_id }])
   end
-
-  def phone
-    @customer = Customer.find(:first,
-                              :include => :phone_numbers,
-                              :conditions => { 'phone_numbers.number' => @user.incoming_phone_number.to_s.gsub(/^1/,'') } )
-    return if @customer
-
-    /^1?(\d{3})/ === @user.incoming_phone_number
-    @accesses = PageAccess.find(:all,
-                                :include => :session,
-                                :limit => 10,
-                                :order => 'page_accesses.id DESC',
-                                :conditions => ["page_accesses.created_at > ? AND session_accesses.area_code = ? AND page_accesses.controller = 'products' AND action = 'main'", Time.now - 30.days, $1])
-  end
 end

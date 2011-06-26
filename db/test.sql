@@ -230,8 +230,8 @@ GRANT SELECT, UPDATE ON permissions_id_seq, delegatables_id_seq TO write_orders;
 GRANT SELECT, INSERT, UPDATE, DELETE ON order_item_variants TO write_orders;
 GRANT USAGE ON order_item_variants_id_seq TO write_orders;
 
-GRANT SELECT, INSERT ON calls TO freeswitch;
-GRANT SELECT, UPDATE ON calls_id_seq TO freeswitch;
+GRANT SELECT, INSERT ON call_logs TO freeswitch;
+GRANT SELECT, UPDATE ON call_logs_id_seq TO freeswitch;
 
 
 update users set name = 'Quinn Harris', email = 'quinn@mountainofpromos.com' where login = 'quinn';

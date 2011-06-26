@@ -1,6 +1,5 @@
 class PhoneController < ActionController::Base
   def suppliers
-
   end
 
   def customers
@@ -17,8 +16,6 @@ class PhoneController < ActionController::Base
 
     render :layout=>false
   end
-
-
 
   def current
     user = User.find_by_login(params[:id])
@@ -40,11 +37,6 @@ class PhoneController < ActionController::Base
 
       return
     end
-
-    user = User.find_by_login(params[:id])
-    user.update_attributes!(:incoming_phone_number => params[:number],
-                            :incoming_phone_name => params[:name],
-                            :incoming_phone_time => Time.now)
 
     number = params[:number].gsub(/^1/,'')
 
@@ -113,11 +105,20 @@ class PhoneController < ActionController::Base
               params[:number] || ' ']
   end
 
+  # Provision Polycom
   def prov
     @phone = Phone.find_by_identifier(params[:id])
     @user = @phone.user
   end
 
+  # Provision UniData
+  def unidata
+    raise "Unknown name" unless /e1_([0-9a-f]{12})\.ini/ === params[:name]
+    @phone = Phone.find_by_identifier($1)
+  end
+
+
+  # Polycom Application
   def polycom
     user = User.find_by_login(params[:id])
     order = user.current_order
@@ -135,6 +136,7 @@ class PhoneController < ActionController::Base
     @customers = [@customer] + (@customers - [@customer])
   end
 
+  # Polycom Idle Display
   def polycom_idle
     user = User.find_by_login(params[:id])
     su = user.permissions.find(:first, :conditions => { :order_id => nil, :name => 'Super' })
@@ -155,31 +157,8 @@ class PhoneController < ActionController::Base
                    "WHERE NOT orders.closed AND orders.user_id IS NOT NULL)) AS sub GROUP BY id)")
 
   end
-
-  def polycom_notify
-    #PolycomIPPhone
-    #  IncomingCallEvent
-    #    CalledPartyNumber => "sip:a46f22acead469c9@216.246.9.251"
-    #    CalledPartyName => "Quinn Harris"
-    #    PhoneIP => "10.86.201.174"
-    #    TimeStamp => "2011-03-06T12:43:16-07:00"
-    #    CallingPartyNumber => "sip:+19707595163@216.246.9.251:5061"
-    #    CallingPartyName => "WIRELESS CALLER"
-    #    MACAddress => "0004f212bd80"
-
-    event_params = params['PolycomIPPhone']['IncomingCallEvent']
-    /^sip:\+?(\d+)\@/ === event_params['CallingPartyNumber']
-    number = $1
-    return unless number.length >= 7
-
-    user = User.find_by_login(params[:id])
-    user.update_attributes!(:incoming_phone_number => number,
-                            :incoming_phone_name => event_params['CallingPartyName'],
-                            :incoming_phone_time => Time.now)
-  end
-
   
-  # XML Directory for polycoms
+  # Polycom XML Directory
   def contacts
     phone = nil
     if /^([0-9a-f]{12})-directory$/ === params[:id]
@@ -190,7 +169,7 @@ class PhoneController < ActionController::Base
     @suppliers = Supplier.find(:all, :conditions => 'phone IS NOT NULL', :order => 'name')
   end
 
-
+  # Used by Thunderbird Addon
   def email_status
     author = TMail::Address.parse(params[:author])
     recipients = params[:recipients].split(',').collect { |r| TMail::Address.parse(r) }
@@ -259,12 +238,7 @@ class PhoneController < ActionController::Base
     render :json => { :text => texts.join(' - '), :uri => uri && url_for(uri.merge({ :protocol => (RAILS_ENV == "production" ? 'https://' : 'http://') })) }
   end
 
-  Phone
-  def unidata
-    raise "Unknown name" unless /e1_([0-9a-f]{12})\.ini/ === params[:name]
-    @phone = Phone.find_by_identifier($1)
-  end
-
+  # Used by Freeswitch
   def directory
     if user_string = params[:user]
       user_int = user_string.to_i
