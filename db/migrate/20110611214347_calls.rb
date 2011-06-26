@@ -19,8 +19,8 @@ class Calls < ActiveRecord::Migration
       t.string :end_reason
       t.datetime :end_time
     end
-    add_foreign_key(:calls, :customers)
-    add_foreign_key(:calls, :users)
+    add_foreign_key(:call_logs, :customers)
+    add_foreign_key(:call_logs, :users)
 
 #    remove_column :users, :incoming_phone_number
 #    remove_column :users, :incoming_phone_name

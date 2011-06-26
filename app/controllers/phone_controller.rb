@@ -310,7 +310,8 @@ class PhoneController < ActionController::Base
       call_record = CallLog.new
     end
 
-    system_answer = (doc.at_xpath("(/cdr/app_log/application[@app_name='answer' or @app_name='bridge'])[last()]")['app_name'] == 'answer')
+    system_answer = doc.at_xpath("(/cdr/app_log/application[@app_name='answer' or @app_name='bridge'])[last()]")
+    system_answer = (system_answer['app_name'] == 'answer') if system_answer
     logger.info("System Answer: #{system_answer.inspect}")
     logger.info("Hang: #{doc.at_xpath('/cdr/variables/sip_hangup_disposition/text()').to_s}")
 
@@ -348,8 +349,10 @@ class PhoneController < ActionController::Base
     attr['end_reason'] = 'unknown' unless attr['end_reason']
 
     if attr['end_reason'] == 'hangup'
-      last_app = doc.at_xpath('/cdr/app_log/application[last()]')['app_name']
-      attr['end_reason'] = 'voicemail' if %w(voicemail playback).include?(last_app)
+      if last_app = doc.at_xpath('/cdr/app_log/application[last()]')
+        last_app = last_app['app_name']
+        attr['end_reason'] = 'voicemail' if %w(voicemail playback).include?(last_app)
+      end
       
       if hangup_dispos = doc.at_xpath('/cdr/variables/sip_hangup_disposition/text()').to_s
         idx = %w(recv_bye send_bye).index(hangup_dispos)

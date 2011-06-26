@@ -1,6 +1,6 @@
 xml.document( :type => 'freeswitch/xml' ) do
   xml.section( :name => 'directory' ) do
-    xml.domain( :name => '10.86.201.144' ) do
+    xml.domain( :name => 'mountainofpromos.com' ) do
       xml.groups do
         unless @no_external
           xml.group( :name => "external" ) do
@@ -22,16 +22,26 @@ xml.document( :type => 'freeswitch/xml' ) do
 	unless @no_internal
           xml.group( :name => "internal" ) do
             xml.users do
+	      xml.user( :id => 'sales', 'number-alias' => '100' ) do
+		xml.params do
+		  xml.param( :name => 'vm-password', :value => '0000' )
+		  xml.param( :name => 'vm-mailto', :value => 'sales@mountainofpromos.com' )
+ 		  xml.param( :name => 'vm-email-all-messages', :value => 'true' )
+		  xml.param( :name => 'vm-attach-file', :value => 'true' )
+		end
+	      end
               for user in @users
 	        xml.user( :id => user.login, 'number-alias' => user.extension ) do
 		  xml.params do
 	  	    dial = "{presence_id=${dialed_user}@${dialed_domain}}${sofia_contact(${dialed_user}@${dialed_domain})}"
 		    external = (user.external_phone_enable ? ",[leg_timeout=#{user.external_phone_timeout}]sofia/gateway/voipstreet/1#{user.external_phone_number}" : '')
     		    xml.param( :name => 'dial-string', :value => dial + (user.external_phone_all ? external : '') )
-    		    xml.param( :name => 'dial-string-external', :value => external ) if user.external_phone_enable
-		    xml.param( :name => 'password', :value => '1234' )#user.phone_password )
+    		    xml.param( :name => 'dial-string-external', :value => external ) if user.external_phone_enable and !user.external_phone_all
+		    xml.param( :name => 'password', :value => user.phone_password )
 		    xml.param( :name => 'vm-password', :value => '0000' )
 		    xml.param( :name => 'vm-mailto', :value => user.email )
+		    xml.param( :name => 'vm-email-all-messages', :value => 'true' )
+		    xml.param( :name => 'vm-attach-file', :value => 'true' )
 		    xml.param( :name => 'http-allowed-api', :value => 'voicemail' )
 		  end
 		  xml.variables do
