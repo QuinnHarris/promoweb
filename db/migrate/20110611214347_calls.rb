@@ -1,6 +1,6 @@
 class Calls < ActiveRecord::Migration
   def self.up
-    create_table :calls do |t|
+    create_table :call_logs do |t|
       t.string :uuid, :limit => 36
 
       t.string :caller_number
@@ -22,9 +22,9 @@ class Calls < ActiveRecord::Migration
     add_foreign_key(:calls, :customers)
     add_foreign_key(:calls, :users)
 
-    remove_column :users, :incoming_phone_number
-    remove_column :users, :incoming_phone_name
-    remove_column :users, :incoming_phone_time
+#    remove_column :users, :incoming_phone_number
+#    remove_column :users, :incoming_phone_name
+#    remove_column :users, :incoming_phone_time
   end
 
   def self.down

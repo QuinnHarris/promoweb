@@ -301,13 +301,13 @@ class PhoneController < ActionController::Base
 
     attr['inbound'] = (doc.at_xpath('/cdr/callflow[last()]/caller_profile/context/text()').to_s == 'public')
     
-    call_record = Call.find_by_uuid(params[:uuid])
+    call_record = CallLog.find_by_uuid(params[:uuid])
     if call_record
       attr.each do |name, value|
         raise "Mismatch: #{call_record.send(name)} != #{value}" if call_record.send(name) != value
       end
     else
-      call_record = Call.new
+      call_record = CallLog.new
     end
 
     system_answer = (doc.at_xpath("(/cdr/app_log/application[@app_name='answer' or @app_name='bridge'])[last()]")['app_name'] == 'answer')
