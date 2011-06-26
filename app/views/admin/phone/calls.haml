@@ -1,0 +1,32 @@
+%h2 Calls
+
+%table
+  %thead
+    %tr
+      %td Inbound
+      %td Caller Name
+      %td Caller Number
+      %td Called Number
+      %td Create Time
+      %td Ring Time
+      %td Answer Time
+      %td End Time
+      %td End Reason
+      %td Talk Duration
+  %tbody
+    - for call in @calls
+      %tr
+        %td= call.inbound
+        %td= call.caller_name
+        %td= call.caller_number
+        %td= call.called_number
+        %td= format_time(call.create_time)
+        %td= format_time(call.ring_time)
+        %td= format_time(call.answered_time)
+        %td= format_time(call.end_time)
+        %td= call.end_reason       
+        %td
+          - if call.answered_time and call.end_time
+            = (call.end_time - call.answered_time).to_i
+
+
