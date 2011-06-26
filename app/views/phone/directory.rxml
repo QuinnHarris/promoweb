@@ -52,6 +52,7 @@ xml.document( :type => 'freeswitch/xml' ) do
 		    xml.variable( :name => 'effective_caller_id_number', :value => user.extension )
 		    xml.variable( :name => 'outbound_caller_id_name', :value => "MTNPRO #{user.name.split(' ').first}"[0...15] )
 		    xml.variable( :name => 'outbound_caller_id_number', :value => user.phone_i )
+		    xml.variable( :name => 'dial_out_prefix', :value => user.external_phone_number ? user.external_phone_number.to_s[0..2] : '970' )
 		  end
 		end
 	      end
