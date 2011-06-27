@@ -428,7 +428,7 @@ private
   def location_from_postalcode(code)
     list = Zipcode.find_by_sql(
      ["SELECT z.*, r.name as state "+
-      "FROM zipcodes z, regions r " +
+      "FROM constants.zipcodes z, constants.regions r " +
       "WHERE z.region = r.id AND z.country = 229 AND z.zip = ?",
      code[0..4]])
     if list.length == 1

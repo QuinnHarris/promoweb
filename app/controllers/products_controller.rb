@@ -223,11 +223,11 @@ public
 
         @sessions = SessionAccess.find(:all, :include => [:pages], :limit => 20,
                                        :conditions => "user_id IS NULL AND " +
-                                       "page_accesses.controller = 'products' AND " +
-                                       "page_accesses.action = 'main' AND " +
-                                       "page_accesses.action_id = #{@product.id} AND " +
-                                       "page_accesses.created_at > NOW() - '3 month'::interval",
-                                       :order => "page_accesses.id DESC")
+                                       "access.page_accesses.controller = 'products' AND " +
+                                       "access.page_accesses.action = 'main' AND " +
+                                       "access.page_accesses.action_id = #{@product.id} AND " +
+                                       "access.page_accesses.created_at > NOW() - '3 month'::interval",
+                                       :order => "access.page_accesses.id DESC")
 
         @customers = Customer.find(:all, :include => { :orders => :items}, :limit => 20,
                              :conditions => "customers.person_name != '' AND " +
