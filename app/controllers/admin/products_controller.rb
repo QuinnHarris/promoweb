@@ -126,9 +126,22 @@ class Admin::ProductsController < Admin::BaseController
   end
   
   def update
-    @product = Product.find(params[:id])
-    @product.update_attributes(params[:product])
-    redirect_to :controller => '/products', :action => :main, :id => @product
+    product = Product.find(params[:id])
+    product.update_attributes(params[:product])
+
+    unless params[:product_image][:image].blank? and params[:product_image][:url].blank?
+      pi = product.product_images.first
+      unless params[:product_image][:url].blank?
+        require 'open-uri'
+        pi.image = URI.parse(params[:product_image][:url]).open
+      else
+        pi.image = params[:product_image][:image]
+      end
+      pi.image.save
+      pi.save!
+    end   
+
+    redirect_to :controller => '/products', :action => :main, :id => product
   end
   
   def chart
