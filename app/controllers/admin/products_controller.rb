@@ -95,7 +95,7 @@ class Admin::ProductsController < Admin::BaseController
       end
       product = supplier.products.create(params[:product])
       variant = product.variants.create(:supplier_num => params[:product][:supplier_num])
-      cost_group = variant.price_groups.create
+      cost_group = variant.price_groups.create(:exponent => 0.0, :coefficient => 1.0)
       cost_group.price_entries.create(:minimum => 1, :fixed => Money.new(0), :marginal => Money.new(10000))
       cost_group.price_entries.create(:minimum => 1000)
       price_group = variant.price_groups.create(:source => supplier.price_source)
