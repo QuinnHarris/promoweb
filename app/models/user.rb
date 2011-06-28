@@ -19,9 +19,12 @@ class User < ActiveRecord::Base
   end
 
   def phone
-    return self['phone'] if self['phone']
-    return "970-375-1900 #{extension_s}" if extension
-    nil
+    str = []
+    if direct_phone_number and /^(\d{3})(\d{3})(\d{4})$/ === direct_phone_number.to_s
+      str << "Direct: #{$1}-#{$2}-#{$3}"
+    end
+    str << "970-375-1900 #{extension_s}" if extension
+    str.empty? ? nil : str.join(' or ')
   end
 
   def phone_i
