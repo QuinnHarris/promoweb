@@ -20,7 +20,7 @@ class Purchase < ActiveRecord::Base
   end
 
   def locked(unlock = false)
-    reconciled || (!unlock && purchase_order && purchase_order.sent)
+    reconciled || (!unlock && purchase_order && purchase_order.sent && items.to_a.find { |i| i.task_completed?(OrderSentItemTask) } )
   end
   
   def order
