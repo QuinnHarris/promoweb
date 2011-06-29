@@ -1418,7 +1418,7 @@ public
 
     @sessions = SessionAccess.find(:all, :include => [:pages, :orders],
                                    :conditions =>
-                                   "user_id IS NULL AND id IN (SELECT session_access_id FROM order_session_accesses WHERE order_id = #{@order.id})")
+                                   "user_id IS NULL AND session_accesses.id IN (SELECT session_access_id FROM access.order_session_accesses WHERE order_id = #{@order.id})")
 
     render :layout => 'order'
   end

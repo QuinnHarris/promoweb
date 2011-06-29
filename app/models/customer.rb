@@ -64,6 +64,12 @@ class Customer < ActiveRecord::Base
     end
     [nil, 0.0]
   end
+
+  before_destroy :remove_contacts
+  def remove_contacts
+    phone_numbers.each { |pn| pn.destroy }
+    email_addresses.each { |ea| ea.destroy }
+  end
 end
 
 #class CustomerValidate < Customer
