@@ -1,9 +1,4 @@
-require 'rexml/document'
-
 class GemlineXML < GenericImport
-  include REXML
-#  include XML
-
   @@decoration_replace = { 'Print' => ['Screen Print', 6],
   'Embroidery' => ['Embroidery', 20000],
   'Embroider' => ['Embroidery', 20000],
@@ -24,11 +19,12 @@ class GemlineXML < GenericImport
   end
   
   def parse_categories(element)
+    return [] unless element
     categories = []
-    element.each_element do |category|
-      first = category.attributes['name'].gsub('&amp;','&')
-      category.each_element do |sub|
-        categories << [first, sub.attributes['name'].gsub('&amp;','&')]
+    element.elements.each do |category|
+      first = category['name'].gsub('&amp;','&')
+      category.elements.each do |sub|
+        categories << [first, sub['name'].gsub('&amp;','&')]
       end
     end
     categories.uniq
@@ -48,39 +44,35 @@ class GemlineXML < GenericImport
 
   def parse_products
     puts "Reading XML"  
-    File.open(@src_file) do |file|
-      @doc = Document.new(file)
-    end
+    doc = File.open(@src_file) { |f| Nokogiri::XML(f) }
     
     break_reg = /(\d+)[-+](\d+)?/
     decoration_reg = /^([A-Za-z0-9 \(\),]+?) ?(?:(?:([0-9\.]+)"?W? ?x? ?([0-9\.]+)"?H?)|(?:([0-9\.]+)"? *(?:(?:dia.?)|(?:diameter))))?$/
 
-    gemroot = @doc.root.get_elements('gemlineproductdata').first
-    gemroot.each_element do |product|
+    gemroot = doc.xpath('/xml/gemlineproductdata/product').each do |product|
       prod_log_str = ''
        
-      attr = product.attributes
-      next if (attr['isflyer'] == "True") or (attr['iscatalog'] == "True") # We don't care about fylers
+      next if (product['isflyer'] == "True") or (product['iscatalog'] == "True") # We don't care about fylers
 
       # Product Record
       prod_data = {
-        'supplier_num' => attr['mainstyle'],
-        'name' => attr['name'].strip,
+        'supplier_num' => product['mainstyle'],
+        'name' => product['name'].strip,
         'lead_time_normal_min' => 3,
         'lead_time_normal_max' => 5,
         'lead_time_rush' => 1,
-        'description' => attr['description'].split('^').delete_if { |s| s.empty? }.join("\n"),
-        'package_weight' => attr['box_weight'].to_f,
-        'package_units' => attr['products_per_box'].to_i,
+        'description' => product['description'].split('^').delete_if { |s| s.empty? }.join("\n"),
+        'package_weight' => product['box_weight'].to_f,
+        'package_units' => product['products_per_box'].to_i,
         'package_unit_weight' => 0.0,
-        'package_height' => attr['box_height_inches'].to_f,
-        'package_width' => attr['box_width_inches'].to_f,
-        'package_length' => attr['box_length_inches'].to_f,
-        'data' => { :id => attr['Id'] }
+        'package_height' => product['box_height_inches'].to_f,
+        'package_width' => product['box_width_inches'].to_f,
+        'package_length' => product['box_length_inches'].to_f,
+        'data' => { :id => product['Id'] }
       }
   
       dimension = {}
-      %w(diameter length height width).each { |n| dimension[n] = attr[n].to_f if attr[n] and attr[n].to_f != 0.0 }
+      %w(diameter length height width).each { |n| dimension[n] = product[n].to_f if product[n] and product[n].to_f != 0.0 }
       dimension = nil if dimension.empty?
   
       # Decorations
@@ -89,16 +81,16 @@ class GemlineXML < GenericImport
           'technique' => 'None',
           'location' => ''
         }]
-        decorations = product.get_elements('decorations').first
-        decorations.get_elements('decoration').each do |decoration|
-          technique = decoration.attributes["technique"]
+
+        product.xpath('decorations/decoration').each do |decoration|
+          technique = decoration["technique"]
           if @@decoration_replace[technique]
             technique, limit = @@decoration_replace[technique]
           else
             puts "!!!! UNKNOWN DECORATION: #{technique}"
           end
                   
-          decoration.each_element do |location|
+          decoration.elements.each do |location|
             s = location.text.gsub(/[\200-\350]+/,' ')
             full, name, width, height, diameter = decoration_reg.match(s).to_a
             
@@ -132,41 +124,40 @@ class GemlineXML < GenericImport
       prod_categories = nil
   
       # items
-      items = []
-      product.get_elements('items/item').each do |item|
-        val = {}
-        attr = item.attributes
-        val['num'] = attr['style']
-        val['color'] = attr['color']
-        val['material'] = attr['fabric']
+      items = product.xpath('items/item').collect do |item|
+        val = {
+          'num' => item['style'],
+          'color' => item['color'],
+          'material' => item['fabric']
+        }
 
-        if swatches_element = item.get_elements('swatches').first
+        if swatches_element = item.at_xpath('swatches')
           swatches = {}
-          swatches_element.each_element do |image|
-            swatches[image.name] = image.attributes['path'] + image.attributes['name']
+          swatches_element.elements.each do |image|
+            swatches[image.name] = image['path'] + image['name']
           end
           val['swatches'] = swatches
         end
 
-        if image_node = item.get_elements('images/zoomed').first
-          val['images'] = [ImageNodeFetch.new(val['num'], "#{image_node.attributes['path']}#{image_node.attributes['name']}")]
+        if image_node = item.at_xpath('images/zoomed')
+          val['images'] = [ImageNodeFetch.new(val['num'], "#{image_node['path']}#{image_node['name']}")]
 
-          item.get_elements('images/alternate-images/').first.each_element do |alt|
+          item.at_xpath('images/alternate-images').elements.each do |alt|
             if /zoomed(\d)/ === alt.name
-              val['images'] << ImageNodeFetch.new("#{val['num']}-#{$1}", "#{alt.attributes['path']}#{alt.attributes['name']}")
+              val['images'] << ImageNodeFetch.new("#{val['num']}-#{$1}", "#{alt['path']}#{alt['name']}")
             end
           end
         end
 
         prices = []
         last_max = nil
-        item.get_elements('pricing').first.each_element do |price|
-          br = break_reg.match(price.attributes['break'])
+        item.xpath("pricing[@type='US']/price").each do |price|
+          br = break_reg.match(price['break'])
           prod_log_str << " * Non contigious prices" if last_max and br[1].to_i != last_max + 1
           last_max = br[2] ? br[2].to_i : nil
           price_val = price.text[1..-1].to_f
           next if prices.last and prices.last[1] == price_val
-          prices << [ br[1].to_i, price_val, convert_pricecode(price.attributes['code']) ]
+          prices << [ br[1].to_i, price_val, convert_pricecode(price['code']) ]
         end
         if prices.empty?
           puts "NO PRICES: #{val['num']}"
@@ -174,9 +165,9 @@ class GemlineXML < GenericImport
         end
         val['prices'] = prices
 
-        categories = parse_categories(item.get_elements('categories').first)
-        collections = item.get_elements('collections')
-        categories += parse_categories(collections.first).collect { |e| ['Collections'] + e } unless collections.empty?
+        categories = parse_categories(item.at_xpath('categories'))
+        collections = item.at_xpath('collections')
+        categories += parse_categories(collections).collect { |e| ['Collections'] + e }
         if prod_categories
           if prod_categories != categories
             raise "Inconsistent categories: #{prod_categories.inspect} != #{categories.inspect}"
@@ -185,18 +176,13 @@ class GemlineXML < GenericImport
           prod_categories = categories.uniq
         end
 
-        items << val
+        val
       end
 
       prod_categories ||= []
 
-      if uses = product.get_elements('product-uses/uses')
-        prod_categories += uses.collect { |use| ['Uses', use.attributes['name']] }
-      end
-  
-      if prod_categories.empty?
-        puts "No categories: #{prod_data['supplier_num']}"
-#        next
+      if uses = product.xpath('product-uses/uses')
+        prod_categories += uses.collect { |use| ['Uses', use['name']] }
       end
 
       # Turn closeout/new category to tag

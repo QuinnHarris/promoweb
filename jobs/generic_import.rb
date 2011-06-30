@@ -246,6 +246,17 @@ class HiResImageFetch < GenericImageFetch
   end
 end
 
+class ValidateError < StandardError
+  def initialize(aspect, value = nil)
+    @aspect, @value = aspect, value
+  end
+  attr_reader :aspect, :value
+  
+  def to_s
+    "#{aspect}: #{value}"
+  end
+end
+
 class GenericImport
   @@properties = %w(material color dimension thickness base fill container pieces shape size memory)
 
@@ -263,7 +274,7 @@ class GenericImport
 #    end
     @decoration_techniques = DecorationTechnique.find(:all).inject({}) { |h, i| h[i.name] = i; h }
     @product_list = []
-    @invalid_prods = []
+    @invalid_prods = {}
   end
 
   def set_standard_colors(colors = nil)
@@ -361,7 +372,7 @@ class GenericImport
 private
   def run_cleanup(product_ids)
     database = @supplier_record.products.collect do |p|
-      @invalid_prods.index(p.supplier_num) ? nil : p.id
+      @invalid_prods.values.flatten.index(p.supplier_num) ? nil : p.id
     end.compact
     puts "#{database.size} - #{product_ids.size}"
     (database - product_ids).collect do |product_id|
@@ -370,6 +381,13 @@ private
       product_record.delete
       product_record
     end  
+  end
+
+  def run_summary
+    puts "Invalid Products:" unless @invalid_prods.empty?
+    @invalid_prods.each do |aspect, list|
+      puts "  #{aspect}: #{list.join(', ')}"
+    end
   end
   
 public
@@ -381,6 +399,7 @@ public
   def run_apply(cleanup = true)
     product_ids = @product_list.collect { |prod| apply_product(prod).id }
     run_cleanup(product_ids) if cleanup
+    run_summary
   end
   
   def run_transform
@@ -419,6 +438,8 @@ public
     end if cleanup
     
     File.open(file_name,"w") { |f| Marshal.dump([last_data, last_ids], f) }
+
+    run_summary
   end
   
   # For debuging
@@ -434,10 +455,13 @@ public
       validate_product(product_data)
       @product_list << product_data
     rescue => boom
-      puts "Validate Error: #{product_data['supplier_num']} (Not Included)"
-      puts boom
-      puts boom.backtrace
-      @invalid_prods << product_data['supplier_num']
+      puts "* Validate Error: #{product_data['supplier_num']}: #{boom}"
+      if boom.is_a?(ValidateError)
+        @invalid_prods[boom.aspect] = (@invalid_prods[boom.aspect] || []) + [product_data['supplier_num']]
+      else
+        puts boom.backtrace
+        @invalid_prods['Other'] = (@invalid_prods[boom.aspect] || []) + [product_data['supplier_num']]     
+      end
     end
   end
   
@@ -451,11 +475,11 @@ public
     # check presense
     %w(supplier_num name description decorations supplier_categories variants).each do |name|
       if product_data[name].nil?
-        raise "Value #{name} is nil"
+        raise ValidateError, "#{name} is nil"
       end
     end
     
-    raise "Must have at least one variant" if product_data['variants'].empty?
+    raise ValidateError, "No Variants" if product_data['variants'].empty?
     
     # check all variants have the same set of properties
     prop_list = @@properties.find_all { |p| product_data['variants'].find { |v| v[p] } }
@@ -463,13 +487,13 @@ public
     prop_list.each do |prop_name|
       product_data['variants'].each do |variant|
         unless variant[prop_name] or variant['properties'][prop_name]
-          raise "Variant \"#{variant['supplier_num']}\" doesn't have property \"#{prop_name}\" unlike [#{(product_data['variants'].collect { |v| v['supplier_num'] } - [variant['supplier_num']]).join(',')}]"
+          raise ValidateError, "Variant property mismatch", "Variant \"#{variant['supplier_num']}\" doesn't have property \"#{prop_name}\" unlike [#{(product_data['variants'].collect { |v| v['supplier_num'] } - [variant['supplier_num']]).join(',')}]"
         end
       end
     end
 
     # check unique variant supplier_num
-    raise "Variant supplier_num not unique" unless product_data['variants'].collect { |v| v['supplier_num'] }.uniq.length == product_data['variants'].length
+    raise ValidateError, "Variant supplier_num not unique" unless product_data['variants'].collect { |v| v['supplier_num'] }.uniq.length == product_data['variants'].length
   
     # check technique
     product_data['decorations'] = product_data['decorations'].collect do |decoration|
@@ -483,12 +507,12 @@ public
     
     # check categories
     if product_data['supplier_categories'].empty?
-      product_log << "Unclassified" 
+      raise ValidateError, "No Categories"
     else
-      raise "Category not list" unless product_data['supplier_categories'].is_a?(Array)
+      raise ValidateError, "Category not list" unless product_data['supplier_categories'].is_a?(Array)
       product_data['supplier_categories'].each do |category|
-        raise "Subcat not list" unless category.is_a?(Array)
-        category.each { |str| raise "Cat not string: #{product_data['supplier_categories'].inspect}" unless str.is_a?(String)}
+        raise ValidateError, "SubCategory not list" unless category.is_a?(Array)
+        category.each { |str| raise ValidateError, "Category not string", product_data['supplier_categories'].inspect unless str.is_a?(String)}
       end
     end
     
@@ -506,13 +530,13 @@ public
       %w(costs prices).each do |type|
         minimum = nil
         marginal = nil
-        raise "No #{type}" unless variant[type] and !variant[type].empty?
-        raise "Duplicate #{type}: #{variant[type].inspect}" unless variant[type].length == variant[type].uniq.length
+        raise ValidateError, "#{type} is nil" unless variant[type] and !variant[type].empty?
+        raise ValidateError, "#{type} Duplicate Entry", variant[type].inspect unless variant[type].length == variant[type].uniq.length
         variant[type].each do |price|
-          raise "Minimum is null value: #{variant[type].inspect}" unless price[:minimum]
-          raise "Minimum not sequential for #{type}: #{variant[type].inspect}" if minimum and price[:minimum] <= minimum
-          raise "Null marginal not last item: #{variant[type].inspect}" if minimum and !marginal
-          raise "Marginal not sequential for #{type}: #{variant[type].inspect}" if marginal and price[:marginal] and price[:marginal] > marginal
+          raise ValidateError, "#{type} Minimum is null", variant[type].inspect unless price[:minimum]
+          raise ValidateErrro, "#{type} Minimum not sequential", variant[type].inspect if minimum and price[:minimum] <= minimum
+          raise ValidateError, "#{type} nil marginal not last item", variant[type].inspect if minimum and !marginal
+          raise ValidateError, "#{type} Marginal not sequential", variant[type].inspect if marginal and price[:marginal] and price[:marginal] > marginal
           minimum = price[:minimum]
           marginal = price[:marginal]
         end
