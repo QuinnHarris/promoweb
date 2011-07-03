@@ -32,6 +32,22 @@ class OrderItemVariant < ActiveRecord::Base
   def to_destroy?
     quantity == 0 and imprint_colors.blank? and quickbooks_po_id.blank? and quickbooks_bill_id.blank?
   end
+
+  # override to allow find by order_item and variant
+  def self.find(*args)
+    return super *args unless args.length == 1 && args.first.include?('_')
+    
+    order_item_id, variant_id = args.first.split('_')
+    vals = { :order_item_id => Integer(order_item_id),
+      :variant_id => variant_id && Integer(variant_id) }
+    oiv = OrderItemVariant.find(:first, :conditions => vals)
+    return oiv if oiv
+    OrderItemVariant.new(vals.merge(:quantity => 0))
+  end
+
+  def meta_id
+    "#{order_item.id}_#{variant && variant.id}"
+  end
 end
 
 # Used as place holder for empty OrderItemVariants
@@ -57,15 +73,8 @@ class OrderItemVariantMeta
 
   attr_reader :order_item, :variant
 
-  def id
+  def meta_id
     "#{order_item.id}_#{variant && variant.id}"
-  end
-
-  def self.find(id)
-    order_item_id, variant_id = id.split('_')
-    OrderItemVariant.new(:order_item_id => Integer(order_item_id),
-                         :variant_id => variant_id && Integer(variant_id),
-                         :quantity => 0)
   end
 
   def quantity; 0; end
