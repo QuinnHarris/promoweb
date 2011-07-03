@@ -275,7 +275,8 @@ public
         oiv.save!
         
         # Reset price with new quantity
-        item.price = item.normal_price(blank) || PricePair.new(Money.new(0),Money.new(0))
+        #item.price = item.normal_price(blank) || PricePair.new(Money.new(0),Money.new(0))
+        item.price = nil
         item.sample_requested = (params[:disposition] == 'sample')
         item.save!
       else
@@ -286,7 +287,8 @@ public
         item.order_item_variants.create(:variant => variant,
                                         :quantity => quantity)
 
-        item.price = item.normal_price(blank) || PricePair.new(Money.new(0),Money.new(0))
+        # Don't fix price until order revised
+        #item.price = item.normal_price(blank) || PricePair.new(Money.new(0),Money.new(0))
         item.sample_requested = (params[:disposition] == 'sample')
         item.save!
         
