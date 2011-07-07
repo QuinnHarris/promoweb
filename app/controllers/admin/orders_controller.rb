@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-require 'rghost'
-
 class EPSError < StandardError
 end
 
@@ -169,6 +167,25 @@ class EPSPlacement < EPSInfo
 
   def inspect
     super + " : #{width_full}x#{height_full}"
+  end
+end
+
+
+class ImagePlacement
+  def initialize(file_name)
+    @file_name = file_name
+    @exif = EXIRF::JPEG.new(file_name)
+  end
+
+  def width
+    @exif.width
+  end
+  def height
+    @exif.height
+  end
+
+  def draw(doc, center_x, center_y)
+    
   end
 end
 
