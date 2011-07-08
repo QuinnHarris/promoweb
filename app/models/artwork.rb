@@ -20,6 +20,10 @@ class Artwork < ActiveRecord::Base
     %w(.ps .eps .ai).include?(File.extname(art.original_filename))
   end
 
+  def can_virtual?
+    %w(.jpg).include?(File.extname(art.original_filename))
+  end
+
   def eps?
     %w(.eps).include?(File.extname(art.original_filename))
   end

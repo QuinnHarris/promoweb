@@ -7,5 +7,13 @@ class ArtworkTag < ActiveRecord::Base
     'supplier' => ArtSentItemTask,
     'customer' => nil
   }
-  cattr_accessor :tag_mapping
+
+  def self.tag_mapping(artwork = nil)
+    return @@tag_mapping unless artwork
+
+    if artwork.can_virtual?
+      return @@tag_mapping.merge('virtual' => ArtPrepairedOrderTask)
+    end
+    @@tag_mapping
+  end
 end
