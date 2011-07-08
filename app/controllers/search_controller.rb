@@ -2,7 +2,7 @@ class SearchController < ApplicationController
   def index
     @stylesheets = ['categories']
 
-    @terms = params[:terms]
+    @terms = params[:terms].strip
     @terms = '' unless @terms
 
     if @terms.upcase[0] == ?M
