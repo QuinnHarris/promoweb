@@ -61,10 +61,10 @@
           %td= submit_tag('Find')
       %tr
         %th Company:
-        = customer_field :company_name
+        != customer_field :company_name
       %tr.required
         %th Name:
-        = customer_field :person_name
+        != customer_field :person_name
         - unless @static or @search
           %td
             = check_box :customer, :solicit
@@ -80,7 +80,7 @@
         - unless @static or @search
           %td
             &nbsp;
-            = add_link(cust, 'email_address', EmailAddress)
+            != add_link(cust, 'email_address', EmailAddress)
       %tr.required
         %th Phone Number:
         %td#phone_numbers
@@ -92,7 +92,7 @@
         - unless @static or @search
           %td
             &nbsp;
-            = add_link(cust, 'phone_number', PhoneNumber)
+            != add_link(cust, 'phone_number', PhoneNumber)
 
       - unless @search
         = render :partial => 'address_edit', :locals => { :field_name => :default_address, :disabled => false }
@@ -115,4 +115,4 @@
         = render :partial => 'address_edit', :locals => { :field_name => :ship_address, :disabled => !@options.different}
       
   - unless @search or @reassoc
-    = submit_options
+    != submit_options

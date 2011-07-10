@@ -57,7 +57,7 @@
             - link_to({ :controller => '/products', :action => 'main', :id => order_item.product }) do
               = image_tag(thumb_path, :alt => "#{order_item.product.name} Thumbnail")
               %br
-              %strong= "M#{order_item.product.id}</strong>"
+              %strong M#{order_item.product.id}
           - else
             %a{ :href => "http://www.mountainofpromos.com/products/main/#{order_item.product.id}" }
               %img{ :src => "http://www.mountainofpromos.com#{thumb_path}" }

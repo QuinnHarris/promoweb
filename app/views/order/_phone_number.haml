@@ -3,6 +3,6 @@
     - unless @static
       = phone.select(:name, PhoneNumber.types)
       = phone.text_field :number_string, :size => 19
-      = remove_link(phone)
+      != remove_link(phone)
     - else
       #{phone.object.name}: #{phone.object.number_string}

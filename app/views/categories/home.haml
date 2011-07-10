@@ -14,7 +14,7 @@
 
   #categories
     - for category, tag, count in @categories
-      = render :partial => 'categories/category', :locals => { :category => category, :display_name => category.name_web, :path => category.path_web, :to_list => true, :context => { :children => true, :tag => tag } }
+      = render :partial => 'categories/category', :locals => { :category => category, :display_name => category.name, :path => category.path_web, :to_list => true, :context => { :children => true, :tag => tag } }
 
   %p 
     We have a large selection of custom imprinted promotional products with over 7,000 to choose from for events like 

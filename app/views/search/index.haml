@@ -3,7 +3,7 @@
   %ul
     - for cat in @categories
       %li
-        = link_to((cat.path_name_list[0..-2] + [cat.name_headline]).join('/'), "/categories/#{cat.path.gsub(' ','_')}")
+        = link_to((cat.path_name_list[0..-2] + [cat.name]).join('/'), "/categories/#{cat.path.gsub(' ','_')}")
 
 - unless @products.empty?
   - unless @categories.empty?

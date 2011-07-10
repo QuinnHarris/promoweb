@@ -215,6 +215,8 @@ class OrderItem < ActiveRecord::Base
   end
   
   def shipping
+    return nil unless shipping_type or shipping_code
+    logger.info("Ship: #{shipping_type.inspect} #{shipping_code.inspect}")
     shipping_find(shipping_type, shipping_code)
   end
 

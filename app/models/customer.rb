@@ -44,7 +44,7 @@ class Customer < ActiveRecord::Base
 
   before_create :set_uuid
   def set_uuid
-    self['uuid'] = UUIDTools::UUID.random_create.to_s22
+    self['uuid'] = SecureRandom.base64[0...22]
     self.quickbooks_id = 'BLOCKED'
   end
   

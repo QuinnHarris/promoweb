@@ -215,8 +215,12 @@ Customer Comments:
     problems = []
     
     address = order.customer.default_address
-    unless address and (list = address.incomplete?).empty?
-      problems << "Customer Address not complete: #{list.join(', ')}"
+    unless address
+      problems << "No Customer Address"
+    else
+      unless (list = address.incomplete?).empty?
+        problems << "Customer Address not complete: #{list.join(', ')}"
+      end
     end
 
     return "No in hands date" if order.delivery_date.nil?

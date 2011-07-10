@@ -1,5 +1,5 @@
 #gridsel
-  - form_tag do
+  = form_tag do
     - for name in %w(columns rows)
       = name.capitalize
       %select{ :onchange => 'location = this.options[this.selectedIndex].value;' }

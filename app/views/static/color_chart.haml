@@ -8,7 +8,7 @@
 %p The colors presented on your computer screen will vary from the actual pantone color.
 
 %table#chart
-  - PantoneColor.colors.in_groups_of(7) do |row|
+  - Pantone::Color.colors.in_groups_of(7) do |row|
     %tr
       - for values in row.compact
         %td{ :style => "background-color: #{"#%06x" % values.last};" }

@@ -19,7 +19,16 @@
 .invoice{ :id => "order-#{@order.id}" }
   - for supplier, purchase_list in @suppliers.to_a.sort_by { |s| s.first.id }
     .supplier
-      %h2= "#{link_to(supplier.name, { :controller => '/admin/suppliers', :action => :detail, :id => supplier })} (#{format_supplier_info(supplier)})"
+      %h2
+        = link_to(supplier.name, { :controller => '/admin/suppliers', :action => :detail, :id => supplier })
+        \:
+        - unless supplier.web.blank?
+          = link_to('Website', "http://#{supplier.web}")
+        - if supplier.phone
+          = format_phone(supplier.phone)
+        - if supplier.fax
+          FAX: #{format_phone(supplier.fax)}
+          = mail_to(supplier.send_email(@order.sample))
       - for purchase in purchase_list.sort_by { |pl| (pl.id || 0) }
         .purchase
           - purchase_lock = !(params[:override] && allowed?('Super')) && purchase.locked(allowed?('Super'))
@@ -48,8 +57,6 @@
                 )
                 - if url = purchase.supplier_status_url
                   %a{ :href => url } Supplier Status
-              - if purchase.supplier != supplier
-                = "(#{format_supplier_info(purchase.supplier)})"
               %div
                 = link_to image_tag('html.png'), :action => :po, :id => purchase
                 = link_to image_tag('pdf.png'), :action => :po, :id => purchase, :format => 'pdf'

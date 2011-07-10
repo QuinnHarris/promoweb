@@ -7,8 +7,8 @@
 %tr.required
   %th Zipcode:
   %td= @static ? address.postalcode : text_field(field_name, :postalcode, :disabled => disabled)
-  - unless @static
-    = observe_field("#{field_name}_postalcode", :condition => "value.length >= 5", :frequency => 0.25, :url => { :controller => '/order', :action=>'location_from_postalcode_ajax' }, :with => "'postalcode='+value+'&type=#{field_name}'", :complete => evaluate_remote_response)
+  /- unless @static
+  /  = observe_field("#{field_name}_postalcode", :condition => "value.length >= 5", :frequency => 0.25, :url => { :controller => '/order', :action=>'location_from_postalcode_ajax' }, :with => "'postalcode='+value+'&type=#{field_name}'", :complete => evaluate_remote_response)
   %td{ :style => "color: red;" } Required for shipping charges
 %tr
   %th City:

@@ -242,7 +242,7 @@ public
           @customer = Customer.new({
             :company_name => '',
             :person_name => ''})
-          @customer.save_with_validation(false)
+          @customer.save(:validate => false)
         end
 
         @order = @customer.orders.create
@@ -389,7 +389,7 @@ public
                 customer.default_address_id != customer.ship_address_id
           customer.default_address = address
         end
-        customer.save_with_validation(false)
+        customer.save(:validate => false)
 
         customer.shipping_rates_clear!
       end
@@ -483,36 +483,39 @@ public
       end
     end
     
-    @default_address = @customer.default_address || Address.new
+    @default_address = @customer.default_address || (@customer.default_address = Address.new)
     @options = Struct.new(:different).new(@customer.ship_address && @customer.ship_address != @default_address)
-    @ship_address = @customer.ship_address || Address.new
+    @ship_address = @customer.ship_address || (@customer.ship_address = Address.new)
     
     # Edit Customer
     if params[:customer_id] and params[:customer] and params[:default_address]
-      Customer.transaction do
-        update = false
-        if @default_address.update_attributes?(params[:default_address])
-          @default_address.update_attributes!(params[:default_address])
-          @customer.default_address = @default_address
+      Customer.transaction do 
+        @customer.attributes = params[:customer]
+        changed = @customer.changed? || @customer.phone_numbers.to_a.find { |p| p.changed? || p.marked_for_destruction? } || @customer.email_addresses.to_a.find { |p| p.changed? || p.marked_for_destruction? }
+
+        @default_address.attributes = params[:default_address]
+        if @default_address.changed?
+          @default_address.save!
           @customer.shipping_rates_clear!
-          update = true
+          changed = true
         end
 
         if params[:ship_address] and params[:options] and (params[:options][:different] == '1') and
             params[:ship_address].find { |k, v| !v.strip.empty? }
           @ship_address = Address.new if @ship_address == @default_address
-          if @ship_address.update_attributes?(params[:ship_address])
-            @ship_address.update_attributes!(params[:ship_address])
-            @customer.ship_address = @ship_address
+          @ship_address.attributes = params[:ship_address]
+          if @ship_address.changed?
+            @ship_address.save!
             @customer.shipping_rates_clear!
-            update = true
-          end          
+            changed = true
+          end
         else
-          @customer.ship_address = nil
+          if @customer.ship_address
+            @customer.ship_address.destroy
+            @customer.ship_address = nil
+            changed = true
+          end
         end
-  
-        @customer.attributes = params[:customer]
-        changed = @customer.changed? || @customer.phone_numbers.to_a.find { |p| p.changed? || p.marked_for_destruction? } || @customer.email_addresses.to_a.find { |p| p.changed? || p.marked_for_destruction? }
 
         if @customer.valid?
           if changed
@@ -525,7 +528,7 @@ public
           end
         else
           if changed
-            @customer.save_with_validation(false) #unless @customer.task_completed?(CustomerInformationTask)
+            @customer.save(:validate => false) #unless @customer.task_completed?(CustomerInformationTask)
             #@order.task_revoke([CustomerInformationTask, RequestOrderTask, RevisedOrderTask])
           end
           @static = false
@@ -757,8 +760,8 @@ public
       @display << disp unless disp.empty?
       
 #      logger.info("CurrentX: #{current.collect { |t| "#{t.class} : #{t.rows},#{t.cols}"}.inspect}")
-      cols_virt = current.find_all { |t| t.visible }.inject(0) { |s, v| s + (v.cols || 0) }
-#      logger.info("Bef: #{cols_table} #{@cols_mult}  #{cols_virt}")
+      cols_virt = current.find_all { |t| t.visible }.inject(0) { |s, v| s + (v.cols.to_i || 0) }
+#      logger.info("Bef: #{cols_table.inspect} #{@cols_mult}  #{cols_virt.inspect}")
       next unless cols_virt > 0
       
       cols_table_new = cols_table.to_i.lcm cols_virt

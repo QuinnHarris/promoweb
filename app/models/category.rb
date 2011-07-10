@@ -1,3 +1,34 @@
+module WillPaginate
+  module Finder
+    module ClassMethods
+      def paginate_by_sql(sql, options)
+        WillPaginate::Collection.create(*wp_parse_options(options)) do |pager|
+          query = sanitize_sql(sql.dup)
+          original_query = query.dup
+          # add limit, offset
+          query << " LIMIT #{pager.per_page}"
+          query << " OFFSET #{pager.offset}"
+#          add_limit! query, :offset => pager.offset, :limit => pager.per_page
+          # perfom the find
+          pager.replace find_by_sql(query)
+          
+          unless pager.total_entries
+            count_query = original_query.sub /\bORDER\s+BY\s+[\w`,\s]+$/mi, ''
+            count_query = "SELECT COUNT(*) FROM (#{count_query})"
+            
+            unless self.connection.adapter_name =~ /^(oracle|oci$)/i
+              count_query << ' AS count_table'
+            end
+            # perform the count query
+            pager.total_entries = count_by_sql(count_query)
+          end
+        end
+      end
+    end
+  end
+end
+        
+
 class Category < ActiveRecord::Base
   acts_as_nested_set
   has_and_belongs_to_many :products
@@ -11,15 +42,14 @@ class Category < ActiveRecord::Base
     self.class.reload
   end
   
-  # To go to nested_set act
-#  acts_as_tree
+#  acts_as_tsearch :vectors => {
+#    :locale => "english",
+#    :fields => [:name]
+#  }
 
-  acts_as_tsearch :vectors => {
-    :locale => "english",
-    :fields => [:name]
-  }
-
-  attr_accessor :parent, :children
+  include PgSearch
+  pg_search_scope :search, :against => :name,
+  :using => { :tsearch => { :dictionary => "english" } }
   
   def destroy_conditional
     return nil unless products.count == 0
@@ -42,10 +72,10 @@ class Category < ActiveRecord::Base
 
 private
   def self.children_recursive_private(hash, current)
-    current.children = hash[current.id]
+    current.children.target = hash[current.id]
     hash[current.id].each do |child|
       children_recursive_private(hash, child) if hash.has_key?(child.id)
-      child.parent = current
+      child.set_parent_target(current)
     end
   end
 
@@ -75,7 +105,7 @@ public
 
     @@root = Category.find_by_name('root')
     
-    list = @@root.all_children
+    list = @@root.descendants
     by_parent_id = {}
     by_parent_id.default = []
       
@@ -83,7 +113,7 @@ public
       
     list.each do |record|
       @@id_map[record.id] = record
-      by_parent_id[record[record.parent_col_name]] += [record]
+      by_parent_id[record[record.parent_column_name]] += [record]
     end
       
     children_recursive_private(by_parent_id, @@root)
@@ -143,7 +173,7 @@ public
   def self.find_by_path(path)
     current = root
     path.each do |comp|
-      current = current.children.find { |child| child.name == comp }
+      current = current.children.to_a.find { |child| child.name == comp }
       return nil unless current
     end
     current
@@ -160,13 +190,9 @@ public
     return true if cat == self
     (parent_id == self.class.root.id) ? false : parent.in_path(cat)
   end
-  
-  def name_web
-    name.gsub('&', '&amp;')
-  end
-  
+    
   def all_condition
-    "(#{left_col_name} >= #{self[left_col_name]}) and (#{right_col_name} <= #{self[right_col_name]})"
+    "(#{left_column_name} >= #{self[left_column_name]}) and (#{right_column_name} <= #{self[right_column_name]})"
   end 
   
   def count_products(options = {})

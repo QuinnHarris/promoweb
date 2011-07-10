@@ -563,32 +563,35 @@ class Product < ActiveRecord::Base
   end
   
   # For tsearch (part of PostgreSQL)
-  acts_as_tsearch :vectors => {
-    :locale => "english",
-    :fields => {
-      "a" => {:columns => ['products.supplier_num', 'products.name'], :weight => 1.0},
-      "b" => {:columns => ['properties.property_string', 'suppliers.name', 'categories.category_string'], :weight => 0.6},
-      "c" => {:columns => ['products.description'], :weight => 0.4}
-    },
-    :tables => {
-      :properties => {
-        :from => "(SELECT products.id as prod_id, array_to_string(array(" + 
-                    "SELECT value FROM properties JOIN properties_variants ON properties.id = properties_variants.property_id " +
-                    "JOIN variants ON properties_variants.variant_id = variants.id " +
-                    "WHERE variants.product_id = products.id " +
-                    "ORDER BY properties.name" +
-                  "), ' ') as property_string " +
-                  "FROM products) AS properties, " +
-                 "suppliers, " +
-                 "(SELECT products.id as prod_id, array_to_string(array(" + 
-                    "SELECT name FROM categories JOIN categories_products ON categories.id = categories_products.category_id " +
-                    "WHERE categories_products.product_id = products.id " +
-                  "), ' ') as category_string " +
-                  "FROM products) AS categories ",
-        :where => 'properties.prod_id = products.id AND suppliers.id = products.supplier_id AND categories.prod_id = products.id'
-      }
-    }
-  }
+#  acts_as_tsearch :vectors => {
+#    :locale => "english",
+#    :fields => {
+#      "a" => {:columns => ['products.supplier_num', 'products.name'], :weight => 1.0},
+#      "b" => {:columns => ['properties.property_string', 'suppliers.name', 'categories.category_string'], :weight => 0.6},
+#      "c" => {:columns => ['products.description'], :weight => 0.4}
+#    },
+#    :tables => {
+#      :properties => {
+#        :from => "(SELECT products.id as prod_id, array_to_string(array(" + 
+#                    "SELECT value FROM properties JOIN properties_variants ON properties.id = properties_variants.property_id " +
+#                    "JOIN variants ON properties_variants.variant_id = variants.id " +
+#                    "WHERE variants.product_id = products.id " +
+#                    "ORDER BY properties.name" +
+#                  "), ' ') as property_string " +
+#                  "FROM products) AS properties, " +
+#                 "suppliers, " +
+#                 "(SELECT products.id as prod_id, array_to_string(array(" + 
+#                    "SELECT name FROM categories JOIN categories_products ON# categories.id = categories_products.category_id " +
+#                    "WHERE categories_products.product_id = products.id " +
+#                  "), ' ') as category_string " +
+#                  "FROM products) AS categories ",
+#        :where => 'properties.prod_id = products.id AND suppliers.id = products.supplier_id AND categories.prod_id = products.id'
+#      }
+#    }
+#  }
+
+  include PgSearch
+  pg_search_scope :search, :against => { :supplier_num => 'A', :name => 'A', :description => 'C' }, :using => { :tsearch => { :dictionary => "english" } }
 
   def property_group_names
     property_groups.flatten.find_all { |n| !Property.is_image?(n) }

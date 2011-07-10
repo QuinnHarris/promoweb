@@ -1,7 +1,7 @@
 - if @product.deleted
   %h1#path !!! PRODUCT NO LONGER AVAILIBLE !!!
 - else
-  = path_text
+  != path_text
 
 %table.layout
   %tr
@@ -23,7 +23,7 @@
             %em= link_to("#{@product.supplier.name}: #{@product.supplier_num}", @product.supplier_url)
             %strong= "(M#{@product.id})"
           %h1= @product.name
-          = path_tail_list
+          != path_tail_list
 
         - if @message
           #message= @message
@@ -382,7 +382,7 @@
             %em
               Italics
             is in queue to be featured.  (Parenthesis) is current category.
-          = treething(@categories)
+          != treething(@categories)
           = link_to("Remove", :action => 'set_featured', :id => @product)
           %hr
           = link_to "Modify Page", :controller => '/admin/products', :action => :edit, :id => @product

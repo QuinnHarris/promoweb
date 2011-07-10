@@ -59,9 +59,9 @@ end
 class RGhost::Paper
   def size
     case @paper
-      when Symbol:
+      when Symbol
         RGhost::Constants::Papers::STANDARD[@paper.to_s.downcase.to_sym]
-      when Array:
+      when Array
         @paper
     end
   end
@@ -406,12 +406,13 @@ class Admin::OrdersController < Admin::BaseController
           tasks_competed.collect { |t| t.to_s }]
     
     @count = Order.count(:include=>include, :conditions=>conditions)
-    @orders = Order.paginate(:all,
+#    @orders = Order.paginate(:all,
+    @orders = Order.find(:all,
       :order => 'orders.id DESC',
       :include => include,
-      :conditions => conditions,
-      :page => params[:page] || 1,
-      :per_page => 30)
+      :conditions => conditions)
+#      :page => params[:page] || 1,
+#      :per_page => 30)
     
     # Prefetch each order
 #    @orders.each do |o|   
@@ -1203,7 +1204,7 @@ public
     end
 
     @stylesheets = ['order']
-    @javascripts = ['autosubmit.js', 'admin_orders', 'effects', 'controls']
+    @javascripts = ['autosubmit.js', 'admin_orders', 'effects', 'controls', 'rails']
     apply_calendar_header
     
     # Populate supplier - po - item list

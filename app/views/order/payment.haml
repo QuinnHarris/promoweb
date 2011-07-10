@@ -67,7 +67,7 @@
               = link_to(image_tag('add.png') + 'Use as Payment', { :action => :payment_use, :id => method }, :confirm => "Use #{method.type_name} for #{method.name} as payment information")
 
           .block
-            - form_remote_tag :update => "method-#{method.id}", :html => { :onsubmit => "return charge(this)" }, :url => { :order_id => @order, :controller => '/admin/orders', :action => :payment_apply, :id => method.id, :txn_id => params[:txn_id] } do
+            - form_tag :update => "method-#{method.id}", :html => { :onsubmit => "return charge(this)" }, :url => { :order_id => @order, :controller => '/admin/orders', :action => :payment_apply, :id => method.id, :txn_id => params[:txn_id] } do
               %table
                 %thead
                   %tr
@@ -114,4 +114,4 @@
 
   %hr
   - form_for :payment, @payment, :url => { :order_id => @order } do
-    = submit_options
+    != submit_options

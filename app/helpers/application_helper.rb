@@ -71,7 +71,7 @@ module ApplicationHelper
   end
     
   def link_to_category(category)
-    link_to(category.name_web, {
+    link_to(category.name, {
       :controller => '/categories',
       :action => 'main',
       :path => path_to_category(category)}.merge(:columns => session[:columns], :rows => session[:rows]))

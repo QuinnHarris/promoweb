@@ -43,7 +43,7 @@
                 = link_to(image_tag(item.active_images.first.image.url(:thumb)), { :controller => '/products', :action => 'main', :id => item.product })
 
           %td
-            = link_to_unless !allowed?('CustomerInformationTask'), "#{order.customer.company_name}<br/>#{order.customer.person_name}", :controller => '/order', :action => :contact, :order_id => order
+            != link_to_unless !allowed?('CustomerInformationTask'), "#{order.customer.company_name}<br/>#{order.customer.person_name}", :controller => '/order', :action => :contact, :order_id => order
             - if allowed?('CustomerInformationTask')
               - for email in order.customer.email_addresses
                 %div= mail_to "#{order.customer.person_name} <#{email.address}>", email.address
@@ -73,4 +73,4 @@
                 In Hands:
                 = order.delivery_date.strftime("%A %b %d")
 
-= will_paginate @orders
+/= will_paginate @orders

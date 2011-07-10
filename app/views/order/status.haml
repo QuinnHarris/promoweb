@@ -37,7 +37,10 @@
               - thumb_path = td.item.product.image_path_relative('thumb')
             - else
               - thumb_path = td.item.active_images.first.image.url(:thumb) 
-            = link_to td.item.product.name + '<br/>' + image_tag(thumb_path, :alt => "#{td.item.product.name} Thumbnail"), { :controller => '/products', :action => 'main', :id => td.item.product }
+            = link_to({ :controller => '/products', :action => 'main', :id => td.item.product }) do
+              = td.item.product.name
+              %br
+              = image_tag(thumb_path, :alt => "#{td.item.product.name} Thumbnail")
             %br
             Qty:
             = td.item.quantity

@@ -7,9 +7,9 @@ class LinkRenderer < WillPaginate::LinkRenderer
     # lifted from original
     text ||= page.to_s
     if page and page != current_page
-      @template.link_to text, url_options(page)
+      "<a href='#{@template.url_for(url_options(page))}'>#{text}</a>"
     else
-      @template.content_tag :span, text, :class => span_class
+      "<span>#{text}</span>"
     end
   end
 
@@ -175,7 +175,7 @@ public
 private
   def categories
     # Redirect to list view if category doesn't have children
-    if @category.children_count == 0
+    if @category.children.count == 0
       redirect_to :path => @path_web + %w(price 1)
       return
     end
@@ -218,7 +218,7 @@ private
       :per_page => @per_page
     })
        
-    @products = @category.paginate_products(options)  
+    @products = @category.paginate_products(options)
 
     @paginate_options = {
       :renderer => 'LinkRenderer'

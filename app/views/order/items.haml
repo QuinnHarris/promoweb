@@ -1,7 +1,7 @@
 - if allowed?('items_edit')
   = render :partial => 'admin/orders/items_menu'
 
-- form_for :order, @order, { :url => { :order_id => @order } }  do |order|
+= form_for :order, @order, { :url => { :order_id => @order } }  do |order|
   - unless true or @static
     Enter zipcode for shipping estimate:
     %input#postalcode{ :name => "postalcode", :size => "5", :onkeypress => "return num_keypress(this, event)", :value => @order.customer.ship_address && @order.customer.ship_address.postalcode, :type => "text" }
@@ -11,4 +11,4 @@
   = render :partial => 'items', :locals => { :static => @static, :absolute => false }
   
   %hr
-  = submit_options
+  != submit_options

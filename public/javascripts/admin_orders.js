@@ -432,6 +432,14 @@ function setup_events(obj)
     Event.observe(input, 'change', input_change)
     Event.observe(input, 'blur', input_blur)
   }
+
+  // Add General Entry
+  document.on('ajax:success', '.add', function(event, container) {
+	var tr = container.up('table').down('tbody').insertRow(tbody.rows.length);
+	tr.innerHTML = request.responseText;
+	setup_events(tr);
+	calculate_all();
+    });
 }
 
 function calculate_all()

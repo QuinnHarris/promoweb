@@ -1,0 +1,68 @@
+class CustomerSend < ActionMailer::Base
+  helper ApplicationHelper
+  helper OrderHelper
+  
+  def self.controller_path
+    "../order"
+  end
+  
+  def self.dual_send(task, subject, header)
+    order = task.object
+    order = order.order if order.respond_to?(:order)
+    raise "Expected Order object" unless order.is_a?(Order)
+
+    if order.user
+      primary_email = order.user.email_string
+      secondary_email = (task.user && (task.user != order.user)) && task.user.email_string
+    else
+      if task.user
+        primary_email = task.user.email_string
+      else
+        logger.info("User task send without order user")
+        primary_email = SEND_EMAIL
+      end
+      secondary_email = nil
+    end
+    
+    customer_email = order.customer.email_string
+    customer_email = SEND_EMAIL unless RAILS_ENV == "production"
+    logger.info("CUST EMAIL: #{customer_email.inspect}")
+  
+    # To Customer
+    send = CustomerSend.quote(order, task, subject, header)
+    send.sender = SEND_EMAIL
+    send.from = primary_email
+    send.reply_to = [primary_email, secondary_email] if secondary_email
+    send.to = customer_email
+    send.deliver
+    
+    # To Company
+    send.from = SEND_EMAIL
+    send.reply_to = customer_email
+    send.to = primary_email
+    send.cc = secondary_email if secondary_email
+    send.subject = "#{task.customer ? '!!! ' : ''}#{send.subject} - [#{task.user ? task.user.name : 'Customer'}]"
+    send.deliver
+  end
+
+  def quote(order, task, subject, header)
+    @header_text = header
+    @waiting_tasks = order.tasks_allowed(%w(Customer))
+    @task = task
+    @order = order
+
+    mail(:subject => "#{subject} (\##{order.id})") do |format|
+      format.text
+      format.html
+    end
+
+    if task.is_a?(ArtPrepairedOrderTask)
+      order.artwork_proofs.each do |artwork|
+        next if artwork.art.size > 128*1024
+        attachments[artwork.art.original_filename] = File.read(artwork.art.path)
+      end
+    elsif !order.invoices_ref.empty?
+      attachments[order.invoices_ref.empty? ? "MOP Quote" : "MOP Invoice (#{order.id}-#{order.invoices_ref.count}).pdf"] = WickedPdf.new.pdf_from_string(render(:file => '/order/invoices', :layout => 'print', :body => { } ))
+    end
+  end
+end

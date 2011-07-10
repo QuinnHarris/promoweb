@@ -29,6 +29,9 @@ class Order < ActiveRecord::Base
     end
   end
 
+  cattr_reader :per_page
+  @@per_page = 30
+
   def sample
     special && special.include?('SAMPLE')
   end

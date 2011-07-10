@@ -22,7 +22,8 @@ class SearchController < ApplicationController
     @page = params[:page].to_i if params[:page]
 
     if @page == 1
-      @categories = Category.find_by_tsearch(@terms, {}, {:headlines => [:name]})
+#      @categories = Category.find_by_tsearch(@terms, {}, {:headlines => [:name]})
+      @categories = Category.search(@terms)
       @categories.each do |cat|
         # Kludge to deal with cat cache
         cat.parent = Category.find_by_id(cat.id).parent
@@ -41,7 +42,12 @@ class SearchController < ApplicationController
 
     # Find by tsearch
     # REALLY INEFFICENT DOESNT USE LIMIT ON DB
-    @products = Product.find_by_tsearch(@terms, options, {:headlines => [:name]}).paginate(:page => @page, :per_page => per_page)
+#    @products = Product.find_by_tsearch(@terms, options, {:headlines => [:name]}).paginate(:page => @page, :per_page => per_page)
+    @products =  WillPaginate::Collection.create(@page, per_page, 0) do |pager|
+      list = Product.search(@terms).includes(:product_images).limit(per_page+1).offset((@page-1)*per_page)
+      pager.replace list[0...per_page]
+      pager.total_entries = list.length > per_page ? per_page*(@page+1) : list.length
+    end
 
     @paginate_options = {}
 

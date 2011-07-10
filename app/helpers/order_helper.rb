@@ -41,15 +41,15 @@ module OrderHelper
     end
   end
     
-  def form_for(object_name, *args, &proc)
-    raise ArgumentError, "Missing block" unless block_given?
-    options = args.extract_options!
-    url = options.delete(:url) || {}
-    url.merge!(:only_path => false, :protocol => "https://") unless request.protocol == "https://" or RAILS_ENV != "production"
-    concat(form_tag(url, options.delete(:html) || {}), proc.binding)
-    fields_for(object_name, *(args << options), &proc)
-    concat('</form>', proc.binding)
-  end
+#  def form_for(object_name, *args, &proc)
+#    raise ArgumentError, "Missing block" unless block_given?
+#    options = args.extract_options!
+#    url = options.delete(:url) || {}
+#    url.merge!(:only_path => false, :protocol => "https://") unless request.protocol == "https://" or RAILS_ENV != "production"
+#    concat(form_tag(url, options.delete(:html) || {}), proc.binding)
+#    fields_for(object_name, *(args << options), &proc)
+#    concat('</form>', proc.binding)
+#  end
   
   def format_time_course(time)
     now = Time.now
@@ -149,6 +149,7 @@ Calendar.setup({
   def remove_link(fields)
     out = ''
     out << fields.hidden_field(:_destroy)
+#    out << link_to(image_tag('remove.png'), "##{fields.object.class.name.underscore}", :class => 'remove')
     out << link_to_function(image_tag('remove.png'), "if (confirm('Remove Item')) { $(this).up('.#{fields.object.class.name.underscore}').hide(); $(this).previous().value = '1'; }")
     out
   end
@@ -163,11 +164,11 @@ Calendar.setup({
   def add_link(cust, name, klass)
     plural = name.pluralize
     string = render(:partial => "/order/#{name}", :locals => { :customer => cust, name.to_sym => klass.new })
-    string.gsub!(/_attributes_\d+_/, '_attributes__index__')
+    string = string.gsub(/_attributes_\d+_/, '_attributes__index__')
     string.gsub!(/attributes\]\[(\d+)\]\[/,'attributes][_index_][')
     index = $1
     javascript_tag("var #{name}_index = #{index};") + 
-    (link_to_function("#{image_tag 'add.png'} Add #{name.split('_').collect { |s| s.capitalize}.join(' ') }") do |page|
+    (link_to_function(image_tag('add.png') + " Add #{name.split('_').collect { |s| s.capitalize}.join(' ') }") do |page|
        page << %{$('#{plural}').insert({ bottom: "#{escape_javascript string}".replace(/_index_/g, #{name}_index++) });
 }
     end)

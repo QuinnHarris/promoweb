@@ -34,7 +34,7 @@
         %td<
           %strong
             #{item.product.name} (M#{item.product.id}) - 
-            = link_to "<em>#{item.product.supplier.name}: #{item.product.supplier_num}</em>", item.product.supplier_url
+            %em= link_to "#{item.product.supplier.name}: #{item.product.supplier_num}", item.product.supplier_url
         = render :partial => 'order_item_entry_tail', :locals => { :object => item, :purchase_lock => purchase_lock, :null => false }
       %tr
         %td{ :colspan => 10 }
@@ -96,11 +96,13 @@
         %td
           - unless @price_lock || purchase_lock
             %div
-              = link_to_remote image_tag("add.png")+" Add General Entry", :complete => "entry_insert(request, 'item-#{item.id}', false)", :url => { :action => :order_item_entry_insert, :id => item.id, :unlock => @unlock }
+              = link_to(image_tag("add.png")+" Add General Entry", { :action => :order_item_entry_insert, :id => item.id, :unlock => @unlock }, :remote => true, :class => 'add')
+              /:complete => "entry_insert(request, 'item-#{item.id}', false)",
             %div.add_dec
               %h4= image_tag("add.png") + " Add Decorations"
               - decors = [DecorationTechnique.find_by_name('General')] + item.product.decorations.collect { |d| d.technique.id != 1 ? d.technique : nil }.uniq.compact
-              = decors.collect { |tech| link_to_remote tech.name, :complete => "entry_insert(request, 'item-#{item.id}', true)", :url => { :action => :order_item_decoration_insert, :id => item.id, :technique => tech.id } }.join(', ')
+              != decors.collect { |tech| link_to(tech.name, { :action => :order_item_decoration_insert, :id => item.id, :technique => tech.id }, :remote => true) }.join(', ')
+              /:complete => "entry_insert(request, 'item-#{item.id}', true)",
         %td.num ???
         %td.num ???
         %td.num ???
@@ -117,7 +119,7 @@
         %td
         %td.admin ???
         %td.admin ???
-    %script= "merge_listing(#{item.normal_all_h.to_json})"
+    %script!= "merge_listing(#{item.normal_all_h.to_json})"
     - unless item.customer_notes.nil? or item.customer_notes.strip.empty?
       .notes.block
         %h3 Customer Notes

@@ -4,8 +4,8 @@
 
 - cache do
   #categories
-    = render(:partial => 'category',    :locals => { :category => @category, :display_name => "All #{@category.name_web == 'root' ? 'Products' : @category.name_web}", :path => @path_web, :to_list => true, :context => @context.merge(:children => true) })
+    = render(:partial => 'category',    :locals => { :category => @category, :display_name => "All #{@category.name == 'root' ? 'Products' : @category.name}", :path => @path_web, :to_list => true, :context => @context.merge(:children => true) })
     - for category in @direct_children
-      = render(:partial => 'category',  :locals => { :category => category,  :display_name => category.name_web, :path => @path_web + [category.name.gsub(' ','_')], :context => @context.merge(:children => (category.children_count > 0)), :to_list => !(category.children_count > 0) })
+      = render(:partial => 'category',  :locals => { :category => category,  :display_name => category.name, :path => @path_web + [category.name.gsub(' ','_')], :context => @context.merge(:children => (category.children.count > 0)), :to_list => !(category.children.count > 0) })
     - if @category.count_products > 0
-      = render(:partial =>  'category', :locals => { :category => @category, :display_name => "Misc. #{@category.name_web}", :path => @path_web + ['exclusive'], :to_list => true, :context => @context.merge(:children => false) })
+      = render(:partial =>  'category', :locals => { :category => @category, :display_name => "Misc. #{@category.name}", :path => @path_web + ['exclusive'], :to_list => true, :context => @context.merge(:children => false) })

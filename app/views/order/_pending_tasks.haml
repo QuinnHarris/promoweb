@@ -56,7 +56,7 @@
           - ['30m', '1h', '2h', '4h', 'EOD', '1d', '2d', '3d', '4d', '5d'].each do |name|
             = submit_tag name
           |
-          = calendar_input_time('task[expected_at]', t.object.complete_at.strftime('%Y-%m-%d %H:%M'), {}, {}, "_#{task.class}")
+          != calendar_input_time('task[expected_at]', t.object.complete_at.strftime('%Y-%m-%d %H:%M'), {}, {}, "_#{task.class}")
           = submit_tag 'Apply'
           - unless task.new_record?
             X
@@ -67,6 +67,9 @@
     %span
       %strong Revoke: 
     - for task in @revokable
-      - string = task.status_name.dup
-      - string << " <strong>for</strong> #{task.object.product.name}" if task.is_a?(OrderItemTask)
-      = link_to "#{image_tag('remove.png')} #{string}", { :controller => '/admin/orders', :action => :task_revoke, :id => task, :class => task.class, :order_id => @order }, { :confirm => "Revoke #{task.status_name} task?" }
+      - link_to({ :controller => '/admin/orders', :action => :task_revoke, :id => task, :class => task.class, :order_id => @order }, { :confirm => "Revoke #{task.status_name} task?" }) do
+        = image_tag('remove.png')
+        = task.status_name
+        - if task.is_a?(OrderItemTask)
+          %strong for
+          = task.object.product.name
