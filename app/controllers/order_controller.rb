@@ -833,7 +833,7 @@ public
       payment_method = PaymentMethod.find(params[:id], :include => :customer)
       raise "Payment not associated with customer" unless @order.customer_id == payment_method.customer_id
 
-      payment_method.revoke!
+      payment_method.revoke! if payment_method.revokable?
 
       if payment_method.transactions.empty?
         payment_method.destroy
