@@ -30,9 +30,9 @@
 
             - decorations = product.decorations.find(:all, :conditions => { :technique_id => item_decoration.technique })
             - if dragable
-              - fields_for "decoration[#{item_decoration.id}]", item_decoration do |dec|
+              = fields_for "decoration[#{item_decoration.id}]", item_decoration do |dec|
                 - unless decorations.empty?
-                  = dec.collection_select(:decoration_id, decorations, :id, :display, { :include_blank => true }, {:onchange => 'window.location.reload()' })
+                  = dec.collection_select(:decoration_id, decorations, :id, :display, { :include_blank => true }) #, {:onchange => 'window.location.reload()' })
                 - if allowed?('Orders')
                   = dec.text_area(:our_notes, :rows => 2)
             - else

@@ -116,3 +116,8 @@
       
   - unless @search or @reassoc
     != submit_options
+
+:javascript
+  $$('.postalcode').each(function (obj) {
+    new Form.Element.Observer(obj, 0.25, function(element, value) {if (value.length >= 5) { new Ajax.Request('/order/location_from_postalcode_ajax', {asynchronous:true, evalScripts:true, onComplete:function(request){eval(request.responseText)}, parameters:'postalcode='+value+'&type=default_address'}); }})
+  });

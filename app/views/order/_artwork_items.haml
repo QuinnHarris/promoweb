@@ -10,7 +10,7 @@
       %tr
         %td
           - if !static and @user
-            - fields_for "group[#{group.id}]", group do |grp|
+            = fields_for "group[#{group.id}]", group do |grp|
               = grp.text_field(:name, :size => 23)
               %br
               = grp.text_area(:description, :rows => 2, :cols => 30)

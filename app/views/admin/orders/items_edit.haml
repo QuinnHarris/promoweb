@@ -33,7 +33,7 @@
         .purchase
           - purchase_lock = !(params[:override] && allowed?('Super')) && purchase.locked(allowed?('Super'))
           - if purchase.new_record?
-            - form_for :order, @order, { :url => { :action => :purchase_create, :id => supplier.id, :order_id => @order } } do |order|
+            = form_for @order, { :url => { :action => :purchase_create, :id => supplier.id, :order_id => @order } } do |order|
               %h2
                 Purchase Order - Create as
                 - for sub in [supplier] + supplier.children
@@ -64,7 +64,7 @@
             - common_tasks = all_tasks = purchase.items.first.tasks_ready.collect { |t| t.class }
             - purchase.items.each { |i| t = i.tasks_ready.collect { |t| t.class }; common_tasks &= t; all_tasks |= t; }
             - common_tasks.each do |klass|
-              - form_for :order, @order, { :url => { :action => :purchase_mark, :id => purchase.id, :order_id => @order } } do |order|
+              = form_for @order, { :url => { :action => :purchase_mark, :id => purchase.id, :order_id => @order } } do |order|
                 = hidden_field_tag(:class, klass.to_s)
                 - case klass.to_s
                 - when 'OrderSentItemTask'

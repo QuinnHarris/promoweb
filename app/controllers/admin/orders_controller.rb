@@ -396,32 +396,34 @@ class Admin::OrdersController < Admin::BaseController
   def index   
     tasks_competed = [CustomerInformationTask]
     tasks_competed = TaskSet.set - [AddItemOrderTask] if params.has_key?(:all)
+
+#    logger.info("STARTTTTTTTTTTTT")
+    os = Order.scoped.joins(:customer).where("customers.person_name != ''")
+    # include tasks_completed
+    os = os.where(:closed => false) unless params.has_key?(:closed)
+    os = os.where("user_id = #{session[:user_id]} OR orders.user_id IS NULL") if params.has_key?(:mine)
+    os = os.where("orders.id IN (SELECT order_id FROM permissions WHERE user_id = #{session[:user_id]}) OR orders.user_id = #{session[:user_id]} #{@permissions.include?('Orders') ? 'OR orders.user_id IS NULL' : ''})") unless @permissions.include?('Super')
+
+#    logger.info("STOPPPPPPPPPPPP")
     
-    include = [{ :customer => :tasks_active }, :tasks_active, :user, { :items => [{ :purchase => :purchase_order }, :tasks_active, :product ] }]
-    conditions = ["order_tasks.active AND " +
-        (params.has_key?(:closed) ? '' : "NOT closed AND ") +
-        (params.has_key?(:mine) ? "(orders.user_id = #{session[:user_id]} OR orders.user_id IS NULL) AND " : '') +
-        (@permissions.include?('Super') ? '' : "(orders.id IN (SELECT order_id FROM permissions WHERE user_id = #{session[:user_id]}) OR orders.user_id = #{session[:user_id]} #{@permissions.include?('Orders') ? 'OR orders.user_id IS NULL' : ''}) AND ") +
-        ("(customers.person_name != '' OR order_tasks.type IN (?))"),
-          tasks_competed.collect { |t| t.to_s }]
-    
-    @count = Order.count(:include=>include, :conditions=>conditions)
-#    @orders = Order.paginate(:all,
-    @orders = Order.find(:all,
-      :order => 'orders.id DESC',
-      :include => include,
-      :conditions => conditions)
-#      :page => params[:page] || 1,
-#      :per_page => 30)
-    
-    # Prefetch each order
-#    @orders.each do |o|   
-#      o.tasks_dep
+    @count = os.count
+
+#    logger.info("MID")
+#    s=Benchmark.measure do
+    @orders = os.order('orders.id DESC').includes([{ :customer => [:tasks_active, :tasks_other, :phone_numbers, :email_addresses] }, :tasks_active, :tasks_other, :user, { :items => [{ :purchase => :purchase_order }, :tasks_active, :tasks_other, { :order_item_variants => { :variant => :product_images }}, { :product => :product_images }] }]).all
 #    end
+
+#    logger.info("COMPLETEEEEEEEEEEEEEEE: #{s}")
 
     urgent = @orders.find_all { |o| o.urgent_note && !o.urgent_note.strip.empty? }
     @groups = urgent.empty? ? [] : [ ['Urgent', urgent] ]
 
+#    require 'benchmark'
+
+#    ready_orders = nil
+#    s=Benchmark.measure do
+
+#    RubyProf.start
     today = Time.now.end_of_day
     ready_orders = @orders.collect do |order|
       time = order.tasks_allowed(@permissions).collect do |task|
@@ -432,6 +434,17 @@ class Admin::OrdersController < Admin::BaseController
       [order, time]
     end.compact.sort_by { |order, time| time }.collect { |order, time| order }
     @groups << ['Ready or Late', ready_orders] unless ready_orders.empty?
+
+#    end
+
+#    logger.info("BENCH: #{s}")
+
+#    result = RubyProf.stop
+
+#    printer = RubyProf::CallTreePrinter.new(result)
+#    printer.print(File.open("/tmp/ruby-prof.out", "w"))
+#    logger.info("Res: #{result}")
+
 
     if params[:sort] == 'task'
       groups = {}
@@ -449,6 +462,8 @@ class Admin::OrdersController < Admin::BaseController
     end
 
     @title = "Orders #{ready_orders.length} of #{@count}"
+
+#    logger.info("ENDDDDDDDDDDDDD")
   end
     
   def payment_apply
@@ -1341,6 +1356,7 @@ public
   end
 
   def set
+    logger.info("SET")
     Order.transaction do
       obj = set_common
       return unless obj

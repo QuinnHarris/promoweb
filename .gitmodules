@@ -1,3 +1,6 @@
 [submodule "vendor/plugins/auto_complete"]
 	path = vendor/plugins/auto_complete
 	url = https://github.com/david-kerins/auto_complete
+[submodule "vendor/plugins/actionwebservice"]
+	path = vendor/plugins/actionwebservice
+	url = https://github.com/nathanvda/actionwebservice.git

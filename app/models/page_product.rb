@@ -1,6 +1,4 @@
-class PageProduct < ActiveRecord::Base
-  establish_connection("crawl")
-  
+class PageProduct < ActiveRecord::Base 
   belongs_to :page
   belongs_to :product
 end

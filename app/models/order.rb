@@ -15,7 +15,7 @@ class Order < ActiveRecord::Base
      customer.tasks_inactive + tasks_inactive + items.collect { |i| i.tasks_inactive }.flatten).uniq.sort_by { |t| t.created_at } 
   end
     
-  has_many :items, :class_name => 'OrderItem', :foreign_key => 'order_id', :include => :product, :order => "products.supplier_id, order_items.id"
+  has_many :items, :class_name => 'OrderItem', :foreign_key => 'order_id' #, :include => :product, :order => "products.supplier_id, order_items.id"
   has_many :entries, :class_name => 'OrderEntry', :foreign_key => 'order_id'
   has_many :payment_transactions
   
@@ -219,6 +219,10 @@ class Order < ActiveRecord::Base
     (tasks_active + tasks_inactive).each { |t| t.destroy }
   end
 
+  def tax_rate_s
+    '%0.02f%' % (self.tax_rate * 100.0)
+  end
+  
   def apply_sales_tax
     unless tax_type
       self.tax_type, self.tax_rate = customer.sales_tax

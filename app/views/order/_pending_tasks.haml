@@ -9,8 +9,8 @@
           - title += " (#{task.object.description})"
         - if task.respond_to?(:our_comment)
           - task = task.object.task_find_inactive(task.class) || task if task.new_record?
-          - form_for :data, task, :url => { :controller => '/admin/orders', :action => :task_execute, :id => task.object, :tasks => tasks.collect { |t| t.class } } do |t|
-            %h2= title
+          = form_for task, { :as => :data, :url => { :controller => '/admin/orders', :action => :task_execute, :id => task.object, :tasks => tasks.collect { |t| t.class } } } do |t|
+            %h2!= title
             = t.text_area :our_comment, 'cols' => 120, 'rows' => 10
             %br
             = submit_tag 'Completed'
@@ -19,7 +19,8 @@
             = submit_tag 'Save'
         - else # No template, do link
           - uri = { :controller => '/admin/orders', :action =>:task_execute, :id => task.object.id, :order_id => @order, :tasks => tasks.collect { |t| t.class } }
-          = link_to(title, uri)
+          = link_to(uri) do
+            != title
           - if task.respond_to?(:email_complete)
             = link_to "(WITHOUT EMAIL)", uri.merge(:without_email => true)
 
@@ -28,7 +29,7 @@
       - if deligate and !(users = deligate.delegatable_users(session[:user_id])).empty?
         .delegate
           then delegate
-          = deligate.action_name
+          != deligate.action_name
           to:
           %ul
           - for user in users
@@ -36,9 +37,9 @@
 
     - else # if blocked
       %span
-        = task.action_name
+        != task.action_name
         BLOCKED because:
-        = blocked
+        %strong= blocked
 
     - unless (users = tasks.last.delegatable_users(session[:user_id])).empty?
       .delegate
@@ -48,7 +49,7 @@
           %li= link_to user.name, { :controller => '/admin/orders', :action => :task_execute, :order_id => @order, :delegate_perm => user.delegatables.first.name, :user_id => user.id }, :class => 'action'
 
     - if task.complete_estimate
-      - form_for :task, task, :url =>  { :controller => '/admin/orders', :action => :task_comment, :id => task.object, :class => tasks.last.class } do |t|
+      = form_for task, { :as => :task, :url =>  { :controller => '/admin/orders', :action => :task_comment, :id => task.object, :class => tasks.last.class } } do |t|
         %hr
         = t.text_area :comment, 'cols' => 120, 'rows' => 2         
         %div
@@ -67,7 +68,7 @@
     %span
       %strong Revoke: 
     - for task in @revokable
-      - link_to({ :controller => '/admin/orders', :action => :task_revoke, :id => task, :class => task.class, :order_id => @order }, { :confirm => "Revoke #{task.status_name} task?" }) do
+      = link_to({ :controller => '/admin/orders', :action => :task_revoke, :id => task, :class => task.class, :order_id => @order }, { :confirm => "Revoke #{task.status_name} task?" }) do
         = image_tag('remove.png')
         = task.status_name
         - if task.is_a?(OrderItemTask)

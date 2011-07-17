@@ -4,4 +4,4 @@
 require File.expand_path('../config/application', __FILE__)
 require 'rake'
 
-RailsDel::Application.load_tasks
+Promoweb::Application.load_tasks

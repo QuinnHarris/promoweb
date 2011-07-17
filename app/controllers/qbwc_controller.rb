@@ -1,7 +1,7 @@
 # This controller implements the seven web callback methods for QBWC
 # Check qbwc_api.rb file for descriptions of parameters and return values
 class QbwcController < ActionController::Base
-  include ExceptionNotification::Notifiable
+  acts_as_web_service
   web_service_api QbwcApi
   
   # Fallthrough for non soap request (needed to validate certificate)
@@ -20,8 +20,8 @@ class QbwcController < ActionController::Base
    <AppDescription>Mountain Xpress Promotions Quickbooks Integration</AppDescription>
    <AppSupport>https://www.mountainofpromos.com/admin/</AppSupport>
    <UserName>mntxpresspromo</UserName>
-   <OwnerID>{d9ec2073-2248-45cf-98fe-4788da4aba7a}</OwnerID>
-   <FileID>{77c425b3-0e8a-4dcd-b7a4-679d3e3e3856}</FileID>
+   <OwnerID>{d9ec2073-2248-45cf-98fe-4788da4aba7#{Rails.env.production? ? 'a' : 'b'}}</OwnerID>
+   <FileID>{77c425b3-0e8a-4dcd-b7a4-679d3e3e385#{Rails.env.production? ? '6' : '0'}}</FileID>
    <QBType>QBFS</QBType>
    <Style>RPC</Style>
    <Scheduler>

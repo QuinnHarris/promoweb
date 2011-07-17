@@ -17,6 +17,7 @@ gem 'pg'
 # gem 'ruby-debug'
 group :development do
   gem 'ruby-debug19', :require => 'ruby-debug'
+  gem 'ruby-prof'
 end
 
 # Bundle the extra gems:
@@ -37,6 +38,8 @@ gem 'exception_notification'
 gem 'nested_set'
 gem 'dynamic_form'
 gem 'pg_search'
+gem 'scruffy'
+gem 'geoip-c'
 
 # Bundle gems for the local environment. Make sure to
 # put test-only gems in this group so their generators

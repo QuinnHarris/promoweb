@@ -1,7 +1,8 @@
 require_dependency "login_system"
 
 class ApplicationController < ActionController::Base
-  protect_from_forgery
+  # Disabled for now but fix (causes JS calls to not have session)
+  #protect_from_forgery
 
   include LoginSystem
   
@@ -41,13 +42,8 @@ public
           }
 
           # GeoIP area code for incoming phone lookup
-          begin
-            if gi = GEOIP[request.remote_ip]
-              attributes.merge!(:area_code => gi.area_code)
-            end
-          rescue Net::GeoIP::RecordNotFoundError
-          rescue
-            # Rescue Everything
+          if gi = GEOIP.look_up(request.remote_ip)
+            attributes.merge!(:area_code => gi[:area_code])
           end
 
           session_record = SessionAccess.create(attributes)

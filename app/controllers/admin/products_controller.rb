@@ -1,4 +1,4 @@
-require 'scruffy'
+#require 'scruffy'
 
 module Scruffy::Layers
   class Line < Base

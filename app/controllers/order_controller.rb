@@ -276,7 +276,6 @@ public
         
         # Reset price with new quantity
         #item.price = item.normal_price(blank) || PricePair.new(Money.new(0),Money.new(0))
-        item.price = nil
         item.sample_requested = (params[:disposition] == 'sample')
         item.save!
       else

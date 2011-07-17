@@ -80,6 +80,6 @@
 
     = render :partial => 'artwork_items', :locals => { :artwork_groups => @artwork_groups, :static => @static, :dragable => dragable, :absolute => false, :filter_tag => nil }
     %hr
-    = submit_options
+    != submit_options
 
 %iframe#upload-target{ :name => "upload-target", :src => "about:blank", :style => "height: 0; border: none;" }

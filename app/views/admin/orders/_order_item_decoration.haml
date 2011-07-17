@@ -1,6 +1,6 @@
 %td
   - unless @price_lock || purchase_lock
-    = link_to(image_tag("remove.png"), { :action => :order_item_remove, :id => entry.id, :klass => 'OrderItemDecoration' }, :remote => true, :method => :delete)
+    = link_to(image_tag("remove.png"), { :action => :order_item_remove, :id => entry.id, :klass => 'OrderItemDecoration' }, :remote => true, :class => 'remove')
     /:complete => "entry_remove(request, '#{entry.class}-#{entry.id}-cost-marginal')", :confirm => "Remove item?",
   - if entry.technique.name == 'General'
     Dec: 

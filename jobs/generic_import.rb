@@ -1,5 +1,5 @@
 require 'rubygems'
-#equire 'RMagick'
+require 'RMagick'
 require File.dirname(__FILE__) + '/../config/environment'
 require 'open-uri'
 require File.dirname(__FILE__) + '/progressbar'

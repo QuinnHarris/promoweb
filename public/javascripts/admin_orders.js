@@ -410,36 +410,28 @@ function entry_remove(request, id)
 
 function setup_events(obj)
 {   
-  var inputs = obj.getElementsByTagName('input')
-  for (var j = 0; j < inputs.length; j++) {
-    var input = inputs[j];
-    if (input.type != 'text' || input.hasClassName('ignore'))
-      continue;
-    Event.observe(input, 'keypress', input_press)
-    Event.observe(input, 'change', input_change)
-    Event.observe(input, 'blur', input_blur)
+    var inputs = obj.getElementsByTagName('input');
+    for (var j = 0; j < inputs.length; j++) {
+	var input = inputs[j];
+	if (input.type != 'text' || input.hasClassName('ignore'))
+	    continue;
+	Event.observe(input, 'keypress', input_press);
+	Event.observe(input, 'change', input_change);
+	Event.observe(input, 'blur', input_blur);
 
-    var nxtSib = input.nextSibling;
-    if (nxtSib && ('hasClassName' in nxtSib) && nxtSib.hasClassName('auto_complete'))
-	new Ajax.Autocompleter(input, nxtSib, '/admin/orders/auto_complete_generic', {
-		afterUpdateElement: autocomplete_change
-	} )
-  }
+	var nxtSib = input.nextSibling;
+	if (nxtSib && ('hasClassName' in nxtSib) && nxtSib.hasClassName('auto_complete'))
+	    new Ajax.Autocompleter(input, nxtSib, '/admin/orders/auto_complete_generic', {
+		    afterUpdateElement: autocomplete_change
+			} );
+    }
 
-  var inputs = obj.getElementsByTagName('textarea')
-  for (var j = 0; j < inputs.length; j++) {
-    var input = inputs[j];
-    Event.observe(input, 'change', input_change)
-    Event.observe(input, 'blur', input_blur)
-  }
-
-  // Add General Entry
-  document.on('ajax:success', '.add', function(event, container) {
-	var tr = container.up('table').down('tbody').insertRow(tbody.rows.length);
-	tr.innerHTML = request.responseText;
-	setup_events(tr);
-	calculate_all();
-    });
+    var inputs = obj.getElementsByTagName('textarea');
+    for (var j = 0; j < inputs.length; j++) {
+	var input = inputs[j];
+	Event.observe(input, 'change', input_change);
+	Event.observe(input, 'blur', input_blur);
+    }
 }
 
 function calculate_all()
@@ -574,5 +566,21 @@ function initialize(){
 	calculate_all();
 	get_all_shipping();
   }
+
+
+  // Add General Entry
+  document.on('ajax:success', '.add', function(event, container) {
+	  var tbody = container.up('table').down('tbody');
+	  var tr = tbody.insertRow(tbody.rows.length);
+	  tr.innerHTML = event.memo.responseText;
+	  setup_events(tr);
+	  calculate_all();
+    });
+
+  document.on('ajax:success', ".remove", function(event, container) {
+	  var tr = container.up('tr');
+	  tr.parentNode.removeChild(tr);
+	  calculate_all();
+    });
 }
 window.onload = initialize

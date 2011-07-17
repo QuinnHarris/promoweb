@@ -1,6 +1,4 @@
 class Site < ActiveRecord::Base
-  establish_connection("crawl")
-  
   class << self
     attr_accessor :url
     attr_accessor :sql_order

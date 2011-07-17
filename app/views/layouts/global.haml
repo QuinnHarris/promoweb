@@ -80,17 +80,17 @@
                 .tabs{ :style => "padding-top: 2.5em;" }
                   %ul
                     - if allowed?('Orders')
-                      = li_to 'Commission', { :controller => '/admin/employee', :action => 'commission' }
+                      != li_to 'Commission', { :controller => '/admin/employee', :action => 'commission' }
                     - if allowed?(%w(Super Orders))
-                      = li_to 'Access', {:controller => '/admin/access', :action => 'paths' }
-                      = li_to 'Suppliers', {:controller => '/admin/suppliers', :action => 'index' }
-                    = li_to 'Calls', {:controller => '/admin/phone', :action => :calls }
-                    = li_to 'Phones', {:controller => '/admin/phone', :action => :setup }
+                      != li_to 'Access', {:controller => '/admin/access', :action => 'paths' }
+                      != li_to 'Suppliers', {:controller => '/admin/suppliers', :action => 'index' }
+                    != li_to 'Calls', {:controller => '/admin/phone', :action => :calls }
+                    != li_to 'Phones', {:controller => '/admin/phone', :action => :setup }
                     - if allowed?('Super')
-                      = li_to 'Users', {:controller => '/admin/login', :action => 'index'}
-                      = li_to 'Quickbooks', {:controller => '/admin/system/quickbooks_blocked', :action => 'index'}
-                    = li_to 'Password', {:controller => '/admin/login', :action => :password }
-                    = li_to 'Other', { :controller => '/admin/login', :action => :other }
+                      != li_to 'Users', {:controller => '/admin/login', :action => 'index'}
+                      != li_to 'Quickbooks', {:controller => '/admin/system/quickbooks_blocked', :action => 'index'}
+                    != li_to 'Password', {:controller => '/admin/login', :action => :password }
+                    != li_to 'Other', { :controller => '/admin/login', :action => :other }
               - elsif @order
                 #custinfo
                   = link_to({ :controller => '/order', :action => 'status', :order_id => @order }) do

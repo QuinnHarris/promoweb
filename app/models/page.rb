@@ -1,6 +1,4 @@
 class Page < ActiveRecord::Base
-  establish_connection("crawl")
-  
   belongs_to :site
   has_many :page_products, :order => 'score DESC'
   

@@ -1,6 +1,6 @@
 %td.description
   - unless @price_lock || purchase_lock
-    = link_to(image_tag("remove.png"), { :action => :order_item_remove, :id => entry.id, :klass => 'OrderItemEntry' }, :remote => true, :method => :delete)
+    = link_to(image_tag("remove.png"), { :action => :order_item_remove, :id => entry.id, :klass => 'OrderItemEntry' }, :remote => true, :class => 'remove')
     /:complete => "entry_remove(request, '#{entry.class}-#{entry.id}-cost-marginal')", :confirm => "Remove item?",
   = text_field_tag "#{entry.class}-#{entry.id}-description", entry.description, :size => 32, :readonly => @price_lock || purchase_lock
   .auto_complete>

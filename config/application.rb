@@ -43,6 +43,14 @@ end
 
 require "#{Rails.root}/lib/mymoney"
 
+# GeoIP geoip-c gem
+require 'geoip'
+GEOIP = GeoIP::City.new('/usr/share/GeoIP/GeoLiteCity.dat')
+
+# Use Nokogiri for soap4r used https://github.com/spox/soap4r-spox (for ruby 1.9 support)
+require 'xsd/xmlparser'
+require 'xsd/xmlparser/nokogiri'
+
 MAIN_EMAIL = 'sales@mountainofpromos.com'
 
 class Time

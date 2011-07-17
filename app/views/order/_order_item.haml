@@ -241,7 +241,8 @@
           - unless static and order_item.our_notes.blank?
             %h3 Notes
           - unless order_item.our_notes.blank?
-            %div= order_item.our_notes.gsub("\n", "<br/>")
+            - for note in order_item.our_notes.split("\n")
+              %div= note
           %div
             - if static
               - unless order_item.blank? || aspect == :cost

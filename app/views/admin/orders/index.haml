@@ -24,9 +24,15 @@
       - for order in orders
         %tr{ :class => cycle('even', 'odd') }
           %td
-            = link_to((order.id.to_s + (order.sample ? '<strong>S</strong>' : '')), { :controller => '/order', :action => 'status', :order_id => order })
-            - unless (pos = order.items.collect { |i| i.purchase && i.purchase.purchase_order }.compact.uniq).empty?
-              = '(' + pos.collect { |po| po.quickbooks_ref }.join(', ') + ')'
+            = link_to(:controller => '/order', :action => :status, :order_id => order) do
+              = order.id
+              - if order.sample
+                %strong> S
+
+            = surround '(', ')' do
+              - pos = order.items.collect { |i| i.purchase && i.purchase.purchase_order && i.purchase.purchase_order.quickbooks_ref }.compact.uniq
+              = link_to(pos.empty? ? 'NO PO' : pos.join(','), :controller => '/admin/orders', :action => :items_edit, :order_id => order )
+
             %br
             = order.user ? order.user.name : "Unassigned"
             - if days = order.days_to_deliver
@@ -37,13 +43,20 @@
               %strong= link_to order.urgent_note, :controller => '/order', :action => :info, :order_id => order.id
           %td
             - images = order.items[0..1].collect do |item|
-              - if item.product.product_images.empty?
-                = link_to(image_tag(item.product.image_path_relative('thumb')), { :controller => '/products', :action => 'main', :id => item.product })
+              - unless (images = item.active_images).empty?
+                = link_to(image_tag(images.first.image.url(:thumb)), { :controller => '/products', :action => 'main', :id => item.product_id })
               - else
-                = link_to(image_tag(item.active_images.first.image.url(:thumb)), { :controller => '/products', :action => 'main', :id => item.product })
+                = link_to(image_tag(item.product.image_path_relative('thumb')), { :controller => '/products', :action => 'main', :id => item.product_id })
 
           %td
-            != link_to_unless !allowed?('CustomerInformationTask'), "#{order.customer.company_name}<br/>#{order.customer.person_name}", :controller => '/order', :action => :contact, :order_id => order
+            - if allowed?('CustomerInformationTask')
+              = link_to(:controller => '/order', :action => :contact, :order_id => order) do
+                %div= order.customer.company_name
+                %div= order.customer.person_name
+            - else
+              %div= order.customer.company_name
+              %div= order.customer.person_name  
+
             - if allowed?('CustomerInformationTask')
               - for email in order.customer.email_addresses
                 %div= mail_to "#{order.customer.person_name} <#{email.address}>", email.address
@@ -58,19 +71,19 @@
             -   included << task.waiting_name
               %div
                 = image_tag task.customer ? 'there_task.png' : 'our_task.png'
-                = link_to_task(task.waiting_name, task, order)
+                != link_to_task(task.waiting_name, task, order)
           %td
-            - last_task = order.task_recent
-            %div
-              Initial Contact:
-              = format_time(order.created_at)
-            %div
-              = last_task.completed_name
-              \:
-              = format_time(last_task.updated_at)
-            - if order.delivery_date
+            - if last_task = order.task_recent
               %div
-                In Hands:
-                = order.delivery_date.strftime("%A %b %d")
+                Initial Contact:
+                = format_time(order.created_at)
+              %div
+                = last_task.completed_name
+                \:
+                = format_time(last_task.updated_at)
+              - if order.delivery_date
+                %div
+                  In Hands:
+                  = order.delivery_date.strftime("%A %b %d")
 
 /= will_paginate @orders

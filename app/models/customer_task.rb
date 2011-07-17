@@ -175,7 +175,8 @@ class TaskSet
   
   def self.order(list)
     list.sort do |l, r|
-      next l.object.id <=> r.object.id if l.class == r.class
+      #      next l.object.id <=> r.object.id if l.class == r.class
+      next 0 if l.class == r.class
       @@set.index(l.class) <=> @@set.index(r.class)
     end
   end

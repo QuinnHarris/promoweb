@@ -63,13 +63,9 @@ class PhoneController < ActionController::Base
     unless pages.empty?
       city_states = []
       pages = pages.find_all do |page|
-        begin
-          if gi = GEOIP[page.address] and gi.area_code == area_code
-            city_states << "#{gi.city} #{gi.region}"
-            true
-          end
-        rescue Net::GeoIP::RecordNotFoundError => e
-          false
+        if gi = GEOIP.look_up(page.address) and gi[:area_code] == area_code
+          city_states << "#{gi[:city]} #{gi[:region]}"
+          true
         end
       end
 

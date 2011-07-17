@@ -76,7 +76,7 @@ class PaymentCreditCard < OnlineMethod
     billing_id
   end
   def useable?
-    revokable?
+    revokable? or creditable?
   end
 
   def fee

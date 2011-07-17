@@ -1,29 +1,22 @@
 - for session in sessions
   .session
-    .agent
-      - if (session.id % 2) == 0
-        X :
-      - browser = Sitealizer::Parser::UserAgent.browser_info(session.user_agent)
-      = image_tag("/awstats-icon/browser/#{browser[:type].downcase}.png")
-      \:
-      = browser[:version]
+    .agent= session.user_agent
     - split_by_common(session.pages) { |page| [format_time(page.created_at, false), page.address] }.each do |(date, address), pages|
       %div
         .date_addr
           = date
           \:
           = address
-          - begin
-            - if gi = GEOIP[address]
-              \:
-              = "#{gi.city} #{gi.region}"
-              - if gi.postal_code
-                \,
-                = gi.postal_code
-              - if gi.area_code
-                = "(#{gi.area_code})"
-          - rescue Net::GeoIP::RecordNotFoundError => e
-            = "Unkown"
+          - if gi = GEOIP.look_up(address)
+            \:
+            = "#{gi[:city]} #{gi[:region]} [#{gi[:country_name]}]"
+            - if gi[:postal_code]
+              \,
+              = gi[:postal_code]
+            - if gi[:area_code]
+              = "(#{gi[:area_code]})"
+          - else
+            Unknown
       - for page in pages
         %div
           = page.created_at.strftime(" %I:%M:%S %p")
@@ -32,13 +25,4 @@
           \:
           - if page.referer
             %span.referer
-              %span
-                - begin
-                  - domain = Sitealizer::Parser::Keyword.get_domain(page.referer.gsub(' ', '%20').gsub(/\{|\}|\"/,''))
-                  - if icon = Admin::AccessController.domain_icons[domain]
-                    = link_to image_tag("access/#{icon}.png"), "http://#{domain}/"
-                  - else
-                    = domain
-                - rescue
-                  Unknown
-              = link_to Sitealizer::Parser::Keyword.get_terms(page.referer), page.referer
+              = page.referer
