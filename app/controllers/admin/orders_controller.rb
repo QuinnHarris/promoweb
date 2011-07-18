@@ -91,7 +91,7 @@ class EPSPlacement < EPSInfo
     define_method "#{name}_imprint=" do |val|
       val = Float(val)
       if !@scale && send(name) > val
-        raise EPSError, "#{name} of #{send(name)}pt > #{val}pt (#{send(name)/72.0}in > #{val/72.0}in)"
+        raise EPSError, "#{name} of #{send(name)}pt > #{val}pt (#{send(name)/72.0}in > #{val/72.0}in) for #{@file_name}"
       end
       instance_variable_set("@#{name}_imprint", val)
     end
@@ -857,7 +857,7 @@ class Admin::OrdersController < Admin::BaseController
     end
 
     # Header
-    product_name = decoration.order_item.product.name.gsub('”','"')
+    product_name = decoration.order_item.product.name.gsub('”','"').gsub('’',"'")
 
     company_name = group.customer.company_name.strip.empty? ? group.customer.person_name : group.customer.company_name
 
