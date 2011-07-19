@@ -1,6 +1,6 @@
 = render :partial => 'acknowledge_menu'
 
-= link_to(image_tag('pdf.png') + " Print", { :action => :invoices, :order_id => @order.id }, { :class => 'nav', :style => 'float: right;' })
+= link_to(image_tag('pdf.png') + " Print", { :action => :invoices, :order_id => @order.id, :format => :pdf }, { :class => 'nav', :style => 'float: right;' })
 
 = render :partial => 'invoices', :locals => { :static => false, :absolute => false }
 
@@ -26,4 +26,4 @@
           = submit_tag('Reject Order', :class => 'button', :id => 'rejectbtn')
 
       %hr
-      = submit_options(false)
+      != submit_options(false)

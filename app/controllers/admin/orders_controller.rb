@@ -426,10 +426,14 @@ class Admin::OrdersController < Admin::BaseController
 #    RubyProf.start
     today = Time.now.end_of_day
     ready_orders = @orders.collect do |order|
+      time = nil
+      s = Benchmark.measure do
       time = order.tasks_allowed(@permissions).collect do |task|
         next unless task.complete_at and (task.complete_at < today)
         task.complete_at
       end.compact.min
+      end
+      logger.info("Order: #{order.id}: #{s}")
       next unless time
       [order, time]
     end.compact.sort_by { |order, time| time }.collect { |order, time| order }

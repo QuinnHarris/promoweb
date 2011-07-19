@@ -54,7 +54,7 @@
           - else
             - thumb_path = order_item.active_images.first.image.url(:thumb) 
           - unless absolute
-            - link_to({ :controller => '/products', :action => 'main', :id => order_item.product }) do
+            = link_to({ :controller => '/products', :action => 'main', :id => order_item.product }) do
               = image_tag(thumb_path, :alt => "#{order_item.product.name} Thumbnail")
               %br
               %strong M#{order_item.product.id}
@@ -65,7 +65,8 @@
               %strong= "M#{order_item.product.id}"
           - if @user and aspect == :cost and order_item.product.supplier_url
             %br
-            = link_to "<em>#{order_item.product.supplier.name}: #{order_item.product.supplier_num}</em>", order_item.product.supplier_url
+            %em
+            = link_to "#{order_item.product.supplier.name}: #{order_item.product.supplier_num}", order_item.product.supplier_url
         %td
           - if aspect == :cost and order_item.product.supplier_url
             = link_to "#{order_item.product.supplier_num}: ", order_item.product.supplier_url

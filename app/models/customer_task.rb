@@ -12,11 +12,6 @@ module ObjectTaskMixin
     base.extend(ClassMethods)
   end
   
-  def tasks_new
-    return @tasks_new if @tasks_new
-    @tasks_new = []
-  end
-  
   def task_recent
     tasks_active.to_a.sort { |l, r| r.updated_at <=> l.updated_at }.first
   end
@@ -48,7 +43,22 @@ module ObjectTaskMixin
   def task_find(task_class)
     tasks_active.to_a.find { |t| t.is_a?(task_class) }
   end
+
+  def tasks_new
+    return @tasks_new if @tasks_new
+    @tasks_new = []
+  end
+
   def task_find_all(task_class)
+#    unless @task_map
+#      @task_map = {}
+#      (tasks_active.to_a + tasks_other.to_a).reverse.each do |task|
+#        @task_map[task.class] = task
+#      end
+#    end
+#    t = tasks_new.find { |t| t.is_a?(task_class) }
+#    return t if t
+#    @task_map[task_class]
     (tasks_active.to_a + tasks_new + tasks_other.to_a).find { |t| t.is_a?(task_class) }
   end
 
@@ -243,8 +253,11 @@ module TaskMixin
       else
         object.tasks_new << target_task = target_class.new(:object => object)
       end
-      
+
       task_list = [target_task]
+
+#      s = Benchmark.measure do
+      
       target_task.depends_on = []
       target_class.depends_on.each do |task_class_list|
         task_class_list = [task_class_list].flatten
@@ -309,6 +322,9 @@ module TaskMixin
       # Can remove if not triggered
       raise "Not flat" unless target_task.depends_on.flatten.length == target_task.depends_on.length
       target_task.depends_on.each { |t| t.add_dependant(target_task) }
+
+#      end
+#      logger.info("Bench: #{target_class} #{s}")
       
       [target_task, task_list]
     end

@@ -958,7 +958,12 @@ public
 
   def invoices
     @static = true
-    render :pdf => 'invoice', :layout => 'print'
+    respond_to do |format|
+      format.html
+      format.pdf do
+        render :pdf => "Order #{@order.id} Invoice", :layout => 'print'
+      end
+    end
   end
   
   def_tasked_action :acknowledge_artwork, ArtAcknowledgeOrderTask do

@@ -67,7 +67,7 @@
     })
   }
 
-- form_for :artwork, @artwork, { :url => { :action => :artwork_edit, :order_id => @order } }  do |artwork|
+= form_for :artwork, @artwork, { :url => { :action => :artwork_edit, :order_id => @order } }  do |artwork|
   - if dragable = allowed?('Orders') && !@order.task_completed?(ArtPrepairedOrderTask)
     %div{ :id => "artwork-group=" }
       = render :partial => 'artwork_decoration', :locals => { :group => nil, :item_decorations => @order_item_decorations, :dragable => true }

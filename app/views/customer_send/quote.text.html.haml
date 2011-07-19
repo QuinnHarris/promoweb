@@ -46,7 +46,7 @@
       - @header_text.split("\n").each do |line|
         - line = auto_link(line)
         - line.gsub!(/\{((?:\w+\:)?[^\}]*)\}/) { |s| link_to($1, uri_param.merge(main_waiting_task.uri)) } if main_waiting_task
-        %p= line
+        %p!= line
         
       - if @order.user
         %hr
