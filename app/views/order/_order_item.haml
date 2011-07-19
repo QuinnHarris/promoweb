@@ -200,7 +200,7 @@
       - if has_shipping
         %tr
           %td{ :colspan => fixed ? 3 : 2 }
-            - unless aspect == :cost
+            - unless true #aspect == :cost
               Estimated
             Shipping:
             %strong= order_item.shipping_description(aspect == :cost)

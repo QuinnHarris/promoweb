@@ -308,5 +308,8 @@ class HighCaliberLine < GenericImport
       
       add_product(product_data)
     end
+
+    # Remove California Line
+    @product_list.delete_if { |p| p['supplier_categories'].include?('California Line') }
   end
 end

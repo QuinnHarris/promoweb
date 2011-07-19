@@ -9,7 +9,7 @@ class ArtworkGroup < ActiveRecord::Base
   end
 
   def pdf_artworks
-    artworks.to_a.find_all { |a| a.can_pdf? }
+    artworks.to_a.find_all { |a| a.can_pdf? && a.has_tag?('supplier') }
   end
 
   def pdf_filename

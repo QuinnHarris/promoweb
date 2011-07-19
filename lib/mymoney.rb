@@ -23,6 +23,7 @@ class Money
   end
 
   def round_cents
+    return self if nil?
     mult = (@multiplier / 100).to_i
     Money.new((@units / mult.to_f).round * mult)
   end

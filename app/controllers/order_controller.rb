@@ -412,7 +412,7 @@ public
     @static = @order.task_completed?(AcknowledgeOrderTask) && (!@user || !params[:unlock])
     
     if request.post?
-      params[:order]['delivery_date(1i)'] = Date.today.year.to_s if params[:order]['delivery_date(1i)'] and params[:order]['delivery_date(1i)'].empty?
+      params[:order]['delivery_date(1i)'] = Date.today.year.to_s if params[:order] and params[:order]['delivery_date(1i)'] and params[:order]['delivery_date(1i)'].empty?
       @order.update_attributes(params[:order])
       next unless @order.valid?
       Order.transaction do

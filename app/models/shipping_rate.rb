@@ -80,7 +80,7 @@ class UPSShippingRate < ShippingRate
     return "Invalid supplier zipcode: #{supplier.address.postalcode}" unless supplier.address.postalcode && supplier.address.postalcode.length == 5
 
     return "No customer address" unless ship_address = customer.ship_address || customer.default_address
-    return "Invalid customer zipcode: #{ship_address.postalcode.length}" unless ship_address.postalcode.split('-').first.length == 5
+    return "Invalid customer zipcode: #{ship_address.postalcode.length}" unless ship_address.postalcode && ship_address.postalcode.length >= 5 && ship_address.postalcode.split('-').first.length == 5
 
     return "No Package Units" unless (package_units = product.package_units) and (package_units > 0)
     
