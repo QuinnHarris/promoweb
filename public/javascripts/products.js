@@ -178,7 +178,10 @@ var ProductPricing = Class.create(PricingBase, {
 
 	    if (!li) {
 		li = $$('#techniques .sel')[0];
-		if (li) technique_id = id_parse(li.id);
+		if (li)
+		    technique_id = id_parse(li.id);
+		else
+		    technique_id = null;
 	    }
 
 	    this.params.technique_id = technique_id;
