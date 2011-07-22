@@ -60,7 +60,13 @@ class Customer < ActiveRecord::Base
     if default_address &&
         (default_address.state.downcase == 'colorado' ||
          default_address.state.downcase == 'co')
-      return ['Colorado', 0.029]
+      if default_address.city.downcase == 'durango'
+        return ['Durango', 0.079]
+      elsif [81301, 81303, 81122, 81137, 81326].include?(default_address.postalcode.to(4).to_i)
+        return ['LaPlata', 0.049]
+      else
+        return ['Colorado', 0.029]
+      end
     end
     [nil, 0.0]
   end

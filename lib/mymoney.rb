@@ -168,8 +168,8 @@ class PricePair
   end
 
   def round_cents
-    PricePair.new(@marginal.round_cents,
-                  @fixed.round_cents)
+    PricePair.new(@marginal && @marginal.round_cents,
+                  @fixed && @fixed.round_cents)
   end
 end
 

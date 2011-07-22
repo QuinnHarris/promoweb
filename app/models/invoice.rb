@@ -18,10 +18,16 @@ class Invoice < ActiveRecord::Base
   end
 
   def qb_sales_tax_id
-    if tax_type == 'Colorado'
-      return '80000476-1300837712'
+    case tax_type
+    when 'Colorado'
+      '80000476-1300837712'
+    when 'LaPlata'
+      '80000710-1311095766'
+    when 'Durango'
+      '80000711-1311096268'
+    else
+      nil
     end
-    nil
   end
 
   before_destroy :destroy_children

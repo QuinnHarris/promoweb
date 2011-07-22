@@ -5,7 +5,7 @@ class Admin::PhoneController < Admin::BaseController
     @calls = calls.collect do |call_log|
       customer = Customer.find(:first,
                                :include => :phone_numbers,
-                               :conditions => { 'phone_numbers.number' => call_log.caller_number.gsub(/^1/,'') } )
+                               :conditions => { 'phone_numbers.number' => call_log.caller_number.gsub(/^1/,'').to_i } )
 
       next [call_log, customer] if customer
 
