@@ -94,4 +94,8 @@ class OrderItemDecoration < ActiveRecord::Base
   def invoice_data
     @@invoice_attributes.inject({}) { |h, a| h[a] = attributes[a]; h }
   end
+
+  def pdf_filename
+    "Proof for #{order_item.product.name.gsub('%','')} of #{artwork_group.name}.pdf"
+  end
 end

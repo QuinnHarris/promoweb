@@ -930,7 +930,7 @@ class Admin::OrdersController < Admin::BaseController
     dst_path = "/tmp/rghost-#{Process.pid}.pdf"
     proof.draw(dst_path)
 
-    dst_name = params[:artwork_id] ? artwork.filename_pdf : group.pdf_filename
+    dst_name = params[:artwork_id] ? artwork.filename_pdf : decoration.pdf_filename
     art_file = File.open(dst_path)
     eval "def art_file.original_filename; #{dst_name.inspect}; end"
 
