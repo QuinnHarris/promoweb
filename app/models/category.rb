@@ -317,6 +317,7 @@ public
     sql << find_products_sql_with_count!(options)
     sql << " AS products GROUP BY counter/#{limit} ORDER BY page"
     res = connection.select_all(sql)
+    res.delete_if { |r| r['min'].nil? or r['max'].nil? }
 
     if options[:window] and options[:window] < res.size and !res.empty?
       idx = []
