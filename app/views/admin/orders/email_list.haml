@@ -1,23 +1,24 @@
 %table#email
   %tbody
     - for size, mail in @list
-    -   body = mail.multipart? ? mail.parts.first.body : mail.body
+      /-   body = mail.multipart? ? mail.parts.first.body : mail.body
+      - body = mail.body
       %tr{ :class => (mail.from.find { |m| m.index('mountainofpromos.com') } && 'our') }
         %td
           .subject= mail.subject
-          .preview= body.split("\n")[0..31].collect { |s| s.strip }.join('<br/>')
+          .preview!= body.to_s.split("\n")[0..31].collect { |s| s.strip }.join('<br/>')
         %td
           .date= format_time(mail.date)
           %div
             From:
-            = format_email(mail, :from)
+            != format_email(mail, :from)
           %div
             To:
-            = format_email(mail, :to)
+            != format_email(mail, :to)
           - if mail.cc
             %div
               CC:
-              = format_email(mail, :cc)
+              != format_email(mail, :cc)
           %div
             Size:
             = size
