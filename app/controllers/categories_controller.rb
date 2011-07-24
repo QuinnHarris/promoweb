@@ -29,7 +29,7 @@ end
 
 
 class CategoriesController < ApplicationController
-  caches_page :main, :home
+  #caches_page :main, :home
 
   @@featured_items = 4
   cattr_reader :featured_items
