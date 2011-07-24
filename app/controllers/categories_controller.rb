@@ -128,7 +128,7 @@ public
 
   # redirect to appropriate method
   def main
-    @path = params[:path]
+    @path = params[:path] || []
     
     # Split @path and tail at meta point
     tail = nil

@@ -571,7 +571,18 @@ function initialize(){
   // Add General Entry
   document.on('ajax:success', '.add', function(event, container) {
 	  var tbody = container.up('table').down('tbody');
-	  var tr = tbody.insertRow(tbody.rows.length);
+	  var insert_row = tbody.rows.length;
+	  if (container.hasClassName('dec')) {
+	      for (i = 0; i < tbody.rows.length; i++) {
+		  if (tbody.rows[i].hasClassName('dec'))
+		      insert_row = i;
+	      }
+	      insert_row++;
+	  }
+	      
+	  var tr = tbody.insertRow(insert_row);
+	  if (container.hasClassName('dec'))
+	      tr.addClassName('dec')
 	  tr.innerHTML = event.memo.responseText;
 	  setup_events(tr);
 	  calculate_all();

@@ -40,23 +40,22 @@ class SearchController < ApplicationController
       :conditions => 'not deleted',
     }
 
-    # Find by tsearch
-    # REALLY INEFFICENT DOESNT USE LIMIT ON DB
-#    @products = Product.find_by_tsearch(@terms, options, {:headlines => [:name]}).paginate(:page => @page, :per_page => per_page)
     @products =  WillPaginate::Collection.create(@page, per_page, 0) do |pager|
-      list = Product.search(@terms).includes(:product_images).limit(per_page+1).offset((@page-1)*per_page)
+      scope = Product.search(@terms).where(:deleted => false)
+      list = scope.includes(:product_images).limit(per_page).offset((@page-1)*per_page)
       pager.replace list[0...per_page]
-      pager.total_entries = list.length > per_page ? per_page*(@page+1) : list.length
+      pager.total_entries = list.length > per_page ? scope.count : ((@page-1)*per_page + list.length)
     end
 
     @paginate_options = {}
 
     # Find by substring search on product name
-    if @products.empty?
-      terms = @terms.split(/\s+/)
-      conditions = "NOT deleted AND " + terms.collect { |t| "(name ILIKE '%#{t}%')" }.join(' AND' )
-      @products = Product.paginate(:all, options.merge(:page => @page, :per_page => per_page, 
-                    :conditions => conditions, :order => "position('#{terms.first.downcase}' in lower(name))::float / length(name), id"))
+    @products =  WillPaginate::Collection.create(@page, per_page, 0) do |pager|
+      scope = Product.where(:deleted => false)
+      @terms.split(/\s+/).each { |t| scope = scope.where("name ILIKE '%#{t}%'") }
+      list = scope.order("id").includes(:product_images).limit(per_page).offset((@page-1)*per_page)
+      pager.replace list[0...per_page]
+      pager.total_entries = scope.count
     end
 
     @context = {}

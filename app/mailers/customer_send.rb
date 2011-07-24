@@ -26,7 +26,6 @@ class CustomerSend < ActionMailer::Base
     
     customer_email = order.customer.email_string
     customer_email = SEND_EMAIL unless RAILS_ENV == "production"
-    logger.info("CUST EMAIL: #{customer_email.inspect}")
   
     # To Customer
     send = CustomerSend.quote(order, task, subject, header)
@@ -51,11 +50,6 @@ class CustomerSend < ActionMailer::Base
     @task = task
     @order = order
 
-    mail(:subject => "#{subject} (\##{order.id})") do |format|
-      format.text
-      format.html
-    end
-
     if task.is_a?(ArtPrepairedOrderTask)
       order.artwork_proofs.each do |artwork|
         next if artwork.art.size > 128*1024
@@ -63,6 +57,11 @@ class CustomerSend < ActionMailer::Base
       end
     elsif !order.invoices_ref.empty?
       attachments[order.invoices_ref.empty? ? "MOP Quote" : "MOP Invoice (#{order.id}-#{order.invoices_ref.count}).pdf"] = WickedPdf.new.pdf_from_string(render(:file => '/order/invoices', :layout => 'print', :body => { } ))
+    end
+
+    mail(:subject => "#{subject} (\##{order.id})") do |format|
+      format.text
+      format.html
     end
   end
 end

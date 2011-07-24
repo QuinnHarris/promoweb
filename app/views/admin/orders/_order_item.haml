@@ -67,7 +67,7 @@
                       = text_field_tag "OrderItemVariant-#{oiv.meta_id}-quantity", oiv.quantity, :class => 'num shipset', :readonly => @price_lock, :tabindex => item.id*2
                     %span{ :class => cycle('odd', 'even') }<
                       = text_field_tag "OrderItemVariant-#{oiv.meta_id}-imprint_colors", oiv.imprint_colors, :class => 'imprint', :readonly => (@price_lock || purchase_lock), :tabindex => item.id*2+1
-      %tr.defined
+      %tr.defined.dec
         - if item.shipping_rates
           %td.shipping= render :partial => 'order_item_shipping', :locals => { :item => item }
         - else
@@ -86,7 +86,7 @@
           \%
 
       - for decoration in item.decorations.find(:all, :include => [:technique, :decoration])
-        %tr.defined
+        %tr.defined.dec
           = render :partial => 'order_item_decoration', :locals => { :entry => decoration, :purchase_lock => purchase_lock }
       - for entry in item.entries.find(:all, :order => 'id')
         %tr
@@ -101,7 +101,7 @@
             %div.add_dec
               %h4= image_tag("add.png") + " Add Decorations"
               - decors = [DecorationTechnique.find_by_name('General')] + item.product.decorations.collect { |d| d.technique.id != 1 ? d.technique : nil }.uniq.compact
-              != decors.collect { |tech| link_to(tech.name, { :action => :order_item_decoration_insert, :id => item.id, :technique => tech.id }, :remote => true) }.join(', ')
+              != decors.collect { |tech| link_to(tech.name, { :action => :order_item_decoration_insert, :id => item.id, :technique => tech.id, :unlock => @unlock }, :remote => true, :class => 'add dec') }.join(', ')
               /:complete => "entry_insert(request, 'item-#{item.id}', true)",
         %td.num ???
         %td.num ???

@@ -60,14 +60,15 @@
             = method.created_at.strftime("%Y-%m-%d")
             %br
             - if current and method.type_notes
-              %p= method.type_notes
+              - for line in method.type_notes.split("\n")
+                %div= line
             - if method.billing_id or method.transactions.empty?
               = link_to(image_tag('remove.png') + (method.transactions.empty? ? 'Remove' : 'Revoke'), { :action => :payment_remove, :id => method }, :confirm => "Remove #{method.type_name} for #{method.name}")
             - if method.billing_id and !@order.task_completed?(PaymentInfoOrderTask)
               = link_to(image_tag('add.png') + 'Use as Payment', { :action => :payment_use, :id => method }, :confirm => "Use #{method.type_name} for #{method.name} as payment information")
 
           .block
-            - form_tag :update => "method-#{method.id}", :html => { :onsubmit => "return charge(this)" }, :url => { :order_id => @order, :controller => '/admin/orders', :action => :payment_apply, :id => method.id, :txn_id => params[:txn_id] } do
+            = form_tag({ :order_id => @order, :controller => '/admin/orders', :action => :payment_apply, :id => method.id, :txn_id => params[:txn_id] }, :onsubmit => "return charge(this)") do
               %table
                 %thead
                   %tr
@@ -113,5 +114,5 @@
       = link_to "Send refund check", { :action => :payment_sendcheck, :order_id => @order, :refund => true }, { :confirm => "A refund check will be sent to the customer." }
 
   %hr
-  - form_for :payment, @payment, :url => { :order_id => @order } do
+  = form_for :payment, @payment, :url => { :order_id => @order } do
     != submit_options

@@ -184,10 +184,10 @@ class PaymentSendCheck < PaymentCheck
   def type_name; "Mailed Check"; end
   
   def type_notes
-    %q(Please mail check to:<br/>
-Mountain Xpress Promotions, LLC<br/>
-954 E. 2nd Ave, Ste 206<br/>
-Durango, CO. 81301<br/>)
+    %q(Please mail check to:
+Mountain Xpress Promotions, LLC
+954 E. 2nd Ave, Ste 206
+Durango, CO. 81301)
   end
 end
 

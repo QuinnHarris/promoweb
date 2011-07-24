@@ -591,7 +591,11 @@ class Product < ActiveRecord::Base
 #  }
 
   include PgSearch
-  pg_search_scope :search, :against => { :supplier_num => 'A', :name => 'A', :description => 'C' }, :using => { :tsearch => { :dictionary => "english" } }
+  pg_search_scope :search,
+    :against => { :supplier_num => 'A', :name => 'A', :description => 'C' },
+#    :associated_against => {  },
+  :associated_against => { :categories => { :name => 'B' }, :supplier => { :name => 'B' } },
+    :using => { :tsearch => { :dictionary => "english" } }
 
   def property_group_names
     property_groups.flatten.find_all { |n| !Property.is_image?(n) }
