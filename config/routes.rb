@@ -61,8 +61,8 @@ ActionController::Routing::Routes.draw do |map|
 
   map.connect 'categories/sitemap', :controller => 'categories', :action => 'sitemap'
   map.connect 'categories/map', :controller => 'categories', :action => 'map'
-  map.connect 'categories', :controller => 'categories', :action => 'main'
   map.connect 'categories/*path', :controller => 'categories', :action => 'main'
+  map.connect 'categories', :controller => 'categories', :action => 'main'
   
   map.connect 'products/sitemap', :controller => 'products', :action => 'sitemap'
 #  map.connect 'products/:id', :controller => 'products', :action => 'main'
