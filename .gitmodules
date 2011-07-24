@@ -4,3 +4,6 @@
 [submodule "vendor/plugins/actionwebservice"]
 	path = vendor/plugins/actionwebservice
 	url = https://github.com/nathanvda/actionwebservice.git
+[submodule "vendor/plugins/action_web_service"]
+	path = vendor/plugins/action_web_service
+	url = https://github.com/nathanvda/actionwebservice
