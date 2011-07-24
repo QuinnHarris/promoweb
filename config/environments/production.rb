@@ -1,3 +1,5 @@
+DATA_ROOT = "/var/www/mountainofpromos.com/"
+
 Promoweb::Application.configure do
   # Settings specified here will take precedence over those in config/application.rb
 
@@ -46,6 +48,8 @@ Promoweb::Application.configure do
 
   # Send deprecation notices to registered listeners
   config.active_support.deprecation = :notify
+
+  config.action_mailer.default_url_options = { :host => "www.mountainofpromos.com", :protocol => "https://" }
 end
 
 ActionMailer::Base.smtp_settings = {
@@ -60,10 +64,7 @@ Promoweb::Application.config.middleware.use ExceptionNotifier,
   :sender_address => %{"Web Application Error" <error@mountainofpromos.com>},
   :exception_recipients => %w{quinn@mountainofpromos.com}
 
-config.action_mailer.default_url_options = { :host => "www.mountainofpromos.com", :protocol => "https://" }
-
 SEND_EMAIL = "Mountain Express Promotions <sales@mountainofpromos.com>"
-DATA_ROOT = "/var/www/mountainofpromos.com/"
 
 # RLIMIT THIS PROCESS
 Process.setrlimit(Process::RLIMIT_AS, 1024*1024*256)

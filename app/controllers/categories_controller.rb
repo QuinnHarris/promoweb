@@ -56,7 +56,7 @@ private
     end
     
     unless exclusive
-      if root.count_products > 0 and root.children_count > 0
+      if root.count_products > 0 and root.children.count > 0
         sitemap_recurse(root, true, list)
       end
       
@@ -150,7 +150,7 @@ public
     # Find Category
     @category = Category.find_by_path(@path)
     raise ::ActionController::RoutingError, "Category does not exist: #{@path.join('/')}" unless @category
-    raise ::ActionController::RoutingError, "Category exclusive only applies to categories with children" unless children or @category.children_count > 0
+    raise ::ActionController::RoutingError, "Category exclusive only applies to categories with children" unless children or @category.children.count > 0
        
     @title = "Custom #{@category.name} - Logo Imprinted Promotional Products"
     
