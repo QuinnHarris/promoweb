@@ -320,7 +320,7 @@
               %tbody
                 - for customer in @customers
                   %tr
-                    %td= customer.orders.collect { |o| link_to o.id, :controller => '/order', :action => 'status', :order_id => o.id }.join(', ')
+                    %td!= customer.orders.collect { |o| link_to o.id, :controller => '/order', :action => 'status', :order_id => o.id }.join(', ')
                     %td= customer.company_name
                     %td= customer.person_name
                     %td

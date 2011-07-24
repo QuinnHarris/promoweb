@@ -83,8 +83,7 @@ class OrderItem < ActiveRecord::Base
   after_create :qb_on_demand
   def qb_on_demand
     if product.quickbooks_id == 'BLOCKED'
-      product.quickbooks_id = nil
-      product.save!
+      Product.update_all('quickbooks_id = NULL', :id => product.id)
     end
   end
   

@@ -155,4 +155,9 @@ public
     true
   end
 
+protected
+  def permission?(name)
+    @permissions.include?(name)
+  end
+
 end

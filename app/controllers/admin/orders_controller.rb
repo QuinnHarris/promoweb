@@ -397,57 +397,35 @@ class Admin::OrdersController < Admin::BaseController
     tasks_competed = [CustomerInformationTask]
     tasks_competed = TaskSet.set - [AddItemOrderTask] if params.has_key?(:all)
 
-#    logger.info("STARTTTTTTTTTTTT")
-    os = Order.scoped.joins(:customer).where("customers.person_name != ''")
-    # include tasks_completed
-    os = os.where(:closed => false) unless params.has_key?(:closed)
-    os = os.where("user_id = #{session[:user_id]} OR orders.user_id IS NULL") if params.has_key?(:mine)
-    os = os.where("orders.id IN (SELECT order_id FROM permissions WHERE user_id = #{session[:user_id]}) OR orders.user_id = #{session[:user_id]} #{@permissions.include?('Orders') ? 'OR orders.user_id IS NULL' : ''})") unless @permissions.include?('Super')
+    order = Order.arel_table
+    or_nodes = []
+    or_nodes << order[:user_id].eq(session[:user_id]) if !permission?('Super') or params.has_key?(:mine)
+    or_nodes << order[:user_id].eq(nil) if permission?('Orders')
+    
+    or_nodes << Arel::Nodes::SqlLiteral.new("orders.user_id IN (SELECT user_id FROM permissions WHERE user_id = #{session[:user_id]})") unless permission?('Super')
+    or_node = or_nodes.inject(nil) { |a, b| a ? a.or(b) : b }
 
-#    logger.info("STOPPPPPPPPPPPP")
+    os = Order.scoped.joins(:customer).where("customers.person_name != ''")
+    os = os.where(:closed => false) unless params.has_key?(:closed)
+    os = os.where(or_node) if or_node
     
     @count = os.count
 
-#    logger.info("MID")
-#    s=Benchmark.measure do
     @orders = os.order('orders.id DESC').includes([{ :customer => [:tasks_active, :tasks_other, :phone_numbers, :email_addresses] }, :tasks_active, :tasks_other, :user, { :items => [{ :purchase => :purchase_order }, :tasks_active, :tasks_other, { :order_item_variants => { :variant => :product_images }}, { :product => :product_images }] }]).all
-#    end
-
-#    logger.info("COMPLETEEEEEEEEEEEEEEE: #{s}")
 
     urgent = @orders.find_all { |o| o.urgent_note && !o.urgent_note.strip.empty? }
     @groups = urgent.empty? ? [] : [ ['Urgent', urgent] ]
 
-#    require 'benchmark'
-
-#    ready_orders = nil
-#    s=Benchmark.measure do
-
-#    RubyProf.start
     today = Time.now.end_of_day
     ready_orders = @orders.collect do |order|
-      time = nil
-#      s = Benchmark.measure do
       time = order.tasks_allowed(@permissions).collect do |task|
         next unless task.complete_at and (task.complete_at < today)
         task.complete_at
       end.compact.min
-#      end
-#      logger.info("Order: #{order.id}: #{s}")
       next unless time
       [order, time]
     end.compact.sort_by { |order, time| time }.collect { |order, time| order }
     @groups << ['Ready or Late', ready_orders] unless ready_orders.empty?
-
-#    end
-
-#    logger.info("BENCH: #{s}")
-
-#    result = RubyProf.stop
-
-#    printer = RubyProf::CallTreePrinter.new(result)
-#    printer.print(File.open("/tmp/ruby-prof.out", "w"))
-#    logger.info("Res: #{result}")
 
 
     if params[:sort] == 'task'
@@ -466,8 +444,6 @@ class Admin::OrdersController < Admin::BaseController
     end
 
     @title = "Orders #{ready_orders.length} of #{@count}"
-
-#    logger.info("ENDDDDDDDDDDDDD")
   end
     
   def payment_apply
@@ -760,7 +736,7 @@ class Admin::OrdersController < Admin::BaseController
   end
 
   def order_remove
-    return "Permission Denied" unless @permissions.include?('Super')
+    return "Permission Denied" unless permission?('Super')
     Order.transaction do
       order = Order.find(params[:id])
       fall = order.customer.orders.find(:first, :conditions => "id != #{order.id}", :order => 'id DESC')
@@ -772,7 +748,7 @@ class Admin::OrdersController < Admin::BaseController
   end
 
   def invoice_remove
-    raise "Permission Denied" unless @permissions.include?('Super')
+    raise "Permission Denied" unless permission?('Super')
     Invoice.transaction do
       invoice = Invoice.find(params[:id])
       invoice.destroy
@@ -1207,7 +1183,7 @@ class Admin::OrdersController < Admin::BaseController
 
 private
   def order_locks
-    @unlock = params[:unlock] && @permissions.include?('Super')
+    @unlock = params[:unlock] && permission?('Super')
     @price_lock = @order.task_completed?(AcknowledgeOrderTask) && !@unlock
   end
 public
