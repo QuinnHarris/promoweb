@@ -39,7 +39,7 @@ xml.rss :version => '2.0', 'xmlns:g' => 'http://base.google.com/ns/1.0' do
 	description += "Custom #{imprints.join(', ')}\n" unless imprints.empty?
 
 	description += product.description.gsub("\n",".\n")
-	xml.description description.gsub(/[\x80-\xff]/, "")
+	xml.description description #.gsub(/[\x80-\xff]/, "")
         
         prop = product.properties_get
         %w(color).each do |name|

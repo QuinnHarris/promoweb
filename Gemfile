@@ -41,6 +41,7 @@ gem 'dynamic_form'
 gem 'scruffy'
 gem 'geoip-c'
 gem 'wicked_pdf'
+gem 'fast_xs'
 
 # Bundle gems for the local environment. Make sure to
 # put test-only gems in this group so their generators
