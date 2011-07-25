@@ -6,10 +6,9 @@
     = @customer.person_name
     %br
     - for pn in @customer.phone_numbers
-      %a{ :href => "Tel://#{pn.number}" }<
-        - unless pn.name.blank?
-          #{pn.name}:
-        = pn.number_string
+      - unless pn.name.blank?
+        #{pn.name}:
+      %a{ :href => "Tel://#{pn.number}" }= pn.number_string
     - orders = @customer.orders.find(:all, :conditions => 'NOT closed').collect { |o| o.id }
     - unless orders.empty?
       %br
