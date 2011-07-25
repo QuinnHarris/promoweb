@@ -7,4 +7,10 @@ module Admin::OrdersHelper
       mail_to(email, full)
     end.join(', ')
   end
+
+  # Kludge to fix autocomplete (REMOVE WITH JQuery Upgrade)
+  def auto_complete_result(entries, field, phrase = nil)
+    return unless entries
+    render :partial => '/admin/orders/autocomplete', :locals => { :entries => entries, :field => field, :phrase => phrase }
+  end
 end

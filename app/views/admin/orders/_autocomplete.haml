@@ -1,0 +1,3 @@
+%ul
+  - for entry in entries
+    %li= phrase ? highlight(entry[field], phrase) : h(entry[field])

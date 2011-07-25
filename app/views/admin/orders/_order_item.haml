@@ -97,12 +97,10 @@
           - unless @price_lock || purchase_lock
             %div
               = link_to(image_tag("add.png")+" Add General Entry", { :action => :order_item_entry_insert, :id => item.id, :unlock => @unlock }, :remote => true, :class => 'add')
-              /:complete => "entry_insert(request, 'item-#{item.id}', false)",
             %div.add_dec
               %h4= image_tag("add.png") + " Add Decorations"
               - decors = [DecorationTechnique.find_by_name('General')] + item.product.decorations.collect { |d| d.technique.id != 1 ? d.technique : nil }.uniq.compact
               != decors.collect { |tech| link_to(tech.name, { :action => :order_item_decoration_insert, :id => item.id, :technique => tech.id, :unlock => @unlock }, :remote => true, :class => 'add dec') }.join(', ')
-              /:complete => "entry_insert(request, 'item-#{item.id}', true)",
         %td.num ???
         %td.num ???
         %td.num ???

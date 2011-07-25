@@ -80,7 +80,7 @@ module OrderHelper
       instance_variable_get("@#{object_name}").send(method).to_s
     else
       if @search or @naked
-        text_field_with_auto_complete object_name, method, {}, complete_options.merge({ :after_update_element => 'on_select', :url => { :action => "auto_complete_for_#{object_name}_#{method}", :customer_id => @search ? nil : @order.customer } } )
+        text_field_with_auto_complete object_name, method, @search ? { :value => '' } : {}, complete_options.merge({ :after_update_element => 'on_select', :url => { :action => "auto_complete_for_#{object_name}_#{method}", :customer_id => @search ? nil : @order.customer } } )
       else
         text_field object_name, method
       end
