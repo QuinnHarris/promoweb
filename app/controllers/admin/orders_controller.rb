@@ -1011,7 +1011,7 @@ class Admin::OrdersController < Admin::BaseController
           if item.product.variants.to_a.find { |v| v.id == oiv.variant_id } 
             item.order_item_variants.create(:variant_id => oiv.variant_id,
                                             :quantity => ((oiv.quantity == 0) or (!samples)) ? oiv.quantity : 1,
-                                            :imprint_colors => samples ? nil : oiv.imprint_colors)
+                                            :imprint_colors => samples ? '' : oiv.imprint_colors)
           else
             oiv_null.quantity += oiv.quantity
           end
