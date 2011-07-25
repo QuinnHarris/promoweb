@@ -515,12 +515,10 @@ class Admin::OrdersController < Admin::BaseController
     define_method("auto_complete_for_customer_#{method.pluralize}") do
       klass = method.camelize.constantize
       column = klass.main_column
-      find_options = { 
-        :conditions => [ "customer_id != ? AND LOWER(#{column}) LIKE ?", params[:customer_id], '%' + params[:customer][method.pluralize].downcase + '%' ], 
-        :order => "#{column} ASC",
-        :limit => 10 }
+      scope = method.camelize.constantize.scoped.where(["LOWER(#{column}) LIKE ?", '%' + params[:customer][method.pluralize].downcase + '%'])
+      scope = scope.where(["customer_id != ?", params[:customer_id]]) if params[:customer_id]
         
-      @items = method.camelize.constantize.find(:all, find_options)
+      @items = scope.order("#{column} ASC").limit(10).all
 
       render :inline => "<%= auto_complete_result @items, '#{column}' %>"
     end
@@ -959,11 +957,11 @@ class Admin::OrdersController < Admin::BaseController
 
   def order_duplicate
     Order.transaction do
-      orig_order = @order.dup
       samples = params[:samples]
       free = params[:free] && samples
 
       # Create new order
+      orig_order = @order
       @order = orig_order.customer.orders.create(:user => @user,
                                                  :special => samples ? "SAMPLES" : "Reorder",
                                                  :delivery_date_not_important => samples || false)
@@ -1013,7 +1011,7 @@ class Admin::OrdersController < Admin::BaseController
           if item.product.variants.to_a.find { |v| v.id == oiv.variant_id } 
             item.order_item_variants.create(:variant_id => oiv.variant_id,
                                             :quantity => ((oiv.quantity == 0) or (!samples)) ? oiv.quantity : 1,
-                                            :imprint_colors => oiv.imprint_colors)
+                                            :imprint_colors => samples ? nil : oiv.imprint_colors)
           else
             oiv_null.quantity += oiv.quantity
           end
@@ -1025,7 +1023,7 @@ class Admin::OrdersController < Admin::BaseController
         else
           orig_item.decorations.each do |dec|
             dec_hash = {}
-            [:technique_id, :decoration_id, :artwork_group_id, :count, :price, :cost].each do |method|
+            [:technique_id, :decoration_id, :artwork_group_id, :count, :price, :cost, :description, :our_notes].each do |method|
               dec_hash[method] = dec.send(method)
             end
             if params[:exact]
@@ -1259,7 +1257,7 @@ public
     
     @items = get_klass(klass_name).find(:all, find_options)
     
-    render :inline => "<%= auto_complete_result @items, 'description' %>"
+    render :inline => "<%!= auto_complete_result @items, 'description' %>"
   end
   
   def order_entry_insert
