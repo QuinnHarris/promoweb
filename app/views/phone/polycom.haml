@@ -15,7 +15,7 @@
     %hr
 
     - for name, phone in @list
-      = "#{name} <a href='Tel://#{phone}'>#{phone}</a>"
+      != "#{name} <a href='Tel://#{phone}'>#{phone}</a>"
       %br
 
     /%softkey{ :index => 1, :label => 'Supplier', :action => 'SoftKey:Applications' }

@@ -946,7 +946,7 @@ class Admin::OrdersController < Admin::BaseController
             :person_name => params[:name] || '' })
       end
 
-      @customer.save_with_validation(false)
+      @customer.save(:validate => false)
       EmailAddress.create(:customer => @custoemr,
                           :address => params[:email])
       
