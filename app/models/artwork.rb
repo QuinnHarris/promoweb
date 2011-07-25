@@ -1,3 +1,23 @@
+module Paperclip
+  module Interpolations
+    def prefix attachment, style_name
+      return '' if style_name == :original
+      "#{style_name}/"
+    end
+
+    def uuid attachment, style_name
+      attachment.instance.customer.uuid
+    end
+
+    def fullfilename attachment, style_name
+      str = "#{attachment.original_filename}"
+      ext = (style = attachment.styles[style_name]) && style[:format]
+      str += ".#{ext}" if ext
+      str
+    end
+  end
+end
+
 class Artwork < ActiveRecord::Base
   has_many :tags, :class_name => 'ArtworkTag'
   belongs_to :user

@@ -59,7 +59,7 @@
                     - for name, req in ArtworkTag.tag_mapping(artwork)
                       - if !static and req and !complete.include?(req)
                         %div
-                          - link_to({ :controller => '/admin/orders', :action => :artwork_mark, :id => artwork.id, :tag => name, :state => !tags.include?(name) }) do
+                          = link_to({ :controller => '/admin/orders', :action => :artwork_mark, :id => artwork.id, :tag => name, :state => !tags.include?(name) }) do
                             %span.checkbox
                               - if tags.include?(name)
                                 = image_tag 'check.png'
