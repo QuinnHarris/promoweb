@@ -258,13 +258,13 @@ public
         if technique.id == 1
           blank = true
           technique = nil
+        else
+          technique_params = {
+            :technique_id => technique.id,
+            :count => unit_count,
+            :decoration_id => decoration && decoration.id,
+          }
         end
-
-        technique_params = {
-          :technique_id => technique.id,
-          :count => unit_count,
-          :decoration_id => decoration && decoration.id,
-        }
       end
 
       if (!@user and
