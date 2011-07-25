@@ -1442,7 +1442,7 @@ public
     @oid = OrderItemDecoration.find(params[:id])
     if standard_colors = @oid.order_item.product.supplier.standard_colors
       @colors = standard_colors.collect do |color| 
-        PantoneColor.find(color)
+        Pantone::Color.find(color)
       end
     end
     render :layout=>false, :content_type => 'application/inkscape'
