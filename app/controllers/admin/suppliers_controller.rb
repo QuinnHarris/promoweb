@@ -25,6 +25,7 @@ class Admin::SuppliersController < Admin::BaseController
     if request.post?
       Supplier.transaction do
         @supplier.attributes = params[:supplier]
+        @supplier.name.strip!
         @supplier.address ||= Address.new
         @supplier.address.update_attributes!(params[:address])
         return unless @supplier.valid?

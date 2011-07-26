@@ -88,9 +88,10 @@ class Admin::ProductsController < Admin::BaseController
   
   def create
     Product.transaction do
-      supplier = Supplier.find_by_name(params[:supplier][:name])
+      supplier_name = params[:supplier][:name].strip
+      supplier = Supplier.find_by_name(supplier_name)
       unless supplier
-        supplier = Supplier.create(:name => params[:supplier][:name],
+        supplier = Supplier.create(:name => supplier_name,
           :price_source => PriceSource.create(:name => params[:supplier][:name]))
       end
       product = supplier.products.create(params[:product])

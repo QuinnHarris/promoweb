@@ -11,7 +11,7 @@
     - for first in @suppliers[nil]
       - for supplier in ([first] + (@suppliers[first.id] || []))
         %tr
-          %td= ((supplier != first) ? '&nbsp;|- ' : '') + supplier['name']
+          %td!= ((supplier != first) ? '&nbsp;|- ' : '') + supplier['name']
           %td= supplier.description
           %td= supplier.products.count
           %td
