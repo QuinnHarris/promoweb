@@ -130,6 +130,10 @@ class PhoneController < ActionController::Base
                                :limit => 10)
 
     @customers = [@customer] + (@customers - [@customer])
+
+    Haml::Template.options[:format] = :xhtml
+    render
+    Haml::Template.options[:format] = :html5
   end
 
   # Polycom Idle Display
@@ -152,6 +156,9 @@ class PhoneController < ActionController::Base
                    "FROM order_item_tasks JOIN order_items ON order_item_tasks.order_item_id = order_items.id JOIN orders ON order_items.order_id = orders.id " +
                    "WHERE NOT orders.closed AND orders.user_id IS NOT NULL)) AS sub GROUP BY id)")
 
+    Haml::Template.options[:format] = :xhtml
+    render
+    Haml::Template.options[:format] = :html5
   end
   
   # Polycom XML Directory
