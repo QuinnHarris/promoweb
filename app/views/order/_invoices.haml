@@ -104,7 +104,7 @@
           - order_item_entries = entries.find_all { |e| e.is_a?(InvoiceOrderItem) }
           - for entry in order_item_entries
             %tr
-              %td{ :colspan => 4 }= entry.html_row(self, absolute)
+              %td{ :colspan => 4 }!= entry.html_row(self, absolute)
             %tr.spacer
           - other_entries = entries - order_item_entries
           - qty_col = other_entries.find { |e| e.quantity > 1 }
@@ -116,7 +116,7 @@
                 %td{ :style => 'max-width: 2em;' } Quantity
               %td Amount
             - for entry in other_entries
-              %tr= entry.html_row(self, absolute)
+              %tr!= entry.html_row(self, absolute)
               %tr.spacer
 
         - if entries.length > 1 || invoice.tax_rate > 0.0

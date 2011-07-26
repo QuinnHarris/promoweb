@@ -1,21 +1,24 @@
 !!! Strict
 %html
   %body
-    &= @customer.company_name
+    = @customer.company_name
     %br
-    &= @customer.person_name
+    = @customer.person_name
     %br
     - for pn in @customer.phone_numbers
-      %a{ :href => "Tel://#{pn.number}" } #{pn.name}: #{pn.number_string}
+      - unless pn.name.blank?
+        #{pn.name}:
+      %a{ :href => "Tel://#{pn.number}" }= pn.number_string
     - orders = @customer.orders.find(:all, :conditions => 'NOT closed').collect { |o| o.id }
     - unless orders.empty?
       %br
-      = "Orders: #{orders.join(', ')}"
+      Orders: #{orders.join(', ')}
 
     %hr
 
     - for name, phone in @list
-      != "#{name} <a href='Tel://#{phone}'>#{phone}</a>"
+      = name
+      %a{ :href => "Tel://#{phone}" }= phone
       %br
 
     /%softkey{ :index => 1, :label => 'Supplier', :action => 'SoftKey:Applications' }

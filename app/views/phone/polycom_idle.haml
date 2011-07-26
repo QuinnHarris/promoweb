@@ -2,14 +2,13 @@
 %html
   %body
     - if @new_orders > 0
-      = "#{@new_orders} New Orders"
+      #{@new_orders} New Orders
       %hr
     
     - unless @recent_customer_tasks.empty?
       - for task in @recent_customer_tasks
-        = "#{task.order_id} #{task.completed_name}"
+        #{task.order_id} #{task.completed_name}
         %br
     - else
       - if @new_orders == 0
         No Customer Activity
-      

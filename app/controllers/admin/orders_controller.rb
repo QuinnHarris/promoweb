@@ -644,8 +644,8 @@ class Admin::OrdersController < Admin::BaseController
           :host => request.remote_ip,
           :data => (params[:data] || {}).symbolize_keys}
           
-        if (params[:commit] && params[:commit].index('Without Email')) || params[:without_email] || (params[:tasks].last != task_name)
-          if task_class.instance_methods.include?('email_complete')
+        if (params[:commit] && params[:commit].include?('Without Email')) || params[:without_email] || (params[:tasks].last != task_name)
+          if task_class.instance_method_already_implemented?(:email_complete)
             task_params[:data].merge!(:email_sent => false)
           end
         end
