@@ -276,7 +276,7 @@ class ElementLayout
       end
     end
 
-    raise EPSError, "Can't fit elements" if layouts.empty?
+    raise EPSError, "Can't fit elements: #{dims.inspect}" if layouts.empty?
 
     layouts.sort_by { |s, l| s }.last.last
   end
@@ -286,7 +286,8 @@ end
 class ProofGenerate
   def initialize(elements, list)
     @header_list = list
-    @margin = 72*3/4
+    @margin_x = 12
+    @margin_y = 72*3/4
 
     @paper_type = :letter
     paper_size = RGhost::Constants::Papers::STANDARD[:letter]
@@ -295,8 +296,8 @@ class ProofGenerate
     @footer_size = 34
     header_footer_size = @header_size + @footer_size
     
-    dims = [[paper_size[1] - 2*margin, paper_size[0] - 2*margin - footer_size - header_size(true), :landscape, 0],
-            [paper_size[0] - 2*margin, paper_size[1] - 2*margin - footer_size - header_size(false), :portrait, 100.0] ]
+    dims = [[paper_size[1] - 2*margin_x, paper_size[0] - 2*margin_y - footer_size - header_size(true), :landscape, 0],
+            [paper_size[0] - 2*margin_x, paper_size[1] - 2*margin_y - footer_size - header_size(false), :portrait, 100.0] ]
     
     @layout = ElementLayout.best(dims, elements)
     Rails.logger.info(@layout.inspect)
@@ -309,7 +310,7 @@ class ProofGenerate
     Rails.logger.info("XXXXXXX Widht: #{@paper_width} #{@paper_height} #{@layout.note}")
   end
 
-  attr_reader :paper_type, :paper_width, :paper_height, :footer_size, :margin, :landscape
+  attr_reader :paper_type, :paper_width, :paper_height, :footer_size, :margin_x, :margin_y, :landscape
 
   def center_x
     paper_width / 2
@@ -334,14 +335,14 @@ class ProofGenerate
   end
 
   def draw_head(image = nil)
-    y = paper_height - margin - 36
+    y = paper_height - margin_y - 36
     doc.moveto :x => center_x, :y => y
     doc.show "Artwork Proof", :with => :title_font, :align => :show_center
 
     Rails.logger.info("Land: #{landscape}")
 
     start_y = y - 6
-    x = margin*2 + 72
+    x = margin_y*2 + 72
     @header_list.in_groups_of( (@header_list.length / (landscape ? 2.0 : 1)).ceil ).each do |sub|
       y = start_y
       sub.each do |name|
@@ -353,11 +354,11 @@ class ProofGenerate
       x += 72*3.75
     end
 
-    doc.image image, :zoom => 20, :x => margin, :y => y if image
+    doc.image image, :zoom => 20, :x => margin_y, :y => y if image
   end
 
   def draw_foot(order)
-    y = margin
+    y = margin_y
     
     doc.moveto :x => center_x, :y => y
     doc.show "www.mountainofpromos.com  (877) 686-5646", :with => :subtitle_font, :align => :show_center
@@ -368,8 +369,8 @@ class ProofGenerate
 
     # Links
     url_prefix = "http://www.mountainofpromos.com/order/acknowledge_artwork?auth=#{order.customer.uuid}&order_id=#{order.id}&"
-    doc.text_link "Accept", :url => url_prefix + "accept=true", :color => :blue, :x => center_x - 200, :y => margin + 10, :tag => :action_font
-    doc.text_link "Reject", :url => url_prefix + "reject=true", :color => :blue, :x => center_x + 146, :y => margin + 10, :tag => :action_font
+    doc.text_link "Accept", :url => url_prefix + "accept=true", :color => :blue, :x => center_x - 200, :y => margin_y + 10, :tag => :action_font
+    doc.text_link "Reject", :url => url_prefix + "reject=true", :color => :blue, :x => center_x + 146, :y => margin_y + 10, :tag => :action_font
 
     doc.border :color => :black
   end
