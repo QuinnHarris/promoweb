@@ -1257,7 +1257,7 @@ public
     
     @items = get_klass(klass_name).find(:all, find_options)
     
-    render :inline => "<%!= auto_complete_result @items, 'description' %>"
+    render :inline => "<%= auto_complete_result @items, 'description' %>"
   end
   
   def order_entry_insert
