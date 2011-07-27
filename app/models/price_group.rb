@@ -9,17 +9,13 @@ class PriceGroup < ActiveRecord::Base
   has_many :order_items
   
   def price_entry_at(n)
-    entry = price_entries.find(:first,
-                               :conditions => ["minimum <= ? AND marginal IS NOT NULL", n],
-                               :order => "minimum DESC")
+    entry = price_entries.where(['minimum <= ? AND marginal IS NOT NULL', n]).reorder('minimum DESC').first
     return entry.price if entry
     return PricePair.new(nil, nil)
   end
   
   def minimum
-    entry = price_entries.find(:first,
-                               :conditions => "fixed IS NULL OR fixed = 0",
-                               :order => "minimum")
+    entry = price_entries.where('fixed IS NULL OR fixed = 0').reorder('minimum').first
     entry && entry.minimum
   end
   
