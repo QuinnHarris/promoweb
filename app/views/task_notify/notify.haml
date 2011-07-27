@@ -29,6 +29,8 @@
     %td= link_to_task(@task.completed_name, @task, @order, :only_path => false)
   %tr
     %th Pending:
-    %td= @order.tasks_ready.collect { |t| link_to_task(t.waiting_name, t, @order, :only_path => false) }.join('<br/>')
+    %td
+      - for task in @order.tasks_ready
+        %div!= link_to_task(task.waiting_name, task, @order, :only_path => false)
 
 = render_partial_null @task.class.to_s.underscore, { :task => @task }

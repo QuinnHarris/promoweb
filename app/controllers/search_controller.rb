@@ -52,7 +52,7 @@ class SearchController < ApplicationController
     # Find by substring search on product name
     @products =  WillPaginate::Collection.create(@page, per_page, 0) do |pager|
       scope = Product.where(:deleted => false)
-      @terms.split(/\s+/).each { |t| scope = scope.where("name ILIKE '%#{t}%'") }
+      @terms.split(/\s+/).each { |t| scope = scope.where(["name ILIKE '%?%'", t]) }
       list = scope.order("id").includes(:product_images).limit(per_page).offset((@page-1)*per_page)
       pager.replace list[0...per_page]
       pager.total_entries = scope.count
