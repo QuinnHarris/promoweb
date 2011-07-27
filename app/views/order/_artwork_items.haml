@@ -98,8 +98,8 @@
               /  .block.admin
               /    %h3 Our Notes
               /    = static ? artwork.our_notes : art.text_area(:our_notes, 'rows' => 3)
-              - if artwork_groups.length > 1
-                = draggable_element("artwork=#{artwork.id}", :revert => "'failure'", :scroll => 'window')
+        - if @user and artwork_groups.length > 1
+          = draggable_element("artwork=#{artwork.id}", :revert => "'failure'", :scroll => 'window')
 
   - if @user
     = drop_receiving_element("artwork-group=#{group.id}", { :onDrop => 'moveItem' } )
