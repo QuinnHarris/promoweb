@@ -841,7 +841,7 @@ class Admin::OrdersController < Admin::BaseController
     placements = artworks.collect do |artwork|
       eps = EPSPlacement.new(artwork.art.path)
       eps.scale = params[:scale]
-      logger.info("Width: #{eps.width} #{eps.height}")
+      logger.info("Width: #{eps.width} #{eps.height} #{decoration.diameter} #{decoration.width} #{decoration.height}")
       if diameter = decoration.diameter
         eps.diameter = diameter * 72
       else
