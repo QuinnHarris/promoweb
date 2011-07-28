@@ -41,7 +41,8 @@ class PhoneController < ActionController::Base
     number = params[:number].gsub(/^1/,'')
 
     customer = Customer.find(:first,
-                             :conditions => ['substring(regexp_replace(phone, \'^1|[^0-9]\', \'\', \'g\') from 1 for 10) = ?', number],
+                             :include => :phone_numbers
+                             :conditions => ['phone_numbers.number = ?', number],
                              :order => 'id DESC')
     if customer
       @lines = [(params[:name] and params[:name].include?('NEW')) ? 
