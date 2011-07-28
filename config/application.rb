@@ -51,6 +51,7 @@ GEOIP = GeoIP::City.new('/usr/share/GeoIP/GeoLiteCity.dat')
 require 'xsd/xmlparser'
 require 'xsd/xmlparser/nokogiri'
 
+SITE_NAME = "www.mountainofpromos.com"
 MAIN_EMAIL = 'sales@mountainofpromos.com'
 
 class Time

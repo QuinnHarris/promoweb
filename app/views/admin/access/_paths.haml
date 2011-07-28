@@ -9,7 +9,12 @@
           = address
           - if gi = GEOIP.look_up(address)
             \:
-            = "#{gi[:city]} #{gi[:region]} [#{gi[:country_name]}]"
+            - if gi[:city]
+              = gi[:city].force_encoding("UTF-8")
+            - if gi[:region]
+              = gi[:region].force_encoding("UTF-8")
+            - if gi[:country_name]
+              [#{gi[:country_name].force_encoding("UTF-8")}]
             - if gi[:postal_code]
               \,
               = gi[:postal_code]
@@ -25,4 +30,4 @@
           \:
           - if page.referer
             %span.referer
-              = page.referer
+              != referer_tag(page.referer)
