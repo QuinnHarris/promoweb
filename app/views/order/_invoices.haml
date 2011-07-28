@@ -74,10 +74,12 @@
         - unless customer.payment_methods.empty?
           %div
             %h3 Bill To
-            - payment = customer.payment_methods.find(:first)
-            /= payment.name
             - if valid?(customer, :company_name)
               = customer.company_name
+            - if payment = customer.payment_methods.find(:first)
+              = payment.name
+            - elsif valid?(customer, :person_name)
+              = customer.person_name
             %br
             = render :partial => '/order/address', :locals => { :address => payment.address, :customer => customer }
 

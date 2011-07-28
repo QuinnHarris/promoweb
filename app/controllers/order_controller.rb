@@ -513,8 +513,10 @@ public
           end
         else
           if @customer.ship_address
-            @customer.ship_address.destroy
+            ship_address = @customer.ship_address
             @customer.ship_address = nil
+            @customer.save!
+            ship_address.destroy
             changed = true
           end
         end

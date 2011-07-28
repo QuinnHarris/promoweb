@@ -261,6 +261,6 @@ class Order < ActiveRecord::Base
   end
 
   def artwork_proofs
-    @artwork_proof_groups.collect { |ag| ag.artworks.find_all { |a| a.has_tag?('proof') } }.flatten
+    artwork_proof_groups.collect { |ag| ag.artworks.find_all { |a| a.has_tag?('proof') } }.flatten
   end
 end
