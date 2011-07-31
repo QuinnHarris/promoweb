@@ -52,12 +52,8 @@ Promoweb::Application.routes.draw do
 
   # See how all your routes lay out with "rake routes"
 
-  resources :products, :controller => 'admin::Products', :except => [:show] do
-    member do
-#      get 'show' => 'products#show'
-      get 'sitemap' => 'products#sitemap'
-    end
-  end
+  match 'products/sitemap' => 'products#sitemap'
+  resources :products, :controller => 'admin::Products', :except => [:show]
   match 'products/:id(.:format)' => 'products#show'
   match 'products/main/:iid' => redirect('/products/%{iid}')
 
