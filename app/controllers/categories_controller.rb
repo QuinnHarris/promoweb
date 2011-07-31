@@ -18,7 +18,6 @@ class LinkRenderer < WillPaginate::LinkRenderer
     options = @template.request.get? ? params.dup : { :path => [] }
     options[:path] = options[:path].split('/')[0...-1] + [page]
     options.rec_merge!(@options[:params]) if @options[:params]
-    Rails.logger.info("OPT: #{options.inspect}")
     return options
   end
 
