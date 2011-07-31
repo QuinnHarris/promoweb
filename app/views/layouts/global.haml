@@ -67,25 +67,25 @@
         %td.layout
           - if @user
             - if allowed?(%w(Super Orders))
-              = link_to image_tag('phone.png'), { :controller => '/admin/phone', :action => :access }, :id => 'phone'
+              = link_to image_tag('phone.png'), { :controller => '/admin/access', :action => :inbound }, :id => 'phone'
               #buttonn.nav
                 = link_to image_tag('find.png') + "Find Customer", { :controller => '/admin/orders', :action => :contact_find }, :class => 'button'
                 = link_to image_tag('add.png') + "New Customer", { :controller => '/admin/orders', :action => :new_order }, { :class => 'button', :confirm => 'Create a new customer and order?' }
             %ul#leftmenu.nav
               != li_to 'Orders', {:controller => '/admin/orders', :action => 'index' } do params[:controller].index('order') or !params[:controller].index('admin') end
-              != li_to 'Admin', {:controller => '/admin/employee', :action => :commission } do  !params[:controller].index('order') and params[:controller].index('admin') end
+              != li_to 'Admin', { :controller => '/admin/employees', :action => :index } do  !params[:controller].index('order') and params[:controller].index('admin') end
 
             #sublist.nav
               - if !params[:controller].index('order') and params[:controller].index('admin')
                 .tabs{ :style => "padding-top: 2.5em;" }
                   %ul
                     - if allowed?('Orders')
-                      != li_to 'Commission', { :controller => '/admin/employee', :action => 'commission' }
+                      != li_to 'Commission', { :controller => '/admin/employees', :action => 'index' } do params[:controller].include?('employees') end
                     - if allowed?(%w(Super Orders))
                       != li_to 'Access', {:controller => '/admin/access', :action => 'paths' }
-                      != li_to 'Suppliers', {:controller => '/admin/suppliers', :action => 'index' }
-                    != li_to 'Calls', {:controller => '/admin/phone', :action => :calls }
-                    != li_to 'Phones', {:controller => '/admin/phone', :action => :setup }
+                      != li_to 'Suppliers', {:controller => '/admin/suppliers', :action => 'index' } do params[:controller].include?('suppliers') end
+                    != li_to 'Calls', {:controller => '/admin/access', :action => 'calls' }
+                    != li_to 'Phones', {:controller => '/admin/phone', :action => 'edit', :id => @user }
                     - if allowed?('Super')
                       != li_to 'Users', {:controller => '/admin/login', :action => 'index'}
                       != li_to 'Quickbooks', {:controller => '/admin/system/quickbooks_blocked', :action => 'index'}

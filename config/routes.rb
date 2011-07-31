@@ -1,4 +1,4 @@
-ActionController::Routing::Routes.draw do |map|
+Promoweb::Application.routes.draw do
   # The priority is based upon order of creation:
   # first created -> highest priority.
 
@@ -52,29 +52,48 @@ ActionController::Routing::Routes.draw do |map|
 
   # See how all your routes lay out with "rake routes"
 
+  resources :products, :controller => 'admin::Products', :except => [:show] do
+    member do
+#      get 'show' => 'products#show'
+      get 'sitemap' => 'products#sitemap'
+    end
+  end
+  match 'products/:id(.:format)' => 'products#show'
+  match 'products/main/:iid' => redirect('/products/%{iid}')
+
+  namespace 'admin' do
+    resource :orders do
+      get 'items_edit'
+      get 'contact_find'
+      get 'new_order'
+    end
+
+    resources :employees
+    resources :suppliers
+    resources :login
+
+    resources :phone, :only => [:edit]
+
+    match 'access/paths' => 'access#paths'
+    match 'access/calls' => 'access#calls'
+  end
+
+  root :to => 'categories#home'
+
+  match 'sitemaps' => 'general#sitemaps'
+  match 'categories/sitemap' => 'categories#sitemap'
+
+  match 'categoires/map' => 'categories#map'
+
+  match 'categories/*path' => 'categories#main'
+  match 'categories' => 'categories#main'
+  
+  match 'admin' => 'admin::Login#auth'
+
   # This is a legacy wild controller route that's not recommended for RESTful applications.
   # Note: This route will make all actions in every controller accessible via GET requests.
-  # match ':controller(/:action(/:id(.:format)))'
-
-  map.root :controller => 'categories', :action => 'home'
-  map.connect 'sitemaps', :controller => 'general', :action => 'sitemaps'
-
-  map.connect 'categories/sitemap', :controller => 'categories', :action => 'sitemap'
-  map.connect 'categories/map', :controller => 'categories', :action => 'map'
-  map.connect 'categories/*path', :controller => 'categories', :action => 'main'
-  map.connect 'categories', :controller => 'categories', :action => 'main'
-  
-  map.connect 'products/sitemap', :controller => 'products', :action => 'sitemap'
-#  map.connect 'products/:id', :controller => 'products', :action => 'main'
-
-  map.connect 'admin', :controller => '/admin/login', :action => 'auth'
-
-#  map.resources :order
-  
-  # Install the default route as the lowest priority.
-  map.connect ':controller/:action/:id.:format'
-  map.connect ':controller/:action/:id'
+  match ':controller(/:action(/:id(.:format)))'
 
   # Unidata Provisioning
-  map.connect ':name', :controller => '/phone', :action => 'unidata', :name => /e1_[0-9a-f]{12}.ini/, :conditions => { :method => :get }
+  match '/e1_:addr.ini' => 'phone#unidata', :constraints => { :addr => /[0-9a-f]{12}/ }
 end

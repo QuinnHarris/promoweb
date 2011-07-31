@@ -220,7 +220,7 @@
           %th{ :colspan => fixed ? 3 : 2 } Sub Total:
           %td.num= total_sum.to_perty
         %tr
-          %th{ :colspan => fixed ? 3 : 2 }= tail.first
+          %th{ :colspan => fixed ? 3 : 2 }!= tail.first
           %td.num.total= tail.last
       - unless tail
         %tr

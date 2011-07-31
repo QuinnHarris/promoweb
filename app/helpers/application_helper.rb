@@ -71,10 +71,10 @@ module ApplicationHelper
   end
     
   def link_to_category(category)
-    link_to(category.name, {
+    link_to(category.name, url_for({
       :controller => '/categories',
       :action => 'main',
-      :path => path_to_category(category)}.merge(:columns => session[:columns], :rows => session[:rows]))
+      :path => path_to_category(category)}.merge(:columns => session[:columns], :rows => session[:rows])))
   end
   
   def render_categories(path, cont = true)
@@ -144,7 +144,7 @@ module ApplicationHelper
   end
   
   def url_for_product(product, category = nil, options = nil) # tag, order, include_children
-    url_prop = { :controller => '/products', :action => 'main', :id => product.web_id }
+    url_prop = { :controller => '/products', :action => 'show', :id => product.web_id }
     unless @robot
       url_prop.merge!( :category => category ) if category
       url_prop.merge!(options) if options
@@ -162,7 +162,7 @@ module ApplicationHelper
   def li_to(name, url_h, cls = nil)
     selected = block_given? ? yield : ((params[:action] == url_h[:action].to_s) and (params[:controller] == url_h[:controller][1..-1]))
     url_h = url_h.merge({:only_path => false, :protocol => "https://"}) unless request.protocol == "https://" or RAILS_ENV != "production"
-    url_h = url_h.merge(:order_id => @order)
+    url_h = url_h.merge(:order_id => @order.id)
     (selected ? "<li class='sel #{cls}'>" : (cls ? "<li class='#{cls}'>" : '<li>')) +
     link_to(name, url_h) + '</li>'
   end

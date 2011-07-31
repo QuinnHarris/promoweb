@@ -15,9 +15,10 @@ class LinkRenderer < WillPaginate::LinkRenderer
 
   # Extention to support *path with page # at end
   def url_options(page)
-    options = @template.request.get? ? params : { :path => [] }
-    options[:path] = options[:path][0...-1] + [page]
+    options = @template.request.get? ? params.dup : { :path => [] }
+    options[:path] = options[:path].split('/')[0...-1] + [page]
     options.rec_merge!(@options[:params]) if @options[:params]
+    Rails.logger.info("OPT: #{options.inspect}")
     return options
   end
 
@@ -128,7 +129,7 @@ public
 
   # redirect to appropriate method
   def main
-    @path = params[:path] || []
+    @path = params[:path] ? params[:path].split('/') : []
     
     # Split @path and tail at meta point
     tail = nil

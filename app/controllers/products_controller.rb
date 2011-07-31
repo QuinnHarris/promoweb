@@ -34,7 +34,7 @@ class ProductsController < ApplicationController
   def sitemap
     headers['Content-Type'] = 'text/xml; charset=utf-8'
     @links = Product.find(:all).collect do |product|
-      { :loc => "http://www.mountainofpromos.com/products/main/#{product.web_id}",
+      { :loc => "http://www.mountainofpromos.com/products/#{product.web_id}",
         :lastmod => product.updated_at.iso8601 }
     end
     
@@ -163,7 +163,7 @@ public
     end
   end
 
-  def main
+  def show
     id = params[:id] && params[:id].split('-').first
     @product = Product.find(id)
 

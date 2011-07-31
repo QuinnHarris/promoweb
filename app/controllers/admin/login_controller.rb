@@ -58,7 +58,7 @@ class Admin::LoginController < ApplicationController
     @users -= [@users.find { |u| u.id == 0 }]  # Remove System user
   end
 
-  def add
+  def new
     @user = UserPass.new(params[:user])
 
     if request.post? and @user.save

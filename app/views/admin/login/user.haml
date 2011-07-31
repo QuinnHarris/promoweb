@@ -2,7 +2,7 @@
 
 %br
 
-- form_for :user, @user do |u|
+- form_for @user, { :url => @user.new_record? ? admin_login_path : admin_login_path(@user) } do |u|
   %table.form
     %caption Add User
     %tr

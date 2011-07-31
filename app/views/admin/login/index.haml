@@ -1,6 +1,6 @@
 %h1 Users
 
-= link_to "Add User", :action => :add
+= link_to "Add User", :action => :new
 
 %table
   %thead
@@ -15,7 +15,7 @@
         %td
           = link_to 'Edit', :action => :edit, :id => user
           ,
-          = link_to 'Phone', :action => :phones, :id => user
+          = link_to 'Phone', edit_admin_phone_path(user)
         %td= user.login
         %td= user.name
         %td= user.email

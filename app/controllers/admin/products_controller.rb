@@ -116,14 +116,13 @@ class Admin::ProductsController < Admin::BaseController
         pi.save!
       end        
 
-      redirect_to :controller => '/order', :action => :add_item, :product => product, :quantity => 100, :price_group => price_group
+      redirect_to :controller => '/order', :action => :add_item, :product => product, :quantity => 100, :price_group => price_group, :order_id => params[:context][:order_id]
     end
   end
   
   def edit
     @product = Product.find(params[:id])
     @supplier = @product.supplier
-    render :action => :new
   end
   
   def update

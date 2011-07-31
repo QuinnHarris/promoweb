@@ -394,7 +394,7 @@ class Admin::OrdersController < Admin::BaseController
   OrderTask
   OrderItemVariant
 
-  def index   
+  def show
     tasks_competed = [CustomerInformationTask]
     tasks_competed = TaskSet.set - [AddItemOrderTask] if params.has_key?(:all)
 

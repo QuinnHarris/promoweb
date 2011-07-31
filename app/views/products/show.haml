@@ -384,4 +384,4 @@
           != treething(@categories)
           = link_to("Remove", :action => 'set_featured', :id => @product)
           %hr
-          = link_to "Modify Page", :controller => '/admin/products', :action => :edit, :id => @product
+          = link_to "Edit Page", edit_product_path(@product)

@@ -6,6 +6,11 @@ class Supplier < ActiveRecord::Base
   has_many :warehouses
   belongs_to :address
 
+  before_save :strip_name
+  def strip_name
+    self.name.strip!
+  end
+
   def standard_colors
     attributes['standard_colors'] ? attributes['standard_colors'].split(',') : (parent ? parent.standard_colors : nil)
   end

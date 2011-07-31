@@ -38,4 +38,4 @@ ActionMailer::Base.smtp_settings = {
 
 SEND_EMAIL = "quinn@qutek.net"
 
-DATA_ROOT = File.join(RAILS_ROOT, "data")
+DATA_ROOT = File.join(Rails.root, "data")

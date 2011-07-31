@@ -1,4 +1,4 @@
-class Admin::EmployeeController <  Admin::BaseController
+class Admin::EmployeesController <  Admin::BaseController
 private
   def calculate
     if params[:id] and params[:id] != @user.id
@@ -30,7 +30,11 @@ private
   end
 
 public
-  def commission
+  def index
+    redirect_to admin_employee_path(@user)
+  end
+
+  def show
     @title = "Commissions"
     calculate
     @acknowledged_orders = @user.orders.find(:all, :order => 'orders.id DESC',

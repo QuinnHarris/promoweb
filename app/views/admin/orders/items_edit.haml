@@ -2,7 +2,7 @@
 - last_art = Artwork.find(:first, :include => { :group => :customer }, :conditions => { 'customers.id' => @order.customer.id }, :order => 'artworks.created_at DESC')
 - if last_art and last_art.has_tag?('customer')
   .late CUSTOMER UPLOADED ARTWORK
-= link_to("Create Product", :controller => :products, :action => :new)
+= link_to("Create Product", new_product_path(:order_id => @order.id))
 |
 = link_to "Sample Order", { :action => :order_duplicate, :order_id => @order, :samples => true }, { :confirm => "Create new order with samples of current items" }
 |
@@ -20,7 +20,7 @@
   - for supplier, purchase_list in @suppliers.to_a.sort_by { |s| s.first.id }
     .supplier
       %h2
-        = link_to(supplier.name, { :controller => '/admin/suppliers', :action => :detail, :id => supplier })
+        = link_to(supplier.name, admin_supplier_path(supplier))
         \:
         - unless supplier.web.blank?
           = link_to('Website', "http://#{supplier.web}")

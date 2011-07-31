@@ -41,4 +41,33 @@ class Admin::AccessController < Admin::BaseController
             "ORDER BY order_session_accesses.order_id, page_accesses.created_at",
        @tasks.collect { |t| t.order_id }])
   end
+
+
+  # Phone
+  def calls
+    @calls = CallLog.find(:all, :order => 'id DESC', :limit => 100)
+  end
+
+  def inbound
+    calls = CallLog.find(:all, :order => 'id DESC', :conditions => { :inbound => true }, :order => 'id DESC', :limit => 4)
+    
+    @calls = calls.collect do |call_log|
+      customer = Customer.find(:first,
+                               :include => :phone_numbers,
+                               :conditions => { 'phone_numbers.number' => call_log.caller_number.gsub(/^1/,'').to_i } )
+
+      next [call_log, customer] if customer
+
+      /^1?(\d{3})/ === call_log.caller_number
+      prefix = $1
+      access = PageAccess.find(:all,
+                              :include => :session,
+                              :limit => 10,
+                              :order => 'page_accesses.id DESC',
+                              :conditions => ["page_accesses.created_at > ? AND session_accesses.area_code = ? AND page_accesses.controller = 'products' AND action = 'main'", Time.now - 30.days, prefix])
+
+      [call_log, access]
+    end
+    
+  end
 end

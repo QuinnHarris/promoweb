@@ -1,5 +1,5 @@
 %h1 Suppliers
-= link_to "New Supplier", { :action => 'detail' }
+= link_to "New Supplier", new_admin_supplier_path
 %table
   %thead
     %tr
@@ -15,4 +15,4 @@
           %td= supplier.description
           %td= supplier.products.count
           %td
-            = link_to((@static ? 'View' : 'Edit'), { :action => 'detail', :id => supplier })
+            = link_to((@static ? 'View' : 'Edit'), edit_admin_supplier_path(supplier))

@@ -1,0 +1,27 @@
+- form_for @product, :html => { :multipart => true } do |p|
+  = p.error_messages
+  - if params[:order_id]
+    = hidden_field :context, :order_id, :value => params[:order_id]
+
+  %table.form
+    %tr
+      %th Supplier Name:
+      %td= @supplier ? @supplier.name : text_field_with_auto_complete(:supplier, :name)
+    %tr
+      %th Product Number:
+      %td= p.text_field :supplier_num
+    %tr
+      %th Product Name:
+      %td= p.text_field :name
+    %tr
+      %th Description:
+      %td= p.text_area :description
+    %tr
+      %th Image URL
+      %td= text_field :product_image, :url
+    %tr
+      %th Image File
+      %td= file_field :product_image, :image
+
+  = p.submit @supplier ? 'Update' : 'Create'
+

@@ -41,7 +41,7 @@ class PhoneController < ActionController::Base
     number = params[:number].gsub(/^1/,'')
 
     customer = Customer.find(:first,
-                             :include => :phone_numbers
+                             :include => :phone_numbers,
                              :conditions => ['phone_numbers.number = ?', number],
                              :order => 'id DESC')
     if customer
@@ -110,8 +110,8 @@ class PhoneController < ActionController::Base
 
   # Provision UniData
   def unidata
-    raise "Unknown name" unless /e1_([0-9a-f]{12})\.ini/ === params[:name]
-    @phone = Phone.find_by_identifier($1)
+    @phone = Phone.find_by_identifier(params[:addr])
+    raise ::ActionController::RoutingError, "No phone provissioned for #{params[:addr]}" unless @phone
   end
 
 
