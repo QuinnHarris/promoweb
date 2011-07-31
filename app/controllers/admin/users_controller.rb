@@ -1,6 +1,4 @@
-class Admin::LoginController < ApplicationController
-  User
-  
+class Admin::UsersController < ApplicationController
   before_filter :login_required
   def protect?(action)
     return false if action == 'auth'
@@ -59,15 +57,19 @@ class Admin::LoginController < ApplicationController
   end
 
   def new
-    @user = UserPass.new(params[:user])
+    @user = UserPass.new
+  end
 
-    if request.post? and @user.save
+  def create
+    @user = UserPass.new(params[:user])
+    
+    if @user.save
       User.authenticate(@user.login, params[:user][:password])
       flash['notice']  = "Signup successful"
       redirect_back_or_default :controller => :orders, :action => :index
+    else
+      render :action => 'new'
     end
-
-    render :action => :user
   end
   
   def edit
@@ -87,9 +89,23 @@ class Admin::LoginController < ApplicationController
     end
     
     @user.password = nil
-    render :action => :user
+  end
+
+  def update
+    @user = User.find(params[:id])
+    params[:user][:email] = nil if params[:user][:email].blank?
+
+    if @user.update_attributes(params[:user])
+      redirect_to :action => :index
+    else
+      render :action => 'edit'
+    end
   end
   
+  def show
+
+  end
+
   def password
     @user = UserPass.find(session[:user_id])
     
@@ -107,9 +123,5 @@ class Admin::LoginController < ApplicationController
     @user.password = nil
     @user.password_confirmation = nil
     class << @user; def old_password; end; end
-  end
-
-  def other
-
   end
 end

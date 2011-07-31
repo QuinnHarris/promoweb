@@ -71,7 +71,7 @@ class PhoneController < ActionController::Base
       end
 
       products = pages.collect do |page|
-        access = PageAccess.find(:all, :conditions => { :controller => 'products', :action => 'main', :session_access_id => page.session_access_id },
+        access = PageAccess.find(:all, :conditions => { :controller => 'products', :action => 'show', :session_access_id => page.session_access_id },
                                  :order => 'id DESC')
         Product.find(access.collect { |a| a.action_id })
       end.flatten.uniq

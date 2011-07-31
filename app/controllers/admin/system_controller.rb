@@ -34,4 +34,8 @@ class Admin::SystemController < Admin::BaseController
     
     redirect_to :action => :quickbooks_blocked
   end
+
+  def other
+
+  end
 end

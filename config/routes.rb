@@ -66,16 +66,39 @@ Promoweb::Application.routes.draw do
       get 'items_edit'
       get 'contact_find'
       get 'new_order'
+      post 'payment_apply'
+      get 'contact_search'
+      get 'contact_merge'
+      get 'task_execute'
+      get 'task_revoke'
+      get 'order_duplicate'
+      get 'artwork_group_new'
+      post 'artwork_drop_set'
+      get 'artwork_generate_pdf'
+      get 'order_own'
+      post 'variant_change'
+      post 'set'
+      post 'auto_complete_generic'
     end
 
     resources :employees
     resources :suppliers
-    resources :login
+    %w(logout password).each do |name|
+      match "users/#{name}" => "users##{name}"
+    end
+    resources :users do
+      resources :phones, :only => [:index, :create, :destroy]
+    end
 
     resources :phone, :only => [:edit]
 
-    match 'access/paths' => 'access#paths'
-    match 'access/calls' => 'access#calls'
+    %w(paths calls inbound).each do |name|
+      match "access/#{name}" => "access##{name}"
+    end
+
+    %w(quickbooks_blocked quickbooks_set other).each do |name|
+      match "system/#{name}" => "system##{name}"
+    end
   end
 
   root :to => 'categories#home'
@@ -84,11 +107,24 @@ Promoweb::Application.routes.draw do
   match 'categories/sitemap' => 'categories#sitemap'
 
   match 'categoires/map' => 'categories#map'
-
   match 'categories/*path' => 'categories#main'
   match 'categories' => 'categories#main'
+
+  match 'search' => 'search#index'
+
+  match 'static/:action', :controller => 'static'
+
+  match 'order/:action(/:id(.:format))', :controller => 'order'
+#  resource :orders, :only => [:index, :show] do
+#    get 'status'
+#    get 'info'
+#    get 'contact'
+
+#    resource :items, :only => [:create, :destroy]
+#    resource :artworks, :only => [:create, :destroy]
+#  end
   
-  match 'admin' => 'admin::Login#auth'
+  match 'admin' => 'admin::Users#auth'
 
   # This is a legacy wild controller route that's not recommended for RESTful applications.
   # Note: This route will make all actions in every controller accessible via GET requests.

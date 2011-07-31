@@ -141,7 +141,7 @@ class Admin::ProductsController < Admin::BaseController
       pi.save!
     end   
 
-    redirect_to :controller => '/products', :action => :main, :id => product
+    redirect_to :controller => '/products', :action => :show, :id => product
   end
   
   def chart

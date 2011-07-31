@@ -10,7 +10,7 @@ class SearchController < ApplicationController
       if num == num.to_i.to_s
         begin
           if product = Product.find(num.to_i)
-            redirect_to({ :controller => 'products', :action => 'main', :id => product.web_id })
+            redirect_to({ :controller => 'products', :action => 'show', :id => product.web_id })
             return
           end
         rescue
@@ -64,7 +64,7 @@ class SearchController < ApplicationController
       if @products.empty?
         render :action => 'notfound'
       elsif @products.size == 1 && @page == 1
-        redirect_to({ :controller => '/products', :action => 'main', :id => @products.first.web_id })
+        redirect_to({ :controller => '/products', :action => 'show', :id => @products.first.web_id })
       end
     end
   end

@@ -37,15 +37,15 @@ class Artwork < ActiveRecord::Base
   end
 
   def can_pdf?
-    %w(.ps .eps .ai).include?(File.extname(art.original_filename))
+    %w(.ps .eps .ai).include?(File.extname(art.original_filename).downcase)
   end
 
   def can_virtual?
-    %w(.jpg).include?(File.extname(art.original_filename))
+    %w(.jpg).include?(File.extname(art.original_filename).downcase)
   end
 
   def eps?
-    %w(.eps).include?(File.extname(art.original_filename))
+    %w(.eps).include?(File.extname(art.original_filename).downcase)
   end
 
   def can_proof?(order)

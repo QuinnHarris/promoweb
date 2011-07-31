@@ -75,7 +75,7 @@ private
     path_list.pop if category.children_count == 0 or !@product.categories.index(path_list.last)
     
     path = path_list.collect { |x| x.name }.join('/').tr(' ','_')
-    action = { :controller => 'categories', :action => 'main', :path => path }
+    action = { :controller => 'categories', :action => 'show', :path => path }
     
     expire_page action
     expire_fragment action
@@ -94,7 +94,7 @@ public
     @product.featured_at = Time.now
     @product.save!
     
-    action = { :action => 'main', :id => @product }
+    action = { :action => 'show', :id => @product }
     
     if params[:category]
       action = expire_category(params[:category]) 
@@ -224,7 +224,7 @@ public
         @sessions = SessionAccess.find(:all, :include => [:pages], :limit => 20,
                                        :conditions => "user_id IS NULL AND " +
                                        "access.page_accesses.controller = 'products' AND " +
-                                       "access.page_accesses.action = 'main' AND " +
+                                       "access.page_accesses.action = 'show' AND " +
                                        "access.page_accesses.action_id = #{@product.id} AND " +
                                        "access.page_accesses.created_at > NOW() - '3 month'::interval",
                                        :order => "access.page_accesses.id DESC")
