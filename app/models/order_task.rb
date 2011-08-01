@@ -283,9 +283,9 @@ class PaymentOverrideOrderTask < OrderTask
   self.action_name = 'ignore <strong>no customer payment and proceed with order</strong>'
   self.roles = %w(Super)
 
-  def self.blocked(object)
-    super || (object.task_completed?(PaymentInfoOrderTask) && "payment information received")
-  end
+#  def self.blocked(object)
+#    super || (object.task_completed?(PaymentInfoOrderTask) && "payment information received")
+#  end
 end
 
 class PaymentNoneOrderTask < OrderTask
@@ -459,6 +459,7 @@ end
 class ReOrderTask < OrderTask
   self.status_name = 'Exact ReOrder'
   self.completed_name = 'Exact ReOrder'
+  self.action_name = 'Mark as Exact ReOrder'
   self.customer = true
   self.roles = %w(Orders)
   

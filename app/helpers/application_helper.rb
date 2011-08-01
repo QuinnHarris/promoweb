@@ -162,7 +162,7 @@ module ApplicationHelper
   def li_to(name, url_h, cls = nil)
     selected = block_given? ? yield : ((params[:action] == url_h[:action].to_s) and (params[:controller] == url_h[:controller][1..-1]))
     url_h = url_h.merge({:only_path => false, :protocol => "https://"}) unless request.protocol == "https://" or RAILS_ENV != "production"
-    url_h = url_h.merge(:order_id => @order.id)
+    url_h = url_h.merge(:order_id => @order.id) if @order
     (selected ? "<li class='sel #{cls}'>" : (cls ? "<li class='#{cls}'>" : '<li>')) +
     link_to(name, url_h) + '</li>'
   end

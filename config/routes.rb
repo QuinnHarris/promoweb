@@ -66,6 +66,7 @@ Promoweb::Application.routes.draw do
       get 'contact_search'
       get 'contact_merge'
       get 'task_execute'
+      post 'task_execute'
       get 'task_revoke'
       get 'order_duplicate'
       get 'artwork_group_new'

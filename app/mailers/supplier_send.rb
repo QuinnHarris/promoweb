@@ -12,6 +12,7 @@ class SupplierSend < ActionMailer::Base
 
     @groups.collect { |g| g.artworks }.flatten.each do |artwork|
       next unless artwork.has_tag?('supplier')
+      next if artwork.art.size >= 7680000
       attachments[artwork.art.original_filename] = {
         :mime_type => artwork.art.content_type,
         :content => File.read(artwork.art.path) }
