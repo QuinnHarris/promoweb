@@ -1142,12 +1142,14 @@ class Admin::OrdersController < Admin::BaseController
       send_email = nil
       
       task_class = Kernel.const_get(params[:class])
+      mark_art = nil
       case params[:class]
       when 'OrderSentItemTask'
         data[:email_sent] = false
         if params[:commit].include?("Send")
           SupplierSend.purchase_order_send(purchase, @user)
           data[:email_sent] = true
+          mark_art = true if purchase.include_artwork_with_po?
         end
         purchase.purchase_order.sent = true
         purchase.purchase_order.save!
@@ -1161,10 +1163,12 @@ class Admin::OrdersController < Admin::BaseController
       raise "Permission Denied" if (task_class.roles & @permissions).empty?
 
       purchase.items.each do |item|
-        item.task_complete({ :user_id => session[:user_id],
-                             :host => request.env['REMOTE_HOST'],
-                             :data => { :po => purchase.id, :email_sent => send_email }.merge(data) }, task_class)
+        par = { :user_id => session[:user_id],
+          :host => request.env['REMOTE_HOST'],
+          :data => { :po => purchase.id, :email_sent => send_email }.merge(data) }
+        item.task_complete(par, task_class)
         send_email = nil
+        item.task_complete(par, ArtSentItemTask) if mark_art
       end
     end
     redirect_to :action => :items_edit

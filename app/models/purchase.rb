@@ -14,6 +14,10 @@ class Purchase < ActiveRecord::Base
     supplier.send_email(order.sample)
   end
 
+  def include_artwork_with_po?
+    supplier.include_artwork_with_po?
+  end
+
   def reconciled
     return @reconciled unless @reconciled.nil?
     @reconciled = items.first.task_completed?(ReconciledItemTask)

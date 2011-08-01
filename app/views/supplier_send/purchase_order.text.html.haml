@@ -1,4 +1,3 @@
-!!! Strict
 %html{ "xml:lang" => "en-US", :lang => "en-US", :xmlns => "http://www.w3.org/1999/xhtml" }
   %head{ :profile => "http://www.w3.org/2005/10/profile" }
     %title= @title
@@ -7,4 +6,8 @@
       = File.open("#{RAILS_ROOT}/public/stylesheets/global.css") { |f| f.read }
       = File.open("#{RAILS_ROOT}/public/stylesheets/order.css") { |f| f.read }
   %body
-    = render :partial => '/admin/orders/po'
+    = render '/admin/orders/po'
+
+    - if @purchase.include_artwork_with_po?
+      %h2 Artwork
+      = render('artwork.html')

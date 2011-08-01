@@ -68,4 +68,8 @@ class Supplier < ActiveRecord::Base
   def send_email(sample = false)
     (sample && !samples_email.blank?) ? samples_email : po_email
   end
+
+  def include_artwork_with_po?
+    artwork_email == po_email
+  end
 end

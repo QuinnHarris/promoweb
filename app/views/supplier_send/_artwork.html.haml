@@ -1,0 +1,32 @@
+- for group in @groups
+  %h2 Group #{group.name}
+  %div= group.description
+
+  - for decoration in group.order_item_decorations
+    %table
+      %tr
+        %th Product:
+        %td #{decoration.order_item.product.name} (#{decoration.order_item.quantity})
+      %tr
+        %th Imprint:
+        %td= decoration.description
+      - if decoration.count
+        %tr
+          %th Number of Colors:
+          %td= decoration.count
+      %tr
+        %th Imprint Colors:
+        - variants = decoration.order_item.order_item_variants.find_all { |v| v.quantity != 0 }
+        %td= (variants.length == 1) ? variants.first.imprint_colors : variants.collect { |v| "#{v.variant.supplier_num}: #{v.imprint_colors}" }.join(', ')
+      - if decoration.decoration
+        %tr
+          %th Location:
+          %td= decoration.decoration.location
+      - if decoration.our_notes and !decoration.our_notes.empty?
+        %tr
+          %th Notes:
+          %td= decoration.our_notes
+
+  %h3 Artwork Files
+  - for artwork in group.artworks.find_all { |a| a.has_tag?('supplier') }
+    %div= link_to artwork.art.original_filename, "#{SITE_NAME}#{artwork.art.url}"

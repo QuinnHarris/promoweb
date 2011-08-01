@@ -1,0 +1,6 @@
+Artwork for PO-<%= @po.quickbooks_ref %> from Mountain Xpress Promotions
+<% if @po.purchase.supplier.account_number -%>
+Account: <%= @po.purchase.supplier.account_number %>
+<% end -%>
+
+<%= render 'artwork.plain' %>

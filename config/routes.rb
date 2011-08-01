@@ -61,11 +61,15 @@ Promoweb::Application.routes.draw do
 
   namespace 'admin' do
     resource :orders do
+      %w(person_name company_name email_addresses phone_numbers).each do |name|
+        post "auto_complete_for_customer_#{name}"
+      end
       get 'items_edit'
       get 'contact_find'
       get 'new_order'
       post 'payment_apply'
       get 'contact_search'
+      post 'contact_find'
       get 'contact_merge'
       get 'task_revoke'
       get 'order_duplicate'

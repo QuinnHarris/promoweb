@@ -4,9 +4,7 @@ class SupplierSend < ActionMailer::Base
   helper ApplicationHelper
   helper OrderHelper
 
-  def artwork(purchase)
-    headers['return-path'] = SEND_EMAIL
-
+  def apply_artwork(purchase)
     @po = purchase.purchase_order
     @groups = ArtworkGroup.find(:all, :conditions => { 'order_items.purchase_id' => purchase.id, 'artwork_tags.name' => 'supplier' }, :include => [{ :order_item_decorations => :order_item }, { :artworks => :tags }])
 
@@ -17,9 +15,16 @@ class SupplierSend < ActionMailer::Base
         :mime_type => artwork.art.content_type,
         :content => File.read(artwork.art.path) }
     end
+  end
+
+  def artwork(purchase)
+    headers['return-path'] = SEND_EMAIL
+
+    apply_artwork(purchase)
 
     mail do |format|
       format.text
+      format.html
     end
   end
 
@@ -28,6 +33,8 @@ class SupplierSend < ActionMailer::Base
     headers['return-path'] = SEND_EMAIL
 
     attachments["MOP PO #{purchase.purchase_order.quickbooks_ref}.pdf"] = WickedPdf.new.pdf_from_string(render(:file => '/admin/orders/po', :layout => 'print', :body => { } ))
+
+    apply_artwork(purchase) if purchase.include_artwork_with_po?
     
     mail do |format|
       format.text
