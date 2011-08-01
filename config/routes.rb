@@ -57,6 +57,8 @@ Promoweb::Application.routes.draw do
   match 'products/:id(.:format)' => 'products#show'
   match 'products/main/:iid' => redirect('/products/%{iid}')
 
+  match '/admin/orders/task_execute' => 'admin::Orders#task_execute'
+
   namespace 'admin' do
     resource :orders do
       get 'items_edit'
@@ -65,8 +67,6 @@ Promoweb::Application.routes.draw do
       post 'payment_apply'
       get 'contact_search'
       get 'contact_merge'
-      get 'task_execute'
-      post 'task_execute'
       get 'task_revoke'
       get 'order_duplicate'
       get 'artwork_group_new'
