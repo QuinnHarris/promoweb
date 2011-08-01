@@ -11,8 +11,6 @@
       %th= link_to 'ID', :sort => 'id'
       %th 
       %th Customer
-      - if allowed?('CustomerInformationTask')
-        %th Contact
       %th= link_to 'Tasks Pending', :sort => 'task'
       %th Dates
   %tbody
