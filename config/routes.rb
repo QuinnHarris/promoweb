@@ -53,6 +53,7 @@ Promoweb::Application.routes.draw do
   # See how all your routes lay out with "rake routes"
 
   match 'products/sitemap' => 'products#sitemap'
+  match 'products/rss' => 'products#rss'
   resources :products, :controller => 'admin::Products', :except => [:show]
   match 'products/:id(.:format)' => 'products#show'
   match 'products/main/:iid' => redirect('/products/%{iid}')
@@ -77,6 +78,8 @@ Promoweb::Application.routes.draw do
       post 'artwork_drop_set'
       get 'artwork_generate_pdf'
       get 'order_own'
+      get 'email_list'
+      post 'shipping_set'
       post 'variant_change'
       post 'set'
       post 'auto_complete_generic'
