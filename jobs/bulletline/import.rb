@@ -177,7 +177,7 @@ class BulletLine < GenericImport
       costs = [
         { :fixed => Money.new(0),
           :minimum => prices.first[:minimum],
-          :marginal => (prices.last[:marginal] * 0.6).round_cents
+          :marginal => prices.last[:marginal] * 0.6
         },
         { :minimum => [prices.last[:minimum] * 2, 100].max }
       ]

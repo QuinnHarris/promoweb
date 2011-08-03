@@ -1,4 +1,4 @@
-require 'spreadsheet'
+#require 'spreadsheet'
 require 'net/ftp'
 
 class LeedsXLSProducts < XLSFile
@@ -91,7 +91,8 @@ class LeedsXLSProducts < XLSFile
     product_data['package_units'] = get(row, 'CartonPackQTY').to_i
     product_data['package_unit_weight'] = 0.0
     
-    product_data['description'] = get(row, 'ItemDescription').to_s.split(/\s*(?:\342\200\242)|(?:\302\267)|[\r\n]+|(?:\. )\s*/).collect do |line|
+    # \s*(?:\342\200\242)|(?:\302\267)|
+    product_data['description'] = get(row, 'ItemDescription').to_s.split(/[\r\n]+|(?:\. )\s*/).collect do |line|
       line.strip
       next nil if line.empty?
       [??,?!,?.].include?(line[-1]) ? line : "#{line}." 

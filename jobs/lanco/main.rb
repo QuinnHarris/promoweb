@@ -1,4 +1,5 @@
-require 'import'
+require '../generic_import'
+require './import'
 
 lanco = LancoSOAP.new
 lanco.set_standard_colors

@@ -1,5 +1,5 @@
 require 'rubygems'
-require 'RMagick'
+#require 'RMagick'
 require File.dirname(__FILE__) + '/../config/environment'
 require 'open-uri'
 require File.dirname(__FILE__) + '/progressbar'
@@ -103,7 +103,7 @@ class ImageNodeFetch < ImageNode
       begin
         puts "Fetch: #{@uri}"
         pbar = nil
-        @uri.open(:content_length_proc => lambda {|t|
+        f = @uri.open(:content_length_proc => lambda {|t|
                     if t && 0 < t
                       name = /\/(\w+)(?:\.(\w+))?$/ =~ uri_tail ? $1 : uri_tail
                       pbar = ProgressBar.new(name, t)
@@ -111,10 +111,12 @@ class ImageNodeFetch < ImageNode
                     end },
                   :progress_proc => lambda {|s|
                     pbar.set s if pbar
-                  }) do |f|
-          return nil if f.length == 0
-          File.open(path, 'w') { |file| file.write(f.read) }
-        end
+                  })
+        return nil if f.length == 0
+        FileUtils.mv(f.path, path)
+#          f.save_as path
+#          File.open(path, 'w') { |file| file.write(f.read) }
+#        end
         puts
       rescue OpenURI::HTTPError, URI::InvalidURIError, Errno::ETIMEDOUT => e
         puts " * #{e.class} : #{@uri}"
@@ -186,7 +188,7 @@ class WebFetch
     begin
       puts "Fetch: #{@uri}"
       pbar = nil
-      @uri.open(:content_length_proc => lambda {|t|
+      f = @uri.open(:content_length_proc => lambda {|t|
         if t && 0 < t
           name = /\/(\w+)(?:\.(\w+))?$/ =~ uri_tail ? $1 : uri_tail
           pbar = ProgressBar.new(name, t)
@@ -194,10 +196,9 @@ class WebFetch
         end },
       :progress_proc => lambda {|s|
         pbar.set s if pbar
-      }) do |f|
-        return nil if f.length == 0
-        File.open(path, 'w') { |file| file.write(f.read) }
-      end
+      })
+      return nil if f.length == 0
+      FileUtils.mv(f.path, path)
       puts
       return path
     rescue OpenURI::HTTPError, URI::InvalidURIError, Errno::ETIMEDOUT => e
@@ -460,7 +461,7 @@ public
         @invalid_prods[boom.aspect] = (@invalid_prods[boom.aspect] || []) + [product_data['supplier_num']]
       else
         puts boom.backtrace
-        @invalid_prods['Other'] = (@invalid_prods[boom.aspect] || []) + [product_data['supplier_num']]     
+        @invalid_prods['Other'] = (@invalid_prods[boom.aspect] || []) + [product_data['supplier_num']]
       end
     end
   end
@@ -534,7 +535,7 @@ public
         raise ValidateError, "#{type} Duplicate Entry", variant[type].inspect unless variant[type].length == variant[type].uniq.length
         variant[type].each do |price|
           raise ValidateError, "#{type} Minimum is null", variant[type].inspect unless price[:minimum]
-          raise ValidateErrro, "#{type} Minimum not sequential", variant[type].inspect if minimum and price[:minimum] <= minimum
+          raise ValidateError, "#{type} Minimum not sequential", variant[type].inspect if minimum and price[:minimum] <= minimum
           raise ValidateError, "#{type} nil marginal not last item", variant[type].inspect if minimum and !marginal
           raise ValidateError, "#{type} Marginal not sequential", variant[type].inspect if marginal and price[:marginal] and price[:marginal] > marginal
           minimum = price[:minimum]
@@ -806,8 +807,8 @@ private
   def convert_pricecode(comp)
     comp = comp.upcase[0] if comp.is_a?(String)
     num = nil
-    num = comp - ?A if comp >= ?A and comp <= ?G
-    num = comp - ?P if comp >= ?P and comp <= ?X
+    num = comp.ord - ?A.ord if comp.ord >= ?A.ord and comp.ord <= ?G.ord
+    num = comp.ord - ?P.ord if comp.ord >= ?P.ord and comp.ord <= ?X.ord
     
     raise "Unknown PriceCode: #{comp}" unless num
     
@@ -817,8 +818,8 @@ private
   def convert_pricecodes(str)
     count = 1
     str.strip.upcase.unpack("C*").collect do |comp|
-      if comp > ?0 and comp <= ?9
-        count = comp - ?0
+      if comp.ord > ?0.ord and comp.ord <= ?9.ord
+        count = comp.ord - ?0.ord
         next nil
       end
       

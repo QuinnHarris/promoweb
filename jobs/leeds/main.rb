@@ -1,5 +1,5 @@
 require '../generic_import'
-require 'import'
+require './import'
 #require 'transform'
 
 puts "Stating Fetch"

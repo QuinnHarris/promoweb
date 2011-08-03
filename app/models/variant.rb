@@ -1,18 +1,26 @@
 class Variant < ActiveRecord::Base
   belongs_to :product
-  has_and_belongs_to_many :properties, :after_remove => :destroy_after_remove   
+  has_and_belongs_to_many :properties, :after_remove => :destroy_after_remove
   has_and_belongs_to_many :price_groups, :after_remove => :destroy_after_remove
-  has_and_belongs_to_many :product_images
-  
+  has_and_belongs_to_many :product_images, :after_remove => :destroy_after_remove
+
+  # Don't leave orphaned records
+  def destroy_after_remove(obj)
+    obj.destroy if obj.variants.empty?
+  end
+
+  before_destroy :remove_associations
+  def remove_associations
+    properties.delete_all
+    price_groups.delete_all
+    product_images.delete_all
+  end
+
   has_many :order_item_variants
   
   def price_group_order_items_count
     OrderItem.count(:include => { :price_group => :variants },
                     :conditions => "variants.id = #{id}")
-  end
-
-  def destroy_after_remove(obj)
-    obj.destroy if obj.variants.empty?
   end
 
   def set_images(images)

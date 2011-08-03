@@ -871,9 +871,8 @@ class Product < ActiveRecord::Base
     src.each do |s|
       if d = create.find { |c| c['technique'] == s.technique }
         # Recycle old decoration
-        cre = s.dup
-        cre.update_attributes(d)
-        created << cre
+        s.update_attributes(d)
+        created << s
         create.delete(d)
       else
         # This destroy can fail if it is referenced from order_item_decorations
@@ -940,7 +939,7 @@ class Product < ActiveRecord::Base
       diff_prices = src_group.diff_prices(dst_data)
 
       next unless diff_prices or !src_only.empty? or !dst_only.empty?
-      
+
       product_log << "  #{source ? source.name : 'Cost'} Changed: "
       product_log << "-(" + src_only.collect { |s| s.supplier_num }.join(',') + ") " unless src_only.empty?
       product_log << "+(" + dst_only.collect { |s| s.supplier_num }.join(',') + ")" unless dst_only.empty?
@@ -968,12 +967,8 @@ class Product < ActiveRecord::Base
     
     # Remove unused groups
     src.each do |group|
-      if destroy = group.order_items.empty?
-        group.destroy
-      else
-        #raise "Associated Order Item" unless group.order_items.empty?
-        group.variants.delete_all
-      end
+      group.variants.delete_all
+      group.destroy if destroy = group.order_items.empty?
 
       product_log << "  #{source ? source.name : 'Cost'} #{destroy ? 'Removed' : 'Revoked'} \n"
       product_log << "    (" + group.variants.collect { |s| s.supplier_num }.join(',') + ")\n"

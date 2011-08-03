@@ -1,5 +1,5 @@
 require '../generic_import'
-require 'import'
+require './import'
 
 import = HighCaliberLine.new("High Caliber Line", "www.highcaliberline.com")
 import.set_standard_colors

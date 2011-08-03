@@ -91,7 +91,7 @@ class GemlineXML < GenericImport
           end
                   
           decoration.elements.each do |location|
-            s = location.text.gsub(/[\200-\350]+/,' ')
+            s = location.text #.gsub(/[\200-\350]+/,' ')
             full, name, width, height, diameter = decoration_reg.match(s).to_a
             
             if full
@@ -144,7 +144,7 @@ class GemlineXML < GenericImport
 
           item.at_xpath('images/alternate-images').elements.each do |alt|
             if /zoomed(\d)/ === alt.name
-              val['images'] << ImageNodeFetch.new("#{val['num']}-#{$1}", "#{alt['path']}#{alt['name']}")
+              val['images'] << ImageNodeFetch.new("#{val['num']}-#{$1}", "#{alt['path']}#{alt['name']}".gsub('\\','/'))
             end
           end
         end

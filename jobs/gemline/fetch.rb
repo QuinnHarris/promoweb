@@ -1,6 +1,6 @@
 # gem install mechanize
-require 'rubygems'
-require 'mechanize'
+#require 'rubygems'
+#gem 'mechanize'
 require 'fileutils'
 
 def fetch
@@ -32,8 +32,8 @@ def fetch
   
   name = /filename=\"(.*)\"/.match(page.response['content-disposition'])[1]
   path = File.join(JOBS_DATA_ROOT,name)
-  
-  File.open(path, 'w') { |f| f.write(page.body) }
+
+  page.save_as path
   
   FileUtils.ln_sf(name, dst_path)
   

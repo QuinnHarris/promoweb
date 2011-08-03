@@ -1,18 +1,11 @@
-require 'rubygems'
-gem 'soap4r'
-require "soap/wsdlDriver"
-
-require '../generic_import'
-
 class LancoSOAP < GenericImport
   def initialize
-    wsdl_file = "wsdl.wsdl"
-    factory = SOAP::WSDLDriverFactory.new(wsdl_file)
-    @driver = factory.create_rpc_driver
-    
-    @driver.proxy.streamhandler.client.set_basic_auth('http://services.promocatalogonline.com/webservice.php', 'quinn', 'harris')
-    @driver.proxy.streamhandler.client.receive_timeout = 10*60
-    @driver.wiredump_file_base = "log"
+    @client = Savon::Client.new do |wsdl, http, wsse|
+      wsdl.document = File.expand_path("wsdl.wsdl")
+      http.proxy = 'http://services.promocatalogonline.com/webservice.php'
+      http.auth.basic('quinn', 'harris')
+      http.read_timeout = 600
+    end
 
     @image_list = {}
     
@@ -24,9 +17,9 @@ class LancoSOAP < GenericImport
   end
   
   @@overrides = {
-    'SBF397' => { 'Alt_Name' => ['McKinley Embossed Mint Tin (empty)', 'McKinley Embossed Mint Tin'] },
-    'MB200' => { 'Prod_Name' => ['Mesh Bags w/ AL100', 'Mesh Bag w/ AL100'] },
-    'TG194' => { 'Prod_Name' => ['Tins Empty', 'Tin Empty'] },
+    'SBF397' => { :alt_Name => ['McKinley Embossed Mint Tin (empty)', 'McKinley Embossed Mint Tin'] },
+    'MB200' => { :prod_name => ['Mesh Bags w/ AL100', 'Mesh Bag w/ AL100'] },
+    'TG194' => { :prod_name => ['Tins Empty', 'Tin Empty'] },
   }
  
   @@image_path = "http://www.lancopromo.com/images/products/"
@@ -64,20 +57,20 @@ class LancoSOAP < GenericImport
   end
   
   def process_prices(product)
-    prices = product.delete('pricing')
+    list = product.delete(:pricing)[:prices][:item]
     
-    return {} if prices.empty?
+    return {} if list.empty?
     
-    cost_list = convert_pricecodes(product['Cost_Code']).zip(prices).collect do |perc, price|
-      (price[:marginal] * (1.0-perc)).round_cents if price
+    cost_list = convert_pricecodes(product[:cost_code]).zip(list).collect do |perc, price|
+      (Money.new(Float(list[:price])) * (1.0-perc)).round_cents if price
     end.compact
     
     costs = [
       { :fixed => Money.new(0),
-        :minimum => prices.first[:minimum],
+        :minimum => Integer(list.first[:from_qty]),
         :marginal => cost_list.last,
       },
-      { :minimum => (prices.last[:minimum] * 1.5).to_i
+      { :minimum => (Integer(list.last[:from_qty]) * 1.5).to_i
       }
     ]
     
@@ -93,12 +86,12 @@ class LancoSOAP < GenericImport
   end
 
   def decorations(product)
-    sizes = [product['Imprint_Size'], product['Imprint_Size2']].uniq.collect do |str|
+    sizes = [product[:imprint_size], product[:imprint_size2]].uniq.collect do |str|
       parse_area(str)
     end.compact
     sizes = [{}] if sizes.empty?
 
-    product['Order_Info'].gsub('&nbsp;', ' ').scan(/(?:\n)?([\w\s]+)::?\s*\s*(.+?)(?:\r|$)/im).each do |name, str|
+    product[:order_info].gsub('&nbsp;', ' ').scan(/(?:\n)?([\w\s]+)::?\s*\s*(.+?)(?:\r|$)/im).each do |name, str|
       matches = [/add $(\d{2,3})(?:\(\w\))? +per color,? up to (\d) colors/im,
                  /Set-? ?up +(?:charges?:?)? *(?:is )?\$ ?(\d{2,3})(?:\(\w\))?(?: per color,? up to +(\d) +colors)?/im,
                  /\$(\d{2,3})(?:\(\w\))? +per +color,? up to +(\d) +colors/im,
@@ -143,19 +136,19 @@ class LancoSOAP < GenericImport
     sub_products.default = []
     products = products.find_all do |product|
       if product['ParentItem'].empty?
-        supplier_nums[product['Web_Id']] = get_id(product['Web_Id'])
+        supplier_nums[product[:web_id]] = get_id(product[:web_id])
         next true
       end
-      supplier_nums[product['Web_Id']] = get_id(product['ParentItem'])
-      sub_products[product['ParentItem']] += [product]
+      supplier_nums[product[:web_id]] = get_id(product[:parent_item])
+      sub_products[product[:parent_item]] += [product]
       false
-    end.sort_by { |p| p['Prod_Name'] }
+    end.sort_by { |p| p[:prod_name] }
     
     products.each do |product|
-      sub = sub_products[product['Web_Id']]
-      common, parts = find_common_list(([product] + sub).collect { |p| p['Prod_Name'].gsub(/(?:w\/)|(?:with)/i,'') })
+      sub = sub_products[product[:web_id]]
+      common, parts = find_common_list(([product] + sub).collect { |p| p[:prod_name].gsub(/(?:w\/)|(?:with)/i,'') })
       
-      description = product['Prod_Description'].strip + "\n" + product['Order_Info'].strip
+      description = product[:prod_description].strip + "\n" + product[:order_info].strip
       description.gsub!('&nbsp;',' ')
       description.gsub!(/\s*\n\s*/,"\n")
       
@@ -172,34 +165,34 @@ class LancoSOAP < GenericImport
       end
       
       product_data = {
-        'supplier_num' => product['Web_Id'],
-        'name' => convert_name(product['Alt_Name'].empty? ? product['Prod_Name'] : product['Alt_Name']),
+        'supplier_num' => product[:web_id],
+        'name' => convert_name(product[:alt_name].empty? ? product[:prod_name] : product[:alt_name]),
         'description' => description,
         'decorations' => [],
         'tags' => {
-          'isNew' => 'New',
-          'closeout' => 'Closeout',
-          'special' => 'Special',
-          'isKosher' => 'Kosher',
-          'MadeInUSA' => 'MadeInUSA'
-        }.collect { |method, name| name if product[method] == 1 }.compact,
-        'supplier_categories' => [[product['Category'], product['SubCategory']]],
-        'package_unit_weight' => product['wt_100'].to_f / 100.0
+          :is_new => 'New',
+          :closeout => 'Closeout',
+          :special => 'Special',
+          :is_kosher => 'Kosher',
+          :made_in_usa => 'MadeInUSA'
+        }.collect { |method, name| name if product[method].to_i == 1 }.compact,
+        'supplier_categories' => [[product[:category], product[:sub_category]]],
+        'package_unit_weight' => product[:wt_100].to_f / 100.0
       }
 
       # Lead Times
-      raise "Unkown Lead: #{product['Lead_Time']}" unless /(\d+)-(\d+) ((?:Business Days)|(?:weeks))/i === product['Lead_Time']
+      raise "Unkown Lead: #{product[:lead_time]}" unless /(\d+)-(\d+) ((?:Business Days)|(?:weeks))/i === product[:lead_time]
       multiplier = $3.include?('weeks') ? 7 : 1
       product_data['lead_time_normal_min'] = $1.to_i * multiplier
       product_data['lead_time_normal_max'] = $2.to_i * multiplier
 
-#      puts "Rush: #{product_data['supplier_num']} : #{product['Rushservice_Id']}"
+#      puts "Rush: #{product_data['supplier_num']} : #{product[:rushservice_id]}"
       # 0 - none
       # 1 - 3day, 1day, 2hr
       # 2 - 3day, 1day
       # 3 - 3day
       product_data['lead_time_rush'], product_data['lead_time_rush_charge'] =
-        case Integer(product['Rushservice_Id'])
+        case Integer(product[:rushservice_id])
         when 1,2
           [1, 1.25]
         when 3
@@ -214,13 +207,13 @@ class LancoSOAP < GenericImport
             
       puts
 
-      image_list = get_images(product['Web_Id'])
-      puts "List #{product['Web_Id']}: #{image_list.inspect}"
-      image_list = image_list.collect { |img| ImageNodeFetch.new(img, "#{image_path(product['Web_Id'])}#{img}") }
+      image_list = get_images(product[:web_id])
+      puts "List #{product[:web_id]}: #{image_list.inspect}"
+      image_list = image_list.collect { |img| ImageNodeFetch.new(img, "#{image_path(product[:web_id])}#{img}") }
 
       used_image_list = []
 
-      if img = image_list.find { |img| img.id == "#{product['Web_Id'].downcase}.jpg" }
+      if img = image_list.find { |img| img.id == "#{product[:web_id].downcase}.jpg" }
         used_image_list << img
         product_data['images'] = [img]
       else
@@ -232,7 +225,7 @@ class LancoSOAP < GenericImport
       product_data['decorations'] = decorations(product)
 
 
-      colors = product['ExtColors'].collect { |c| c.split(',') }.flatten.compact.collect { |c| c.strip }.sort
+      colors = product[:ext_colors].collect { |c| c.split(',') }.flatten.compact.collect { |c| c.strip }.sort
       puts "Colors: #{colors.inspect}"
       color_image = {}
       colors.each do |color|
@@ -277,8 +270,25 @@ class LancoSOAP < GenericImport
       add_product(product_data)
     end
   end
+
+  def clean_value(value)
+    case value
+    when String
+      value.strip!
+    when Hash
+      value.delete_if do |key, v|
+        next true if /\@\w+:/ === key.to_s
+        clean_value(v)
+        false
+      end
+    when Array
+      value.each { |v| clean_value(v) }
+    end
+  end
   
-  def parse_soap_products(products)
+  def parse_soap_products(response)
+    clean_value(response.to_hash[:get_all_products_response][:return][:item])
+
     products.collect do |product|
       attributes = {}
       product.__xmlele.each do |node, value|
@@ -314,7 +324,7 @@ class LancoSOAP < GenericImport
       end
     else
       puts "Getting All Products"
-      @products = parse_soap_products(@driver.getAllProducts)
+      @products = parse_soap_products(@client.request(:getAllProducts))
       cache_write(file_name, products)
     end
 
@@ -323,7 +333,7 @@ class LancoSOAP < GenericImport
 
     
     @products.each do |product|
-      supplier_num = product['Web_Id']
+      supplier_num = product[:web_id]
       if override = @@overrides[supplier_num]
         override.each do |prop, (old_value, new_value)|
           if product[prop] != old_value

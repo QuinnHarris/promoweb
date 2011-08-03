@@ -1,7 +1,7 @@
 require '../generic_import'
 
-require 'import'
-require 'fetch'
+require './import'
+require './fetch'
 
 fetch
 

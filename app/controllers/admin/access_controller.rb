@@ -59,12 +59,12 @@ class Admin::AccessController < Admin::BaseController
       next [call_log, customer] if customer
 
       /^1?(\d{3})/ === call_log.caller_number
-      prefix = $1
+      prefix = $1.to_i
       access = PageAccess.find(:all,
                               :include => :session,
                               :limit => 10,
                               :order => 'page_accesses.id DESC',
-                              :conditions => ["page_accesses.created_at > ? AND session_accesses.area_code = ? AND page_accesses.controller = 'products' AND action = 'main'", Time.now - 30.days, prefix])
+                               :conditions => ["page_accesses.created_at > ? AND session_accesses.area_code = #{prefix} AND page_accesses.controller = 'products' AND action = 'show'", Time.now - 30.days])
 
       [call_log, access]
     end

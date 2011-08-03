@@ -1,5 +1,5 @@
 require '../generic_import'
-require 'import'
+require './import'
 
 import = LogoIncludedXML.new("LogoIncluded.xml")
 import.fetch

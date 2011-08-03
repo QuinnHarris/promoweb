@@ -37,7 +37,7 @@ class Admin::UsersController < ApplicationController
         end
 
         flash['notice']  = "Login successful"
-        redirect_back_or_default :controller => :orders, :action => :index
+        redirect_back_or_default :controller => '/admin/orders', :action => :index
       else
         flash.now['notice']  = "Login unsuccessful"
       end

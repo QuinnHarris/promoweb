@@ -128,7 +128,9 @@ public
   
   def self.find_by_id(id)
     root
-    @@id_map[id.to_i]
+    res = @@id_map[id.to_i]
+    raise "COULDN'T FIND: #{id}" unless res
+    res
   end
   
    
@@ -383,7 +385,7 @@ public
    
     until cat.empty?
       break unless current.children
-      nxt_cat = current.children.find { |c| c.name == cat.first }
+      nxt_cat = current.children.to_a.find { |c| c.name == cat.first }
       break unless nxt_cat
       cat.shift
       current = nxt_cat
@@ -391,12 +393,11 @@ public
     
     cat.each do |sub|
       new_cat = Category.create({ :name => sub,:lft=>0,:rgt=>0 })
-      current.add_child(new_cat)
-      @@id_map[new_cat.id] = new_cat
-      current.children = (current.children || []) + [new_cat]
-      new_cat.parent = current
+      new_cat.move_to_child_of(current)
       current = new_cat
     end
+
+    reload unless cat.empty?
     
     current
   end

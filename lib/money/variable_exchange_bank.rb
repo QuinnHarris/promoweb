@@ -28,22 +28,22 @@ class Money
     
     def initialize
       @rates = {}
-      @mutex = Mutex.new
+#      @mutex = Mutex.new
     end
     
     # Registers a conversion rate. +from+ and +to+ are both currency names.
     def add_rate(from, to, rate)
-      @mutex.synchronize do
+#      @mutex.synchronize do
         @rates["#{from}_TO_#{to}".upcase] = rate
-      end
+#      end
     end
     
     # Gets the rate for exchanging the currency named +from+ to the currency
     # named +to+. Returns nil if the rate is unknown.
     def get_rate(from, to)
-      @mutex.synchronize do
+#      @mutex.synchronize do
         @rates["#{from}_TO_#{to}".upcase] 
-      end
+#      end
     end
     
     # Given two currency names, checks whether they're both the same currency.

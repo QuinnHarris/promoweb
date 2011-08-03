@@ -1,5 +1,5 @@
 require '../generic_import'
-require 'import'
+require './import'
 
 import = BulletLine.new('Bullet_All-SKUs_11-23.xls')
 import.set_standard_colors

@@ -43,7 +43,7 @@ class PhoneController < ActionController::Base
     customer = Customer.find(:first,
                              :include => :phone_numbers,
                              :conditions => ['phone_numbers.number = ?', number],
-                             :order => 'id DESC')
+                             :order => 'customers.id DESC')
     if customer
       @lines = [(params[:name] and params[:name].include?('NEW')) ? 
                 'DIALED NEW CUSTOMER' : '----- Customer -----',
