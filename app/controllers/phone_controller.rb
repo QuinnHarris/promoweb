@@ -175,8 +175,8 @@ class PhoneController < ActionController::Base
 
   # Used by Thunderbird Addon
   def email_status
-    author = Mail::Address.new(params[:author])
-    recipients = Mail::AddressList.new(params[:recipients]).addresses
+    author = Mail::Address.new(params[:author].gsub("\n",''))
+    recipients = Mail::AddressList.new(params[:recipients].gsub("\n",'')).addresses
     subject = params[:subject]
 
     emails = [author, recipients].flatten.find_all { |addr| addr.domain != 'mountainofpromos.com' }
