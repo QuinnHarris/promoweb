@@ -127,8 +127,8 @@ class MyRange
   end
 
   def round_cents
-    MyRange.new(@min.round_cents,
-                @max.round_cents)
+    MyRange.new(@min && @min.round_cents,
+                @max && @max.round_cents)
   end
 end
 

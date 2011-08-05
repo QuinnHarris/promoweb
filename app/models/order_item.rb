@@ -191,8 +191,8 @@ class OrderItem < ActiveRecord::Base
       (decorations+entries).each do |d|
         list = d.send("list_#{type}")
         next nil unless p = list.marginal || Money.new(0)
-        unit += p
-        total += list.fixed || Money.new(0)
+        unit += p unless p.nil?
+        total += list.fixed unless list.fixed.nil?
       end
 
       # Shipping

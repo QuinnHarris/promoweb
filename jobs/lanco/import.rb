@@ -17,7 +17,7 @@ class LancoSOAP < GenericImport
   end
   
   @@overrides = {
-    'SBF397' => { :alt_Name => ['McKinley Embossed Mint Tin (empty)', 'McKinley Embossed Mint Tin'] },
+    'SBF397' => { :alt_name => ['McKinley Embossed Mint Tin (empty)', 'McKinley Embossed Mint Tin'] },
     'MB200' => { :prod_name => ['Mesh Bags w/ AL100', 'Mesh Bag w/ AL100'] },
     'TG194' => { :prod_name => ['Tins Empty', 'Tin Empty'] },
   }
@@ -57,25 +57,29 @@ class LancoSOAP < GenericImport
   end
   
   def process_prices(product)
-    list = product.delete(:pricing)[:prices][:item]
+    return {} if product[:pricing][:prices].empty?
+    prices = [product[:pricing][:prices][:item]].flatten.collect do |elem|
+      { :fixed => Money.new(0),
+        :minimum => Integer(elem[:from_qty]),
+        :marginal => Money.new(Float(elem[:price]))
+      }
+    end
     
-    return {} if list.empty?
-    
-    cost_list = convert_pricecodes(product[:cost_code]).zip(list).collect do |perc, price|
-      (Money.new(Float(list[:price])) * (1.0-perc)).round_cents if price
+    cost_list = convert_pricecodes(product[:cost_code]).zip(prices).collect do |perc, price|
+      (price[:marginal] * (1.0-perc)).round_cents if price
     end.compact
     
     costs = [
       { :fixed => Money.new(0),
-        :minimum => Integer(list.first[:from_qty]),
+        :minimum => prices.first[:minimum],
         :marginal => cost_list.last,
       },
-      { :minimum => (Integer(list.last[:from_qty]) * 1.5).to_i
+      { :minimum => (prices.last[:minimum] * 1.5).to_i
       }
     ]
     
-    min = (product['Order_Info'] =~ /less than min/i)   
-    if prices.first[:minimum] != 1 and !min
+    min = (product[:order_info] =~ /less than min/i)   
+    if prices.first[:minimum] > 1 and !min
       costs.unshift({ :fixed => Money.new(24.00),
         :minimum => (prices.first[:minimum] / 2.0).ceil,
         :marginal => cost_list.last,
@@ -135,7 +139,7 @@ class LancoSOAP < GenericImport
     sub_products = {}
     sub_products.default = []
     products = products.find_all do |product|
-      if product['ParentItem'].empty?
+      if product[:parent_item].empty?
         supplier_nums[product[:web_id]] = get_id(product[:web_id])
         next true
       end
@@ -164,6 +168,7 @@ class LancoSOAP < GenericImport
         description += "\n<a href='/static/fills#c'><strong>C Fills:</strong></a> Pecan Turtles, Truffles, Chocolate Coins, Hershey Kisses, English Butter Toffee, Chocolate Covered Almonds, Chocolate Covered Pretzels, Red Foil Chocolate Hearts, Cashews, Cocolate Balls, Halloween Balls, Christmas Balls, Jelly Bellies, M&M'S, Earth Balls, Easter Eggs, Sports Balls, American Flag Balls, Foil Wrapped Chocolate Squares, Soy Nuts, Chocolate Covered Sunflower Seeds, Granola"
       end
       
+      puts "Wt: #{product[:wt_100].inspect}"
       product_data = {
         'supplier_num' => product[:web_id],
         'name' => convert_name(product[:alt_name].empty? ? product[:prod_name] : product[:alt_name]),
@@ -207,7 +212,7 @@ class LancoSOAP < GenericImport
             
       puts
 
-      image_list = get_images(product[:web_id])
+      image_list = [] #get_images(product[:web_id])
       puts "List #{product[:web_id]}: #{image_list.inspect}"
       image_list = image_list.collect { |img| ImageNodeFetch.new(img, "#{image_path(product[:web_id])}#{img}") }
 
@@ -224,8 +229,8 @@ class LancoSOAP < GenericImport
       # Decorations
       product_data['decorations'] = decorations(product)
 
-
-      colors = product[:ext_colors].collect { |c| c.split(',') }.flatten.compact.collect { |c| c.strip }.sort
+#      colors = product[:ext_colors][:item].collect { |c| c.split(',') }.flatten.compact.collect { |c| c.strip }.sort
+      colors = [product[:ext_colors][:item]].flatten
       puts "Colors: #{colors.inspect}"
       color_image = {}
       colors.each do |color|
@@ -247,13 +252,13 @@ class LancoSOAP < GenericImport
       
       product_data['variants'] = ([product] + sub).zip(parts).collect do |prod, fill_name|
         price_data = process_prices(prod)
-        price_data.merge!('dimension' => parse_volume(prod['Size_Description']))
+        price_data.merge!('dimension' => parse_volume(prod[:size_description]))
         price_data.merge!('fill' => fill_name ) unless sub.empty?
         
         color_image.collect do |color, images|
 #          puts "Color: #{color}  Img: #{images && images.join(', ')}"
           # For Each Variant
-          { 'supplier_num' => prod['Web_Id'] + (color && "-#{color}").to_s,
+          { 'supplier_num' => prod[:web_id] + (color && "-#{color}").to_s,
             'color' => color,
             'images' => images
           }.merge(price_data)
@@ -288,22 +293,6 @@ class LancoSOAP < GenericImport
   
   def parse_soap_products(response)
     clean_value(response.to_hash[:get_all_products_response][:return][:item])
-
-    products.collect do |product|
-      attributes = {}
-      product.__xmlele.each do |node, value|
-        value = value.strip if value.is_a?(String)
-        value = value.collect { |v| v.is_a?(String) ? v.strip : v } if value.is_a?(Array)
-        attributes[node.name] = value
-      end
-      attributes['pricing'] = attributes['pricing'].prices.collect do |price|
-        { :minimum => price.fromQty.to_i,
-          :fixed => Money.new(0),
-          :marginal => Money.new(price.price.to_f).round_cents
-        }
-      end
-      attributes
-    end
   end
   
   def merge_products(orig, new)
