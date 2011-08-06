@@ -527,10 +527,13 @@ class Product < ActiveRecord::Base
   has_many :decorations, :conditions => 'NOT(deleted)'
   belongs_to :supplier
   belongs_to :featured, :class_name => 'Category', :foreign_key => 'featured_id'
-  has_and_belongs_to_many :categories, {
-    :before_remove => :remove_featured_if,
-    :after_remove => Proc.new { |product, cat| Category.find_by_id(cat.id).destroy_conditional }
-  }
+#  has_and_belongs_to_many :categories, {
+#    :before_remove => :remove_featured_if,
+#    :after_remove => Proc.new { |product, cat| Category.find_by_id(cat.id).destroy_conditional }
+#  }
+  has_many :category_products
+  has_many :categories, :through => :category_products, :before_remove => :remove_featured_if, :after_remove => Proc.new { |product, cat| Category.find_by_id(cat.id).destroy_conditional }
+
   has_many :tags
   has_many :variants, :conditions => 'NOT(variants.deleted)'
   
@@ -803,18 +806,19 @@ class Product < ActiveRecord::Base
         src.delete(match)
       else
         category = Category.get(d)
-#        unless Category.find_by_sql("SELECT * FROM categories_products WHERE category_id = #{d.id} AND product_id = #{id} AND pinned = 'false'").empty?
-          # Don't add pinned false products
-#          next
-#        end
-        category.pinned = nil # Effects product category many_many attribute
         categories << category
         added << category
       end
     end
 
+    str = ''
+
     src.delete_if do |s|
-      Category.find_by_sql("SELECT * FROM categories_products WHERE category_id = #{s.id} AND product_id = #{id}").first.pinned
+      if CategoryProduct.where(:category_id => s.id, :product_id => id, :pinned => true).exists?
+        str << "   * #{s.path}\n"
+        next false
+      end
+      true
     end
     
     src.each do |s|
@@ -825,7 +829,6 @@ class Product < ActiveRecord::Base
       categories.delete(s)
     end
     
-    str = ''
     src.each { |deleted| str << "   - #{deleted.path}\n" }
     added.each { |add| str << "   + #{add.path}\n"}
     

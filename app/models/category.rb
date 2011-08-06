@@ -31,7 +31,11 @@ end
 
 class Category < ActiveRecord::Base
   acts_as_nested_set
-  has_and_belongs_to_many :products
+#  has_and_belongs_to_many :products
+  has_many :category_products
+  has_many :products, :through => :category_products
+
+
   has_and_belongs_to_many :keywords
   has_many :featured, :class_name => 'Product', :foreign_key => 'featured_id'
   
@@ -405,6 +409,6 @@ public
 private 
   after_destroy :destroy_parent_if_empty
   def destroy_parent_if_empty
-    parent.destroy if parent and parent.children_count == 0 and parent.pinned == false
+    parent.destroy if parent and parent.children.empty? and parent.pinned != true
   end
 end

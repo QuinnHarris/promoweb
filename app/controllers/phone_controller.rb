@@ -57,7 +57,7 @@ class PhoneController < ActionController::Base
     area_code = number[0...3].to_i
 
     pages = PageAccess.find_by_sql("SELECT session_access_id, address, MAX(id) as max FROM " +
-                                     "(SELECT * FROM page_accesses WHERE " +
+                                     "(SELECT * FROM access.page_accesses WHERE " +
                                      "page_accesses.created_at > (NOW() - '1 days'::interval)) AS sub " +
                                    "GROUP BY session_access_id, address " +
                                    "ORDER BY max DESC LIMIT 200")

@@ -47,13 +47,13 @@ class NorwoodXML < GenericImport
           'supplier_categories' => [%w(Taxonomy SubTaxonomy).collect { |n| product.get_elements(n).first.text }]
         }
         
-        puts "Num: #{product_data['supplier_num']}"
+#        puts "Num: #{product_data['supplier_num']}"
 
         # Calendar Kludge
         if sufix = @@sufixes[product_data['supplier_categories'].first]
           unless product_data['name'].downcase.include?(sufix.downcase)
             product_data['name'] << " #{sufix}"
-            puts "Append: #{product_data['name']}"
+            puts "Append: #{product_data['supplier_num']}: #{product_data['name']}"
           end
         end
 

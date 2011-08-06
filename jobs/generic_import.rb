@@ -198,7 +198,11 @@ class WebFetch
         pbar.set s if pbar
       })
       return nil if f.length == 0
-      FileUtils.mv(f.path, path)
+      if f.respond_to?(:path)
+        FileUtils.mv(f.path, path)
+      else
+        File.open(path, 'w') { |a| a.write(f) }
+      end
       puts
       return path
     rescue OpenURI::HTTPError, URI::InvalidURIError, Errno::ETIMEDOUT => e
