@@ -97,7 +97,7 @@ module RecordImages
         return true
       end
       
-      img = Magick::Image::read(src).first
+      img = Magick::ImageList.new(src).first
       if options[:size]
         img = img.change_geometry(options[:size]) do |c, r, i|
           i.resize(c, r)
@@ -122,7 +122,7 @@ module RecordImages
       return nil if image_exists?(name, num)
       base = File.basename(src)
       ext = base.split('.').last
-      img = Magick::Image::read(src).first
+      img = Magick::ImageList.new(src).first
       dst = image_path_absolute(name, get_image_options(name)[:ext], num)
       puts "Convert: #{src} => #{dst}"
       img.write(dst)
@@ -133,7 +133,7 @@ module RecordImages
     def image_transform(src, name, num = 1)
       return nil if image_exists?(name, num)
       options = get_image_options(name)
-      img = src.is_a?(Magick::Image) ? src : Magick::Image::read(src).first
+      img = src.is_a?(Magick::Image) ? src : Magick::ImageList.new(src).first
       img = img.change_geometry(options[:size]) do |c, r, i|
         res = i.resize(c, r)
         res = yield res if block_given?
