@@ -1,223 +1,307 @@
-h1 {
-  margin: 0;
-  margin-bottom: 0.5em;
-  border-bottom: medium solid black;
+/* Global */
+div#content {
+    padding-top: 1em;
+}
+div#main {
+    padding: 1em;
+    padding-top: 0;
 }
 
-a { color: #0000B0; }
-
-table.block thead th.head {
-  background-color: #F0F0F0;
+table td, table th {
+  vertical-align: top;
 }
 
-table.block thead th.admin {
-  background-color: #F0E0E0;
-}
-
+/* Form Entry */
 table.form th {
   padding-left: 1em;
   text-align: right;
-  vertical-align: top;
   background-color: #EEE;
   font-weight: normal;
 }
-
 table.form tr.required th {
   font-weight: bold;
 }
-
-table.block td {
-  font-size: 1em;
-  font-family: sans-serif;
-  vertical-align: top;
+table.form caption {
+  font-size: 1.2em;
+  font-weight: bold;
+  text-align: left;
+  border-bottom: thin solid black;
+  margin-top: 1.0em;
 }
 
-img {
-  position: relative;
-  top: 3px;
+div.block {
+    float: left;
 }
 
-div.thumb { float: left; }
-div.item div.notes { float: right; }
-
-
-.block input, .block textarea {
-  font-size: 1em;
-  font-family: sans-serif;
-  background-color: #FFFFD0;
-  border: none;
-  border-top: thin solid #E0E0E0;
-  border-bottom: thin solid #E0E0E0;
+/* Status Page */
+table#status {
+  border-spacing: 0.2em;
 }
-
-.block td.num {
-  text-align: right;
+table#status td {
+  padding: 0.2em;
+  border: thin solid grey;
 }
-
-input.money {
-  width: 3.75em;
-  text-align: right;
+table#status td.header {
+	border: none;
+	text-align: center;
 }
-
-input.margin {
-  width: 3em;
+div#key span {
+    padding: 0.5em;
+    border: thin solid black;
+    line-height: 2.5em;
+    white-space: nowrap; 
 }
-
-input.num {
-  width: 4em;
-}
-
-input.imprint {
-  width: 6em;
-}
-
-input.default {
-  font-style: italic;
-}
-
-input.changed {
-  background-color: #D0D0FF;
-}
-
-input.predicate {
-  background-color: #D0FFD0;
-}
-
-input.sending, textarea.sending {
-  border-top: thin solid red;
-  border-bottom: thin solid red;
-}
-
-.late {
-	color: red;	
-}
-
-table#email {
-	border-spacing: 0 0.5em;
-}
-
-table#email td {
-	vertical-align: top;
-}
-
-table#email tr { background-color: #F8F8F8; }
-table#email tr.our { background-color: #FFF8F8; }
-
-div.subject, div.date {
-	border-bottom: thin solid black;
-}
-
-div.date { text-align: right; }
-
-div.preview {
-	border-left: 0.5em solid black;
-	padding-left: 1em;
-	font: monospace;
-	font-size: 0.8em;
-}
-
-
-div.supplier {
-	border: thin solid black;
-	background-color: #E0FFE0;
-}
-
-div.supplier > h2 {
-	color: white;
-	background-color: #004000;
-	margin: 0;
-	padding-left: 0.25em;
-}
-
-h2 > a { color: #C0C0FF; }
-
-div.purchase {
-	border: thin solid black;
-	background-color: #FFE0E0;
-	margin: 0.5em;
-}
-
-div.purchase h2 {
-	color: white;
-	background-color: #400000;
-	margin: 0;
-	margin-bottom: 0.5em;
-	padding-left: 0.25em;
-}
-
-div.supplier h2 div {
-    margin-right: 0.5em;
+div.time {
+    font-size: 0.8em;
     float: right;
 }
+.pending { background-color: #F0F0FF; }
+.complete { background-color: #E0FFE0; }
+.ready { background-color: #FFFFE0; }
+.late { color: red; }
+
+/* Artwork Page */
+.message {
+    font-size: 0.8em;
+}
+
+.message p {
+    margin-top: 0.4em;
+    margin-bottom: 0.4em;
+}
+
+/* Item Page and Order Acknowledge Page */
+.num {
+  text-align: right;
+}
+
+table#items_table td {
+    padding: 0;
+}
+table#items_table table {
+    margin: 0;
+    width: 100%;
+}
+
+table#items_table tr.spacer {
+    height: 1em;
+}
+
+table#items_table td.thumb {
+  text-align: center;
+}
+table#items_table textarea {
+    width: 100%;
+}
+table#items_table tbody th,table#items_table tfoot th  {
+    text-align: right;
+}
+table#items_table tfoot tr.total {
+    text-align: right;
+    font-size: 1.2em;
+    font-weight: bold;
+}
+table#items_table tfoot tr.total td {
+    border-top: medium solid black;
+}
+
+table thead, table tr.thead {
+  text-align: center;
+  font-weight: bold;
+}
+
+table thead td, table tr.thead td {
+  border-bottom: medium solid black;
+}
+
+tr.total td, tr td.total {
+    border-top: thin solid black;
+}
+tr td.total, td.subtotal {
+    font-weight: bold;
+}
+
+
+/* Acknowledge Page */
+div.invoice { border: thin solid black; padding: 0; margin-bottom: 1em; page-break-inside: avoid; }
+div.invoice > h3 { font-family: sans-serif;  background-color: black; color: white; margin: 0; padding-left: 0.5em; }
+div.invoice div.date { float: right; color: white; margin-right: 0.5em; margin-top: 0.25em;}
+div.invoice table, div.invoice div.notes { margin-left: 1em; margin-right: 1em; }
 
 
 div.item {
-	background-color: white;
-	margin: 0.5em;
-	clear: both;
+  clear: both;
+  overflow: hidden;
 }
 
-div.notes {
-    background-color: white;
-    margin: 0.5em;
-    margin-left: 0.75em;
-    margin-right: 0.75em;
+/* Artwork Page */
+div.group {
+  border: medium solid #400000;
+  margin-bottom: 1em;  
 }
 
-div.general {
-	background-color: white;
-	margin: 0.5em;
-	margin-left: 1em;
-	margin-right: 1em;
+div.group table.head {
+  width: 100%;
+  border-bottom: medium solid #400000;
 }
 
-div.general table {
-	margin-left: auto;
-	margin-right: auto;
+div.group > table td:first-child {
+  width: 1%;
 }
 
-div.add_dec {
+div.group table td {
+  position: relative;
+}
+
+div.group table div.decorations {
+  width: 100%;
+  min-height: 4.5em;
+  bottom: 0;
+}
+
+div.group div.items {
+  background-color: #F0FFF0;
+  min-height: 2em;
+  border: thin solid black;
+}
+
+div.group div.item {
+  border: thin solid black;
+  background-color: white;
+  margin: 0.5em;
+}
+
+div.decorations {
+  min-height: 2em;
   background-color: #F0F0FF;
 }
 
-div.add_dec h4 {
-  text-align: left;
-  border-bottom: thin solid black;
+div.decoration {
+  width: 1;
+  display: inline-block;
+  border: thin solid black;
+  background-color: white;
+  margin: 0.5em;
+}
+
+div.decoration h3 {
   margin: 0;
-  margin-top: 0.5em;
   padding: 0;
+  border-bottom: thin solid black;
 }
 
-/* Lifted from Autocomplete */
-div.auto_complete {
-    z-index: 100;
-    width: 350px;
-    background: #fff;
-}
-div.auto_complete ul {
-    border:1px solid #888;
-    margin:0;
-    padding:0;
-    width:100%;
-    list-style-type:none;
-}
-div.auto_complete ul li {
-    margin:0;
-    padding:3px;
-}
-div.auto_complete ul li.selected {
-    background-color: #ffb;
-}
-div.auto_complete ul strong.highlight {
-    color: #800; 
-    margin:0;
-    padding:0;
+div.item h3 {
+  margin-top: 0.25em;
+  margin-bottom: 0;
+  font-size: 1.0em;
+  text-align: center;
+  border-bottom: medium solid black;
 }
 
-div.hide {
-    display: none;
+div.item dl {
+  margin: 0;
+  margin-top: 0.25em;
 }
 
-td.description input {
-    width: 92%;
+div.item dt {
+  float: left;
+  padding-left: 1.0em;
+  padding-right: 0.5em;
+  font-weight: bold;
+}
+
+div.item dd {
+  display: block;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  margin-bottom: 0.25em;
+}
+
+/* Variants dupes from products.css */
+dl.variants dt {  
+  text-align: right;
+  float: left;
+  font-weight: bold;
+ 
+  margin: 0;
+  padding: 0;
+
+  padding-top: 0.25em;
+ 
+}
+
+dl.variants dd {
+  margin: 0;
+  padding: 0;
+
+  margin-top: 0.25em;
+}
+
+dl.variants ul {
+   list-style: none;
+   margin: 0;
+   padding: 0;
+}
+
+dl.variants ul li {
+  float: left;
+  margin: 0.25em 0 0 0.25em;
+  padding: 0;
+  text-align: center;
+  border: thin outset black;
+}
+
+dl.variants span {
+  display: block;
+  padding: 0em 0.25em 0em 0.25em;
+}
+
+dl.variants span.even { background-color: #F4F4FF; }
+
+/* Payment */
+div.lowlight {
+  background-color: #F0F0F0;
+}
+div.lowlight h1 {
+  font-family: sans serif;
+  font-size: 1.5em;
+  color: red;
+}
+
+/* Acknowledge */
+div#ack {
+  text-align:center;
+  background-color: #FCC;
+  padding: 0.5em;
+}
+
+input.button {
+    font-size: 1.0em;
+    font-weight: bold;
+    padding-left: 28px;
+    background-repeat: no-repeat;
+    background-position: 2px 2px;
+    min-height: 28px;
+}
+
+input#submitbtn {
+    color: #006000;
+    background-image: url('/images/submit.png');
+}
+
+input#nextbtn {
+    color: #000080;
+    background-image: url('/images/forward.png');
+}
+
+input#addbtn {
+    color: #006000;
+    background-image: url('/images/addbtn.png');
+}
+
+input#rejectbtn {
+    color: #600000;
+    padding-left: 50px;
+    background-image: url('/images/reject.png');
 }
