@@ -48,6 +48,7 @@ gem 'mechanize' # DL for Gemline
 gem 'spreadsheet' # Spreadsheet for Leeds, Bullet
 #gem 'httpclient' # Auth for soap4r for Lanco
 gem 'savon'
+gem 'rmagick'
 
 # Bundle gems for the local environment. Make sure to
 # put test-only gems in this group so their generators
