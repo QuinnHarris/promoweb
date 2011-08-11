@@ -54,6 +54,7 @@ class Admin::AccessController < Admin::BaseController
     @calls = calls.collect do |call_log|
       customer = Customer.find(:first,
                                :include => :phone_numbers,
+                               :order => 'customers.id DESC',
                                :conditions => { 'phone_numbers.number' => call_log.caller_number.gsub(/^1/,'').to_i } )
 
       next [call_log, customer] if customer
