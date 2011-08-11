@@ -1,3 +1,5 @@
+require 'RMagick'
+
 module Magick
   class Image
     def box_vignette(border, mult)

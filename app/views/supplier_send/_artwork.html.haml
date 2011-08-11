@@ -29,4 +29,4 @@
 
   %h3 Artwork Files
   - for artwork in group.artworks.find_all { |a| a.has_tag?('supplier') }
-    %div= link_to artwork.art.original_filename, "#{SITE_NAME}#{artwork.art.url}"
+    %div= link_to artwork.art.original_filename, "http://#{SITE_NAME}#{artwork.art.url}"
