@@ -210,7 +210,7 @@ class OrderItem < ActiveRecord::Base
   end
   
   def shipping_find(type, code)
-    shipping_rates && shipping_rates.find { |r| r.type == type and r.code == code }
+    (shipping_rates && !shipping_rates.is_a?(String)) ? (shipping_rates.find { |r| r.type == type and r.code == code }) : nil
   end
   
   def shipping

@@ -51,7 +51,7 @@
 
       %td{ :style => 'width: 1em;' }
       %td
-        %h2 Order Acknowledgement
+        %h2 Order Acknowledgement / Invoice
         - task = @order.task_completed?(AcknowledgeOrderTask)
         Order #:
         = @order.id

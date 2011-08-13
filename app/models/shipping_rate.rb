@@ -109,7 +109,6 @@ class UPSShippingRate < ShippingRate
     package_units = product.package_units
     package_full_count = (quantity.to_f / package_units).floor
     package_tail_units = quantity - (package_units*package_full_count)
-
     if product.package_weight
       package_weight = product.package_weight
       units_weight = package_weight / package_units
