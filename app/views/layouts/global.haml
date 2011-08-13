@@ -72,7 +72,7 @@
                 = link_to image_tag('find.png') + "Find Customer", { :controller => '/admin/orders', :action => :contact_find }, :class => 'button'
                 = link_to image_tag('add.png') + "New Customer", { :controller => '/admin/orders', :action => :new_order }, { :class => 'button', :confirm => 'Create a new customer and order?' }
             %ul#leftmenu.nav
-              != li_to 'Orders', {:controller => '/admin/orders', :action => 'index' } do params[:controller].index('order') or !params[:controller].index('admin') end
+              != li_to 'Orders', {:controller => '/admin/orders', :action => :show } do params[:controller].index('order') or !params[:controller].index('admin') end
               != li_to 'Admin', { :controller => '/admin/employees', :action => :index } do  !params[:controller].index('order') and params[:controller].index('admin') end
 
             #sublist.nav
@@ -93,7 +93,7 @@
                     != li_to 'Other', { :controller => '/admin/system', :action => :other }
               - elsif @order
                 #custinfo
-                  = link_to({ :controller => '/order', :action => 'status', :order_id => @order }) do
+                  = link_to(status_order_path(@order)) do
                     %strong
                       = @order.customer.company_name
                     \:
@@ -111,16 +111,16 @@
                   \-
                   = @order.user ? @order.user.name : '?'
                   - if @order.user_id.nil? or (@order.user_id != @user.id and allowed?('Super'))
-                    = link_to "Own", { :controller => '/admin/orders', :action => :order_own }, (@order.user_id ? { :class => 'admin', :confirm => "Take ownership of order from #{@order.user.name}" } : nil)
+                    = link_to "Own", own_admin_order_path(@order), { :method => :post }.merge(@order.user_id ? { :class => 'admin', :confirm => "Take ownership of order from #{@order.user.name}" } : {})
                   - else
-                    = link_to "UnOwn", { :controller => '/admin/orders', :action => :order_own, :unown => true }, { :class => 'admin', :confirm => "UnOwn order from #{@order.user.name}" }
+                    = link_to "UnOwn", own_admin_order_path(@order, :unown => true), { :method => :post, :class => 'admin', :confirm => "UnOwn order from #{@order.user.name}" }
                   \-
                   - if @customer_zone
                     = @customer_zone.name
                     \=>
                     %strong
                       = @customer_zone.now.strftime("%I:%M %p")
-                  = link_to("(Deliver: #{@order.delivery_date ? @order.delivery_date.strftime("%A %b %d") + " : #{@order.days_to_deliver} days" : 'unknown'})", { :controller => '/order', :action => 'info', :order_id => @order })
+                  = link_to("(Deliver: #{@order.delivery_date ? @order.delivery_date.strftime("%A %b %d") + " : #{@order.days_to_deliver} days" : 'unknown'})", info_order_path(@order))
           - else
             #header.nav
               %div
@@ -137,7 +137,7 @@
                     - else
                       = mail_to "#{@order.user.name} <#{@order.user.email}>", nil, :subject => "Order #{@order.id}"
                 - if @order
-                  = link_to((image_tag('cart.png') + "Items (#{@order.items.count})"), { :controller => '/order', :action => :items }, :id => 'items')
+                  = link_to((image_tag('cart.png') + "Items (#{@order.items.count})"), items_order_path(@order), :id => 'items')
                 - else
                   %div#tagline
                     Your logo on custom imprinted
@@ -167,7 +167,7 @@
               = link_to "Sitemap", { :controller => '/categories', :action => 'map' }
             |
             %span#copyright
-              = link_to({ :controller => 'static', :action => 'copyright' }, :rel => 'nofollow') do
+              = link_to({ :controller => '/static', :action => 'copyright' }, :rel => 'nofollow') do
                 &#169;#{Time.now.year} Mountain Xpress Promotions
 
     - unless @user

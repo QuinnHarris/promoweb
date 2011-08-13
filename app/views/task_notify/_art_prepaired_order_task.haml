@@ -1,3 +1,3 @@
 - unless (groups = task.object.customer.artwork_groups).empty?
   %h2 Customer Artwork
-  = render :partial => '/order/artwork_items', :locals => { :artwork_groups => groups, :static => true, :absolute => true, :filter_tag => nil }
+  = render :partial => '/orders/artwork_items', :locals => { :artwork_groups => groups, :static => true, :absolute => true, :filter_tag => nil }

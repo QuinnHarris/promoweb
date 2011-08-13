@@ -3,7 +3,7 @@
     - for order_item in @order.items
       %tr
         %td.item{ :colspan => 4 }
-          = render :partial => '/order/order_item', :locals => { :order_item => order_item, :static => static, :absolute => absolute, :invoice => false }
+          = render :partial => '/orders/order_item', :locals => { :order_item => order_item, :static => static, :absolute => absolute, :invoice => false }
           %tr.spacer
 
     - unless (entries = @order.po_entries + @order.entries).empty?

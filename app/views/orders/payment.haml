@@ -63,12 +63,12 @@
               - for line in method.type_notes.split("\n")
                 %div= line
             - if method.billing_id or method.transactions.empty?
-              = link_to(image_tag('remove.png') + (method.transactions.empty? ? 'Remove' : 'Revoke'), { :action => :payment_remove, :id => method }, :confirm => "Remove #{method.type_name} for #{method.name}")
+              = link_to(image_tag('remove.png') + (method.transactions.empty? ? 'Remove' : 'Revoke'), payment_remove_order_path(@order, :method_id => method), :method => :post, :confirm => "Remove #{method.type_name} for #{method.name}")
             - if method.billing_id and !@order.task_completed?(PaymentInfoOrderTask)
-              = link_to(image_tag('add.png') + 'Use as Payment', { :action => :payment_use, :id => method }, :confirm => "Use #{method.type_name} for #{method.name} as payment information")
+              = link_to(image_tag('add.png') + 'Use as Payment', payment_use_order_path(@order, :method_id => method), :method => :post, :confirm => "Use #{method.type_name} for #{method.name} as payment information")
 
           .block
-            = form_tag({ :order_id => @order, :controller => '/admin/orders', :action => :payment_apply, :id => method.id, :txn_id => params[:txn_id] }, :onsubmit => "return charge(this)") do
+            = form_tag(payment_apply_admin_order_path(@order, :method_id => method.id, :txn_id => params[:txn_id]), :onsubmit => "return charge(this)") do
               %table
                 %thead
                   %tr
@@ -108,7 +108,7 @@
   %div
     = link_to "Add Credit Card", :action => :payment_creditcard, :order_id => @order
     %br
-    = link_to "Send a check for payment", { :action => :payment_sendcheck, :order_id => @order }, { :confirm => "Aknowledge that you will mail a check as payment for this order." }
+    = link_to "Send a check for payment", payment_sendcheck_order_path(@order), { :method => :post, :confirm => "Aknowledge that you will mail a check as payment for this order." }
     - if @user && @order.total_billable.to_i < 0
       .admin
       = link_to "Send refund check", { :action => :payment_sendcheck, :order_id => @order, :refund => true }, { :confirm => "A refund check will be sent to the customer." }

@@ -1,6 +1,6 @@
 .tabs.nav
   %ul
-    != li_to "Order", { :controller => '/order', :action => :acknowledge_order, :order_id => @order }
+    != li_to_order 'Order', :acknowledge_order_order
     - if @order.task_ready?(ArtAcknowledgeOrderTask) or @order.task_completed?(ArtAcknowledgeOrderTask)
-      != li_to "Artwork", { :controller => '/order', :action => :acknowledge_artwork, :order_id => @order }
+      != li_to_order 'Artwork', :acknowledge_artwork_order
 

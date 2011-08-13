@@ -6,6 +6,6 @@
   %tbody
     - for order in @order.customer.orders
       %tr
-        %td= link_to order.id, :action => :status, :order_id => order.id
+        %td= link_to order.id, status_order_path(order)
         %td= format_time(order.created_at, false)
         %td= format_time(order.updated_at, false)

@@ -2,7 +2,7 @@
   Your credit card information will be retained for the duration of this order by CISP/PCI Compliant
   %a{:href => 'http://www.trustcommerce.com/', :target => 'other'} TrustCommerce.
   The card will not be billed until you acknowledge the invoice for the amount that will be billed.  After your order has shipped, you could be charged or credited for any differences in the shipping estimate and product over run or under runs within 10% of the requested quantity.
-- form_for :credit_card, @credit_card, :url => { :action => :payment_creditcard, :order_id => @order } do |cc|
+= form_for(@credit_card, :as => :credit_card, :url => payment_creditcard_order_path(@order)) do |cc|
   %table.form
     %caption Add Credit Card
     %tr
@@ -36,7 +36,7 @@
   = check_box :options, :different, { :onclick => "enable_disable_forum('address', this)" }
   Specify different billing address
   %br
-  - fields_for :address, @address do |add|
+  = fields_for :address, @address do |add|
     %table#address.form
       %tr
         %th{ :rowspan => "2" } Address:

@@ -28,7 +28,7 @@ module OrderModule
       uri = { :controller => "/#{self.controller_path}", :action => action}
       tasks.each do |task|
         next if task.is_a?(String)
-        raise "uri already set #{action} #{task} as #{uri.inspect}" if task.uri and task.uri != uri
+        raise "uri already set #{action} #{task} as #{task.uri} != #{uri.inspect}" if task.uri and task.uri != uri
         task.uri = uri
       end
       instance_variable_set "@#{action}_tasks", tasks
@@ -48,8 +48,82 @@ private
       return false
     end
 
-#    raise "No session @order" unless @order
+    order_id = params[:order_id] || params[:id] || session[:order_id]
 
+    if params[:auth]
+      customer = Customer.find_by_uuid(params[:auth])
+      if order_id
+        @order = customer.orders.find_by_id(order_id)
+        raise "Can't find order for customer" unless @order
+      else
+        @order = customer.orders.first
+      end
+    else
+      unless session[:order_id] or session[:user_id]
+        # If not logged in
+        @order = nil
+        if params[:controller].include?('admin')
+          redirect_to :controller => '/admin/users', :action => :auth
+        else
+          render :action => :login
+        end
+        return false
+      end
+
+      # Typical customer path
+      if order_id
+        begin
+          @order = Order.includes(:customer, :user).find(order_id)
+        rescue ActiveRecord::RecordNotFound
+          # Temporary kludge to deal with :id for legacy methods
+          @order = Order.find(session[:order_id], :include => [:customer, :user])
+        end
+        
+        # If changing order
+        unless session[:user_id]
+          old_order = Order.find(session[:order_id])
+          if old_order.customer_id != @order.customer_id
+            @order = nil
+            raise "Order #{session[:order_id]} does not belong to current customer"
+          end
+        end
+      end
+    end
+    
+    session[:order_id] = @order && @order.id if @order
+
+    # Set Timezone
+    session[:tz] = nil if params[:order_id] and session[:order_id] != params[:order_id]
+    if !session[:tz] and @order and @order.customer.default_address and @order.customer.default_address.postalcode
+      list = Zipcode.find_by_sql(["SELECT z.*, r.name as state "+
+                                  "FROM constants.zipcodes z, constants.regions r " +
+                                  "WHERE z.region = r.id AND z.country = 229 AND z.zip = ?",
+                                  @order.customer.default_address.postalcode[0..4]])
+      if list.length == 1
+        session[:tz] = list.first.tz_name
+        Time.zone = session[:tz] || 'Mountain Time (US & Canada)'
+      end
+    end
+      
+    # Set @permissions and @user if applicable for all controllers
+    if session[:user_id]
+      @user = User.find(session[:user_id])
+
+      @permissions = @user.permissions.find(:all,
+        :conditions => ['order_id IS NULL OR order_id = ?',
+        order_id]).collect { |p| p.name }
+      #raise "Permission Denied" if @permissions.empty?
+      @customer_zone = Time.zone if session[:tz]
+      Time.zone = 'Mountain Time (US & Canada)'
+
+      if @order and @user.current_order_id != @order.id
+        User.update_all("current_order_id = #{@order.id}", "id = #{@user.id}")
+      end
+    else
+      @permissions = %w(Customer)
+    end
+
+    # Set page title
     if @order
       if @user
         @title = "#{(@order.customer.company_name.blank? ? @order.customer.person_name : @order.customer.company_name)[0..18]}|#{params[:action].capitalize}"[0..22]
@@ -61,7 +135,7 @@ private
     # Check Task Permissions
     tasks_name = "#{params[:action]}_tasks"
     return true unless self.class.respond_to?(tasks_name)
-    tasks = self.class.send(tasks_name)
+    return true unless tasks = self.class.send(tasks_name)
     needed = tasks.collect { |t| t.is_a?(String) ? t : t.roles }.flatten.uniq
     raise "Permission denied, Tasks: #{tasks}; Needed: #{needed.inspect}; Has: #{@permissions.inspect}" if (needed & @permissions).empty?
     true
@@ -69,7 +143,7 @@ private
 
   def redirect_to_next(inject = [], params = {})
     next_task = @order.task_next(@permissions, inject) { |t| t.uri && !t.uri[:controller].include?('admin') }
-    redirect_to ((next_task and next_task.uri) ? next_task.uri : { :controller => '/order', :action => :status }).merge({:order_id => @order.id}).merge(params)
+    redirect_to ((next_task and next_task.uri) ? next_task.uri : { :controller => '/orders', :action => :status }).merge(:id => @order.id).merge(params)
   end
   
   def task_complete(params, task_class, revokable = [], revoked = true)
@@ -97,7 +171,7 @@ private
           end
         end
         
-        redirect_to :action => :status, :order_id => @order, :task => 'RequestOrder'
+        redirect_to status_order_path(@order), :task => 'RequestOrder'
       else
         redirect_to_next(inject)
       end
@@ -157,11 +231,11 @@ private
 public
 end
 
-class OrderController < ApplicationController 
+class OrdersController < ApplicationController 
   include OrderModule
   layout 'order'
   
-  before_filter :setup_order, :except => [:auth, :logout, :add_item]
+  prepend_before_filter :setup_order, :except => [:logout, :add]
 
 private
   def set_order_id(order_id)
@@ -175,23 +249,12 @@ private
   end
 public
 
-  # To be depreciated
-  def auth
-    @customer = Customer.find_by_uuid(params[:id], :include => :default_address)
-#    location_from_postalcode(@customer.default_address.postalcode)  # Set time zone
-    if params[:order]
-      @order = @customer.orders.find_by_id(params[:order])
-    else
-      @order = @customer.orders.first
-    end
-    set_order_id(@order.id)
-    if params[:act]
-      redirect_to :action => params[:act], :order_id => @order.id 
-    else
-      redirect_to_next
-    end
+  # Old Email link URL
+  def legacy_redirect
+    redirect_to :action => params[:name], :id => params[:order_id]
   end
 
+  # What are these login logout now used for?
   def login
     redirect_to_next
   end
@@ -201,136 +264,15 @@ public
     redirect_to :controller => 'categories', :action => 'home'
   end
 
-  def add_item
-    product = Product.find(params[:product])
-    
-    quantity = params[:quantity].to_i
-    if params[:quantity].empty? or quantity == 0
-      render :inline => "Invalid Quantity"
-      return
-    end
-    price_group = PriceGroup.find(params[:price_group])
-    technique = DecorationTechnique.find(params[:technique]) unless !params[:technique] or params[:technique] == 'NaN' or params[:technique].empty?
-    decoration = Decoration.find(params[:decoration]) unless !params[:decoration] or params[:decoration] == 'NaN' or params[:decoration].empty?
-    unit_count = params[:unit_count].to_i != 0 ? params[:unit_count].to_i : nil
-
-    unless params[:variants].blank?
-      variant = Variant.find(params[:variants].split(',').first)
-    else
-      variant = price_group.variants.first if price_group.variants.length == 1
-    end
-    
-    Customer.transaction do
-      @customer = @order.customer if @order
-
-      if @user and %w(order customer).include?(params[:disposition])
-        @order = nil
-        @customer = nil if params[:disposition] == 'customer'
-        logger.info("Adding as new #{params[:disposion]}")
-      elsif @order and @order.task_completed?(AcknowledgeOrderTask) and (params[:disposion] != 'exist')
-        order = @customer.orders.find(:first)
-        if @order.id != order.id and !order.task_completed?(AcknowledgeOrderTask)
-          @order = order
-        else
-          logger.info("Creating new order")
-          @order = nil
-        end
-      end
-
-      unless @order
-        unless @customer
-          @customer = Customer.new({
-            :company_name => '',
-            :person_name => ''})
-          @customer.save(:validate => false)
-        end
-
-        @order = @customer.orders.create
-        @order.save!
-      end
-
-      item_params = {
-        :product_id => product.id,
-        :price_group_id => price_group.id
-      }
-
-      if technique
-        if technique.id == 1
-          blank = true
-          technique = nil
-        else
-          technique_params = {
-            :technique_id => technique.id,
-            :count => unit_count,
-            :decoration_id => decoration && decoration.id,
-          }
-        end
-      end
-
-      if (!@user and
-          (item = @order.items.find(:first, :conditions => item_params)) and
-          (!technique or item.decorations.find(:first, :conditions => technique_params)) and
-          (oiv = item.order_item_variants.find(:first, :conditions => { :variant_id => variant && variant.id })))
-        oiv.quantity = quantity
-        oiv.save!
-        
-        # Reset price with new quantity
-        #item.price = item.normal_price(blank) || PricePair.new(Money.new(0),Money.new(0))
-        item.sample_requested = (params[:disposition] == 'sample')
-        item.save!
-      else
-        # Create Order Item
-        item = @order.items.new(item_params)
-        item.save!
-
-        item.order_item_variants.create(:variant => variant,
-                                        :quantity => quantity)
-
-        # Don't fix price until order revised
-        #item.price = item.normal_price(blank) || PricePair.new(Money.new(0),Money.new(0))
-        item.sample_requested = (params[:disposition] == 'sample')
-        item.save!
-        
-        if technique
-          decor = item.decorations.new(technique_params)
-          normal = decor.normal_price
-          decor.price = normal if normal and normal.is_a?(Money)
-          decor.save!
-        end
-      end
-
-      if blank
-        item.task_complete({ :user_id => session[:user_id],
-                             :host => request.remote_ip }, ArtExcludeItemTask)
-      end
-      
-      # Don't change task if item added to existing order even if order acknowledged
-      unless (@order.task_completed?(AcknowledgeOrderTask) or @order.task_completed?(PaymentNoneOrderTask)) and (params[:disposition] == 'exist') and @permissions.include?('Super')
-        task_complete({ :data => { :product_id => product.id, :item_id => item.id }},
-                      AddItemOrderTask, [AddItemOrderTask, RequestOrderTask, RevisedOrderTask, QuoteOrderTask])
-      end
-    end
-
-    # Wait until all has succeeded to write session
-    set_order_id(@order.id)
-
-    if @user
-      if params[:disposion] == 'customer'
-        redirect_to :action => :contact, :order_id => @order
-      else
-        redirect_to :controller => "/admin/orders", :action => :items_edit, :order_id => @order
-      end
-    else
-      redirect_to :action => :items, :order_id => @order, :task => 'AddItemOrder'
-    end
-  end
-  
-public
-  def orders
+  def index
     if params[:customer_id]
       @customer = Customer.find(params[:customer_id])
       @order = @customer.orders.find(:first, :order => 'id DESC')
     end
+  end
+
+  def show
+    redirect_to :action => :items
   end
 
   def_tasked_action :items, ItemNotesOrderTask, 'Art' do
@@ -338,7 +280,7 @@ public
     
     @static = @order.task_completed?(AcknowledgeOrderTask)
     
-    @javascripts = ['quote.js', 'autosubmit.js']   
+    @javascripts = ['quote.js', 'autosubmit.js', 'rails.js']   
     
     if params[:order_items]
       OrderItem.transaction do      
@@ -363,47 +305,7 @@ public
       render_edit
     end
   end
-  
-  def_tasked_action :item_remove, RemoveItemOrderTask do
-    OrderItem.transaction do
-      item = @order.items.find(params[:id])
-      item.destroy
-      task_complete({ :data => { :product_id => item.product.id, :item_id => item.id } },
-                    RemoveItemOrderTask, [RemoveItemOrderTask])
-    end
-    redirect_to :back
-  end
-  
-  def shipping_get
-    item = @order.items.find(params[:id])
-    customer = @order.customer
     
-    address = (customer.ship_address ||= Address.new)
-    if address.postalcode != params[:postalcode]
-      Customer.transaction do
-        address.postalcode = params[:postalcode]
-        address.save!
-        customer.ship_address = address
-        unless customer.default_address_id and
-                customer.default_address_id != customer.ship_address_id
-          customer.default_address = address
-        end
-        customer.save(:validate => false)
-
-        customer.shipping_rates_clear!
-      end
-    end
-
-    @rates = item.shipping_rates(true)
-
-    unless @rates
-      render :inline => "Unable to calculate shipping information."
-      return
-    end
-    
-    render :partial => 'shipping', :locals => { :rates => @rates }
-  end
-  
   # Order Information
   def_tasked_action :info, InformationOrderTask do    
     @javascripts = ['quote.js', 'autosubmit.js']
@@ -425,37 +327,6 @@ public
         end
        end
       render_edit
-    end
-  end
-  
-private
-  def location_from_postalcode(code)
-    list = Zipcode.find_by_sql(
-     ["SELECT z.*, r.name as state "+
-      "FROM constants.zipcodes z, constants.regions r " +
-      "WHERE z.region = r.id AND z.country = 229 AND z.zip = ?",
-     code[0..4]])
-    if list.length == 1
-      session[:tz] = list.first.tz_name
-      list.first
-    else
-      nil
-    end
-  end
-  
-  # Customer Specific
-public
-  # Duplicated in orders controller
-  %w(company_name person_name email phone).each do |method|
-    define_method("auto_complete_for_customer_#{method}") do
-      find_options = { 
-        :conditions => [ "LOWER(#{method}) LIKE ? AND id != ?", '%' + params[:customer][method].downcase + '%', Integer(params[:customer_id]) ], 
-        :order => "#{method} ASC",
-        :limit => 10 }
-      
-      @items = Customer.find(:all, find_options)
-      
-      render :inline => "<%= auto_complete_result @items, '#{method}' %>"
     end
   end
 
@@ -565,7 +436,22 @@ public
 #      end
 #    end
   end
-  
+
+private
+  def location_from_postalcode(code)
+    list = Zipcode.find_by_sql(
+     ["SELECT z.*, r.name as state "+
+      "FROM constants.zipcodes z, constants.regions r " +
+      "WHERE z.region = r.id AND z.country = 229 AND z.zip = ?",
+     code[0..4]])
+    if list.length == 1
+      session[:tz] = list.first.tz_name
+      list.first
+    else
+      nil
+    end
+  end
+public  
   def location_from_postalcode_ajax
     if loc = location_from_postalcode(params[:postalcode])
       render :inline => "$('#{params[:type]}_city').value = '#{loc.city}';" + 
@@ -576,7 +462,9 @@ public
   end
   
   # Artwork
-  def_tasked_action :artwork, VisitArtworkOrderTask, ArtOverrideOrderTask, ArtReceivedOrderTask, ArtDepartmentOrderTask, ArtPrepairedOrderTask, ArtSentItemTask, ArtExcludeItemTask do    
+  def_tasked_action :artwork, VisitArtworkOrderTask, ArtOverrideOrderTask, ArtReceivedOrderTask, ArtDepartmentOrderTask, ArtPrepairedOrderTask, ArtSentItemTask, ArtExcludeItemTask do
+
+    @artwork = Artwork.new
     groups = @order.customer.artwork_groups
     @artwork_groups = groups.find_all { |g| !g.decorations_for_order(@order).empty? }
     groups -= @artwork_groups
@@ -592,7 +480,8 @@ public
     @order_item_decorations = @order.items.collect { |oi| oi.decorations.find(:all, :conditions => { 'artwork_group_id' => nil }) }.flatten
     @upload_id = Time.now.to_i.to_s
     
-    @javascripts = ['autosubmit.js'] #, 'upload_progress.js']
+    @stylesheets = ['orders']
+    @javascripts = ['autosubmit.js', 'rails.js'] #, 'upload_progress.js']
     @javascripts += ['effects.js', 'dragdrop.js'] if @user
     apply_calendar_header if @user
 
@@ -604,90 +493,6 @@ public
     
     @permited = @order.permissions.find_all_by_name(self.class.artwork_tasks.collect { |t| t.roles }.flatten.uniq,
       :include => :user)
-  end
-  
-  def artwork_add   
-    if params[:artwork] and params[:artwork][:art] != ''
-      Artwork.transaction do
-        group_name = "Order #{@order.id}"
-
-        unless @user
-          group_name = "Customer Order #{@order.id}"
-        else
-          group = @order.customer.artwork_groups.to_a.find do |group|
-            if group.order_item_decorations.empty?
-              true
-            else
-              if group.order_item_decorations.to_a.find { |d| d.order_item.order_id != @order.id }
-                false
-              else
-                @order.items.collect { |oi| oi.decorations }.flatten.length == 1
-              end
-            end
-          end
-        end
-        group = @order.customer.artwork_groups.find_by_name(group_name) unless group
-        group = @order.customer.artwork_groups.create(:name => group_name) unless group
-
-        artwork = group.artworks.create(params[:artwork].merge(:user => @user, :host => request.remote_ip))
-        if artwork.id
-          artwork.tags.create(:name => 'customer') unless @user
-          task_complete({ :data => { :id => artwork.id } }, ArtReceivedOrderTask, nil, false)
-        end
-      end
-    end
-        
-#    redirect_to :action => :artwork, :task => 'ArtReceivedOrder'
-    redirect_to :back
-  end
-  
-  def artwork_edit
-    Artwork.transaction do
-      params[:artwork].each do |id, hash|
-        artwork = Artwork.find(id)
-        raise "Artwork row not found for customer_id: #{@order.customer_id} id: #{id}" unless artwork.group.customer_id == @order.customer_id
-        artwork.update_attributes!(hash)
-      end if params[:artwork]
-
-      if @user
-        { :decoration => OrderItemDecoration,
-          :group => ArtworkGroup }.each do |name, klass|
-          
-          params[name] && params[name].each do |id, hash|
-            item = klass.find(id)
-            item.update_attributes!(hash)
-          end
-        end
-      end
-    end
-
-    if /^((?:Send Art)|(?:Mark as Sent)) for (.+)$/ === params[:commit]
-      Artwork.transaction do
-        email_sent = $1.include?('Send')
-        po = PurchaseOrder.find_by_quickbooks_ref($2)
-        po.purchase.items.each do |item|
-          item.task_complete({ :user_id => session[:user_id],
-                               :host => request.env['REMOTE_HOST'],
-                               :data => { :email_sent => email_sent }},
-                             ArtSentItemTask)
-        end
-        SupplierSend.artwork_send(po.purchase, @user) if email_sent
-      end
-      redirect_to :back
-      return
-    end
-
-    render_edit
-  end
-    
-  def artwork_remove
-    Artwork.transaction do
-      art = Artwork.find(params[:id])
-      raise "Art not associated with customer" unless art.group.customer_id == @order.customer_id
-      art.tags.each { |t| t.destroy }
-      art.destroy
-    end
-    redirect_to :action => :artwork, :order_id => @order
   end
   
 private
@@ -708,8 +513,10 @@ public
   
   def status
     Admin::OrdersController
-    apply_calendar_header if session[:user_id]
-#    @javascripts = ['calendar_date_select/calendar_date_select.js']
+    if session[:user_id]
+      apply_calendar_header
+      @javascripts << 'rails'
+    end
     
     unless @order
       @order = Order.new
@@ -791,7 +598,7 @@ public
   def_tasked_action :payment, PaymentInfoOrderTask, PaymentOverrideOrderTask, FirstPaymentOrderTask, FinalPaymentOrderTask do    
     @customer = @order.customer
 
-    @javascripts = ['autosubmit.js']
+    @javascripts = ['autosubmit.js', 'rails.js']
     
     if params[:commit]
       render_edit({}, [PaymentInfoOrderTask])
@@ -823,19 +630,19 @@ public
 
   def payment_use
     PaymentInfoOrderTask.transaction do
-      payment_method = PaymentMethod.find(params[:id], :include => :customer)
+      payment_method = PaymentMethod.find(params[:method_id], :include => :customer)
       raise "Payment not associated with customer" unless @order.customer_id == payment_method.customer_id
       raise "Already have payment info" unless payment_method.billing_id and !@order.task_completed?(PaymentInfoOrderTask)
       
       task_complete({ :data => { :id => payment_method.id } },
                     PaymentInfoOrderTask)
     end
-    redirect_to :action => :payment, :order_id => @order
+    redirect_to :action => :payment
   end
   
   def payment_remove
     PaymentMethod.transaction do
-      payment_method = PaymentMethod.find(params[:id], :include => :customer)
+      payment_method = PaymentMethod.find(params[:method_id], :include => :customer)
       raise "Payment not associated with customer" unless @order.customer_id == payment_method.customer_id
 
       payment_method.revoke! if payment_method.revokable?
@@ -851,7 +658,7 @@ public
         end
       end
     end
-    redirect_to :action => :payment, :order_id => @order
+    redirect_to :action => :payment
   end
     
   def filter_parameters(unfiltered_parameters)

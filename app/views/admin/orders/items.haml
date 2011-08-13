@@ -3,15 +3,16 @@
 - if last_art and last_art.has_tag?('customer')
   .late CUSTOMER UPLOADED ARTWORK
 = link_to("Create Product", new_product_path(:order_id => @order.id))
-|
-= link_to "Sample Order", { :action => :order_duplicate, :order_id => @order, :samples => true }, { :confirm => "Create new order with samples of current items" }
-|
-= link_to "FREE Sample Order", { :action => :order_duplicate, :order_id => @order, :samples => true, :free => true }, { :confirm => "Create new order with FREE samples of current items" }
-- if true #acknowledged = @order.task_completed?(AcknowledgeOrderTask)
+
+- action_list = [['Sample Order', :samples => true], ['FREE Sample Order', :samples => true, :free => true ], ['ReOrder', {}], ]
+- if @suppliers.collect { |s, p| p }.flatten.find { |p| p.new_record? }
+  Must have PO for all items to Spec Sample or Exact ReOrder
+- else
+  - action_list += [['Exact ReOrder', :exact => true], ['Spec Sample Order', {:spec => true}]]
+- action_list.each do |name, params|
   |
-  = link_to "ReOrder", { :action => :order_duplicate, :order_id => @order }, { :confirm => "Create new reorder current items" }
-  |
-  = link_to "Exact ReOrder", { :action => :order_duplicate, :order_id => @order, :exact => true }, { :confirm => "Create new reorder current items" }
+  = link_to name, duplicate_admin_order_path(@order, params), :method => :post, :confirm => "Create new #{name}"
+
 - if @permissions.include?('Super') && !@unlock
   .admin
     The order has been Acknowledged so customer pricing can't be changed.
@@ -33,7 +34,7 @@
         .purchase
           - purchase_lock = !(params[:override] && allowed?('Super')) && purchase.locked(allowed?('Super'))
           - if purchase.new_record?
-            = form_for @order, { :url => { :action => :purchase_create, :id => supplier.id, :order_id => @order } } do |order|
+            = form_for @order, { :url => purchase_create_admin_order_path(@order, :supplier_id => supplier.id) } do |order|
               %h2
                 Purchase Order - Create as
                 - for sub in [supplier] + supplier.children
@@ -109,5 +110,5 @@
 
 - unless @tasks.empty? and @revokable.empty?
   %hr
-  = render :partial => 'order/pending_tasks'
+  = render :partial => 'orders/pending_tasks'
 

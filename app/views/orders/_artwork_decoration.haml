@@ -17,7 +17,7 @@
               = item_decoration.description
               - if @user and !@static and item_decoration.has_dimension?
                 \-
-                = link_to "Inkscape Template", { :controller => '/admin/orders', :action => :inkscape, :id => item_decoration.id }
+                = link_to "Inkscape Template", inkscape_order_artwork_path(@order, :id => item_decoration.id)
                 \-
                 - if !@static && item_decoration.artwork_group
                   - if item_decoration.artwork_group.pdf_artworks.empty?
@@ -25,8 +25,8 @@
                   - elsif false #item_decoration.artwork_group.pdf_exists?
                     Proof already created
                   - else
-                    = link_to "Proof", { :controller => '/admin/orders', :action => :artwork_generate_pdf, :decoration_id => item_decoration.id }
-                    = link_to "(Scale)", { :controller => '/admin/orders', :action => :artwork_generate_pdf, :decoration_id => item_decoration.id, :scale => true }
+                    = link_to "Proof", make_proof_order_artwork_path(@order, :decoration_id => item_decoration.id), :method => :post, :confirm => "Generate Proof from Supplier artworks"
+                    = link_to "(Scale)", make_proof_order_artwork_path(@order, :decoration_id => item_decoration.id, :scale => true), :method => :post, :confirm => "Generate Proof from Supplier artworks"
 
             - decorations = product.decorations.find(:all, :conditions => { :technique_id => item_decoration.technique })
             - if dragable

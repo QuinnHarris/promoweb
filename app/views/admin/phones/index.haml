@@ -30,6 +30,32 @@
         = user.text_field(:external_phone_timeout, :size => 2)
         %span{ :style => 'float: right;' }= user.submit
 
+%h2 Phone Registrations
+%table
+  %thead
+    %tr
+      %td IP Address
+      %td IP Location
+      %td Expires
+  %tbody
+    - for reg in @registrations
+      %tr
+        %td= reg.network_ip
+        %td
+          - if gi = GEOIP.look_up(reg.network_ip)
+            - if gi[:city]
+              = gi[:city].force_encoding("UTF-8")
+            - if gi[:region]
+              = gi[:region].force_encoding("UTF-8")
+            - if gi[:country_name]
+              [#{gi[:country_name].force_encoding("UTF-8")}]
+            - if gi[:postal_code]
+              \,
+              = gi[:postal_code]
+            - if gi[:area_code]
+              = "(#{gi[:area_code]})"
+        %td= Time.at(reg.expires)
+
 %h2 Provisioned Phones
 = error_messages_for :phone
 = form_for [@user, @phone] do |ph|

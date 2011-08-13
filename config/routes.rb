@@ -58,35 +58,36 @@ Promoweb::Application.routes.draw do
   match 'products/:id(.:format)' => 'products#show'
   match 'products/main/:iid' => redirect('/products/%{iid}')
 
-  match '/admin/orders/task_execute' => 'admin::Orders#task_execute'
+  match '/admin/orders/shipping_get' => 'admin::Orders#shipping_get'
 
   namespace 'admin' do
     resource :orders do
       %w(person_name company_name email_addresses phone_numbers).each do |name|
         post "auto_complete_for_customer_#{name}"
       end
-      get 'items_edit'
       get 'contact_find'
       get 'new_order'
-      post 'payment_apply'
       get 'contact_search'
       post 'contact_find'
       get 'contact_merge'
-      get 'task_revoke'
-      get 'order_duplicate'
-      get 'artwork_group_new'
-      post 'artwork_drop_set'
-      get 'artwork_generate_pdf'
-      get 'order_own'
-      get 'email_list'
-      post 'shipping_set'
       post 'variant_change'
       post 'set'
       post 'auto_complete_generic'
+      
+      get 'order_item_remove'
+      get 'order_item_entry_insert'
+      get 'order_item_decoration_insert'
+      get 'order_entry_insert'
+
+      get 'shipping_get'
+      post 'shipping_set'
+
+      get 'po'
+      get 'purchase_mark'
     end
 
     resources :employees
-    resources :suppliers
+    resources :suppliers, :except => [:show]
     %w(logout password).each do |name|
       match "users/#{name}" => "users##{name}"
     end
@@ -118,21 +119,84 @@ Promoweb::Application.routes.draw do
 
   match 'static/:action', :controller => 'static'
 
-  match 'order/:action(/:id(.:format))', :controller => 'order'
-#  resource :orders, :only => [:index, :show] do
-#    get 'status'
-#    get 'info'
-#    get 'contact'
+  match 'order/:name' => 'orders#legacy_redirect'
+  resources :orders, :only => [:index, :show] do
+    collection do
+      post 'add' => 'order_items#add'
+    end
 
-#    resource :items, :only => [:create, :destroy]
-#    resource :artworks, :only => [:create, :destroy]
-#  end
+    member do
+      get 'status'
+      get 'items'
+      post 'items'
+      get 'info'
+      post 'info'
+      get 'contact'
+      post 'contact'
+      get 'artwork'
+      get 'payment'
+      get 'payment_creditcard'
+      post 'payment_creditcard'
+      post 'payment_sendcheck'
+      post 'payment_use'
+      post 'payment_remove'
+
+      get 'review'
+      get 'acknowledge_order'
+      get 'acknowledge_artwork'
+
+      # Temp
+      post 'artwork_add'
+      post 'artwork_edit'
+      get 'artwork_remove'
+
+      namespace :admin do
+        get 'items'
+        get 'email'
+        get 'access'
+        delete 'destroy'
+
+        post 'duplicate'
+        post 'restore'
+        
+        post 'payment_apply'
+        post 'own'
+
+        put 'purchase_create'
+
+        delete 'task_revoke'
+        put 'task_execute'
+        post 'task_comment'
+      end
+    end
+
+    resources :items, :only => [:destroy], :controller => 'order_items'
+
+    resource :artwork, :controller => 'artwork', :only => [] do
+      post 'edit'
+      scope :module => :admin do
+        post 'drop_set'
+        post 'group_new'
+        post 'group_destroy'
+        post 'make_proof'
+        get 'inkscape'
+      end
+    end
+
+    resources :artwork, :only => [:destroy, :create] do
+      member do
+        scope :module => :admin do
+          post 'mark'
+        end
+      end
+    end
+  end
   
   match 'admin' => 'admin::Users#auth'
 
   # This is a legacy wild controller route that's not recommended for RESTful applications.
   # Note: This route will make all actions in every controller accessible via GET requests.
-  match ':controller(/:action(/:id(.:format)))'
+  #  match ':controller(/:action(/:id(.:format)))'
 
   # Unidata Provisioning
   match '/e1_:addr.ini' => 'phone#unidata', :constraints => { :addr => /[0-9a-f]{12}/ }

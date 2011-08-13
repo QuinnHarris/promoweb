@@ -40,7 +40,7 @@
       %tr
         %th
           - if !static and RemoveItemOrderTask.allowed?(@permissions)
-            = link_to(image_tag('remove.png') + "Remove", { :action => :item_remove, :id => order_item, :order_id => @order }, :confirm => "Remove #{order_item.product.name}")
+            = link_to(image_tag('remove.png') + "Remove", order_item_path(@order, order_item), :method => :delete, :confirm => "Remove #{order_item.product.name}")
         %td Description
         %td Unit
         - if fixed
@@ -54,12 +54,12 @@
           - else
             - thumb_path = order_item.active_images.first.image.url(:thumb) 
           - unless absolute
-            = link_to({ :controller => '/products', :action => 'main', :id => order_item.product }) do
+            = link_to(url_for_product(order_item.product)) do
               = image_tag(thumb_path, :alt => "#{order_item.product.name} Thumbnail")
               %br
               %strong M#{order_item.product.id}
           - else
-            %a{ :href => "http://www.mountainofpromos.com/products/main/#{order_item.product.id}" }
+            %a{ :href => "http://www.mountainofpromos.com/products/#{order_item.product.id}" }
               %img{ :src => "http://www.mountainofpromos.com#{thumb_path}" }
               %br
               %strong= "M#{order_item.product.id}"
@@ -73,10 +73,10 @@
 
           - unless absolute
             %strong
-              = link_to order_item.product.name, { :controller => '/products', :action => 'main', :id => order_item.product }
+              = link_to order_item.product.name, url_for_product(order_item.product)
           - else
             %strong
-              %a{ :href => "http://www.mountainofpromos.com/products/main/#{order_item.product.id}" }
+              %a{ :href => "http://www.mountainofpromos.com/products/#{order_item.product.id}" }
                 = order_item.product.name
           %em
             (for

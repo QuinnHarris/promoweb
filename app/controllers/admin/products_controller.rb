@@ -116,7 +116,7 @@ class Admin::ProductsController < Admin::BaseController
         pi.save!
       end        
 
-      redirect_to :controller => '/order', :action => :add_item, :product => product, :quantity => 100, :price_group => price_group, :order_id => params[:context][:order_id]
+      redirect_to :controller => '/orders', :action => :add, :product => product, :quantity => 100, :price_group => price_group, :id => params[:context][:order_id]
     end
   end
   

@@ -1,6 +1,6 @@
 OrderTask
 
-module OrderHelper
+module OrdersHelper
   def submit_options(commit = true)   
     output = []
     inject = [controller.class.send("#{params[:action]}_tasks").first]
@@ -31,7 +31,7 @@ module OrderHelper
   
   def link_to_task(name, task, order = @order, options = {}, html_options = {})
     if task.uri
-      link_to(name, task.uri.merge(:order_id => order.id).merge(options), html_options.merge(:class => @user && task.late && 'late'))
+      link_to(name, task.uri.merge(:id => order.id).merge(options), html_options.merge(:class => @user && task.late && 'late'))
     else
       if @user && task.late
         "<span class='late'>#{name}</span>"
@@ -40,16 +40,13 @@ module OrderHelper
       end
     end
   end
-    
-#  def form_for(object_name, *args, &proc)
-#    raise ArgumentError, "Missing block" unless block_given?
-#    options = args.extract_options!
-#    url = options.delete(:url) || {}
-#    url.merge!(:only_path => false, :protocol => "https://") unless request.protocol == "https://" or RAILS_ENV != "production"
-#    concat(form_tag(url, options.delete(:html) || {}), proc.binding)
-#    fields_for(object_name, *(args << options), &proc)
-#    concat('</form>', proc.binding)
-#  end
+
+  def li_to_order(name, method = nil, list = nil)
+    method ||= "#{name.downcase}_order"
+    li_to_cur(name,
+              send("#{method}_path", @order),
+              [list].flatten.compact.collect { |m| send("#{m}_path", @order) })
+  end
   
   def format_time_course(time)
     now = Time.now
@@ -80,7 +77,7 @@ module OrderHelper
       instance_variable_get("@#{object_name}").send(method).to_s
     else
       if @search or @naked
-        text_field_with_auto_complete object_name, method, @search ? { :value => '' } : {}, complete_options.merge({ :after_update_element => 'on_select', :url => { :action => "auto_complete_for_#{object_name}_#{method}", :customer_id => @search ? nil : @order.customer } } )
+        text_field_with_auto_complete object_name, method, @search ? { :value => '' } : {}, complete_options.merge({ :after_update_element => 'on_select', :url => { :controller => '/admin/orders', :action => "auto_complete_for_#{object_name}_#{method}", :customer_id => @search ? nil : @order.customer } } )
       else
         text_field object_name, method
       end
@@ -163,7 +160,7 @@ Calendar.setup({
   
   def add_link(cust, name, klass)
     plural = name.pluralize
-    string = render(:partial => "/order/#{name}", :locals => { :customer => cust, name.to_sym => klass.new })
+    string = render(:partial => "/orders/#{name}", :locals => { :customer => cust, name.to_sym => klass.new })
     string = string.gsub(/_attributes_\d+_/, '_attributes__index__')
     string.gsub!(/attributes\]\[(\d+)\]\[/,'attributes][_index_][')
     index = $1

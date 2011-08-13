@@ -71,7 +71,7 @@ class InvoiceOrderItem < InvoiceEntry
     if predicesor
       tail = ["&ndash; (Previous invoice total: <strong>#{predicesor.orig_price.to_perty}</strong>) = Total:", total_price.to_perty]
     end
-    template.render(:partial => '/order/order_item',
+    template.render(:partial => '/orders/order_item',
                     :locals => { :order_item => order_item, :static => true, :absolute => absolute, :shipping => false, :invoice => true, :user => nil, :tail => tail })
   end
 

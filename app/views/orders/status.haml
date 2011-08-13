@@ -1,11 +1,11 @@
 - if @order and @user
   - if @order.closed
-    .admin= link_to "Open Order", { :controller => '/admin/orders', :action => 'restore', :id => @order }, { :confirm => "Unclose order #{@order.id}" }
+    .admin= link_to "Open Order", restore_admin_order_path(@order), { :method => :post, :confirm => "Unclose order #{@order.id}" }
   - else
     %h3 Available Tasks
     = render :partial => 'pending_tasks'
   - if allowed?('Super') and @order.task_ready?(CancelOrderTask) and !@order.task_completed?(RequestOrderTask) and @order.customer.orders.length > 1
-    = link_to "Remove Order", :controller => '/admin/orders', :action => :order_remove, :id => @order.id
+    = link_to "Remove Order", admin_order_path(@order), :method => :delete
   %hr
 
 %h2 Order Status Overview
@@ -60,7 +60,7 @@
                 = format_time(td.complete_at)
 
               - if @user and td.allowed?(@permissions) and td.revokable?
-                = link_to image_tag('remove.png'), { :controller => '/admin/orders', :action => :task_revoke, :id => td, :class => td.class, :order_id => @order }, { :confirm => "Revoke #{td.status_name} task?" }
+                = link_to image_tag('remove.png'), task_revoke_admin_order_path(@order, :task_id => td, :class => td.class), :method => :delete, :confirm => "Revoke #{td.status_name} task?"
             .name                
               = image_tag td.active ? 'check.png' : (td.customer ? 'there_task.png' : 'our_task.png')
               - if td.uri and (@user ? td.allowed?(@permissions) : ((td.ready? or td.active) and !td.uri[:controller].include?('admin')))
@@ -69,7 +69,7 @@
                 = td.status_name
             - if td.respond_to?(:apply)
               %div
-                - text = render_partial_null("/order/status/#{td.class.to_s.underscore}", { :task => td })
+                - text = render_partial_null("/orders/status/#{td.class.to_s.underscore}", { :task => td })
                 - if @user and td.ready?
                   - form_tag({ :controller => '/admin/orders', :action => :task_execute, :id => td.object, :tasks => [td.class] }) do
                     != text
@@ -100,7 +100,11 @@
           %td= format_time(task.created_at)
           %td= task.user ? task.user.name : "Customer"
           %td= link_to(task.host, "http://www.maxmind.com/app/locate_ip?ips=#{task.host}") if task.host
-          %td= (task.allowed?(@permissions) and task.revokable?) ? link_to(image_tag('remove.png'), { :controller => '/admin/orders', :action => :task_revoke, :id => task, :class => task.class, :order_id => @order }, { :confirm => "Revoke #{task.status_name} task?" }) : (task.active ? 'X' : '-')
+          %td
+            - if task.allowed?(@permissions) and task.revokable?
+              = link_to image_tag('remove.png'), task_revoke_admin_order_path(@order, :task_id => task, :class => task.class), :method => :delete, :confirm => "Revoke #{td.status_name} task?"
+            - else
+              = task.active ? 'X' : '-'
           %td= link_to_task(task.completed_name, task)
           %td= task.data.inspect
 

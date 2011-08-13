@@ -1,5 +1,5 @@
 module Admin::OrdersHelper
-  include OrderHelper
+  include ::OrdersHelper
   
   def format_email(mail, name)
     return nil unless mail.send(name)

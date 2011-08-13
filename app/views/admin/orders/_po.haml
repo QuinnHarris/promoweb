@@ -64,7 +64,7 @@
       %h3 Vendor
       %strong= @purchase.supplier.name
       %br
-      = render :partial => '/order/address', :locals => { :address => @purchase.supplier.address }
+      = render :partial => '/orders/address', :locals => { :address => @purchase.supplier.address }
       %br
       %strong Phone:
       = @purchase.supplier.phone
@@ -82,11 +82,11 @@
       - elsif valid?(@purchase.order.customer, :person_name)
         %div
           %strong= @purchase.order.customer.person_name
-      = render :partial => '/order/address', :locals => { :address => @purchase.order.customer.ship_address || @purchase.order.customer.default_address }
+      = render :partial => '/orders/address', :locals => { :address => @purchase.order.customer.ship_address || @purchase.order.customer.default_address }
 
 %hr
 
-= render :partial => '/order/order_item', :collection => @purchase.items, :locals => { :static => true, :absolute => true, :invoice => true, :aspect => :cost }
+= render :partial => '/orders/order_item', :collection => @purchase.items, :locals => { :static => true, :absolute => true, :invoice => true, :aspect => :cost }
 - unless (entries = @purchase.entries).empty?
   %table.block
     %thead

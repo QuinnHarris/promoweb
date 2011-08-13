@@ -17,6 +17,8 @@ class Admin::PhonesController < Admin::BaseController
       return unless @user.valid?
       @user.save!
     end
+
+    @registrations = Registration.where(:reg_user => @user.login).all
   end
 
   def create

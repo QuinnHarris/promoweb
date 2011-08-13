@@ -74,7 +74,7 @@
         %td#email_addresses
           - unless @search
             - @customer.email_addresses << EmailAddress.new if @customer.email_addresses.empty?
-            = render :partial => '/order/email_address', :locals => { :customer => cust }
+            = render :partial => 'email_address', :locals => { :customer => cust }
           - else
             = text_field_predicated(:customer, :email_addresses)
         - unless @static or @search
@@ -86,7 +86,7 @@
         %td#phone_numbers
           - unless @search
             - @customer.phone_numbers << PhoneNumber.new if @customer.phone_numbers.empty?
-            = render :partial => '/order/phone_number', :locals => { :customer => cust }
+            = render :partial => 'phone_number', :locals => { :customer => cust }
           - else
             = text_field_predicated(:customer, :phone_numbers)
         - unless @static or @search
@@ -119,5 +119,5 @@
 
 :javascript
   $$('.postalcode').each(function (obj) {
-    new Form.Element.Observer(obj, 0.25, function(element, value) {if (value.length >= 5) { new Ajax.Request('/order/location_from_postalcode_ajax', {asynchronous:true, evalScripts:true, onComplete:function(request){eval(request.responseText)}, parameters:'postalcode='+value+'&type=default_address'}); }})
+    new Form.Element.Observer(obj, 0.25, function(element, value) {if (value.length >= 5) { new Ajax.Request('/orders/location_from_postalcode_ajax', {asynchronous:true, evalScripts:true, onComplete:function(request){eval(request.responseText)}, parameters:'postalcode='+value+'&type=default_address'}); }})
   });

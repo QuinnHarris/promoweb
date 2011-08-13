@@ -6,7 +6,7 @@
         %th= "#{name.gsub('_', ' ').capitalize}:"
         %td= @static ? @supplier.send(name) : supplier.text_field(name)
     - if @address
-      = render :partial => '/order/address_edit', :locals => { :field_name => :address, :disabled => false }
+      = render :partial => '/orders/address_edit', :locals => { :field_name => :address, :disabled => false }
 
     - %w(inside_sales accounting customer_service problem_resolution).each do |name|
       - %w(name email phone).each do |field|

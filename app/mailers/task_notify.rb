@@ -1,6 +1,6 @@
 class TaskNotify < ActionMailer::Base
   helper ApplicationHelper
-  helper OrderHelper
+  helper OrdersHelper
   
   def notify(order, task, recipients)
     @order, @task = order,task

@@ -70,7 +70,7 @@
           - elsif valid?(customer, :person_name)
             = customer.person_name
             %br
-          = render :partial => '/order/address', :locals => { :address => customer.ship_address || customer.default_address }
+          = render :partial => '/orders/address', :locals => { :address => customer.ship_address || customer.default_address }
         - unless customer.payment_methods.empty?
           %div
             %h3 Bill To
@@ -81,7 +81,7 @@
             - elsif valid?(customer, :person_name)
               = customer.person_name
             %br
-            = render :partial => '/order/address', :locals => { :address => payment.address, :customer => customer }
+            = render :partial => '/orders/address', :locals => { :address => payment.address, :customer => customer }
 
   %hr
 - for invoice in (@order.invoices + @order.payment_transactions.find_all { |t| !t.amount.zero? }).sort_by { |i| i.created_at || Time.now }

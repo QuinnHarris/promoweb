@@ -26,7 +26,7 @@
     = link_to "Unlock to Modify", :unlock => true
 
 - unless @static or (!@user and @order.task_completed?(ArtAcknowledgeOrderTask))
-  - form_for :artwork, @artwork, { :url => { :action => :artwork_add, :order_id => @order, :upload_id => @upload_id }, :html => { :multipart => true } }  do |artwork|
+  - form_for @artwork, :url => order_artwork_index_path(@order), :html => { :multipart => true } do |artwork|
     %table.form
       %caption Add Artwork
       %tr
@@ -51,7 +51,7 @@
         .admin.action
           = link_to "Revoke #{perm.name} from #{perm.user.name}", { :controller => '/admin/orders', :action => :permission_revoke, :name => perm.name, :user_id => perm.user_id, :order_id => perm.order_id }
       %hr
-    = render :partial => 'pending_tasks'
+    = render :partial => '/orders/pending_tasks'
     %hr
 
 :javascript
@@ -61,20 +61,20 @@
     droparea.getElementsByClassName(parent.className)[0].appendChild(draggable);
     draggable.style.top = 0;
     draggable.style.left = 0;
-    new Ajax.Request('/admin/orders/artwork_drop_set', {
+    new Ajax.Request('#{drop_set_order_artwork_path(@order)}', {
       asynchronous:true, evalScripts:true, parameters: droparea.id + '&' + draggable.id
       #{@order.task_ready?(ArtPrepairedOrderTask) ? ', onComplete: function(transport) { window.location.reload() }' : '' }
     })
   }
 
-= form_for :artwork, @artwork, { :url => { :action => :artwork_edit, :order_id => @order } }  do |artwork|
+= form_for @artwork, :url => edit_order_artwork_path(@order)  do |artwork|
   - if dragable = allowed?('Orders') && !@order.task_completed?(ArtPrepairedOrderTask)
     %div{ :id => "artwork-group=" }
       = render :partial => 'artwork_decoration', :locals => { :group => nil, :item_decorations => @order_item_decorations, :dragable => true }
     = drop_receiving_element("artwork-group=", { :onDrop => 'moveItem', :accept => 'decoration' } )
 
   - if allowed?(%w(Art Orders)) && !@static
-    = link_to image_tag('add.png') + "New Artwork Group", { :controller => 'admin/orders', :action => 'artwork_group_new', :customer_id => @order.customer }, { :class => 'button', :confirm => "Create a new artwork group for #{@order.customer.person_name}" }
+    = link_to image_tag('add.png') + "New Artwork Group", group_new_order_artwork_path(@order), { :method => :post, :class => 'button', :confirm => "Create a new artwork group for #{@order.customer.person_name}" }
 
   %hr
 

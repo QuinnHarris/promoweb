@@ -85,72 +85,8 @@ public
     end
     
     # Set @order for all controllers
-    if params[:auth] or params[:order_id] or session[:order_id]      
-      if params[:auth]
-        customer = Customer.find_by_uuid(params[:auth])
-        if params[:order_id]
-          @order = customer.orders.find_by_id(params[:order_id])
-          raise "Can't find order for customer" unless @order        
-        else
-          @order = customer.orders.first
-        end
-      else
-        @order = Order.find(params[:order_id] || session[:order_id], :include => [:customer, :user])
-        if params[:order_id] and !session[:user_id]
-          # If Customer (or not logged in)
-          if session[:order_id]
-            # If changing order
-            old_order = Order.find(session[:order_id])
-            if old_order.customer_id != @order.customer_id
-              @order = nil
-              raise "Order #{session[:order_id]} does not belong to current customer"
-            end
-          else
-            # If not logged in and not establised as customer
-            if params[:controller].include?('admin')
-              redirect_to :controller => '/admin', :action => ''
-            else
-              @order = nil
-              render :action => :login
-              return false
-            end
-          end
-        end
-      end
-
-      session[:tz] = nil if params[:order_id] and session[:order_id] != params[:order_id]
-      if !session[:tz] and @order.customer.default_address and @order.customer.default_address.postalcode
-        list = Zipcode.find_by_sql(["SELECT z.*, r.name as state "+
-                                    "FROM constants.zipcodes z, constants.regions r " +
-                                    "WHERE z.region = r.id AND z.country = 229 AND z.zip = ?",
-                                    @order.customer.default_address.postalcode[0..4]])
-        if list.length == 1
-          session[:tz] = list.first.tz_name
-          Time.zone = session[:tz] || 'Mountain Time (US & Canada)'
-        end
-      end
-      
-      session[:order_id] = @order && @order.id
-      raise "Unknown Order" unless session[:order_id]
-    end
-
-    # Set @permissions and @user if applicable for all controllers
-    if session[:user_id]
-      @user = User.find(session[:user_id])
-
-      @permissions = @user.permissions.find(:all,
-        :conditions => ['order_id IS NULL OR order_id = ?',
-        session[:order_id]]).collect { |p| p.name }
-      #raise "Permission Denied" if @permissions.empty?
-      @customer_zone = Time.zone if session[:tz]
-      Time.zone = 'Mountain Time (US & Canada)'
-
-      if @order and @user.current_order_id != @order.id
-        User.update_all("current_order_id = #{@order.id}", "id = #{@user.id}")
-      end
-    else
-      @permissions = %w(Customer)
-    end
+    @order = Order.find(session[:order_id]) unless @order or session[:order_id].nil?
+    @user = User.find(session[:user_id]) unless @user or session[:user_id].nil?
     
     true
   end

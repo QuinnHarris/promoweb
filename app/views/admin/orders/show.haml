@@ -22,23 +22,23 @@
       - for order in orders
         %tr{ :class => cycle('even', 'odd') }
           %td
-            = link_to(:controller => '/order', :action => :status, :order_id => order) do
+            = link_to(status_order_path(order)) do
               = order.id
               - if order.sample
                 %strong> S
 
             = surround '(', ')' do
               - pos = order.items.collect { |i| i.purchase && i.purchase.purchase_order && i.purchase.purchase_order.quickbooks_ref }.compact.uniq
-              = link_to(pos.empty? ? 'NO PO' : pos.join(','), :controller => '/admin/orders', :action => :items_edit, :order_id => order )
+              = link_to(pos.empty? ? 'NO PO' : pos.join(','), items_admin_order_path(order))
 
             %br
             = order.user ? order.user.name : "Unassigned"
             - if days = order.days_to_deliver
               %br
-              = link_to(days < 0 ? 'PAST DUE' : "#{order.days_to_deliver} Days", { :controller => '/order', :action => :info, :order_id => order })
+              = link_to(days < 0 ? 'PAST DUE' : "#{order.days_to_deliver} Days", info_order_path(order))
             - if order.urgent_note and !order.urgent_note.strip.empty?
               %br
-              %strong= link_to order.urgent_note, :controller => '/order', :action => :info, :order_id => order.id
+              %strong= link_to order.urgent_note, info_order_path(order)
           %td
             - images = order.items[0..1].collect do |item|
               - unless (images = item.active_images).empty?
@@ -48,7 +48,7 @@
 
           %td
             - if allowed?('CustomerInformationTask')
-              = link_to(:controller => '/order', :action => :contact, :order_id => order) do
+              = link_to(contact_order_path(order)) do
                 %div= order.customer.company_name
                 %div= order.customer.person_name
             - else

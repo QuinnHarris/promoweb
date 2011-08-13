@@ -1,5 +1,5 @@
 %hr
 
-= render :partial => '/order/acknowledge_artwork', :locals => { :static => true }
+= render :partial => '/orders/acknowledge_artwork', :locals => { :static => true }
 
 = link_to 'Acknowledge Artwork', {  :only_path => false, :controller => 'order', :action => 'acknowledge_artwork', :auth => @order.customer.uuid, :order_id => @order.id }

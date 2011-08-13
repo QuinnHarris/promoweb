@@ -155,7 +155,7 @@ module ObjectTaskMixin
           :conditions => ["permissions.order_id = ? AND permissions.name IN (?)", order.id, roles])
         notify_users.uniq!
         notify_users.delete(task.user)
-        TaskNotify.deliver_notify(order, task, notify_users.collect { |u| u.email_string }) unless notify_users.empty?
+        TaskNotify.notify(order, task, notify_users.collect { |u| u.email_string }).deliver unless notify_users.empty?
       end
     end
     task

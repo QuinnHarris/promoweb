@@ -22,7 +22,7 @@
               %div #{p.name}: #{p.number_string}
         %tr
           %th Orders
-          %td!= data.orders.collect { |o| link_to o.id, :controller => '/order', :action => :status, :order_id => o.id }.join(', ')
+          %td!= data.orders.collect { |o| link_to o.id, status_order_path(o) }.join(', ')
     - else
       %h2 Product Views
       #{format_phone(call_log.caller_number)} : #{call_log.caller_name} @ #{format_time(call_log.create_time)}

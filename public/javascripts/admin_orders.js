@@ -521,7 +521,7 @@ function shipping_change(target)
     target.addClassName("sending");
     new Ajax.Request('/admin/orders/shipping_set', {
 	    parameters:   {
-		"id" : target.id,
+		"item_id" : target.id,
 		    "value" : target.value  },
 		onComplete: request_complete
 		});
@@ -530,7 +530,7 @@ function shipping_change(target)
 function get_shipping(s)
 {
     var table = s.parentNode.parentNode.parentNode;
-    new Ajax.Updater(s, '/admin/orders/shipping_get/'+table.id.split('-')[1], {asynchronous:true, evalScripts:true});
+    new Ajax.Updater(s, '/admin/orders/shipping_get?item_id='+table.id.split('-')[1], {asynchronous:true, evalScripts:true});
 }
 
 function get_all_shipping()

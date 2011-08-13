@@ -158,6 +158,11 @@ module ApplicationHelper
     str += list[-1].to_s unless list.empty?
     str    
   end
+
+  def li_to_cur(name, options, list = nil)
+    selected = [options, list].flatten.compact.uniq.find { |e| current_page?(e) }
+    (selected ? "<li class='sel'>" : "<li>") + link_to(name, options) + '</li>'
+  end
   
   def li_to(name, url_h, cls = nil)
     selected = block_given? ? yield : ((params[:action] == url_h[:action].to_s) and (params[:controller] == url_h[:controller][1..-1]))

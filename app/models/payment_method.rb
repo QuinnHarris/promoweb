@@ -45,7 +45,7 @@ end
 
 class OnlineMethod < PaymentMethod
   def self.gateway
-    secrets = YAML.load_file(RAILS_ROOT + '/config/secrets')
+    secrets = YAML.load_file("#{Rails.root}/config/secrets")
     ActiveMerchant::Billing::TrustCommerceGateway.new(secrets['trust_commerce'][RAILS_ENV].symbolize_keys)
   end
 end

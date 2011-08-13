@@ -7,7 +7,7 @@
   }
 
 %h2 Order Items
-= render :partial => '/order/items', :locals => { :static => true, :absolute => true }
+= render :partial => '/orders/items', :locals => { :static => true, :absolute => true }
 
 %h2 Order Information
 %table.info
@@ -32,7 +32,7 @@
 - customer = @order.customer
 - unless customer.artwork_groups.empty?
   %h2 Customer Artwork
-  = render :partial => '/order/artwork_items', :locals => { :artwork_groups => customer.artwork_groups, :static => true, :absolute => true, :filter_tag => nil }
+  = render :partial => '/orders/artwork_items', :locals => { :artwork_groups => customer.artwork_groups, :static => true, :absolute => true, :filter_tag => nil }
 
 %h2 Contact Information
 %table.info
