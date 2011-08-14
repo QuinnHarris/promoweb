@@ -1,25 +1,5 @@
 # Methods added to this helper will be available to all templates in the application.
 module ApplicationHelper
-  def error_messages_for_many(object_list, options = {})
-    options = options.symbolize_keys
-    objects = object_list.collect { |obj| instance_variable_get("@#{obj}") }.compact
-    error_count = objects.inject(0) { |sum, o| sum + o.errors.count }
-    if error_count > 0
-      content_tag("div",
-        content_tag(
-          options[:header_tag] || "h2",
-          "#{pluralize(error_count, "error")} prohibited this from being saved"
-        ) +
-        content_tag("p", "There were problems with the following fields:") +
-        content_tag("ul",
-          objects.collect { |obj| obj.errors.full_messages.collect { |msg| content_tag("li", msg) } }.flatten),
-        "id" => options[:id] || "errorExplanation", "class" => options[:class] || "errorExplanation"
-      )
-    else
-      ""
-    end
-  end
-
   def format_time_tod(time)
     time.strftime(" %I:%M %p")
   end

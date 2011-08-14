@@ -48,7 +48,9 @@ private
       return false
     end
 
-    order_id = params[:order_id] || params[:id] || session[:order_id]
+    order_id = params[:order_id]
+    order_id = params[:id] if order_id.nil? and (/^\d{4,5}$/ === params[:id])
+    order_id = session[:order_id] unless order_id
 
     if params[:auth]
       customer = Customer.find_by_uuid(params[:auth])
@@ -58,34 +60,38 @@ private
       else
         @order = customer.orders.first
       end
-    else
-      unless session[:order_id] or session[:user_id]
-        # If not logged in
-        @order = nil
-        if params[:controller].include?('admin')
-          redirect_to :controller => '/admin/users', :action => :auth
-        else
-          render :action => :login
-        end
-        return false
-      end
 
-      # Typical customer path
-      if order_id
-        begin
-          @order = Order.includes(:customer, :user).find(order_id)
-        rescue ActiveRecord::RecordNotFound
-          # Temporary kludge to deal with :id for legacy methods
-          @order = Order.find(session[:order_id], :include => [:customer, :user])
-        end
-        
-        # If changing order
-        unless session[:user_id]
-          old_order = Order.find(session[:order_id])
-          if old_order.customer_id != @order.customer_id
-            @order = nil
-            raise "Order #{session[:order_id]} does not belong to current customer"
-          end
+      # Redirect without :auth parameter
+      redirect_to
+      return false
+    end
+
+    unless session[:order_id] or session[:user_id]
+      # If not logged in
+      @order = nil
+      if params[:controller].include?('admin')
+        redirect_to :controller => '/admin/users', :action => :auth
+      else
+        render :action => :login
+      end
+      return false
+    end
+    
+    # Typical customer path
+    if order_id
+      begin
+        @order = Order.includes(:customer, :user).find(order_id)
+      rescue ActiveRecord::RecordNotFound
+        # Temporary kludge to deal with :id for legacy methods
+        @order = Order.find(session[:order_id], :include => [:customer, :user])
+      end
+      
+      # If changing order
+      unless session[:user_id]
+        old_order = Order.find(session[:order_id])
+        if old_order.customer_id != @order.customer_id
+          @order = nil
+          raise "Order #{session[:order_id]} does not belong to current customer"
         end
       end
     end
@@ -364,7 +370,9 @@ public
     if params[:customer_id] and params[:customer] and params[:default_address]
       Customer.transaction do 
         @customer.attributes = params[:customer]
-        changed = @customer.changed? || @customer.phone_numbers.to_a.find { |p| p.changed? || p.marked_for_destruction? } || @customer.email_addresses.to_a.find { |p| p.changed? || p.marked_for_destruction? }
+        changed = @customer.changed? ||
+          @customer.phone_numbers.to_a.find { |p| p.changed? || p.marked_for_destruction? } ||
+          @customer.email_addresses.to_a.find { |p| p.changed? || p.marked_for_destruction? }
 
         @default_address.attributes = params[:default_address]
         if @default_address.changed?
@@ -386,13 +394,17 @@ public
           if @customer.ship_address
             ship_address = @customer.ship_address
             @customer.ship_address = nil
-            @customer.save!
+            @customer.save(:validate => false)
             ship_address.destroy
             changed = true
           end
         end
 
-        if @customer.valid?
+        valid = @customer.valid? &&
+          !@customer.phone_numbers.to_a.find { |p| !p.valid? } &&
+          !@customer.email_addresses.to_a.find { |e| !e.valid? }
+        
+        if valid
           if changed
             @customer.updated_at_will_change!
             @customer.save!
@@ -417,14 +429,14 @@ public
 
         @order.save! if changed || @order.apply_sales_tax
         
-        if @customer.valid?
+        if valid
           render_edit
           next
         end
       end
     end
     
-    @javascripts = ['autosubmit.js', 'effects.js', 'controls.js']
+    @javascripts = ['autosubmit.js', 'effects.js', 'controls.js', 'rails.js']
     
     # Apply City/State from Zip code
 #    if @default_address.postalcode and @default_address.postalcode.length == 5
@@ -515,7 +527,7 @@ public
     Admin::OrdersController
     if session[:user_id]
       apply_calendar_header
-      @javascripts << 'rails'
+      @javascripts << 'rails.js'
     end
     
     unless @order
@@ -737,17 +749,11 @@ public
     
     redirect_to :action => :payment, :order_id => @order
   end
- 
-  def create_invoice
-    @order.save_price!
-    invoice = @order.generate_invoice
-    invoice.comment = params[:invoice][:comment]
-    invoice.save!
-    redirect_to :action => :acknowledge_order
-  end
-  
+   
   def_tasked_action :acknowledge_order, AcknowledgeOrderTask do
     @order_task = OrderTask.new(params[:order_task])
+
+    @javascripts = ['rails.js'] if @user
 
     next unless params[:commit]
     

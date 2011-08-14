@@ -9,7 +9,7 @@
           - title += " (#{task.object.description})"
         - if task.respond_to?(:our_comment)
           - task = task.object.task_find_inactive(task.class) || task if task.new_record?
-          = form_for(task, :as => :data, :url => task_execute_admin_order_path(@order, :object_id => task.object, :tasks => tasks.collect { |t| t.class })) do |t|
+          = form_for(task, :as => :data, :url => task_execute_admin_order_path(@order, :object_id => task.object, :tasks => tasks.collect { |t| t.class }), :html => { :method => :put }) do |t|
             %h2!= title
             = t.text_area :our_comment, 'cols' => 120, 'rows' => 10
             %br
@@ -18,11 +18,11 @@
               = submit_tag 'Completed (Without Email)'
             = submit_tag 'Save'
         - else # No template, do link
-          - uri = task_execute_admin_order_url(@order, :object_id => task.object.id, :tasks => tasks.collect { |t| t.class })
-          = link_to(uri, :method => :put) do
+          - url_params = { :object_id => task.object.id, :tasks => tasks.collect { |t| t.class } }
+          = link_to(task_execute_admin_order_url(@order, url_params), :method => :put) do
             != title
           - if task.respond_to?(:email_complete)
-            = link_to "(WITHOUT EMAIL)", uri.merge(:without_email => true), :method => :put
+            = link_to "(WITHOUT EMAIL)", task_execute_admin_order_url(@order, url_params.merge(:without_email => true)), :method => :put
 
       - else # Link to task page
         %span= link_to_task(task.status_name, task)

@@ -24,12 +24,12 @@
       div#note { background-color: #eee; padding: 0.5em; margin-top: 0.5em; }
       div#note p { margin: 0; margin-bottom: 0.5em; }
       
-      = File.open("#{RAILS_ROOT}/public/stylesheets/order.css") { |f| f.read }
+      = File.open("#{RAILS_ROOT}/public/stylesheets/orders.css") { |f| f.read }
 
     %a#logo{ :href => 'http://www.mountainofpromos.com/' }
       %img{ :src => 'http://www.mountainofpromos.com/images/logo.png' }
 
-    - uri_param = { :only_path => false, :controller => 'order', :auth => @order.customer.uuid, :order_id => @order.id }
+    - uri_param = { :only_path => false, :protocol => 'https', :controller => 'orders', :auth => @order.customer.uuid, :id => @order.id }
     #login
       Links: 
       -# = link_to "Login", uri_param.merge(:action => 'login')

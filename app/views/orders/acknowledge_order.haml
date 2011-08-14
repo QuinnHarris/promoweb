@@ -1,6 +1,6 @@
 = render :partial => 'acknowledge_menu'
 
-= link_to(image_tag('pdf.png') + " Print", { :action => :invoices, :order_id => @order.id, :format => :pdf }, { :class => 'nav', :style => 'float: right;' })
+= link_to(image_tag('pdf.png') + " Print", invoices_order_path(@order, :format => :pdf), { :class => 'nav', :style => 'float: right;' })
 
 = render :partial => 'invoices', :locals => { :static => false, :absolute => false }
 

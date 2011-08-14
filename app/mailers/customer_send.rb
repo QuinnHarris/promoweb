@@ -1,6 +1,6 @@
 class CustomerSend < ActionMailer::Base
   helper ApplicationHelper
-  helper OrderHelper
+  helper OrdersHelper
   
   def self.controller_path
     "../order"
@@ -56,7 +56,7 @@ class CustomerSend < ActionMailer::Base
         attachments[artwork.art.original_filename] = File.read(artwork.art.path)
       end
     elsif !order.invoices_ref.empty?
-      attachments[order.invoices_ref.empty? ? "MOP Quote" : "MOP Invoice (#{order.id}-#{order.invoices_ref.count}).pdf"] = WickedPdf.new.pdf_from_string(render(:file => '/order/invoices', :layout => 'print', :body => { } ))
+      attachments[order.invoices_ref.empty? ? "MOP Quote" : "MOP Invoice (#{order.id}-#{order.invoices_ref.count}).pdf"] = WickedPdf.new.pdf_from_string(render(:file => '/orders/invoices', :layout => 'print', :body => { } ))
     end
 
     mail(:subject => "#{subject} (\##{order.id})") do |format|

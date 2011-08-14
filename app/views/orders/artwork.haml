@@ -26,7 +26,7 @@
     = link_to "Unlock to Modify", :unlock => true
 
 - unless @static or (!@user and @order.task_completed?(ArtAcknowledgeOrderTask))
-  - form_for @artwork, :url => order_artwork_index_path(@order), :html => { :multipart => true } do |artwork|
+  = form_for @artwork, :url => order_artwork_index_path(@order), :html => { :multipart => true } do |artwork|
     %table.form
       %caption Add Artwork
       %tr

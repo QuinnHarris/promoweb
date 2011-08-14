@@ -2,4 +2,4 @@
 
 = render :partial => '/orders/acknowledge_artwork', :locals => { :static => true }
 
-= link_to 'Acknowledge Artwork', {  :only_path => false, :controller => 'order', :action => 'acknowledge_artwork', :auth => @order.customer.uuid, :order_id => @order.id }
+= link_to 'Acknowledge Artwork', {  :only_path => false, :protocol => 'https', :controller => 'orders', :action => 'acknowledge_artwork', :auth => @order.customer.uuid, :id => @order.id }

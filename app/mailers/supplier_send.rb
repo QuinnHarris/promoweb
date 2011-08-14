@@ -2,7 +2,7 @@ FAX_EMAIL = "fax@mountainofpromos.com"
 
 class SupplierSend < ActionMailer::Base
   helper ApplicationHelper
-  helper OrderHelper
+  helper OrdersHelper
 
   def apply_artwork(purchase)
     @po = purchase.purchase_order

@@ -71,7 +71,7 @@
               %div
                 - text = render_partial_null("/orders/status/#{td.class.to_s.underscore}", { :task => td })
                 - if @user and td.ready?
-                  - form_tag({ :controller => '/admin/orders', :action => :task_execute, :id => td.object, :tasks => [td.class] }) do
+                  = form_for(td, :url => task_execute_admin_order_path(@order, :object_id => td.object, :tasks => [td.class]), :html => { :method => :put }) do |t|
                     != text
                     = submit_tag 'Completed'
                     - if td.respond_to?(:email_complete)

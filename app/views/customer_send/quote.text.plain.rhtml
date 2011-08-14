@@ -4,7 +4,7 @@
 <% end -%>
 
 <% customer = @order.customer -%>
-Login URL: <%= url_for( :only_path => false, :controller => 'order', :action => 'login', :auth => @order.customer.uuid, :order_id => @order.id ) %>
+Login URL: <%= url_for( :only_path => false, :protocol => 'https', :controller => 'orders', :action => 'items', :auth => @order.customer.uuid, :id => @order.id ) %>
 
 The HTML version of this email contains more information.
 

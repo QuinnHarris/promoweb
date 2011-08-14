@@ -63,7 +63,7 @@
             %div
               = image_tag('credit_cards.png')
           - if @user
-            = link_to "Logout", { :controller => '/admin/users', :action => 'logout' }
+            = link_to "Logout", logout_admin_users_path
         %td.layout
           - if @user
             - if allowed?(%w(Super Orders))

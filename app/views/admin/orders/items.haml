@@ -65,7 +65,7 @@
             - common_tasks = all_tasks = purchase.items.first.tasks_ready.collect { |t| t.class }
             - purchase.items.each { |i| t = i.tasks_ready.collect { |t| t.class }; common_tasks &= t; all_tasks |= t; }
             - common_tasks.each do |klass|
-              = form_for @order, { :url => { :action => :purchase_mark, :id => purchase.id, :order_id => @order } } do |order|
+              = form_for @order, { :url => purchase_mark_admin_order_path(@order, :purchase_id => purchase.id), :html => { :method => :post }} do |order|
                 = hidden_field_tag(:class, klass.to_s)
                 - case klass.to_s
                 - when 'OrderSentItemTask'

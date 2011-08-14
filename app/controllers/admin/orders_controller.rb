@@ -357,14 +357,24 @@ class Admin::OrdersController < Admin::BaseController
     redirect_to status_orders_path(fall)
   end
 
-  def invoice_remove
+  def invoice_create
+    Invoice.transaction do
+      @order.save_price!
+      invoice = @order.generate_invoice
+      invoice.comment = params[:invoice][:comment]
+      invoice.save!
+    end
+    redirect_to :controller => '/orders', :action => :acknowledge_order
+  end
+
+  def invoice_destroy
     raise "Permission Denied" unless permission?('Super')
     Invoice.transaction do
-      invoice = Invoice.find(params[:id])
+      invoice = Invoice.find(params[:invoice_id])
       invoice.destroy
     end
 
-    redirect_to :controller => '/orders', :action => :acknowledge_order, :id => params[:order_id]
+    redirect_to :controller => '/orders', :action => :acknowledge_order
   end
   
   def permission_revoke
@@ -607,7 +617,7 @@ class Admin::OrdersController < Admin::BaseController
   
   def purchase_mark
     Purchase.transaction do
-      purchase = Purchase.find(params[:id])
+      purchase = Purchase.find(params[:purchase_id])
 
       data = {}
 

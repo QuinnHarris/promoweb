@@ -1,4 +1,4 @@
-- customer.fields_for :phone_numbers, phone_number do |phone|
+= customer.fields_for :phone_numbers, phone_number do |phone|
   .phone_number
     - unless @static
       = phone.select(:name, PhoneNumber.types)

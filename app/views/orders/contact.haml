@@ -1,5 +1,5 @@
 - unless @search
-  = error_messages_for_many [:customer, :default_address, :ship_address]
+  = error_messages_for 'customer', :object => ([@customer, @default_address, @ship_address] + @customer.email_addresses + @customer.phone_numbers)
   - if @user and @static and !@reassoc
     .admin
       = link_to "Unlock to Modify", :unlock => true
@@ -24,14 +24,14 @@
 - if @reassoc
   .admin
     %h3
-      = link_to "Associate this order #{@order.id} with customer below", { :controller => '/admin/orders', :action => :contact_merge, :order_id => @order.id, :keep_customer_id => @customer.id, :discard_customer_id => @order.customer }
+      = link_to "Associate this order #{@order.id} with customer below", contact_merge_admin_order_path(@order, :keep_customer_id => @customer.id, :discard_customer_id => @order.customer)
       %br
       = link_to "View Customer Orders", :controller => :order, :action => :orders, :customer_id => @customer.id
       %br
       = link_to "OOPS Go back and don't associate", { :customer_id => nil }
 
 
-- form_for :customer, @customer, :url => { :order_id => @order } do |cust|
+= form_for @customer, :url => { :action => :contact }, :html => { :method => :post } do |cust|
   = hidden_field_tag 'customer_id', @customer.id
   %table.form
     %caption
@@ -47,9 +47,9 @@
           %td Current Customer
           %td
             Similar Customer:
-            = link_to "Merge", { :controller => '/admin/orders', :action => :contact_merge, :order_id => @order.id, :keep_customer_id => @order.customer.id, :discard_customer_id => @similar.id }, :confirm => "Merge similar customer into current customer?  This will delete the similar customer and reassociate all its orders with the current customer!!!"
+            = link_to "Merge", contact_merge_admin_order_path(@order, :keep_customer_id => @order.customer.id, :discard_customer_id => @similar.id), :method => :put, :confirm => "Merge similar customer into current customer?  This will delete the similar customer and reassociate all its orders with the current customer!!!"
             ,
-            = link_to "View", :action => :orders, :order_id => @similar.orders.find(:first)
+            = link_to "View", items_order_path(@similar.orders.find(:first))
     %tbody
       - if @search
         %tr

@@ -90,7 +90,7 @@
       - if invoice.created_at
         = format_time_abs(invoice.created_at, false)
         - if !@static and allowed?('Super') and invoice.is_a?(Invoice)
-          = link_to(image_tag('remove.png'), { :controller => '/admin/orders', :action => :invoice_remove, :id => invoice }, { :confirm => "Remove Invoice" })
+          = link_to(image_tag('remove.png'), invoice_destroy_admin_order_path(@order, :invoice_id => invoice), { :method => :delete, :confirm => "Remove Invoice" })
       - else
         PENDING
     - if invoice.is_a?(Invoice)
@@ -137,7 +137,7 @@
       .notes
         - if !static and @user and invoice.new_record?
           %h3 Notes
-          - form_for :invoice, invoice, :url => { :action => :create_invoice, :order_id => @order } do |inv|
+          - form_for invoice, :url => invoice_create_admin_order_path(@order), :html => { :method => :put } do |inv|
             = inv.text_area :comment, 'cols' => 50, 'rows' => 5
             = submit_tag('Create Invoice')
         - else

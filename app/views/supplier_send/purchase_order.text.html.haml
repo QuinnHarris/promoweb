@@ -4,7 +4,7 @@
     %meta{ :content => "text/html; charset=UTF-8", "http-equiv" => "Content-Type" }
     %style{ :type => 'text/css' }
       = File.open("#{RAILS_ROOT}/public/stylesheets/global.css") { |f| f.read }
-      = File.open("#{RAILS_ROOT}/public/stylesheets/order.css") { |f| f.read }
+      = File.open("#{RAILS_ROOT}/public/stylesheets/orders.css") { |f| f.read }
   %body
     = render '/admin/orders/po'
 

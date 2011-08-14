@@ -69,7 +69,6 @@ Promoweb::Application.routes.draw do
       get 'new_order'
       get 'contact_search'
       post 'contact_find'
-      get 'contact_merge'
       post 'variant_change'
       post 'set'
       post 'auto_complete_generic'
@@ -88,10 +87,13 @@ Promoweb::Application.routes.draw do
 
     resources :employees
     resources :suppliers, :except => [:show]
-    %w(logout password).each do |name|
-      match "users/#{name}" => "users##{name}"
-    end
+
     resources :users do
+      collection do
+        get 'logout'
+        get 'password'
+        post 'password'
+      end
       resources :phones, :only => [:index, :create, :destroy]
     end
 
@@ -123,6 +125,7 @@ Promoweb::Application.routes.draw do
   resources :orders, :only => [:index, :show] do
     collection do
       post 'add' => 'order_items#add'
+      post 'location_from_postalcode_ajax'
     end
 
     member do
@@ -137,13 +140,20 @@ Promoweb::Application.routes.draw do
       get 'payment'
       get 'payment_creditcard'
       post 'payment_creditcard'
+      
+      get 'payment_sendcheck'
       post 'payment_sendcheck'
+      
       post 'payment_use'
       post 'payment_remove'
 
       get 'review'
       get 'acknowledge_order'
+      post 'acknowledge_order'
       get 'acknowledge_artwork'
+      post 'acknowledge_artwork'
+
+      get 'invoices'
 
       # Temp
       post 'artwork_add'
@@ -163,10 +173,16 @@ Promoweb::Application.routes.draw do
         post 'own'
 
         put 'purchase_create'
+        post 'purchase_mark'
+
+        put 'invoice_create'
+        delete 'invoice_destroy'
 
         delete 'task_revoke'
         put 'task_execute'
         post 'task_comment'
+
+        put 'contact_merge'
       end
     end
 
