@@ -257,7 +257,7 @@ public
 
   # Old Email link URL
   def legacy_redirect
-    redirect_to :action => params[:name], :id => params[:order_id]
+    redirect_to :controller => '/orders', :action => params[:name], :id => params[:order_id]
   end
 
   # What are these login logout now used for?
