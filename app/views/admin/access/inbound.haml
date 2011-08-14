@@ -27,9 +27,10 @@
       %h2 Product Views
       #{format_phone(call_log.caller_number)} : #{call_log.caller_name} @ #{format_time(call_log.create_time)}
       %table
-        - data.in_groups_of(6) do |row|
+        - data.in_groups_of(5) do |row|
           %tr
             - for access in row.compact
+              - next unless access.action_id
               %td
                 - product = Product.find(access.action_id)
                 = render :partial => '/categories/thumb', :locals => { :product => product, :category => nil, :context => nil }
