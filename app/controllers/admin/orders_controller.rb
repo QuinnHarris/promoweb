@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 class Admin::OrdersController < Admin::BaseController
   include ::OrdersController::OrderModule
-  prepend_before_filter :setup_order, :except => [:set]
+  before_filter :setup_order, :except => [:set]
   
   OrderTask
   OrderItemVariant

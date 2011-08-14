@@ -44,6 +44,8 @@ public
 
     @payed_orders = @user.orders.find(:all, :order => 'orders.id DESC',
                                      :conditions => "settled AND orders.updated_at > NOW() - '3 months'::interval")
+
+    @commission = Commission.new
   end
 
   def apply_commission

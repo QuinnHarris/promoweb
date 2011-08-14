@@ -80,7 +80,7 @@ module ApplicationHelper
     res = category.path_obj_list.collect do |comp|
       link_to_category(comp)
     end.join(' > ')
-    res += link_to image_tag('remove.png'), { :controller => '/admin/categories', :action => :remove_product, :id => @product, :category => category.id }, :confirm => "Remove #{@product.name} from #{category.path}" if @user and @product
+    res += link_to image_tag('remove.png'), product_remove_admin_category_path(category, :product_id => @product), :method => :post, :confirm => "Remove #{@product.name} from #{category.path}" if @user and @product
     res
   end
   

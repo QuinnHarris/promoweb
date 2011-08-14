@@ -3,14 +3,14 @@
     #description= @category.description
 - else
   #description.admin
-    - form_for :category, @category, { :url => { :controller => '/admin/categories', :action => :add, :id => @category } } do |cat|
+    = form_for @category, { :url => add_admin_category_path(@category) } do |cat|
       = cat.text_field :name, :value => ''
       = submit_tag 'Add Category'
-      - if @category.products.empty? and !@category.children
-        = link_to 'Remove Category', { :controller => '/admin/categories', :action => :remove, :id => @category }
+      - if @category.products.empty? and @category.children.empty?
+        = link_to 'Remove Category', admin_category_path(@category), :method => :delete
 
-    - form_for :category, @category, { :url => { :controller => '/admin/system', :action => :category_description, :id => @category } } do |cat|
+    - form_for @category, { :url => admin_category_path(@category), :html => { :method => :put } } do |cat|
       = cat.text_area :description, :cols => 100, :rows => 4
       %br
       = submit_tag 'Update'
-      = link_to "Promote", { :controller => 'admin/promote', :action => 'category', :id => @category  }
+

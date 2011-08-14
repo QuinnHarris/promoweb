@@ -3,14 +3,23 @@ class Admin::CategoriesController < Admin::BaseController
     Category.transaction do
       parent = Category.find_by_id(params[:id])
       child = Category.create(params[:category].merge(:pinned => true, :parent_id => parent.id))
-      parent.add_child(child)
+      child.move_to_child_of(parent)
       child.parent = parent
       
       redirect_to :controller => '/categories', :action => :main, :path => child.path_name_list
     end
   end
 
-  def remove
+  def update
+    Category.transaction do
+      category = Category.find(params[:id])
+      category.description = params[:category][:description]
+      category.save!
+    end
+    redirect_to :back
+  end
+
+  def destroy
     Category.transaction do
       child = Category.find_by_id(params[:id])
       parent = child.parent
@@ -54,7 +63,7 @@ public
     render :inline => "<%= content_tag('ul', @categories.collect { |e| content_tag('li', h(e.path)) }) %>"
   end
 
-  def add_product
+  def product_add
     Category.transaction do
       category = Category.find_by_path(params[:path].split('/'))
       product = Product.find(params[:id])
@@ -70,10 +79,10 @@ public
     redirect_to :back
   end
 
-  def remove_product
+  def product_remove
     Category.transaction do
-      category = Category.find(params[:category])
-      product = Product.find(params[:id])
+      category = Category.find(params[:id])
+      product = Product.find(params[:product_id])
       
       product.categories.delete(category)
     end

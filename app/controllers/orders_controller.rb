@@ -43,11 +43,6 @@ module OrderModule
   
 private
   def setup_order
-    unless request.protocol == "https://" or RAILS_ENV != "production"
-      redirect_to :protocol => "https://" 
-      return false
-    end
-
     order_id = params[:order_id]
     order_id = params[:id] if order_id.nil? and (/^\d{4,5}$/ === params[:id])
     order_id = session[:order_id] unless order_id
@@ -109,24 +104,6 @@ private
         session[:tz] = list.first.tz_name
         Time.zone = session[:tz] || 'Mountain Time (US & Canada)'
       end
-    end
-      
-    # Set @permissions and @user if applicable for all controllers
-    if session[:user_id]
-      @user = User.find(session[:user_id])
-
-      @permissions = @user.permissions.find(:all,
-        :conditions => ['order_id IS NULL OR order_id = ?',
-        order_id]).collect { |p| p.name }
-      #raise "Permission Denied" if @permissions.empty?
-      @customer_zone = Time.zone if session[:tz]
-      Time.zone = 'Mountain Time (US & Canada)'
-
-      if @order and @user.current_order_id != @order.id
-        User.update_all("current_order_id = #{@order.id}", "id = #{@user.id}")
-      end
-    else
-      @permissions = %w(Customer)
     end
 
     # Set page title
@@ -237,11 +214,11 @@ private
 public
 end
 
-class OrdersController < ApplicationController 
+class OrdersController < AuthenticatedController 
   include OrderModule
   layout 'order'
   
-  prepend_before_filter :setup_order, :except => [:logout, :add, :legacy_redirect]
+  before_filter :setup_order, :except => [:add, :legacy_redirect]
 
 private
   def set_order_id(order_id)
@@ -266,17 +243,9 @@ public
       @order = customer.orders.first
     end
     session[:order_id] = @order.id
-    redirect_to({ :controller => '/orders', :action => params[:name], :id => @order.id })
-  end
-
-  # What are these login logout now used for?
-  def login
-    redirect_to_next
-  end
-  
-  def logout
-    session[:order_id] = nil
-    redirect_to :controller => 'categories', :action => 'home'
+    url = { :controller => '/orders', :action => params[:name], :id => @order.id }
+    logger.info("Redirect URL: #{url.inspect}")
+    redirect_to url
   end
 
   def index

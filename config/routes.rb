@@ -54,7 +54,11 @@ Promoweb::Application.routes.draw do
 
   match 'products/sitemap' => 'products#sitemap'
   match 'products/rss' => 'products#rss'
-  resources :products, :controller => 'admin::Products', :except => [:show]
+  resources :products, :controller => 'admin::Products', :except => [:show] do
+    member do
+      get 'chart'
+    end
+  end
   match 'products/:id(.:format)' => 'products#show'
   match 'products/main/:iid' => redirect('/products/%{iid}')
 
@@ -85,7 +89,11 @@ Promoweb::Application.routes.draw do
       get 'purchase_mark'
     end
 
-    resources :employees
+    resources :employees, :only => [:index, :show] do
+      member do
+        put 'apply_commission'
+      end
+    end
     resources :suppliers, :except => [:show]
 
     resources :users do
@@ -106,6 +114,18 @@ Promoweb::Application.routes.draw do
     %w(quickbooks_blocked quickbooks_set other).each do |name|
       match "system/#{name}" => "system##{name}"
     end
+
+    resources :categories, :only => [:update, :destroy] do
+      collection do
+        post 'product_add'
+        get 'auto_complete_for_path'
+      end
+
+      member do
+        put 'add'
+        post 'product_remove'
+      end
+    end
   end
 
   root :to => 'categories#home'
@@ -113,7 +133,7 @@ Promoweb::Application.routes.draw do
   match 'sitemaps' => 'general#sitemaps'
   match 'categories/sitemap' => 'categories#sitemap'
 
-  match 'categoires/map' => 'categories#map'
+  match 'categories/map' => 'categories#map'
   match 'categories/*path' => 'categories#main'
   match 'categories' => 'categories#main'
 

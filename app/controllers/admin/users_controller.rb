@@ -1,5 +1,5 @@
-class Admin::UsersController < ApplicationController
-  before_filter :login_required
+class Admin::UsersController < Admin::BaseController
+#  before_filter :login_required
   def protect?(action)
     return false if action == 'auth'
     true

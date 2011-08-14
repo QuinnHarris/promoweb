@@ -8,7 +8,7 @@
 %h1= "Commissions for #{@user.name}"
 
 %h2 Commission Payments
-- form_for :commission, @commission, :url => { :action => :apply_commission, :id => params[:id] } do |comm|
+- form_for @commission, :url => apply_commission_admin_employee_path(@user), :html => { :method => :put } do |comm|
   %table
     %thead
       %td Date
@@ -51,7 +51,7 @@
         - total_payable = Money.new(0)
         - for order in orders
           %tr
-            %td= link_to order.id, { :controller => '/order', :action => 'status', :order_id => order.id }
+            %td= link_to order.id, status_order_path(order)
             %td= format_time(order.tasks_active.first.created_at, false)
             %td.money= order.total_price_cache.to_perty
             %td.money= order.total_cost_cache.to_perty

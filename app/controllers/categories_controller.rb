@@ -29,6 +29,8 @@ end
 
 
 class CategoriesController < ApplicationController
+  before_filter :setup_context
+
   #caches_page :main, :home
 
   @@featured_items = 4
@@ -128,6 +130,8 @@ public
 
   # redirect to appropriate method
   def main
+    @javascripts = ['rails.js'] if @user
+    
     @path = params[:path] ? params[:path].split('/') : []
     
     # Split @path and tail at meta point

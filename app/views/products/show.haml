@@ -277,7 +277,7 @@
 
       - if @user
         .admin
-          - form_for :product, @product, { :url => { :controller => '/admin/categories', :action => :add_product, :id => @product } } do |prod|
+          - form_for :product, @product, { :url => product_add_admin_categories_path(:product_id => @product) } do |prod|
             = text_field_with_auto_complete nil, :path, {}, :url => { :controller => '/admin/categories', :action => :auto_complete_for_path }
             = submit_tag 'Add to Category'
         .admin
@@ -352,7 +352,7 @@
                       - e = group.price_entries.to_a.find { |v| v.minimum == min }
                       = e ? (e.marginal.to_s + ((!e.fixed or e.fixed.zero?) ? '' : " (#{e.fixed})")) : nil
 
-          = link_to 'Price Chart', :controller => '/admin/products', :action => 'chart', :id => @product
+          = link_to 'Price Chart', chart_product_path(@product)
 
           - if @page_products
             %hr
@@ -371,17 +371,5 @@
                     %td= pp.correct
                     %td= link_to pp.page.request_uri, pp.page.url
 
-        #feature-sel.admin
-          %h2 Set as featured item
-          %p.instruct
-            Click on category to set as featured item.
-            %strong
-              Bold
-            (position) is featured.
-            %em
-              Italics
-            is in queue to be featured.  (Parenthesis) is current category.
-          != treething(@categories)
-          = link_to("Remove", :action => 'set_featured', :id => @product)
           %hr
           = link_to "Edit Page", edit_product_path(@product)

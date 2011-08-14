@@ -18,8 +18,8 @@ public
   
   @@robot_str = %w(bot spider crawler wget getright libwww-perl lwp- yahoo google java jdk altavista scooter lycos infoseek lecodechecker slurp twiceler ia_archiver siteuptime yanga jeeves bing)
   
-  before_filter :set_link_context
-  def set_link_context
+  before_filter :setup_link_context
+  def setup_link_context
     Category.refresh  # Kludgy shit!!!
     user_agent = request.env['HTTP_USER_AGENT'] ? request.env['HTTP_USER_AGENT'].downcase : 'unknown'
     @robot = @@robot_str.find { |str| user_agent.index(str) }
@@ -84,11 +84,14 @@ public
       PageAccess.create(access_attributes)
     end
     
+    true
+  end
+
+  # before_filter :setup_context for non Authenticated controllers
+  def setup_context
     # Set @order for all controllers
     @order = Order.find(session[:order_id]) unless @order or session[:order_id].nil?
     @user = User.find(session[:user_id]) unless @user or session[:user_id].nil?
-    
-    true
   end
 
 protected

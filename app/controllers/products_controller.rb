@@ -30,6 +30,8 @@
 #ActiveRecord::Base.observers << :product_sweeper
 
 class ProductsController < ApplicationController
+  before_filter :setup_context
+
   # Google sitemap
   def sitemap
     headers['Content-Type'] = 'text/xml; charset=utf-8'

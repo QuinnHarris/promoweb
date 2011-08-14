@@ -1,13 +1,4 @@
-class Admin::SystemController < Admin::BaseController 
-  def category_description
-    Category.transaction do
-      category = Category.find(params[:id])
-      category.description = params[:category][:description]
-      category.save!
-    end
-    redirect_to :back
-  end
-  
+class Admin::SystemController < Admin::BaseController
   def quickbooks_blocked
     @title = "Quickbooks"
 
