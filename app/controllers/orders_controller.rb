@@ -241,7 +241,7 @@ class OrdersController < ApplicationController
   include OrderModule
   layout 'order'
   
-  prepend_before_filter :setup_order, :except => [:logout, :add]
+  prepend_before_filter :setup_order, :except => [:logout, :add, :legacy_redirect]
 
 private
   def set_order_id(order_id)
@@ -257,7 +257,16 @@ public
 
   # Old Email link URL
   def legacy_redirect
-    redirect_to :controller => '/orders', :action => params[:name], :id => params[:order_id]
+    raise "Legacy without auth" unless params[:auth]
+    customer = Customer.find_by_uuid(params[:auth])
+    if params[:order_id]
+      @order = customer.orders.find_by_id(params[:order_id])
+      raise "Can't find order for customer" unless @order
+    else
+      @order = customer.orders.first
+    end
+    session[:order_id] = @order.id
+    redirect_to({ :controller => '/orders', :action => params[:name], :id => @order.id })
   end
 
   # What are these login logout now used for?
