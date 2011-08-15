@@ -17,9 +17,10 @@
       :style => "float: right; " }
     %img{ :alt => "Privacy Policy by TRUSTe",
           :src => "//privacy-policy.truste.com/verified-seal/www.mountainofpromos.com/green/h.png" }
-%p
-  We will not contact you or send you an email for any reason not directly related to an order unless you select to be added to our email list.  More information on how we use your information can be found on our TRUSTe verified
-  = link_to 'privacy policy.', :controller => :static, :action => :privacy
+- unless @search
+  %p
+    We will not contact you or send you an email for any reason not directly related to an order unless you select to be added to our email list.  More information on how we use your information can be found on our TRUSTe verified
+    = link_to 'privacy policy.', :controller => '/static', :action => :privacy
 
 - if @reassoc
   .admin
@@ -31,7 +32,7 @@
       = link_to "OOPS Go back and don't associate", { :customer_id => nil }
 
 
-= form_for @customer, :url => { :action => :contact }, :html => { :method => :post } do |cust|
+= form_for @customer, :url => contact_order_path(@order), :html => { :method => :post } do |cust|
   = hidden_field_tag 'customer_id', @customer.id
   %table.form
     %caption
