@@ -123,7 +123,9 @@ class OrderItemsController < OrdersController
     end
   end
 
-  def_tasked_action :destroy, RemoveItemOrderTask do
+#  def_tasked_action :destroy, RemoveItemOrderTask do
+  def destroy
+    raise "Permission denied" if (RemoveItemOrderTask.roles & @permissions).empty?
     OrderItem.transaction do
       item = @order.items.find(params[:id])
       item.destroy
