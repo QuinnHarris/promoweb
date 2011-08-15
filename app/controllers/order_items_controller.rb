@@ -19,7 +19,10 @@ class OrderItemsController < OrdersController
     end
     
     Customer.transaction do
-      @customer = @order.customer if @order
+      if @order.nil? and session[:order_id]
+        @order = Order.find(session[:order_id])
+        @customer = @order.customer if @order
+      end
 
       if @user and %w(order customer).include?(params[:disposition])
         @order = nil
@@ -34,6 +37,8 @@ class OrderItemsController < OrdersController
           @order = nil
         end
       end
+
+      raise "No existing order" if @order.nil? and params[:disposion] == 'exist'
 
       unless @order
         unless @customer
