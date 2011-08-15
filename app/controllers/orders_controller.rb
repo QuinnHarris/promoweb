@@ -93,6 +93,10 @@ private
     
     session[:order_id] = @order && @order.id if @order
 
+    if @order and @user and @user.current_order_id != @order.id
+      User.update_all("current_order_id = #{@order.id}", "id = #{@user.id}")
+    end
+
     # Set Timezone
     session[:tz] = nil if params[:order_id] and session[:order_id] != params[:order_id]
     if !session[:tz] and @order and @order.customer.default_address and @order.customer.default_address.postalcode

@@ -16,10 +16,6 @@ class AuthenticatedController < ApplicationController
       #raise "Permission Denied" if @permissions.empty?
       @customer_zone = Time.zone if session[:tz]
       Time.zone = 'Mountain Time (US & Canada)'
-
-      if @order and @user.current_order_id != @order.id
-        User.update_all("current_order_id = #{@order.id}", "id = #{@user.id}")
-      end
     else
       @permissions = %w(Customer)
     end
