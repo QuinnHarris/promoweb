@@ -216,7 +216,7 @@ class Admin::OrdersController < Admin::BaseController
   def contact_find
     if params[:order] and !params[:order][:id].blank? and
         Order.exists?(params[:order][:id].to_i)
-      redirect_to :controller => '/orders', :action => 'status', :id => params[:order][:id].to_i
+      redirect_to :controller => '/orders', :action => 'status_page', :id => params[:order][:id].to_i
       return
     end
 
@@ -920,6 +920,6 @@ public
                                    :conditions =>
                                    "user_id IS NULL AND session_accesses.id IN (SELECT session_access_id FROM access.order_session_accesses WHERE order_id = #{@order.id})")
 
-    render :layout => 'order'
+    render :layout => 'order', :template => '/admin/access/paths'
   end
 end

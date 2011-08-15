@@ -149,7 +149,7 @@ Promoweb::Application.routes.draw do
     end
 
     member do
-      get 'status'
+      get 'status' => 'orders#status_page'
       get 'items'
       post 'items'
       get 'info'
@@ -203,6 +203,8 @@ Promoweb::Application.routes.draw do
         post 'task_comment'
 
         put 'contact_merge'
+
+        get 'paths'
       end
     end
 

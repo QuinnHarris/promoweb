@@ -501,7 +501,7 @@ private
   end
 public
   
-  def status
+  def status_page
     Admin::OrdersController
     if session[:user_id]
       apply_calendar_header
@@ -583,6 +583,7 @@ public
     end
     
     #logger.info(list.inspect)
+    render 'status'
   end
   
   def_tasked_action :payment, PaymentInfoOrderTask, PaymentOverrideOrderTask, FirstPaymentOrderTask, FinalPaymentOrderTask do    
