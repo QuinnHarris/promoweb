@@ -80,6 +80,6 @@ class ArtworkController < OrdersController
       art.tags.each { |t| t.destroy }
       art.destroy
     end
-    redirect_to :action => :index
+    redirect_to :back
   end
 end
