@@ -55,7 +55,7 @@
                       = submit_tag("Send Art for #{purchase.purchase_order.quickbooks_ref}")
                       = submit_tag("Mark as Sent for #{purchase.purchase_order.quickbooks_ref}")
                   - else
-                    = link_to "Create PO to send artwork", { :controller => '/admin/orders', :action => :items_edit }
+                    = link_to "Create PO to send artwork", items_admin_order_path(@order)
                 - elsif item_decoration.order_item.task_completed?(ArtSentItemTask)
                   %strong Artwork sent to supplier
 

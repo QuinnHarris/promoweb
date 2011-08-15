@@ -230,7 +230,7 @@ class Admin::OrdersController < Admin::BaseController
     @customer = Customer.new
     @search = true
     @javascripts = ['effects.js', 'controls.js']
-    render :template => '/order/contact'
+    render :template => '/orders/contact'
   end
     
   def task_execute
