@@ -203,8 +203,6 @@ Promoweb::Application.routes.draw do
         post 'task_comment'
 
         put 'contact_merge'
-
-        get 'paths'
       end
     end
 

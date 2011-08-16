@@ -51,10 +51,11 @@ private
       customer = Customer.find_by_uuid(params[:auth])
       if order_id
         @order = customer.orders.find_by_id(order_id)
-        raise "Can't find order for customer" unless @order
       else
         @order = customer.orders.first
       end
+      raise "Can't find order for customer" unless @order
+      session[:order_id] = @order.id
 
       # Redirect without :auth parameter
       redirect_to

@@ -913,7 +913,7 @@ public
     render :layout => 'order'
   end
 
-  def paths
+  def access
     @stylesheets = ['orders', 'access']
 
     @sessions = SessionAccess.find(:all, :include => [:pages, :orders],

@@ -298,7 +298,7 @@
                   %tr
                     %td= format_time(session.pages.last.created_at)
                     %td= link_to session.pages.last.address, admin_access_paths_path(:session_id => session.id)
-                    %td!= session.orders.collect { |o| link_to o.order_id, paths_admin_order_path(o) }.join(', ')
+                    %td!= session.orders.collect { |o| link_to o.order_id, access_admin_order_path(o) }.join(', ')
                     - if gi = GEOIP.look_up(session.pages.last.address)
                       %td= gi[:region] && gi[:region].force_encoding("UTF-8")
                       %td= gi[:city] && gi[:city].force_encoding("UTF-8")
