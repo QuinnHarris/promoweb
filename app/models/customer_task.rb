@@ -228,6 +228,7 @@ module TaskMixin
     attr_accessor :waiting_name
     attr_accessor :completed_name
     attr_accessor :action_name
+    attr_accessor :option
     attr_accessor :customer
     attr_accessor :uri
     attr_accessor :auto_complete
@@ -340,7 +341,7 @@ module TaskMixin
   end
   
   # dependants
-  %w(status_name waiting_name completed_name action_name customer uri auto_complete roles notify).each do |name|
+  %w(status_name waiting_name completed_name action_name option customer uri auto_complete roles notify).each do |name|
     define_method name do
       self.class.send(name)
     end
@@ -400,12 +401,14 @@ module TaskMixin
   def admin; nil; end
     
   def complete_estimate
+    return nil if option
     if respond_to?(:execute_duration)
       return depend_max_at.add_workday(execute_duration)
     end
     dependants && dependants.first.depends_on.collect { |t| (t != self && !t.new_record? && t.active) ? t.created_at : nil }.compact.max
   end
   def complete_at
+    return nil if option
     return expected_at if expected_at
     return created_at if !new_record? and active
     complete_estimate

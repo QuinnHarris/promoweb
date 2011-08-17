@@ -282,6 +282,7 @@ class PaymentOverrideOrderTask < OrderTask
   self.completed_name = 'Payment Information Bypassed'
   self.action_name = 'ignore <strong>no customer payment and proceed with order</strong>'
   self.roles = %w(Super)
+  self.option = true
 
 #  def self.blocked(object)
 #    super || (object.task_completed?(PaymentInfoOrderTask) && "payment information received")
@@ -296,6 +297,7 @@ class PaymentNoneOrderTask < OrderTask
   self.completed_name = 'Payment not neeeded'
   self.action_name = 'mark as <strong>no payment necassary</strong>'
   self.roles = %w(Orders)
+  self.option = true
 
   def self.blocked(object)
     super || (object.task_completed?(PaymentInfoOrderTask) && "payment information received") ||
@@ -354,6 +356,7 @@ class ArtOverrideOrderTask < OrderTask
   self.action_name = 'ignore <strong>no customer payment and proceed with artwork</strong>'
   self.auto_complete = true
   self.roles = %w(Orders)
+  self.option = true
   
   def admin
     !new_record? and active
