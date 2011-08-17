@@ -168,7 +168,6 @@ class LancoSOAP < GenericImport
         description += "\n<a href='/static/fills#c'><strong>C Fills:</strong></a> Pecan Turtles, Truffles, Chocolate Coins, Hershey Kisses, English Butter Toffee, Chocolate Covered Almonds, Chocolate Covered Pretzels, Red Foil Chocolate Hearts, Cashews, Cocolate Balls, Halloween Balls, Christmas Balls, Jelly Bellies, M&M'S, Earth Balls, Easter Eggs, Sports Balls, American Flag Balls, Foil Wrapped Chocolate Squares, Soy Nuts, Chocolate Covered Sunflower Seeds, Granola"
       end
       
-      puts "Wt: #{product[:wt_100].inspect}"
       product_data = {
         'supplier_num' => product[:web_id],
         'name' => convert_name(product[:alt_name].empty? ? product[:prod_name] : product[:alt_name]),
@@ -182,7 +181,7 @@ class LancoSOAP < GenericImport
           :made_in_usa => 'MadeInUSA'
         }.collect { |method, name| name if product[method].to_i == 1 }.compact,
         'supplier_categories' => [[product[:category], product[:sub_category]]],
-        'package_unit_weight' => product[:wt_100].to_f / 100.0
+        'package_unit_weight' => product[:wt_100].is_a?(String) ? (product[:wt_100].to_f / 100.0) : nil
       }
 
       # Lead Times
@@ -212,7 +211,7 @@ class LancoSOAP < GenericImport
             
       puts
 
-      image_list = [] #get_images(product[:web_id])
+      image_list = get_images(product[:web_id])
       puts "List #{product[:web_id]}: #{image_list.inspect}"
       image_list = image_list.collect { |img| ImageNodeFetch.new(img, "#{image_path(product[:web_id])}#{img}") }
 
