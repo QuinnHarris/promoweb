@@ -1,4 +1,4 @@
-class LinkRenderer < WillPaginate::LinkRenderer
+class LinkRenderer < WillPaginate::ActionView::LinkRenderer
   # Extention to LinkRender to support :page_names option
   def page_link_or_span(page, span_class = 'current', text = nil)
     text ||= @options[:page_names] ? @options[:page_names][page-1] : page.to_s
