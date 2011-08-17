@@ -1,29 +1,15 @@
 class LinkRenderer < WillPaginate::ActionView::LinkRenderer
-  # Extention to LinkRender to support :page_names option
-  def page_link_or_span(page, span_class = 'current', text = nil)
-    text ||= @options[:page_names] ? @options[:page_names][page-1] : page.to_s
-#   super page, span_class, text
-
-    # lifted from original
-    text ||= page.to_s
-    if page and page != current_page
-      "<a href='#{@template.url_for(url_options(page))}'>#{text}</a>"
+  def page_number(page)
+    text = @options[:page_names] ? @options[:page_names][page-1] : page.to_s
+    unless page == current_page
+      link(text, page, :rel => rel_value(page))
     else
-      "<span>#{text}</span>"
+      tag(:em, text, :class => 'current')
     end
   end
 
-  # Extention to support *path with page # at end
-  def url_options(page)
-    options = @template.request.get? ? params.dup : { :path => [] }
-    options[:path] = options[:path].split('/')[0...-1] + [page]
-    options.rec_merge!(@options[:params]) if @options[:params]
-    return options
-  end
-
-private
-  def params
-    @params ||= @template.params.to_hash.symbolize_keys
+  def add_current_page_param(url_params, page)
+    url_params[:path] = url_params[:path].split('/')[0...-1] + [page]
   end
 end
 
