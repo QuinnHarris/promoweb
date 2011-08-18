@@ -70,7 +70,7 @@
               = link_to image_tag('phone.png'), { :controller => '/admin/access', :action => :inbound }, :id => 'phone'
               #buttonn.nav
                 = link_to image_tag('find.png') + "Find Customer", { :controller => '/admin/orders', :action => :contact_find }, :class => 'button'
-                = link_to image_tag('add.png') + "New Customer", { :controller => '/admin/orders', :action => :new_order }, { :class => 'button', :confirm => 'Create a new customer and order?' }
+                = link_to image_tag('add.png') + "New Customer", admin_orders_path, { :method => :post, :class => 'button', :confirm => 'Create a new customer and order?' }
             %ul#leftmenu.nav
               != li_to 'Orders', {:controller => '/admin/orders', :action => :show } do params[:controller].index('order') or !params[:controller].index('admin') end
               != li_to 'Admin', { :controller => '/admin/employees', :action => :index } do  !params[:controller].index('order') and params[:controller].index('admin') end

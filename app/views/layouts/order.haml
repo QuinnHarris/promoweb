@@ -5,7 +5,7 @@
         SAMPLE
       %div{ :style => 'float: right;' }
         - if allowed?(%w(Super Orders))
-          = link_to image_tag('add.png') + "New Order", { :controller => 'admin/orders', :action => :new, :customer_id => @order.customer }, { :class => 'button', :method => :post, :confirm => "Create a new order for #{@order.customer.person_name}" }
+          = link_to image_tag('add.png') + "New Order", admin_orders_path(:customer_id => @order.customer), { :class => 'button', :method => :post, :confirm => "Create a new order for #{@order.customer.person_name}" }
         - unless params[:controller].include?('admin')
           %br
           = link_to(image_tag('bookmark.png'), { :auth => @order.customer.uuid })
