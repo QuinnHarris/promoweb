@@ -114,9 +114,16 @@ class Admin::ProductsController < Admin::BaseController
 
         pi.image.save
         pi.save!
-      end        
+      end
 
-      redirect_to :controller => '/orders', :action => :add, :product => product, :quantity => 100, :price_group => price_group, :id => params[:context][:order_id]
+      if params[:context][:order_id]
+        @order = Order.find(params[:context][:order_id])
+        item = @order.items.create(:product_id => product.id, :price_group_id => price_group.id)
+        item.order_item_variants.create(:variant_id => variant.id, :quantity => 100)
+        redirect_to items_admin_order_path(@order)
+      else
+        redirect_to product_path(product)
+      end
     end
   end
   
