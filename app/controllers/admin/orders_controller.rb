@@ -417,7 +417,7 @@ class Admin::OrdersController < Admin::BaseController
   end
 
   def task_dependants(tasks)
-    (tasks + tasks.collect { |t| task_dependants(t.depends_on).find_all { |u| !u.is_a?(AcknowledgeOrderTask) } }).flatten
+    (tasks + tasks.collect { |t| task_dependants(t.depends_on.find_all { |u| !u.is_a?(AcknowledgeOrderTask) }) }).flatten
   end
 
   def duplicate
