@@ -388,7 +388,7 @@ class Admin::OrdersController < Admin::BaseController
     redirect_to :back
   end
 
-  def new_order
+  def create
     Customer.transaction do
       if params[:email] and
           customer = Customer.find(:first, :include => :email_addresses, :conditions => ['lower(email_addresses.address) ~ ?', params[:email].downcase])

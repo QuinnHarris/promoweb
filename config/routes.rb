@@ -71,7 +71,6 @@ Promoweb::Application.routes.draw do
         post "auto_complete_for_customer_#{name}"
       end
       get 'contact_find'
-      get 'new_order'
       get 'contact_search'
       post 'contact_find'
       post 'variant_change'
