@@ -236,6 +236,8 @@ Promoweb::Application.routes.draw do
 
   match 'phone/:action(/:id)' => 'Phone'
 
+  match '/qbwc/api' => 'qbwc#api'
+
   # Unidata Provisioning
   match '/e1_:addr.ini' => 'phone#unidata', :constraints => { :addr => /[0-9a-f]{12}/ }
 end
