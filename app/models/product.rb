@@ -816,9 +816,9 @@ class Product < ActiveRecord::Base
     src.delete_if do |s|
       if CategoryProduct.where(:category_id => s.id, :product_id => id, :pinned => true).exists?
         str << "   * #{s.path}\n"
-        next false
+        next true
       end
-      true
+      false
     end
     
     src.each do |s|

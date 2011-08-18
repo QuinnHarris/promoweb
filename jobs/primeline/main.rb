@@ -1,5 +1,5 @@
 require '../generic_import'
-require 'import'
+require './import'
 
 import = PrimeLineWeb.new
 import.set_standard_colors
