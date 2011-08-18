@@ -1,8 +1,4 @@
 # -*- coding: utf-8 -*-
-require 'hpricot'
-Hpricot.buffer_size = 256*1024 #262144
-
-
 class PrimeLineWeb < GenericImport
   @@decoration_replace = {
     'Silk Screened' => 'Screen Print',
@@ -49,9 +45,9 @@ class PrimeLineWeb < GenericImport
 
   def process_root
     fetch = WebFetch.new('http://www.primeline.com/')
-    doc = Hpricot(open(fetch.get_path))
+    doc = Nokogiri::HTML(open(fetch.get_path))
     categories = {}
-    doc.search("//a").each do |a|
+    doc.xpath("//a").each do |a|
       next unless a['href'].include?('/Products/ProductList.aspx')
       next if a.inner_html.include?('<img')
       url = a['href'].gsub(/^\.\.\//, '')
@@ -67,9 +63,9 @@ class PrimeLineWeb < GenericImport
   
   def products_list(name)
     fetch = WebFetch.new("http://www.primeline.com/Products/ProductList.aspx?SearchType=#{name}&TotalDisplay=1024")
-    doc = Hpricot(open(fetch.get_path))
+    doc = Nokogiri::HTML(open(fetch.get_path))
     
-    doc.search("//table[@id='Table4']/tr/td/div/a").to_a.collect do |a|
+    doc.xpath("//table[@id='Table4']/tr/td/div/a").to_a.collect do |a|
       next nil unless a['href'].index('ProductDetail')
       a['href'].strip.gsub(/^\.\.\//, '')
     end
@@ -105,8 +101,8 @@ class PrimeLineWeb < GenericImport
     puts "Category: #{url}  #{category}"
     fetch = WebFetch.new(url)
     return unless path = fetch.get_path
-    doc = Hpricot(open(path))   
-    doc.search("//table[@id='Table4']/tr/td/div/a").each do |a|
+    doc = Nokogiri::HTML(open(path))
+    doc.xpath("//table[@id='Table4']/tr/td/div/a").each do |a|
       next unless a['href'].index('ProductDetail')
       path = a['href'].strip.gsub(/^\.\.\//, '')
 #      puts "Product: #{path} : #{category}"
@@ -143,28 +139,28 @@ class PrimeLineWeb < GenericImport
 
   def process_product(categories, url, tag)
     fetch = WebFetch.new(url)
-    doc = Hpricot(open(fetch.get_path))
+    doc = Nokogiri::HTML(open(fetch.get_path))
     return nil unless doc
 
-    prod_name = doc.search("//span[@id='ctl00_content_ProductName']").inner_html.split(' ').collect do |c|
+    prod_name = doc.xpath("//span[@id='ctl00_content_ProductName']").inner_html.split(' ').collect do |c|
       @@upcases.index(c.upcase.gsub(/\d/,'')) ? c.upcase : c.capitalize
     end.join(' ')
 
     data = {
-      'supplier_num' => doc.search("//span[@id='ctl00_content_ProductCode']").inner_html,
+      'supplier_num' => doc.xpath("//span[@id='ctl00_content_ProductCode']").inner_html,
       'name' => prod_name
     }
     puts "Number: #{data['supplier_num']}"
 
-    main_img = doc.search("//img[@id='ctl00_content_PIM']").first['src']
+    main_img = doc.xpath("//img[@id='ctl00_content_PIM']").first['src']
     log = []
     return nil if main_img == "Product_Images/picturesoon.jpg"
     
-    note = doc.search("//span[@id='ctl00_content_ProductClasstext']").to_a
+    note = doc.xpath("//span[@id='ctl00_content_ProductClasstext']").to_a
     return nil if note and note.first.inner_html == "Non-Stock"
 
     properties = []
-    doc.search("//td[@id='ctl00_content_TableCell1']/span").each do |span|
+    doc.xpath("//td[@id='ctl00_content_TableCell1']/span").each do |span|
       raise "Unkonown prop" unless /^\s*<b>\s*(.+?)\s*:\s*<\/b>\s*(.+?)$/ =~ span.inner_html
       name, value = $1.strip, $2.strip
       puts "  - #{name.inspect} : #{value.inspect}"
@@ -173,7 +169,7 @@ class PrimeLineWeb < GenericImport
     data['properties'] = properties    
     
     # Features
-    features = doc.search("//img[@src='images/bulletArrow.gif']").collect do |img|
+    features = doc.xpath("//img[@src='images/bulletArrow.gif']").collect do |img|
       img.next_sibling.inner_html.gsub(/(<[^>]+>)|(<--.*)/,'').strip
     end
 #    log << " * NO FEATURES" if features.empty?
@@ -181,7 +177,7 @@ class PrimeLineWeb < GenericImport
 
     price_no_special = nil
     price_no_less = nil
-    price_note = doc.search("//span[@id='ctl00_content_PriceNote']").join.strip
+    price_note = doc.xpath("//span[@id='ctl00_content_PriceNote']").to_a.join.strip
     unless price_note.empty?
       data['price_note'] = price_note
       price_note = price_note.downcase
@@ -189,8 +185,8 @@ class PrimeLineWeb < GenericImport
       price_no_less = true if price_note.index('less than minimum')
     end
     
-    setup_price = doc.search("//span[@id='ctl00_content_SetupCostDesc']").first.inner_html
-    running_price = doc.search("//span[@id='ctl00_content_RunningCostDesc']").first
+    setup_price = doc.xpath("//span[@id='ctl00_content_SetupCostDesc']").first.inner_html
+    running_price = doc.xpath("//span[@id='ctl00_content_RunningCostDesc']").first
     running_price = running_price.inner_html if running_price
 #    @decoration_costs << [setup_price ? setup_price.strip : nil, running_price ? running_price.strip : nil]
     
@@ -198,29 +194,29 @@ class PrimeLineWeb < GenericImport
     price_codes = {}
     
     # Price Code
-    price_list = (doc.search("span[@id='ctl00_content_DiscountCode']") +
-                  doc.search("span[@id='ctl00_content_DiscountCodeCloseout']")).first
+    price_list = (doc.xpath("span[@id='ctl00_content_DiscountCode']") +
+                  doc.xpath("span[@id='ctl00_content_DiscountCodeCloseout']")).first
     if price_list
       price_str = price_list.inner_html.strip.gsub(/<.+>/,'')
       price_str += 'C' if price_str.length == 1 and price_str[0] > ?0 and price_str[0] <= ?9 #Kludge for 4 without C price
       price_list = price_str.empty? ? nil : convert_pricecodes(price_str)
     end
     
-    price_rows = doc.search("//tr[@id='ctl00_content_RegularPriceRow']/td/table/tr/td") +
-                 doc.search("//tr[@id='ctl00_content_CloseoutPriceRow']/td/table/tr/td")
+    price_rows = doc.xpath("//tr[@id='ctl00_content_RegularPriceRow']/td/table/tr/td") +
+                 doc.xpath("//tr[@id='ctl00_content_CloseoutPriceRow']/td/table/tr/td")
     price_rows.each do |price_row|
-      rows = price_row.search("table/tr/td/table/tr[td/font]")
+      rows = price_row.xpath("table/tr/td/table/tr[td/font]")
       next unless rows and rows.length > 1
       
-      minimums = rows.shift.search("/td[@align='right']/font/b").compact
+      minimums = rows.shift.xpath("/td[@align='right']/font/b").to_a.compact
       next if minimums.empty?
       minimums = minimums.collect { |m| m.inner_html.to_i }
       
       rows.each do |row|
-        head = row.search("td/span/font").first
+        head = row.xpath("td/span/font").first
         head = head.inner_html.downcase if head
         
-        list = row.search("td/font").collect { |e| e.inner_html.strip.empty? ? nil : e.inner_html }.compact
+        list = row.xpath("td/font").collect { |e| e.inner_html.strip.empty? ? nil : e.inner_html }.compact
         next nil if list.empty?
         
         variant_prices[head] = minimums.zip(list).collect do |min, price|
@@ -249,7 +245,7 @@ class PrimeLineWeb < GenericImport
       data['lead_time_rush'] = 1
     end
 
-    it = doc.search("//table/tbody/tr/td/span[@class='black11']").last
+    it = doc.xpath("//table/tbody/tr/td/span[@class='black11']").last
     if it 
       data['lead_time_normal_min'], data['lead_time_normal_max'] = it.inner_html.scan(/(?:(?:(\d+)\s*-\s*)?(\d+) days)|(?:(?:(\d+)\s*-\s*)?(\d+) weeks)/).collect { |dl, dh, wl, wh| dh ? [dl ? dl.to_i : dh.to_i, dh.to_i] : [(wl ? wl.to_i : wh.to_i)*5, wh.to_i*5] }.max
     else
@@ -296,7 +292,7 @@ class PrimeLineWeb < GenericImport
     variants = []  
     href_reg = /\(.*?,\"(.*?)\"/
     num_reg = /\/(.*?)\./
-    color_list = doc.search("//span[@id='ctl00_content_ColorLinks']/a")
+    color_list = doc.xpath("//span[@id='ctl00_content_ColorLinks']/a")
     return nil if color_list.empty?
     variants = color_list.collect do |a|
       name = a.inner_html
@@ -345,7 +341,7 @@ class PrimeLineWeb < GenericImport
     
     
     # Shipping
-    shipping = doc.search("//td[@id='ctl00_content_ShippingManualCell']/span/text()")
+    shipping = doc.xpath("//td[@id='ctl00_content_ShippingManualCell']/span/text()")
     unless shipping.empty?
       shipping = shipping.first.content 
     
@@ -373,7 +369,7 @@ class PrimeLineWeb < GenericImport
     end
     data['image-thumb'] = TransformImageFetch.new("http://www.primeline.com/Products/Product_Images/#{short_num}.jpg")
     
-    hi_res = doc.search("//span[@id='ctl00_content_HiReslink']/a")
+    hi_res = doc.xpath("//span[@id='ctl00_content_HiReslink']/a")
     unless hi_res.empty?
       path = "http://www.primeline.com/#{hi_res.first['href']}"
       data['image-main'] = TransformImageFetch.new(path)
