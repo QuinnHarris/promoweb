@@ -120,7 +120,8 @@ class Admin::ProductsController < Admin::BaseController
         @order = Order.find(params[:context][:order_id])
         item = @order.items.create(:product_id => product.id, :price_group_id => price_group.id)
         item.order_item_variants.create(:variant_id => variant.id, :quantity => 100)
-        task_complete({ :data => { :product_id => product.id, :item_id => item.id }},
+        @order.task_complete({ :user_id => session[:user_id], :host => request.remote_ip,
+                               :data => { :product_id => product.id, :item_id => item.id }},
                       AddItemOrderTask, [AddItemOrderTask, RequestOrderTask, RevisedOrderTask, QuoteOrderTask])
         redirect_to items_admin_order_path(@order)
       else
