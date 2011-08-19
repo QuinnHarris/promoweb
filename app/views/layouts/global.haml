@@ -106,7 +106,7 @@
                     = addr.postalcode
                   - for email in @order.customer.email_addresses
                     \:
-                    = mail_to "#{@order.customer.person_name} <#{email.address}>", email.address, :cc => (@order.user != @user ? @order.user.email_string : nil)
+                    = mail_to "#{@order.customer.person_name} <#{email.address}>", email.address, :cc => ((@order.user && @order.user != @user) ? @order.user.email_string : nil)
                 %div
                   \-
                   = @order.user ? @order.user.name : '?'
