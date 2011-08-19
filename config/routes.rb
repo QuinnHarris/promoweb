@@ -94,7 +94,7 @@ Promoweb::Application.routes.draw do
         put 'apply_commission'
       end
     end
-    resources :suppliers, :except => [:show]
+    resources :suppliers
 
     resources :users do
       collection do
