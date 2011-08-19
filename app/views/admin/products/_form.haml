@@ -17,6 +17,22 @@
       %th Description:
       %td= p.text_area :description
     %tr
+      %th Package (LxWxH):
+      %td
+        = p.text_field :package_length, :size => 5
+        in x
+        = p.text_field :package_width, :size => 5
+        in x
+        = p.text_field :package_height, :size => 5
+        in
+    %tr
+      %th Package Units @ Weight:
+      %td
+        = p.text_field :package_units, :size => 8
+        @
+        = p.text_field :package_weight, :size => 8
+        lbs
+    %tr
       %th Image URL
       %td= text_field :product_image, :url
     %tr

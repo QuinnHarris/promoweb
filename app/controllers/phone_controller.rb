@@ -194,7 +194,7 @@ class PhoneController < ActionController::Base
         @order = po.purchase.order
         @supplier = po.purchase.supplier
         texts << "Order #{@order.id}"
-        uri = { :controller => '/admin/orders', :action => :items_edit, :order_id => @order }
+        uri = { :controller => '/admin/orders', :action => :items, :id => @order }
       end
     end
     
@@ -204,7 +204,7 @@ class PhoneController < ActionController::Base
         texts << "ORDER DOESN'T MATCH CUSTOMER EMAIL" unless emails.empty? or emails.find { |a| @order.customer.email_addresses.to_a.find { |b| b.address.downcase.include?(a.address.downcase) } }
         texts << (@order.user_id ? @order.user.name : "UNASSIGNED")
         texts << "Order #{@order.id}"
-        uri = { :controller => '/admin/orders', :action => :items_edit, :order_id => @order, :own => true } if @order.user_id.nil?
+        uri = { :controller => '/admin/orders', :action => :items, :id => @order, :own => true } if @order.user_id.nil?
       else
         customers = emails.collect do |addr|
           Customer.find(:all, :include => :email_addresses, :conditions => ["lower(email_addresses.address) ~ ?", addr.address.downcase], :order => 'customers.id DESC')
@@ -224,7 +224,7 @@ class PhoneController < ActionController::Base
           if !emails.empty? && recipients.find { |r| r.address == MAIN_EMAIL }
             texts << "NEW CUSTOMER"
             /M(\d{4,5})/ === subject
-            uri = { :controller => '/admin/orders', :action => :new_order, :email => author.address || '', :name => author.name, :product => $1}
+            uri = { :controller => '/admin/orders', :action => :create, :email => author.address || '', :name => author.name, :product => $1}
           else
             texts << "UNKNOWN"
           end
