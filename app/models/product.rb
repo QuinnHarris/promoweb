@@ -226,7 +226,7 @@ class PriceCollectionCompetition < PriceCollectionAll
     cost_entries = cost_group.price_entries.to_a
     cost_first = cost_entries.find { |e| e.marginal and e.fixed.to_i == 0 }
     cost_last = cost_entries.reverse.find { |e| e.marginal }
-                 
+
     n1 = params[:n1] || supplier_minimums.first
     if params[:n2]
       n2 = params[:n2]
@@ -997,9 +997,11 @@ class Product < ActiveRecord::Base
       when "Bullet Line"
         "http://www.bulletline.com/ViewItem.aspx?pn=#{supplier_num}"
       when "LogoIncluded"
-      "http://www.logoincluded.com/products/#{data && data[:path]}"
+        "http://www.logoincluded.com/products/#{data && data[:path]}"
       when "DigiSpec"
-      data && data[:url]
+        data && data[:url]
+      when "Ash City"
+      "http://www.ashcity.com/Catalog/ProductDetail.aspx?ProductCode=#{supplier_num}&Currency=USD&Language=en-US"
       else
         "http://www.mountainofpromos.com/search/#{supplier.name}"
     end

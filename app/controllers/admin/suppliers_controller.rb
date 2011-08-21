@@ -17,6 +17,7 @@ class Admin::SuppliersController < Admin::BaseController
   def create
     @supplier = Supplier.new(params[:supplier])
     @supplier.address = Address.new(params[:address])
+    @supplier.price_source = PriceSource.create(:name => params[:supplier][:name])
 
     if @supplier.save
       redirect_to(admin_suppliers_path,

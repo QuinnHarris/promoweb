@@ -96,8 +96,8 @@ class ImageNodeFetch < ImageNode
   end
 
   def get
-    puts "GET: #{uri}"
     unless File.exists?(path)
+      puts "GET: #{uri}"
       FileUtils.mkdir_p(File.split(path).first)
 
       begin

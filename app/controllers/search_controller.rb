@@ -49,6 +49,8 @@ class SearchController < ApplicationController
 
     @paginate_options = {}
 
+    return if @products
+
     # Find by substring search on product name
     @products =  WillPaginate::Collection.create(@page, per_page, 0) do |pager|
       scope = Product.where(:deleted => false)
