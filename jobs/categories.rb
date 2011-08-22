@@ -138,6 +138,38 @@ private
 
   def data
 [
+  ['Apparel',
+  [
+  ],[
+     ['Outerwear',
+      [supplier('Ash City',
+                category('Outerwear') ) ],
+      %w(Windvests Windshirts Insulated\ Seam-Sealed Teflon Soft\ Shells Leather Insulated Seam-Sealed Reversible\ Jackets Reversible\ Vests Workwear).collect do |name|
+        [name, [supplier('Ash City', match('name', name.gsub(/s$/,''), 1))]]
+      end + 
+      [
+       ['Performance Jackets',
+        [supplier('Ash City',
+                  all(match('name', 'jacket', 1),
+                      match(%w(name material), 'performance', 1) ) ) ] ],
+       ['Techno series',
+        [supplier('Ash City',
+                  match('description', 'EZAWAY', 1) ) ] ],
+      ] ],
+     ['Soft Shell',
+      [supplier('Ash City',
+                category('Soft Shell') ) ],
+      [
+       ['Performance Jackets',
+        [supplier('Ash City',
+                  all(match('name', 'jacket', 1),
+                      match(%w(name material), 'performance', 1) ) ) ] ],
+       ['Performance Vests',
+        [supplier('Ash City',
+                  all(match('name', 'vest', 1),
+                      match(%w(name material), 'performance', 1) ) ) ] ],
+      ] ],
+    ] ],
  ['Awards',
   [
   ],[

@@ -70,6 +70,7 @@ Promoweb::Application.routes.draw do
       %w(person_name company_name email_addresses phone_numbers).each do |name|
         post "auto_complete_for_customer_#{name}"
       end
+      get 'create_email' # needed by Thunderbird plugin on NEW CUSTOMER
       get 'contact_find'
       get 'contact_search'
       post 'contact_find'

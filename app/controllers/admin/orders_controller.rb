@@ -57,6 +57,7 @@ class Admin::OrdersController < Admin::BaseController
     end
 
     @title = "Orders #{ready_orders.length} of #{@count}"
+    @javascripts = ['rails.js']
   end
     
   def payment_apply
@@ -390,13 +391,6 @@ class Admin::OrdersController < Admin::BaseController
 
   def create
     Customer.transaction do
-      if params[:email] and
-          customer = Customer.find(:first, :include => :email_addresses, :conditions => ['lower(email_addresses.address) ~ ?', params[:email].downcase])
-        order = customer.orders.find(:first, :conditions => 'user_id IS NOT NULL', :order => 'id DESC')
-        render :inline => "Customer already serviced by #{order.user.name}"
-        return
-      end
-
       if params[:customer_id]
         @customer = Customer.find(params[:customer_id])
       else
@@ -405,11 +399,37 @@ class Admin::OrdersController < Admin::BaseController
             :person_name => params[:name] || '' })
       end
 
-      @customer.save(:validate => false)
-      EmailAddress.create(:customer => @custoemr,
-                          :address => params[:email])
-      
+      @customer.save(:validate => false)      
       @order = @customer.orders.create(:user_id => session[:user_id])
+      session[:order_id] = @order.id
+    end
+
+    redirect_to contact_order_path(@order)
+  end
+
+  def create_email
+    Customer.transaction do
+      if customer = Customer.find(:first, :include => :email_addresses, :conditions => ['lower(email_addresses.address) ~ ?', params[:email].downcase]) and
+          order = customer.orders.find(:first, :conditions => 'user_id IS NOT NULL', :order => 'id DESC')
+        render :inline => "Customer already serviced by #{order.user.name}"
+        return
+      end
+
+      customer = Customer.new({
+                                 :company_name => '',
+                                 :person_name => params[:name] || '' })
+
+      customer.save(:validate => false)
+      customer.email_addresses.create(:address => params[:email])
+      
+      @order = customer.orders.create(:user_id => session[:user_id])
+
+      if /M(\d{4,5})/ === params[:subject] and
+          product = Product.find($1) and
+          (pg = PriceGroup.find(:all, :include => :variants, :conditions => { 'price_groups.source_id' => nil, 'variants.product_id' => product.id})).length == 1
+        @order.items.create(:product_id => product.id,
+                            :price_group_id => pg.first.id)
+      end
       session[:order_id] = @order.id
     end
 

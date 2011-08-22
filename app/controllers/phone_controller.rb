@@ -224,7 +224,7 @@ class PhoneController < ActionController::Base
           if !emails.empty? && recipients.find { |r| r.address == MAIN_EMAIL }
             texts << "NEW CUSTOMER"
             /M(\d{4,5})/ === subject
-            uri = { :controller => '/admin/orders', :action => :create, :email => author.address || '', :name => author.name, :product => $1}
+            uri = { :controller => '/admin/orders', :action => :create_email, :email => author.address || '', :name => author.name, :product => $1}
           else
             texts << "UNKNOWN"
           end

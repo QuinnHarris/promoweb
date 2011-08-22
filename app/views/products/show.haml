@@ -22,7 +22,7 @@
           %span#prod_num
             %em= link_to("#{@product.supplier.name}: #{@product.supplier_num}", @product.supplier_url)
             %strong= "(M#{@product.id})"
-          %h1= @product.name
+          %h1!= @product.name
           != path_tail_list
 
         - if @message

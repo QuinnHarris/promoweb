@@ -49,8 +49,6 @@ class SearchController < ApplicationController
 
     @paginate_options = {}
 
-    return if @products
-
     # Find by substring search on product name
     @products =  WillPaginate::Collection.create(@page, per_page, 0) do |pager|
       scope = Product.where(:deleted => false)
@@ -58,7 +56,15 @@ class SearchController < ApplicationController
       list = scope.order("id").includes(:product_images).limit(per_page).offset((@page-1)*per_page)
       pager.replace list[0...per_page]
       pager.total_entries = scope.count
-    end
+    end if @products.empty?
+
+    # Find by supplier num
+    @products = WillPaginate::Collection.create(@page, per_page, 0) do |pager|
+      list = Product.where(:supplier_num => @terms).limit(per_page).offset((@page-1)*per_page).all
+      pager.replace list
+      pager.total_entries = list.count
+    end if @products.empty?
+      
 
     @context = {}
 
