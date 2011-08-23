@@ -141,9 +141,33 @@ private
   ['Apparel',
   [
   ],[
+     ['Hats & Caps',
+      [match('name', /(?:^| )hat(?:$| |\/)/),
+       supplier('High Caliber Line',
+                category('Headwear', 'Regular') ),
+       supplier('Norwood',
+                category('OUTDOOR', 'HEADWEAR'),
+                all(category('GOLF'),
+                    match('name', 'cap') ) ),
+       supplier('Bullet Line',
+                category('Headwear', 'Structured/Constructed Caps'),
+                category('Headwear', 'Unstructured/Unconstructed Caps') ),
+       supplier('Ash City',
+                all(category('Accessories'),
+                    match('name', 'cap')))
+      ],[
+         ['Visors',
+          [match('name', 'visor', 1),
+           supplier('Bullet Line',
+                    category('Headwear', 'Visors') ) ] ],
+         ['Knit Caps',
+          [match('name', 'knit', 1),
+           supplier('Bullet Line',
+                    category('Headwear', 'Knit Caps') ) ] ],
+        ] ],
      ['Outerwear',
       [supplier('Ash City',
-                category('Outerwear') ) ],
+                category('Outerwear'), match('name', 'jacket') ) ],
       %w(Windvests Windshirts Insulated\ Seam-Sealed Teflon Soft\ Shells Leather Insulated Seam-Sealed Reversible\ Jackets Reversible\ Vests Workwear).collect do |name|
         [name, [supplier('Ash City', match('name', name.gsub(/s$/,''), 1))]]
       end + 
@@ -168,6 +192,61 @@ private
         [supplier('Ash City',
                   all(match('name', 'vest', 1),
                       match(%w(name material), 'performance', 1) ) ) ] ],
+      ] ],
+
+     ['Fleece',
+      [supplier('Ash City',
+                category('Fleece') ),
+       match('name', 'fleece')],
+      %w(Vests Microfleece Vintage).collect do |name|
+        [name, [supplier('Ash City', match('name', name.gsub(/s$/,''), 1))]]
+      end + 
+      [
+       ['Microfleece',
+        [supplier('Ash City',
+                  match(%w(name material), 'microfleece', 1) ) ] ],
+       ['Poly fleece',
+        [supplier('Ash City',
+                  match(%w(name material), 'polyester', 1) ) ] ],
+       ['Interactive Fleece',
+        [supplier('Ash City',
+                  match('name', 'interactive', 1) ) ] ],
+       ['Cotton/Poly Fleece',
+        [supplier('Ash City',
+                  all(match(%w(name material), 'cotton', 1),
+                      match(%w(name material), 'polyester', 1) ) ) ] ],
+       ['Bonded Fleece',
+        [supplier('Ash City',
+                  match('name', 'bonded', 1) ) ] ],
+      ] ],
+     ['Knits',
+      [supplier('Ash City',
+                category('Knits'), match('name', 'polo') ) ],
+      %w(Jersey Pique Teflon Edry Textured Eperformance Jacquard Mercerized Interlock Micro\ pima).collect do |name|
+        [name, [supplier('Ash City', match(%w(name material description), name, 1))]]
+      end + 
+      [
+      ] ],
+     ['Wovens',
+      [supplier('Ash City',
+                category('Wovens') ), ],
+      %w(Easy\ care Primalux Twill Teflon Stretch Cotton Denim Service Vintage Wrinkle\ Free Wrinkle\ Resistant).collect do |name|
+        [name, [supplier('Ash City', match(%w(name material description), name, 1))]]
+      end + 
+      [
+       ['Silk blend',
+        [supplier('Ash City',
+                  match(%w(name material description), 'silk', 1) ) ] ],
+      ] ],
+     ['Active Wear',
+      [supplier('Ash City',
+                category('Active Wear') ) ],
+      [
+      ] ],
+     ['Safety',
+      [supplier('Ash City',
+                category('Safety') ) ],
+      [
       ] ],
     ] ],
  ['Awards',
@@ -282,6 +361,9 @@ private
    supplier('High Caliber Line',
             all(category('Bags'),
                 match('name', /[^(cooler)] bag/i) ) ),
+   supplier('Ash City',
+            all(category('Accessories'),
+                match('name', %w(bag pack portfolio tote brief))))
   ],[
      ['Backpacks',
       [match('name', %w(Backpack Daypack)),
@@ -1237,28 +1319,6 @@ private
       [match(%w(name description), ['Yo-Yo', 'Yo Yo', 'YoYo']),
        supplier('Lanco',
                 category('Toys & Games', 'Yo-Yo\'s') )]],
-    ] ],
- ['Hats & Caps',
-  [match('name', /(?:^| )hat(?:$| |\/)/),
-#   exclude(match('name', 'twill')),
-   supplier('High Caliber Line',
-            category('Headwear', 'Regular') ),
-   supplier('Norwood',
-            category('OUTDOOR', 'HEADWEAR'),
-            all(category('GOLF'),
-                match('name', 'cap') ) ),
-   supplier('Bullet Line',
-            category('Headwear', 'Structured/Constructed Caps'),
-            category('Headwear', 'Unstructured/Unconstructed Caps') )
-  ],[
-     ['Visors',
-      [match('name', 'visor', 1),
-       supplier('Bullet Line',
-                category('Headwear', 'Visors') ) ] ],
-     ['Knit Caps',
-      [match('name', 'knit', 1),
-       supplier('Bullet Line',
-                category('Headwear', 'Knit Caps') ) ] ],
     ] ],
  # Bad category
  ['Travel',

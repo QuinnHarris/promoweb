@@ -8,7 +8,6 @@ class DecorationPriceEntry < ActiveRecord::Base
   end
   
   def multiplier(name, unit)
-    logger.info("Mult: #{unit} #{self["#{name}_offset"]} #{self["#{name}_divisor"]}")
     ((unit - 1 - self["#{name}_offset"]) / self["#{name}_divisor"]).floor || 0
   end
     
