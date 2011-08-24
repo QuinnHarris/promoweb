@@ -27,7 +27,7 @@
     %h3
       = link_to "Associate this order #{@order.id} with customer below", contact_merge_admin_order_path(@order, :keep_customer_id => @customer.id, :discard_customer_id => @order.customer)
       %br
-      = link_to "View Customer Orders", :controller => :order, :action => :orders, :customer_id => @customer.id
+      = link_to "View Customer Orders", orders_path(:customer_id => @customer.id)
       %br
       = link_to "OOPS Go back and don't associate", { :customer_id => nil }
 

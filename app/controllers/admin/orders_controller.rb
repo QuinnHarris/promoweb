@@ -158,7 +158,7 @@ class Admin::OrdersController < Admin::BaseController
     customer = Customer.find(:first, find_options)
       
     if params[:order_id]
-      redirect_to contact_order_path(@order)
+      redirect_to contact_order_path(@order, :customer_id => customer.id)
     else
       redirect_to orders_path(:customer_id => customer.id)
     end

@@ -67,8 +67,6 @@ class AshCityXML < GenericImport
         'supplier_categories' => [[src_data['Category'], src_data['Brand']]]
       }
 
-      puts "Mat: #{prod_data['material']}"
-
       name = src_data['StyleName']
 
       if (wo_name = name.gsub(/<b>new<\/b>\s+/i, '')) != name
