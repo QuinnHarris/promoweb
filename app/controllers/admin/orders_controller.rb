@@ -352,7 +352,7 @@ class Admin::OrdersController < Admin::BaseController
       fall = @order.customer.orders.find(:first, :conditions => "id != #{@order.id}", :order => 'id DESC')
 
       User.where(:current_order_id => @order.id).each do |user|
-        user.update_attributes(:current_order_id = fall.id)
+        user.update_attributes(:current_order_id => fall.id)
       end
 
       @order.destroy
