@@ -107,9 +107,9 @@ private
                                   @order.customer.default_address.postalcode[0..4]])
       if list.length == 1
         session[:tz] = list.first.tz_name
-        Time.zone = session[:tz] || 'Mountain Time (US & Canada)'
       end
     end
+    Time.zone = session[:tz] || 'Mountain Time (US & Canada)'
 
     # Set page title
     if @order

@@ -129,7 +129,7 @@
 
           - unless false #@product.deleted
             #prices.box
-              = form_tag(add_orders_path, {:name => "productform" }) do
+              = form_tag(add_orders_url(:protocol => Rails.env.production? ? 'https://' : nil), {:name => "productform" }) do
                 %p
                   = hidden_field_tag "product", @product.id
                   = hidden_field_tag "price_group", @prices.price_sets.first && @prices.price_sets.first.group.id
