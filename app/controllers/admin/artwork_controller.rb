@@ -9,14 +9,16 @@ class EPSInfo
   end
 
   private
-  def find_declares(count = 100)
+  def find_declares
     @declares = {}
+    started = nil
     File.open(@file_name).each do |line|
-      if /^%%(\w+):\s(.+)$/ === line
+      if /^%%(\w+):\s(.+)$/ === line.encode('ASCII', :invalid => :replace, :replace => '')
         @declares[$1] = $2
+        started = true
+      elsif started
+        return
       end
-      count -= 1
-      return if count == 0
     end
   end
 
