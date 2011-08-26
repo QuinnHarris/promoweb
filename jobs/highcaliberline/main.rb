@@ -1,7 +1,7 @@
 require '../generic_import'
 require './import'
 
-import = HighCaliberLine.new("High Caliber Line", "www.highcaliberline.com")
+import = HighCaliberLine.new
 import.set_standard_colors
 import.run_parse_cache
 import.run_transform 
