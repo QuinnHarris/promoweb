@@ -165,6 +165,8 @@ class EPSPlacement < EPSInfo
 
     # Insert eps
     doc.image @file_name, :x => (center_x - width_imprint/2 + offset_x)/s, :y => (center_y - height_imprint/2 + offset_y)/s
+
+    doc.scale(1.0/s, 1.0/s) unless s == 1.0
   end
 
   def inspect
