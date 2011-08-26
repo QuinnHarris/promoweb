@@ -15,7 +15,7 @@ class Order < ActiveRecord::Base
      customer.tasks_inactive + tasks_inactive + items.collect { |i| i.tasks_inactive }.flatten).uniq.sort_by { |t| t.created_at } 
   end
     
-  has_many :items, :class_name => 'OrderItem', :foreign_key => 'order_id' #, :include => :product, :order => "products.supplier_id, order_items.id"
+  has_many :items, :class_name => 'OrderItem', :foreign_key => 'order_id' #, :order => "products.supplier_id, order_items.product_id, order_items.id"
   has_many :entries, :class_name => 'OrderEntry', :foreign_key => 'order_id'
   has_many :payment_transactions
   
