@@ -131,7 +131,7 @@ private
 
   def redirect_to_next(inject = [], params = {})
     next_task = @order.task_next(@permissions, inject) { |t| t.uri && !t.uri[:controller].include?('admin') }
-    redirect_to ((next_task and next_task.uri) ? next_task.uri : { :controller => '/orders', :action => :status }).merge(:id => @order.id).merge(params)
+    redirect_to ((next_task and next_task.uri) ? next_task.uri : { :controller => '/orders', :action => :status_page }).merge(:id => @order.id).merge(params)
   end
   
   def task_complete(params, task_class, revokable = [], revoked = true)

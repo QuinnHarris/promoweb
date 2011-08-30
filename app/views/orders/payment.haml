@@ -115,4 +115,4 @@
 
   %hr
   = form_for :payment, @payment, :url => { :order_id => @order } do
-    != submit_options
+    != submit_options false

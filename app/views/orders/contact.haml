@@ -96,7 +96,7 @@
         = render :partial => 'address_edit', :locals => { :field_name => :ship_address, :disabled => !@options.different}
       
   - unless @reassoc
-    != submit_options
+    != submit_options !@static
 
 :javascript
   $$('.postalcode').each(function (obj) {
