@@ -71,7 +71,8 @@ Promoweb::Application.routes.draw do
         post "auto_complete_for_customer_#{name}"
       end
       get 'create_email' # needed by Thunderbird plugin on NEW CUSTOMER
-      get 'contact_find'
+      get 'find'
+      post 'find_apply'
       get 'contact_search'
       post 'contact_find'
       post 'variant_change'

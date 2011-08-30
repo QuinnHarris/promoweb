@@ -1,18 +1,16 @@
-- unless @search
-  %p
-    We will not contact you or send you an email for any reason not directly related to an order unless you select to be added to our email list.  More information on how we use your information can be found on our TRUSTe verified
-    = link_to 'privacy policy.', :controller => '/static', :action => :privacy
+%p
+  We will not contact you or send you an email for any reason not directly related to an order unless you select to be added to our email list.  More information on how we use your information can be found on our TRUSTe verified
+  = link_to 'privacy policy.', :controller => '/static', :action => :privacy
 
-- unless @search
-  = error_messages_for 'customer', :object => ([@customer, @default_address, @ship_address] + @customer.email_addresses + @customer.phone_numbers)
-  - if @user and @static and !@reassoc
-    .admin
-      = link_to "Unlock to Modify", :unlock => true
+= error_messages_for 'customer', :object => ([@customer, @default_address, @ship_address] + @customer.email_addresses + @customer.phone_numbers)
+- if @user and @static and !@reassoc
+  .admin
+    = link_to "Unlock to Modify", :unlock => true
 
-- if @search or @naked
+- if @naked
   :javascript
     function on_select(field, value) {
-      params = {#{@search ? '' : "'order_id': #{@order.id}"}}
+      params = {'order_id': #{@order.id}}
       params[field.name] = field.value
       window.location = '/admin/orders/contact_search?' + Object.toQueryString(params)
     }
@@ -38,9 +36,7 @@
   %table.form
     %caption
       Contact Information
-      - if @search
-        Search
-      - elsif @naked
+      - if @naked
         Set or Associate
     - if @similar
       %thead
@@ -53,55 +49,38 @@
             ,
             = link_to "View", items_order_path(@similar.orders.find(:first))
     %tbody
-      - if @search
-        %tr
-          %th Order #
-          %td= text_field :order, :id, :value => ''
-        %tr
-          %th Purchase #
-          %td= text_field :purchase_order, :quickbooks_ref
-          %td= submit_tag('Find')
       %tr
         %th Company:
         != customer_field :company_name
       %tr.required
         %th Name:
         != customer_field :person_name
-        - unless @static or @search
+        - unless @static
           %td
             = check_box :customer, :solicit
             Put me on the email list.
       %tr.required
         %th Email:
         %td#email_addresses
-          - unless @search
-            - @customer.email_addresses << EmailAddress.new if @customer.email_addresses.empty?
-            = render :partial => 'email_address', :locals => { :customer => cust }
-          - else
-            = text_field_predicated(:customer, :email_addresses)
-        - unless @static or @search
+          - @customer.email_addresses << EmailAddress.new if @customer.email_addresses.empty?
+          = render :partial => 'email_address', :locals => { :customer => cust }
+        - unless @static
           %td
             &nbsp;
             != add_link(cust, 'email_address', EmailAddress)
       %tr.required
         %th Phone Number:
         %td#phone_numbers
-          - unless @search
-            - @customer.phone_numbers << PhoneNumber.new if @customer.phone_numbers.empty?
-            = render :partial => 'phone_number', :locals => { :customer => cust }
-          - else
-            = text_field_predicated(:customer, :phone_numbers)
-        - unless @static or @search
+          - @customer.phone_numbers << PhoneNumber.new if @customer.phone_numbers.empty?
+          = render :partial => 'phone_number', :locals => { :customer => cust }
+        - unless @static
           %td
             &nbsp;
             != add_link(cust, 'phone_number', PhoneNumber)
 
-      - unless @search
-        = render :partial => 'address_edit', :locals => { :field_name => :default_address, :disabled => false }
+      = render :partial => 'address_edit', :locals => { :field_name => :default_address, :disabled => false }
 
-
-
-  - unless @search or (@static and !@options.different)
+  - unless (@static and !@options.different)
     %table#shipping.form
       %caption Shipping Address
       %tbody
@@ -116,7 +95,7 @@
           %td= @static ? @ship_address.name : text_field(:ship_address, :name, :disabled => !@options.different)
         = render :partial => 'address_edit', :locals => { :field_name => :ship_address, :disabled => !@options.different}
       
-  - unless @search or @reassoc
+  - unless @reassoc
     != submit_options
 
 :javascript

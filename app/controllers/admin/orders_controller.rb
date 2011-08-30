@@ -160,7 +160,11 @@ class Admin::OrdersController < Admin::BaseController
     if params[:order_id]
       redirect_to contact_order_path(@order, :customer_id => customer.id)
     else
-      redirect_to orders_path(:customer_id => customer.id)
+      if customer.orders.length == 1
+        redirect_to status_order_path(customer.orders.first)
+      else
+        redirect_to orders_path(:customer_id => customer.id)
+      end
     end
   end
   
@@ -214,24 +218,27 @@ class Admin::OrdersController < Admin::BaseController
     redirect_to contact_order_path(@order)
   end
 
-  def contact_find
+  def find
+    @customer = Customer.new
+    @search = true
+    @javascripts = ['effects.js', 'controls.js']
+  end
+
+  def find_apply
     if params[:order] and !params[:order][:id].blank? and
-        Order.exists?(params[:order][:id].to_i)
-      redirect_to :controller => '/orders', :action => 'status_page', :id => params[:order][:id].to_i
+        order = Order.find(params[:order][:id])
+      redirect_to status_order_path(order)
       return
     end
 
     if params[:purchase_order] and !params[:purchase_order][:quickbooks_ref].blank?
       if po = PurchaseOrder.find_by_quickbooks_ref(params[:purchase_order][:quickbooks_ref])
-        redirect_to :controller => '/admin/orders', :action => :items, :order_id => po.purchase.order.id
+        redirect_to items_admin_order_path(po.purchase.order)
         return
       end
     end
 
-    @customer = Customer.new
-    @search = true
-    @javascripts = ['effects.js', 'controls.js']
-    render :template => '/orders/contact'
+    redirect_to find_admin_orders_path
   end
     
   def task_execute
