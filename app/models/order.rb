@@ -201,14 +201,14 @@ class Order < ActiveRecord::Base
   end
   composed_of :payed, :class_name => 'Money', :mapping => ["payed", 'units']
 
-  before_save :update_cache
+  before_save :update_cache, :apply_sales_tax
   def update_cache
     self['total_price_cache'] = price = total_item_price.min.round_cents
     self['total_cost_cache'] = cost = total_item_cost.min.round_cents
     true
   end
 
-  before_create :block_qb, :apply_sales_tax
+  before_create :block_qb
   def block_qb
     self.quickbooks_id = 'BLOCKED'
   end

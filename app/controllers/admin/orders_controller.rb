@@ -443,6 +443,12 @@ class Admin::OrdersController < Admin::BaseController
     (tasks + tasks.collect { |t| task_dependants(t.depends_on.find_all { |u| !u.is_a?(AcknowledgeOrderTask) }) }).flatten
   end
 
+  def item_duplicate
+    orig_item = @order.item.find(params[:item_id])
+
+    
+  end
+
   def duplicate
     Order.transaction do
       samples = params[:samples]
