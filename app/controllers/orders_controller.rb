@@ -109,7 +109,6 @@ private
         session[:tz] = list.first.tz_name
       end
     end
-    Time.zone = session[:tz] || 'Mountain Time (US & Canada)'
 
     # Set page title
     if @order
@@ -378,7 +377,7 @@ public
             ship_address = @customer.ship_address
             @customer.ship_address = nil
             @customer.save(:validate => false)
-            ship_address.destroy
+            ship_address.destroy unless ship_address == @default_address
             changed = true
           end
         end
