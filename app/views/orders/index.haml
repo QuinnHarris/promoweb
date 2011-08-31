@@ -1,11 +1,28 @@
 %table
   %thead
-    %td #
-    %td Created
-    %td Last Modified
+    %td Order
+    %td Product
+    %td Info
   %tbody
     - for order in @order.customer.orders
       %tr
-        %td= link_to order.id, status_order_path(order)
-        %td= format_time(order.created_at, false)
-        %td= format_time(order.updated_at, false)
+        %td
+          %div= link_to order.id, status_order_path(order)
+          %div= link_to 'Items', items_order_path(order)
+          %div= link_to 'Info', info_order_path(order)
+        %td
+          - images = order.items.collect do |item|
+            - thumb_url = (images = item.active_images).empty? ? item.product.image_path_relative('thumb') : images.first.image.url(:thumb)
+            %div{ :style => 'text-align: center; display: inline-block;' }
+              = link_to(url_for_product(item.product)) do
+                = image_tag(thumb_url)
+                %br
+                = item.product.name
+        %td
+          %div
+          - unless order.closed
+            OPEN
+          - if order.sample
+            SAMPLE
+          %div Created: #{format_time(order.created_at, false)}
+          %div Updated: #{format_time(order.updated_at, false)}
