@@ -305,3 +305,14 @@ input#rejectbtn {
     padding-left: 50px;
     background-image: url('/images/reject.png');
 }
+
+table#list tr:nth-child(2n) {
+    background-color: #f0f0f8;
+}
+
+table#list .products div {
+    text-align: center;
+    display: inline-block;
+    max-width: 250px;
+}
+

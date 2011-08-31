@@ -1,4 +1,4 @@
-%table
+%table#list
   %thead
     %td Order
     %td Product
@@ -10,10 +10,10 @@
           %div= link_to order.id, status_order_path(order)
           %div= link_to 'Items', items_order_path(order)
           %div= link_to 'Info', info_order_path(order)
-        %td
+        %td.products
           - images = order.items.collect do |item|
             - thumb_url = (images = item.active_images).empty? ? item.product.image_path_relative('thumb') : images.first.image.url(:thumb)
-            %div{ :style => 'text-align: center; display: inline-block;' }
+            %div
               = link_to(url_for_product(item.product)) do
                 = image_tag(thumb_url)
                 %br
