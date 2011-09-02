@@ -68,16 +68,18 @@ class OrderItem < ActiveRecord::Base
   after_save :cascade_update
   after_destroy :cascade_update
   def cascade_update
-    order.updated_at_will_change!
-    order.save!
+    order.touch
     if purchase
       if purchase.items.empty?
         purchase.destroy
       else
-        purchase.updated_at_will_change!
-        purchase.save! 
+        purchase.touch
       end
     end
+  end
+  def touch
+    super
+    cascade_update
   end
 
   after_create :qb_on_demand

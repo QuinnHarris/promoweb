@@ -25,8 +25,7 @@ class OrderItemVariant < ActiveRecord::Base
   after_save :cascade_update
   after_destroy :cascade_update
   def cascade_update
-    order_item.updated_at_will_change!
-    order_item.save!
+    order_item.touch
   end
 
   def to_destroy?

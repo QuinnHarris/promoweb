@@ -20,10 +20,7 @@ class PurchaseEntry < ActiveRecord::Base
   after_save :cascade_update
   after_destroy :cascade_update
   def cascade_update
-    purchase.updated_at_will_change!
-    purchase.save!
-
-    purchase.order.updated_at_will_change!
-    purchase.order.save!
+    purchase.touch
+    purchase.order.touch
   end
 end

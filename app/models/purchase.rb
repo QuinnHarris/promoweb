@@ -86,18 +86,15 @@ class Purchase < ActiveRecord::Base
   after_save :cascade_update
   def cascade_update
     if purchase_order
-      unless purchase_order.sent
-        purchase_order.updated_at_will_change!
-        purchase_order.save!
-      end
-
-      if bill
-        bill.updated_at_will_change!
-        bill.save!
-      end
+      purchase_order.touch unless purchase_order.sent
+      bill.touch if bill
     end
 
     order.push_quickbooks!
+  end
+  def touch
+    super
+    cascade_update
   end
 
   before_destroy :destroy_children
