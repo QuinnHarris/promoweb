@@ -42,7 +42,7 @@ xml.rss :version => '2.0', 'xmlns:g' => 'http://base.google.com/ns/1.0' do
 	xml.description description #.gsub(/[\x80-\xff]/, "")
         
         prop = product.properties_get
-        %w(color).each do |name|
+        %w(color material size).each do |name|
           xml.tag!("g:#{name}", prop[name].join(',')) if prop[name]
         end
         if prop['dimension']
@@ -59,16 +59,25 @@ xml.rss :version => '2.0', 'xmlns:g' => 'http://base.google.com/ns/1.0' do
 #        xml.tag!('g:expiration_date', @expiration_date)
         
         xml.tag!('g:condition', 'new')
-        xml.tag!('g:image_link', "http://www.mountainofpromos.com/data/product/#{product.id}/#{product.id}_large_1.jpg")
+		
+	if product.product_images.empty?
+	  images = ["data/product/#{product.id}/#{product.id}_large_1.jpg"]
+	else
+	  images = product.product_images.to_a.sort_by { |i| i.variants.empty? ? 0 : 1 }.collect { |i| i.image.url(:medium) }
+	end
+        xml.tag!('g:image_link', "http://www.mountainofpromos.com#{images.first}")
+	images[1..10].each do |i|
+	  xml.tag!('g:additional_image_link', "http://www.mountainofpromos.com#{i}")
+	end
         
         xml.tag!('g:brand', product.supplier.name)
-#        xml.tag!('g:mpn', product.supplier.name)
         xml.tag!('g:mpn', product.supplier_num)
         
         xml.tag!('g:price', product.price_comp_cache)
 
-        for category_name in product.categories.collect { |c| cat = Category.find_by_id(c.id); cat ? cat.path_name_list.join(' > ') : '' }
-          xml.tag!('g:product_type', category_name)
+        for c in product.categories.to(9)
+	  cat = Category.find_by_id(c.id)
+          xml.tag!('g:product_type', cat.path_name_list.join(' > ')) if cat
 	end
 
 	xml.tag!('online_only', 'y')
@@ -82,7 +91,6 @@ xml.rss :version => '2.0', 'xmlns:g' => 'http://base.google.com/ns/1.0' do
         # price_type
         # quantity
         # shipping
-        # size
       end
     end
   end

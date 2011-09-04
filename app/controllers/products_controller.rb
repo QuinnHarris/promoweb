@@ -46,7 +46,7 @@ class ProductsController < ApplicationController
   # RSS feed with Googleness
   def rss  
     @products = Product.find(:all,
-                             :include => [:supplier, :categories, { :decorations => :technique } ],
+                             :include => [:supplier, :categories, :product_images, { :decorations => :technique } ],
       :conditions => 'NOT(products.deleted) AND products.price_comp_cache IS NOT NULL',
       :order => 'products.id')
 
