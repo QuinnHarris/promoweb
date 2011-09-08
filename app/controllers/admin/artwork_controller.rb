@@ -515,7 +515,7 @@ class Admin::ArtworkController < Admin::OrdersController
     begin
       proof = ProofGenerate.new(placements, info_list)
     rescue EPSError => e
-      @error = e
+      render :inline => "Error: #{e}"
       return
     end
     proof.setup(:Title => 'Artwork Proof',

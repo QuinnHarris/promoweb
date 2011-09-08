@@ -125,7 +125,7 @@
             #header.nav
               %div
                 %span#phone
-                  1-877-686-5646
+                  %a{ :href => "tel:18776865646" } 1-877-686-5646
                   - if @order and @order.user
                     #{@order.user.extension_s}
                 %span#email

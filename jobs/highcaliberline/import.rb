@@ -150,7 +150,7 @@ class HighCaliberLine < GenericImport
       cost_list = [{
           :minimum => price_list.first[:minimum],
           :fixed => Money.new(0),
-          :marginal => (price_list.last[:marginal] * 0.6).round_cents
+          :marginal => (price_list.last[:marginal] * 0.6)
         },{
           :minimum => (price_list.last[:minimum] * 1.5).to_i,
         }]
@@ -159,7 +159,7 @@ class HighCaliberLine < GenericImport
         cost_list.unshift({
           :minimum => price_list.first[:minimum] / 2,
           :fixed => Money.new(25.00),
-          :marginal => (price_list.first[:marginal] * 0.6).round_cents
+          :marginal => (price_list.first[:marginal] * 0.6)
         })
 
         price_list.unshift({
