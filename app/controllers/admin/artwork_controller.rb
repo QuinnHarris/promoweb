@@ -476,7 +476,7 @@ class Admin::ArtworkController < Admin::OrdersController
     end
 
     # Header
-    product_name = decoration.order_item.product.name.gsub('”','"').gsub('’',"'")
+    product_name = decoration.order_item.product.name.encode('ASCII', :invalid => :replace, :undef => :replace, :replace => '')
 
     company_name = group.customer.company_name.strip.empty? ? group.customer.person_name : group.customer.company_name
 

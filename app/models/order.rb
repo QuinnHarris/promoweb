@@ -82,7 +82,7 @@ class Order < ActiveRecord::Base
       end
     end
     new_invoice = generate_invoice
-    @invoices << new_invoice if new_invoice
+    @invoices << new_invoice if new_invoice and !new_invoice.total_price.zero?
     @invoices
   end
   def invoice_entries
