@@ -114,5 +114,5 @@
       = link_to "Send refund check", { :action => :payment_sendcheck, :order_id => @order, :refund => true }, { :confirm => "A refund check will be sent to the customer." }
 
   %hr
-  = form_for :payment, @payment, :url => { :order_id => @order } do
+  = form_for :payment, @payment, :url => payment_submit_order_path(@order) do
     != submit_options false

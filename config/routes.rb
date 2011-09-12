@@ -160,6 +160,7 @@ Promoweb::Application.routes.draw do
       post 'contact'
       get 'artwork'
       get 'payment'
+      post 'payment_submit'
       get 'payment_creditcard'
       post 'payment_creditcard'
       

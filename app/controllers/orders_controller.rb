@@ -623,6 +623,10 @@ public
     end
   end
 
+  def payment_submit
+    render_edit
+  end
+
   def payment_use
     PaymentInfoOrderTask.transaction do
       payment_method = PaymentMethod.find(params[:method_id], :include => :customer)
