@@ -590,7 +590,7 @@ class CancelOrderTask < OrderTask
     return super if super
     
     unless order.task_completed?(FinalPaymentOrderTask)
-      return nil if order.total_charge.zero?
+      return nil if order.total_billable.zero?
       if order.task_completed?(FirstPaymentOrderTask)
         return "first Payment made but not final payment"
       end
