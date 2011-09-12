@@ -465,6 +465,7 @@ class ReOrderTask < OrderTask
   self.action_name = 'Mark as Exact ReOrder'
   self.customer = true
   self.roles = %w(Orders)
+  self.option = true
   
   def status
     active
