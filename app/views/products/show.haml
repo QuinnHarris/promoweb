@@ -96,7 +96,7 @@
                             - reset_cycle
                             - for prop in props
                               %span{ :class => cycle('odd', 'even') }
-                                = prop ? (prop.is_image? ? image_tag(prop.translate) : prop.translate) : 'NA'
+                                != prop ? (prop.is_image? ? image_tag(prop.translate) : prop.translate) : 'NA'
 
           - unless @locations.empty?
             #decorations.box

@@ -437,8 +437,10 @@ class Admin::OrdersController < Admin::BaseController
       if /M(\d{4,5})/ === params[:subject] and
           product = Product.find($1) and
           (pg = PriceGroup.find(:all, :include => :variants, :conditions => { 'price_groups.source_id' => nil, 'variants.product_id' => product.id})).length == 1
-        @order.items.create(:product_id => product.id,
-                            :price_group_id => pg.first.id)
+        item = @order.items.create(:product_id => product.id,
+                                   :price_group_id => pg.first.id)
+        task_complete({ :data => { :product_id => product.id, :item_id => item.id } },
+                      AddItemOrderTask, [AddItemOrderTask])
       end
       session[:order_id] = @order.id
     end
