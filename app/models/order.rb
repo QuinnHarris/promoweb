@@ -207,6 +207,11 @@ class Order < ActiveRecord::Base
     self['total_cost_cache'] = cost = total_item_cost.min.round_cents
     true
   end
+  def touch
+    update_cache
+    save!
+    super
+  end
 
   before_create :block_qb
   def block_qb

@@ -790,7 +790,8 @@ public
     end
   end
 
-  def_tasked_action :review, ReviewOrderTask do
+#  def_tasked_action :review, ReviewOrderTask do
+  def review
     unless params[:commit]
       @order_task = @order.task_find(ReviewOrderTask)
       company_person = !@order.customer.company_name.strip.empty?

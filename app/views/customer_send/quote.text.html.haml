@@ -35,10 +35,10 @@
       -# = link_to "Login", uri_param.merge(:action => 'login')
       = link_to 'Status', uri_param.merge(:action => 'status_page')
       - for task in @waiting_tasks
-        - unless task == ReviewOrderTask
-          = link_to task.waiting_name, task.uri.merge(uri_param)
-        - else
-          = link_to task.waiting_name, 'http://ratepoint.com/tellus/77047'
+        /- unless task == ReviewOrderTask
+        /  = link_to task.waiting_name, task.uri.merge(uri_param)
+        /- else
+        = link_to task.waiting_name, 'http://ratepoint.com/tellus/77047'
 
     #note
       - main_waiting_task = @waiting_tasks.find { |t| t.depends_on.include?(@task) }

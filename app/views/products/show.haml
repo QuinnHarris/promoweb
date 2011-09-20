@@ -266,7 +266,7 @@
                 %dl
                   - for prop in @common_properties
                     %dt= "#{prop.name.capitalize}:"
-                    %dd= prop.is_image? ? image_tag(prop.translate) : prop.translate
+                    %dd!= prop.is_image? ? image_tag(prop.translate) : prop.translate
 
             - unless @product.description.nil? or @product.description.empty?
               .desc#features

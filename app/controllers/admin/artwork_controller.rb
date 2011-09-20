@@ -280,7 +280,7 @@ class ElementLayout
       end
     end
 
-    raise EPSError, "Can't fit elements: #{dims.inspect}" if layouts.empty?
+    raise EPSError, "Can't fit elements: #{dims.inspect} of #{elements.inspect}" if layouts.empty?
 
     layouts.sort_by { |s, l| s }.last.last
   end
