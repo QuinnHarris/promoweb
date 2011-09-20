@@ -97,6 +97,7 @@ class Order < ActiveRecord::Base
     InvoiceEntry
     invoice = Invoice.new(:order => self, :tax_rate => tax_rate, :tax_type => tax_type)
     (items + po_entries + entries).each do |entry|
+      next if entry.new_record? # Kludge to deal with place holder record inserted on status page when there are no items on the order
       invoice_klass = Kernel.const_get(entry.class.reflections[:invoice_entries].class_name)
       entry_last = invoice_entries[[invoice_klass.to_s, entry.id]]
       included << entry_last if entry_last
