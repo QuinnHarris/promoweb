@@ -51,8 +51,10 @@ class CustomerSend < ActionMailer::Base
     @order = order
 
     if task.is_a?(ArtPrepairedOrderTask)
-      order.artwork_proofs.each do |artwork|
-        next if artwork.art.size > 128*1024
+      size = 6*1024*1024*3/4
+      order.artwork_proofs.sort_by { |a| a.art.size }.each do |artwork|
+        size -= artwork.art.size
+        break if size < 0
         attachments[artwork.art.original_filename] = File.read(artwork.art.path)
       end
     else #if !order.invoices_ref.empty?

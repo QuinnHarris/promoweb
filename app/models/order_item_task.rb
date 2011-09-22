@@ -65,6 +65,22 @@ class OrderSentItemTask < OrderItemTask
   def email_complete
 
   end
+
+  def self.blocked(order_item)
+    ret = super
+    return ret if ret
+    
+    address = order_item.order.customer.default_address
+    unless address
+      return "No Customer Address"
+    else
+      unless (list = address.incomplete?).empty?
+        return "Customer Address not complete: #{list.join(', ')}"
+      end
+    end
+
+    nil
+  end
   
   def execute_duration
     15.minutes
