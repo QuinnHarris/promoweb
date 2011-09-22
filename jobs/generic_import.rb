@@ -230,7 +230,11 @@ class TransformImageFetch < GenericImageFetch
   def apply_image(type, record)
     return true if record.image_exists?(type)
     return nil unless path = get_path
-    record.image_transform(path, type)
+    begin
+      record.image_transform(path, type)
+    rescue Magick::ImageMagickError
+      return nil
+    end
     return true
   end
 end
