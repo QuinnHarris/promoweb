@@ -140,7 +140,7 @@ class Admin::ProductsController < Admin::BaseController
     product.update_attributes(params[:product])
 
     unless params[:product_image][:image].blank? and params[:product_image][:url].blank?
-      pi = product.product_images.first
+      pi = product.product_images.first || product.product_images.create(:supplier_ref => params[:product][:supplier_num])
       unless params[:product_image][:url].blank?
         require 'open-uri'
         pi.image = URI.parse(params[:product_image][:url]).open

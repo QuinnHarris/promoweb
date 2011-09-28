@@ -224,7 +224,7 @@ Customer Comments:
     end
 
     return "No in hands date" if order.delivery_date.nil?
-    if !order.delivery_date_not_important && order.delivery_date <= Date.today+2
+    if !order.delivery_date_not_important && order.delivery_date <= Date.today+1
       problems << "In hands date too soon: #{order.delivery_date.inspect}"
     end
 
@@ -586,6 +586,7 @@ class CancelOrderTask < OrderTask
   self.action_name = 'Cancel Order'
   self.completed_name = 'Order Canceled'
   self.roles = %w(Orders)
+  self.option = true
 
   def self.blocked(order)
     return super if super
