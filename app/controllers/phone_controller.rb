@@ -239,7 +239,7 @@ class PhoneController < ActionController::Base
       uri = { :controller => '/orders', :action => :status_page, :id => @order } unless uri
     end
 
-    render :json => { :text => texts.join(' - '), :uri => uri && url_for(uri.merge({ :protocol => (RAILS_ENV == "production" ? 'https://' : 'http://') })) }
+    render :json => { :text => texts.join(' - '), :uri => uri && url_for(uri.merge({ :protocol => (Rails.env.production? ? 'https://' : 'http://') })) }
   end
 
   # Used by Freeswitch

@@ -76,10 +76,10 @@ class Category < ActiveRecord::Base
 
 private
   def self.children_recursive_private(hash, current)
-    current.children.target = hash[current.id]
+    current.association(:children).target = hash[current.id]
     hash[current.id].each do |child|
       children_recursive_private(hash, child) if hash.has_key?(child.id)
-      child.set_parent_target(current)
+      child.association(:parent).target = current
     end
   end
 
@@ -109,13 +109,12 @@ public
 
     @@root = Category.find_by_name('root')
     
-    list = @@root.descendants
     by_parent_id = {}
     by_parent_id.default = []
       
     @@id_map[@@root.id] = @@root
       
-    list.each do |record|
+    @@root.descendants.each do |record|
       @@id_map[record.id] = record
       by_parent_id[record[record.parent_column_name]] += [record]
     end
@@ -209,7 +208,7 @@ public
     else
       Product.count(:all,
         :conditions => (options[:children] ? all_condition : "category_id = #{id}"),
-        :include => :categories)
+        :joins => :categories)
     end
   end
   

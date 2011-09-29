@@ -1,11 +1,24 @@
 source 'http://rubygems.org'
 
-gem 'rails', '3.0.10'
+gem 'rails', '3.1.0'
 
 # Bundle edge Rails instead:
 # gem 'rails', :git => 'git://github.com/rails/rails.git'
 
 gem 'pg'
+
+
+# Gems used only for assets and not required
+# in production environments by default.
+group :assets do
+  gem 'sass-rails', "  ~> 3.1.0"
+  gem 'coffee-rails', "~> 3.1.0"
+  gem 'uglifier'
+end
+
+# Remove soon
+gem 'prototype-rails', :git => 'git://github.com/rails/prototype-rails.git'
+#gem 'jquery-rails'
 
 # Use unicorn as the web server
 # gem 'unicorn'
@@ -20,13 +33,20 @@ group :development do
   gem 'ruby-prof'
 end
 
+group :test do
+  # Pretty printed test output
+  gem 'turn', :require => false
+end
+
 # Bundle the extra gems:
 # gem 'bj'
 # gem 'aws-s3', :require => 'aws/s3'
+gem "compass", ">= 0.12.alpha.0"
+gem "fancy-buttons"
 gem 'nokogiri'
 #gem 'uuidtools'
 gem 'haml'
-gem 'sass'
+#gem 'coffee-rails'
 gem 'activemerchant'
 gem 'foreigner'
 gem 'acts_as_tree'

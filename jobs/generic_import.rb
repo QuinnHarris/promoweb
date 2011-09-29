@@ -5,7 +5,7 @@ require 'open-uri'
 require File.dirname(__FILE__) + '/progressbar'
 require File.dirname(__FILE__) + '/categories'
 
-JOBS_DATA_ROOT = RAILS_ROOT + "/jobs/data"
+JOBS_DATA_ROOT = Rails.root + "/jobs/data"
 
 def apply_decorations(supplier_name)
   supplier = Supplier.find_by_name(supplier_name)
@@ -50,7 +50,7 @@ end
 
 
 class ImageNode
-  @@cache_dir = File.join(RAILS_ROOT, "cache")
+  @@cache_dir = File.join(Rails.root, "cache")
 
   def initialize(id)
     @id = id
@@ -146,7 +146,7 @@ class LocalFetch
 end
 
 class WebFetch
-  @@cache_dir = File.join(RAILS_ROOT, "cache")
+  @@cache_dir = File.join(Rails.root, "cache")
   
   def initialize(uri)
     @uri = URI.parse(uri.gsub(' ', '%20'))
@@ -265,7 +265,7 @@ end
 class GenericImport
   @@properties = %w(material color dimension thickness base fill container pieces shape size memory)
 
-  @@cache_dir = File.join(RAILS_ROOT, "jobs/cache")
+  @@cache_dir = File.join(Rails.root, "jobs/cache")
   
   def initialize(supplier)
     @supplier_name = supplier

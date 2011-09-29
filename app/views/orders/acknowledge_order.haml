@@ -11,7 +11,7 @@
 
 %hr
 .nav
-  - form_for :order_task, @order_task, :url => { :order_id => @order } do |ak|
+  - form_for @order_task, :url => { :order_id => @order } do |ak|
     - if @order.task_ready?(AcknowledgeOrderTask)
       = ak.text_area :comment, :rows => 4
       %br

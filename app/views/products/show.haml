@@ -23,6 +23,25 @@
             %em= link_to("#{@product.supplier.name}: #{@product.supplier_num}", @product.supplier_url)
             %strong= "(M#{@product.id})"
           %h1!= @product.name
+          
+          - unless @product.tags.empty?
+            .tags
+              - for tag in @product.tags
+                %span= image_tag("tags/#{tag.name.downcase}.png") + "#{tag.name}"
+
+          #share                  
+            %div{ :class => "addthis_toolbox addthis_default_style" }
+              %a{ :href => "//www.addthis.com/bookmark.php?v=250&amp;username=mountainxpress", :class => "addthis_button_compact" }
+                Share
+              %span{ :class => "addthis_separator"} |
+              %a{ :class => "addthis_button_preferred_1" }
+              %a{ :class => "addthis_button_preferred_2" }
+              %a{ :class => "addthis_button_preferred_3" }
+              %a{ :class => "addthis_button_preferred_4" }
+            :javascript
+              var addthis_config = {"data_track_clickback":true};
+            %script{ :type => "text/javascript", :src => "//s7.addthis.com/js/250/addthis_widget.js#username=mountainxpress" }
+              
           != path_tail_list
 
         - if @message
@@ -44,23 +63,6 @@
         - cache do
           - setup_main unless @user
           #prod_img
-            - unless @product.tags.empty?
-              %span#tags
-                - for tag in @product.tags
-                  = image_tag("tags/#{tag.name.downcase}.png") + "#{tag.name}"
-            %div#share
-              %div{ :class => "addthis_toolbox addthis_default_style" }
-                %a{ :href => "//www.addthis.com/bookmark.php?v=250&amp;username=mountainxpress", :class => "addthis_button_compact" }
-                  Share
-                %span{ :class => "addthis_separator"} |
-                %a{ :class => "addthis_button_preferred_1" }
-                %a{ :class => "addthis_button_preferred_2" }
-                %a{ :class => "addthis_button_preferred_3" }
-                %a{ :class => "addthis_button_preferred_4" }
-              :javascript
-                var addthis_config = {"data_track_clickback":true};
-              %script{ :type => "text/javascript", :src => "//s7.addthis.com/js/250/addthis_widget.js#username=mountainxpress" }
-
             - if @product.product_images.empty?
               = image_tag(@product.image_path_relative('main'), :alt => @product.name)
               %br
@@ -80,9 +82,9 @@
 
           - unless @properties.empty?
             #variants.box
-              %dl
-                - index = -1
-                - for names, properties in @properties
+              - index = -1
+              - for names, properties in @properties
+                %dl
                   %dt
                     %a{ :href => "#" }
                       - reset_cycle
@@ -100,7 +102,7 @@
 
           - unless @locations.empty?
             #decorations.box
-              %dl
+              %dl#dechead
                 %dt>
                   %span Decoration:
                 %dd#techniques
@@ -110,13 +112,13 @@
                         %a{ :href => "#", :title => "Click to select #{tech.name}" }
                           %span= tech.friendly_name
 
-              %dl#sub
+              %dl
                 - display = @techniques.first.unit_name
                 %dt{ :style => !display && 'display:none;' }>
                   %span Number of #{display && @techniques.first.unit_name.capitalize}(s):
                 %dd{ :style => !display && 'display:none;' }>
                   %input#unit_value{ :name => "unit_value", :type => "text", :value => @techniques.first.unit_default, :size => "6" }
-
+              %dl
                 - display = @techniques.first.name != "None"
                 %dt{ :style => !display && 'display:none;' }>
                   %span Location:
@@ -174,8 +176,8 @@
                       %td
                       %td.num#dec_fixed_price $???.??
                     %tr#total
-                      %th Total:
-                      %td{ :colspan => 3 }
+                      %th{ :colspan => 2 } Total:
+                      %td{ :colspan => 2 }
                         %span.num#total_price $????.??
                     %tr
                       %td{ :colspan => 5 }
@@ -254,7 +256,8 @@
                   %dt Normal:
                   %dd
                     = [@product.lead_time_normal_min, @product.lead_time_normal_max].uniq.collect { |d| format_leed_time(d) }.join(' to ')
-                  - if @product.lead_time_rush
+                - if @product.lead_time_rush
+                  %dl
                     %dt Rush:
                     %dd
                       = format_leed_time(@product.lead_time_rush)
@@ -263,8 +266,8 @@
             - unless @common_properties.empty?
               .desc#attributes
                 %h2 Attributes
-                %dl
-                  - for prop in @common_properties
+                - for prop in @common_properties
+                  %dl
                     %dt= "#{prop.name.capitalize}:"
                     %dd= prop.is_image? ? image_tag(prop.translate) : prop.translate
 
@@ -277,7 +280,7 @@
 
       - if @user
         .admin
-          - form_for :product, @product, { :url => product_add_admin_categories_path(:product_id => @product) } do |prod|
+          - form_for @product, { :url => product_add_admin_categories_path(:product_id => @product) } do |prod|
             = text_field_with_auto_complete nil, :path, {}, :url => { :controller => '/admin/categories', :action => :auto_complete_for_path }
             = submit_tag 'Add to Category'
         .admin

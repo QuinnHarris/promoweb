@@ -1,11 +1,10 @@
 - unless @categories.empty?
-  %h2 Categories
-  %ul
+  %h1#path Category Search: #{@terms}  
+  %ul#search
     - for cat in @categories
       %li
         = link_to((cat.path_name_list[0..-2] + [cat.name]).join('/'), "/categories/#{cat.path.gsub(' ','_')}")
 
 - unless @products.empty?
-  - unless @categories.empty?
-    %h2 Products
+  %h1#path Product Search: #{@terms}  
   = render :partial => 'categories/list', :locals => { :products => @products, :columns => @columns, :category => nil, :context => @context }

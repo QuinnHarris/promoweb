@@ -1,7 +1,5 @@
 class SearchController < ApplicationController
   def index
-    @stylesheets = ['categories']
-
     @terms = params[:terms].strip
     @terms = '' unless @terms
 

@@ -25,7 +25,7 @@ class CustomerSend < ActionMailer::Base
     end
     
     customer_email = order.customer.email_string
-    customer_email = SEND_EMAIL unless RAILS_ENV == "production"
+    customer_email = SEND_EMAIL unless Rails.env.production?
   
     # To Customer
     send = CustomerSend.quote(order, task, subject, header)

@@ -16,7 +16,7 @@ class QbwcController < ActionController::Base
 <QBWCXML>
    <AppName>PromoWeb</AppName>
    <AppID></AppID>
-   <AppURL>http#{RAILS_ENV == 'production' ? 's://www.mountainofpromos.com' : '://10.86.201.144:3000'}/qbwc/api</AppURL>
+   <AppURL>http#{Rails.env.production? ? 's://www.mountainofpromos.com' : '://10.86.201.144:3000'}/qbwc/api</AppURL>
    <AppDescription>Mountain Xpress Promotions Quickbooks Integration</AppDescription>
    <AppSupport>https://www.mountainofpromos.com/admin/</AppSupport>
    <UserName>mntxpresspromo</UserName>

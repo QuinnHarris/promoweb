@@ -1,7 +1,9 @@
 class AuthenticatedController < ApplicationController
+  self.stylesheets << 'orders'
+  
   before_filter :setup_user
   def setup_user
-    unless request.protocol == "https://" or RAILS_ENV != "production"
+    unless request.protocol == "https://" or Rails.env.development?
       redirect_to :protocol => "https://" 
       return false
     end

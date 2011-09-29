@@ -6,6 +6,9 @@ class ApplicationController < ActionController::Base
 
   include LoginSystem
   
+  class_attribute :stylesheets
+  self.stylesheets = ['application']
+  
 public
   def self.caches_page(*actions)
     return unless perform_caching
@@ -29,7 +32,7 @@ public
     @real_user = true if user_agent.include?('blackberry')
 
     # Track access
-    if (RAILS_ENV == "production") and @real_user
+    if Rails.env.production? and @real_user
       unless session[:ses_id]
         session_record = SessionAccess.find(:first, :conditions => 
           ["user_agent = ? AND id IN (SELECT session_access_id FROM access.page_accesses WHERE address = ? AND created_at > NOW() - '3 month'::interval )",

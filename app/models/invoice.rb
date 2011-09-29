@@ -17,6 +17,10 @@ class Invoice < ActiveRecord::Base
     total_item_price + total_tax
   end
 
+  def tax_rate_s
+    '%0.02f%' % (self.tax_rate * 100.0)
+  end
+
   def qb_sales_tax_id
     case tax_type
     when 'Colorado'

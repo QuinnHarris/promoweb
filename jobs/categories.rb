@@ -12,7 +12,7 @@ class NewCategoryTransform
       end
     end
 
-    if RAILS_ENV == "production"
+    if Rails.env.production?
       record['categories'] = [['Other']] if record['categories'].empty?
     else
       record['categories'] = record['categories'] + record['categories'].collect { |cat| ['YBySupplier', @supplier] + cat }

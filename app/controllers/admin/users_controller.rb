@@ -29,7 +29,7 @@ class Admin::UsersController < Admin::BaseController
         session[:user_id] = user.id
 
         # Update Session
-        if RAILS_ENV == "production"
+        if Rails.env.production?
           session_record = SessionAccess.find(session[:ses_id])
           logger.info("Replacing session user ID: #{session_record.user_id} => #{user.id}") if session_record.user_id
           session_record.user_id = user.id

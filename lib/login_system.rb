@@ -41,7 +41,7 @@ module LoginSystem
   #   def authorize?(user)
   # 
   def login_required
-    unless request.protocol == "https://" or RAILS_ENV != "production"
+    unless request.protocol == "https://" or Rails.env.development?
       redirect_to :protocol => "https://" 
       return
     end

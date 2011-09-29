@@ -1,0 +1,337 @@
+@import "compass/css3";
+@import "fancy-buttons";
+
+@import "variables";
+
+body {
+  background-color: white;
+  margin: 0;
+}
+
+div#header {
+  position: relative;
+  min-width: 50em;
+  background-color: $alt-background;
+  width: 100%;
+  
+  a#logo {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    height: 85px;
+    width: 420px;
+    background-image: image-url('logo.png');
+    background-image: none, image-url('logo.svg');
+    span { display: none; }
+  }
+  
+  div#htop {
+    height: 50px;
+    margin: 0;
+    padding-left: 150px;
+    
+    div#contact {
+      padding-top: 0.2em;
+      text-align: center;
+      margin-right: 20em;
+      width: 100%;
+      div#phone {
+        font-size: 1.8em;
+        font-family: monospace;
+        white-space: nowrap;
+      }
+    }
+    
+    a#items {
+      position: absolute;
+      top: 0;
+      right: 0;
+      @include fancy-button($highlight-color);
+      @include border-radius(0 0 0 1em);
+      img { padding-right: 5px; }
+    }
+    
+    div#tagline {
+      position: absolute;
+      top: 0;
+      right: 0;
+      padding-top: 0.25em;
+      padding-right: 0.25em;
+      font-size: 0.8em;
+      color: #000080;
+      margin-right: 0.5em;
+    }
+  }
+  
+  div#hbottom {
+    height: 35px;
+    margin: 0;
+    background-color: $nav-background;
+    @include linear-gradient(color-stops($nav-background, darken($nav-background, 15%) 75%, $nav-background));
+    margin-left: 40px;
+    
+    ul#static {
+      list-style: none;
+      margin: 0;
+      margin-top: 5px;
+      padding: 0;
+      position: absolute;
+      right: 0;
+      li {
+        margin: 0;
+        display: inline-block;
+        border-left: thin solid black;
+        border-right: thin solid black;
+        padding: 0 0.5em 0 0.5em;
+        a {
+          color: $head-color;
+          &:hover { color: lighten($head-color, 10%); }
+        }
+      }
+    }
+  }
+}
+
+table.layout {
+  border-collapse:collapse;
+  width: 100%;
+}
+
+td#nav {
+  padding: 5px;
+  padding-top: 0;
+  background-color: $nav-background;
+  width: 1%;
+  
+  div#leftbar div { 
+    position: relative;
+    padding: 0;
+    margin-bottom: 0.5em;
+    font-family: Verdana, Lucida, Geneva, Helvetica, Arial, sans-serif;
+    font-size: 0.8em;
+    //border: thin solid $head-color;
+  
+    a.head, span.head {
+      display: block;
+      @include fancy-button($head-color, 1em, 0, 0);
+      font-weight: bold;
+      color: white;
+      border-top: thin solid #888;
+      padding-left: 0.2em;
+    }
+    a.head:hover { background-color: lighten($head-color, 10%); }
+    
+    form {
+      white-space: nowrap;
+      padding-right: 0.2em;
+      input[type='text'] {
+        width: 80%;
+      }
+      input[type='submit'] {
+        @include fancy-button(darken($highlight-color, 10%), 1em, 0.5em, 0);
+        padding: 0.2em 0.5em;
+        width: 15%;
+      }
+    }
+  
+    ul {
+      background-color: lighten($nav-background, 10%);
+      
+      li {  
+        // Definitions below could show here but common with search
+  
+        > ul {
+          display: block;
+          visibility: hidden;
+          position: absolute;
+          left: 98%;
+          top: 0;
+          background-color: lighten($nav-background, 10%);
+          //border-top: thin solid #AAA;
+          border-left: thin solid #AAA;
+          @include box-shadow(3px 3px 2px #AAA); 
+          visibility: hidden;
+          @include transition(visibility 0s linear 0.5s, opacity 0.5s linear);
+          opacity: 0.0;
+        }
+        
+        &:hover {
+          > ul {
+            visibility: visible;
+            width: auto;
+            z-index: 100;
+            background-color: white;
+            @include transition-delay(0.3s);
+            opacity: 1.0;
+          }
+        }
+        
+        &.sel {
+          > ul {
+            visibility: visible;
+            position: relative;
+            left: 0;
+            top: 1px;
+            margin-left: 0.5em;
+            border: none;
+            @include box-shadow(none); 
+            opacity: 1.0;
+          }
+          > a { background-color: lighten($highlight-color, 35%); }
+        }
+      }
+    }
+  }
+  
+  div#badges div { margin-top: 0.5em; text-align: center; }
+}
+
+ul#search {
+  font-size: 0.8em;
+  font-family: Verdana, Lucida, Geneva, Helvetica, Arial, sans-serif;
+}
+
+td#nav div#leftbar div ul, ul#search {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+  
+      li {
+        margin: 0;
+        padding: 0.1em 0;
+        position: relative;
+        background-color: lighten($nav-background, 10%);
+  
+        a {
+          display: block;
+          color: $text-color;
+          font-weight: bold;
+          text-decoration: none;
+          white-space: nowrap;
+          padding: 0 0.3em;
+        }
+        
+        &:hover {
+          background-color: lighten($highlight-color, 35%);
+          @include transition(background-color 2s cubic-bezier(0.00,0.8,0.5,1.00));
+        }
+      }
+    }
+
+div#footer { text-align: center; }
+
+/* Content */
+div#content {
+  display: block;
+  margin: 0;
+  padding: 0;
+}
+
+// Category and Product Pages
+h1#path {
+  color: white;
+  font-size: 1.2em;
+  font-family: 'Holtwood One SC', serif;
+  @include fb-color($head-color, "default");
+  margin: 0;
+  padding: 0.2em 0 0.2em 0.5em;
+
+  a { color: white };
+}
+span#num {
+  float: right;
+  margin-top: 0.25em;
+  margin-right: 0.25em;
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+  color: white;
+  font-weight: bold;
+}
+
+div.tags {
+  float: right;
+  font-size: 0.9em;
+  margin-right: 0.5em;
+  margin-top: 0.2em;
+  white-space: nowrap;
+  margin-left: 16em;
+  margin-bottom: 0.2em;
+  
+  a, span {
+    @include fancy-button(#E0E0E0, 1em, 0.6em, 0.1em);
+    color: black;
+    padding: 0.1em 0.3em;
+    
+    img {
+      margin-bottom: -3px;
+      margin-right: 0.25em;
+    }
+  }
+}
+
+
+/* General Site Wide */
+a { text-decoration: none; }
+a.thumb {
+  text-align: center;
+  font-size: 0.8em;
+  span {
+  	display: block;
+  	color: black;
+  }
+  span.price {
+  	font-size: 0.9em;
+  	color: darken($highlight-color, 10%);
+  }
+  &:hover span {
+	  text-decoration: underline;
+  }
+}
+img { border: 0; }
+
+hr {
+  clear: both;
+  padding: 0;
+  border: none;
+  border-bottom: thin solid black;
+}
+
+table {
+  thead {
+    font-weight: bold;
+    td { border-bottom: medium solid black; }
+  }
+  td { vertical-align: top; }
+}
+
+h2 { border-bottom: thin solid black; }
+h3 { margin-left: 1em; }
+p, h4, ul { margin-left: 1.5em; }
+p.head { margin-left: 0; }
+
+
+
+/*
+a#items {
+    display: block;
+    position: absolute;
+    top: 0;
+    right: 0;
+    background-color: #57485a;
+    -moz-border-radius: 0 0 0 0.5em;
+    padding: 0 0.5em 0.2em 0.5em;
+
+    color: white;
+    vertical-align: top;
+}
+
+a#items img {
+    margin-top: 4px;
+    margin-right: 4px;
+}
+
+a#items:hover {
+    background-color: #6b5270;
+    color: #E0E0E0;
+}
+*/

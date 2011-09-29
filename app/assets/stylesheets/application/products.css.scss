@@ -1,0 +1,337 @@
+@import "fancy-buttons";
+
+@import "variables";
+
+// Replace Someday
+td#prod_nav {
+  border-right: thin solid black;
+  text-align: center;
+  height: 100%;
+  z-index: 0;
+  width: 15%;
+  @include background(linear-gradient(left, white 85%, $alt-background));
+  
+  div#prod_list div {
+    padding: 0.5em;
+    padding-left: 0.5em;
+    margin-left: 0.5em;
+    
+    &.current {
+      border: 1px solid black;
+      border-right: 1px solid white;
+      @include border-radius(1em 0 0 1em);
+      background-color: white;
+      padding-left: 0.5em;
+      padding-right: 0;
+      z-index: 100;
+      margin-right: -1px;
+    }
+  }
+}
+
+div#prod {
+  border-top: thin solid black;
+  z-index: 0;
+  width: 100%;
+  
+  #prod_title {
+    h1 {
+      font-size: 1.5em;
+      font-weight: bold;
+      margin: 0;
+      padding: 0.1em 0 0.2em 0.5em;
+      @include fancy-button-colors(lighten($highlight-color, 40%));
+    }
+    #prod_num {
+      float: right;
+      font-size: 1em;
+      padding: 0.1em 0.5em 0.1em 0.5em;
+      margin: 0.3em;
+      background-color: #ffffca;
+      @include border-radius(1em);
+      opacity: 0.8;
+    }
+    div#share {
+      float: right;
+      margin: 0.2em;
+    }
+    ul {
+      list-style: none;
+      margin: 0;
+      margin-left: 0.5em;
+      padding: 0;
+      
+      li {
+        display: inline;
+        margin-left: 0;
+        margin-right: 0.5em;
+        padding-left: 0.5em;
+        padding-right: 0.5em;
+        font-size: 0.8em;
+      }
+    }
+  }
+  
+  div#message {
+    color: red;
+    margin: 0.5em 1em 0.5em 1em;
+  }
+  
+  div#prod_img {
+    clear: both;
+    float: right;
+    background-color: white;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    padding-left: 1.5em;
+    margin-bottom: 0.5em;
+    
+    ul#main_imgs {
+      list-style: none;
+      display: block;
+      position: relative;
+      width: 320px;
+      height: 320px;
+      
+      li {
+        display: block;
+        position: absolute;
+      }
+    }
+    
+    ul.thumbs {
+      list-style: none;
+      
+      li {
+        display: inline-block;
+        border: thin solid white;
+        
+        &.active {
+          border: thin solid #DDD;
+        }
+        
+        &.sel {
+          border: thin solid yellow;
+        }
+      }
+    }
+  }
+  
+  div.box, div.desc {
+    margin-left: 1em;
+    margin-top: 0.8em;
+    font-size: 0.8em;
+    
+    ul {
+      margin: 0;
+      padding: 0;    
+    }
+  
+    dl {
+      margin: 0;
+      padding: 0.1em 0 0.1em 0;
+      display: block;
+      //background-color: yellow;
+      
+      dt {
+        //display: inline-block;
+        float: left;
+        margin: 0;
+        padding: 0;
+        font-weight: bold;
+        vertical-align: top;
+        
+        a { color: black; }
+      }
+      
+      dd {
+        //display: inline-block;
+        //overflow: hidden;
+        margin: 0;
+        padding: 0;
+        
+        ul {
+          //display: inline;
+          list-style: none;
+          
+          li {
+            //display: inline-block;
+            //display: inline;
+            float: left;
+            margin: 0;
+            margin-left: 0.3em;
+            margin-bottom: 0.3em;
+            padding: 0.1em 0.3em 0.1em 0.3em;
+            text-align: center;
+            border: thin solid #808080;
+            @include background(linear-gradient(top, white, #E0E0E8 50%, #D0D0D8 50%, #E0E0E8));
+          }
+        }
+      }
+    }
+  }
+  
+  div.box {
+    ul {
+      list-style-position: outside;
+      overflow: hidden;
+    }
+    
+    a, span { color: black; }
+    
+    dl {     
+      dt { padding-top: 0.15em; }
+      
+      dd ul li {
+        &:hover {
+          background-color: #F0F0E8;
+          @include background(linear-gradient(top, #F0F0E8, #E0E0D8 50%, #F0F0E8 50%, white));
+          
+          span.even { background-color: #F4F4F0; }
+        }
+        
+        &.sel {
+          background-color: #FFFFE0;
+          @include background(linear-gradient(top, #F0F0E8, #E0E0D8 50%, #F0F0E8 50%, white));
+          border: thin solid #D0D050;
+          
+          span.even { background-color: #F4F4E0; }
+        }
+      }
+    }
+      
+    span.even { background-color: #F4F4FF; }
+  }
+  
+  div.desc {
+    display: inline-block;
+    padding: 0.5em;
+    vertical-align: top;
+    min-width: 15em;
+    
+    h2 {
+      display: block;
+      font-size: 1.0em;
+      font-weight: bold;
+      border-bottom: thin solid black;
+      margin: 0;
+      margin-bottom: 0.25em;
+      padding-right: 10em;
+    }
+    
+    ul {
+      list-style: outside;
+      margin-left: 1.5em;
+    }
+    
+    p {
+      margin: 0;
+      margin-left: 1em;
+    }
+  }
+        
+  div#decorations {
+    margin-bottom: 0;
+    padding: 0;
+    background-color: $alt-background;
+    
+    dl#dechead {
+      padding: 0;
+      dt {
+        background-color: white;
+        padding-right: 0.5em;
+      }
+      dd { padding-left: 0.5em; }
+    }
+    
+    dl { padding-left: 0.5em; }
+  }
+  
+  div#prices {
+    margin-top: 0;
+    background-color: lighten($alt-background, 2%);
+    
+    table {
+      display: inline-block;
+      border-collapse: collapse;
+      td { text-align: center; vertical-align: middle; }
+      
+      &#price_calc {
+        margin-top: 0.5em;
+        margin-left: 0.5em;
+        
+        td.num { text-align: right; }
+        tr.dec { background-color: $alt-background; }
+        
+        #item_unit_price { font-weight: bold; }
+        
+        tr#total {
+          font-size: 1.2em;
+          font-weight: bold;
+
+          th, td { text-align: right; }
+          td { border-top: thin solid black; }
+        }
+        
+        div#info {
+          font-weight: bold;
+          color: red;
+        }
+        
+        td#addtoorder {
+          padding-left: 0.5em;
+            
+          a.submit {
+            display: block;
+            border: thin solid black;
+            padding: 0.15em 0.25em 0.15em 0.25em;
+            margin: 0.15em;
+            background-color: #E8E0E0;
+            @include background(linear-gradient(top, white, #E8E0E0 50%, #D8D0D0 50%, #E8E0E0));
+            
+            &:hover {
+              background-color: #D8D0D0;
+              @include background(linear-gradient(bottom, white, #E8E0E0 50%, #D8D0D0 50%, #E8E0E0));
+            }
+            
+            span { font-weight: bold; }
+          }
+        }
+      }
+      
+      &#price_list {
+        margin: 1em;
+        margin-right: 0;
+        vertical-align: top;
+        
+        thead tr {
+          font-weight: bold;
+          th, td { border-bottom: thin solid black; }
+          
+          th {
+            text-align: right;
+            padding-right: 0.4em;
+          }
+          td { text-align: center; }
+        }
+        
+        td {
+          border-left: thin solid black;
+          border-right: thin solid black;
+          padding: 0 0.25em 0 0.25em;
+          
+          &.sel {
+            font-weight: bold;
+          }
+        }
+      }
+    }
+  }
+  
+  div#static {
+    margin-left: 0.5em;
+    margin-bottom: 1em;
+  }
+}
+

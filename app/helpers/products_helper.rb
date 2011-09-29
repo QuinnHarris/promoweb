@@ -21,7 +21,7 @@ module ProductsHelper
   
   def setup_main
     # Properties
-    @product.variants.target = @product.variants.find(:all, :include => :properties)
+    @product.association(:variants).target = @product.variants.find(:all, :include => :properties)
     @common_properties = @product.common_properties
     @properties = @product.variant_properties
     

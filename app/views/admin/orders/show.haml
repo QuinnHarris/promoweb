@@ -17,10 +17,10 @@
     - for name, orders in @groups
       - if name
         %tr
-          %td{ :colspan => '4' }
+          %td{ :colspan => '5' }
             %h2= "#{name} (#{orders.length})"
       - for order in orders
-        %tr{ :class => cycle('even', 'odd') }
+        %tr
           %td
             = link_to(status_order_path(order)) do
               = order.id

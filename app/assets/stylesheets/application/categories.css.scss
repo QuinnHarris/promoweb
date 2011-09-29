@@ -1,0 +1,133 @@
+@import "fancy-buttons";
+
+@import "variables";
+
+
+// Category and List Page
+table.list { 
+  border-collapse: separate;
+  
+  td {
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
+    background-color: white;
+    text-align: center;
+    width: 1%;
+  }
+}
+
+div#description {
+  margin-left: 1em;
+  margin-right: 1em;
+  padding: 0.5em 1em 0.5em 1em;
+  font-size: small;
+}
+
+
+// Category Page
+div.category {
+  margin: 1em;
+  border: none;
+  background-color: $head-color;
+  padding: 0 0.2em 0.2em 0.2em;
+      
+  a.title {
+    display: block;
+    color: white;
+    //font-weight: bold;
+    font-size: 1.2em;
+    font-family: 'Holtwood One SC', serif;
+    white-space: nowrap;
+    @include fancy-button-colors($head-color);
+  
+    padding: 0.25em;
+    /*&:hover {
+        background-color: lighten($head-color, 10%);
+    }*/
+  }
+  
+  /* .tags in global */
+    
+  table td { padding: 0; margin: 0; border: none; }
+  
+  table.breaks { 
+    border-collapse: collapse;
+    width: 100%;
+    background-color: lighten($highlight-color, 55%);
+    td {
+      white-space: nowrap;
+      text-align: center;
+      font-size: 0.9em;
+    
+      a {
+        display: block;
+        color: $text-color;
+        //padding: 0.25em 0.5em 0.25em 0.5em;
+        //&:hover {  background-color: lighten($highlight-color, 35%); }
+        @include fancy-button(lighten($highlight-color, 40%), 1em, 0, 0);
+      }
+    }
+  }
+}
+
+
+// List Page
+div#list {
+  padding: 1em;
+  
+  table { clear: both; background-color: #EEE; }
+}
+
+div.pagination {
+  text-align: center;
+  overflow: hidden;
+  a { 
+    padding: 2px 0.5em 2px 0.5em;
+    line-height: 2em;
+    color: #000040;
+    white-space: nowrap;
+    font-weight: bold;
+    border-left: thin solid #E0E0EF;
+    border-right: thin solid #E0E0EF;
+  }
+}
+div.pagination a.sel, div.pages a:hover { background-color: #E0E0EF; }
+
+// Column Row dropdown
+div#gridsel {
+    float: right;
+    margin-top: 0.5em;
+    margin-right: 0.5em;
+}
+
+
+/* Home Page */
+div#virtues {
+  margin-top: 1em;
+  margin-left: 1em;
+  margin-right: 1em;
+
+  div {
+  	border-left: medium solid $head-color;
+  	border-right: medium solid $head-color;
+  	border-bottom: medium solid $head-color;
+  	margin: 0;
+  	margin-bottom: 0.5em;
+
+  	h2 {
+	    text-align: center;
+	    font-size: medium;
+	    margin-bottom: 0;
+	    padding: 0.25em;
+	    
+	    color: white;
+	    @include fancy-button-colors($head-color);
+  	}
+  
+  	p {
+	    font-size: small;
+	    margin: 0.5em 1.0em;
+  	}
+  }
+}
+

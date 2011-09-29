@@ -77,35 +77,3 @@ class Customer < ActiveRecord::Base
     email_addresses.each { |ea| ea.destroy }
   end
 end
-
-#class CustomerValidate < Customer
-#  validates_presence_of :person_name, :email, :phone
-#  validates_as_email :email
-#  
-##  def self.valid_phone?(number)
-##    return true if number.nil?
-##
-##    n_digits = number.scan(/[0-9]/).size
-##    valid_chars = (number =~ /^[+\/\-() 0-9]+$/)
-##    return n_digits == 10 && valid_chars
-##  end    
-##  
-##  def validate
-##    error_message = 'is an invalid phone number, must contain 10 digits, only the following characters are allowed: 0-9/-()+'
-##    
-##    return true if phone.nil?
-##    
-##    digits = phone.scan(/[0-9]/)
-##    valid_chars = (phone =~ /^[+\/\-() 0-9]+$/)
-##
-##    if digits.size == 10 && valid_chars
-##      phone = digits.join
-##      return true
-##    else
-##      errors.add('phone', error_message)  
-##      return false    
-##    end
-##  end
-#end
-
-#Customer.establish_connection(RAILS_ENV + '_orders')

@@ -70,10 +70,6 @@ public
 
   @@columns = 4
   @@rows = 5
-#  if RAILS_ENV != "production"
-#    @@columns = 6
-#    @@rows = 10
-#  end
   cattr_reader :columns, :rows
   
 

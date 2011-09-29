@@ -1,0 +1,379 @@
+@import "compass/css3";
+
+@import "variables";
+
+/* Global */
+div#content {
+  padding-top: 1em;
+}
+div#main {
+  padding: 1em;
+  padding-top: 0;
+}
+
+/*table td, table th {
+  vertical-align: top;
+}*/
+
+/*
+div#header div.tabs {
+  margin-bottom: 0;
+  font-size: 0.8em;
+  display: block;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+    
+  ul {
+    border-bottom: none;
+    li {
+      background-color: #ff370f;
+      border: none;
+      
+      a {
+        color: white;
+      }
+      
+      &.sel, &:hover {
+          background-color: #f45434;
+      }
+    }
+  }
+  > ul {
+    padding-right: 0.5em;
+  }
+}*/
+
+/* Tabs */
+div.tabs {
+  clear: none;
+  position: relative;
+  margin-bottom: 1em;
+  
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: inline;
+    overflow: hidden;
+    border-bottom: thin solid black;
+    
+    li {
+      display: inline;
+      margin: 0 0.125em 0 0.125em;
+      padding-top: 0.25em;
+    
+      z-index: 100;
+      border: thin solid black;
+      border-bottom: none;
+      
+      background-color: #F0F0F8;
+      @include border-radius(1em 1em 0 0);
+      
+      &.sel {
+        border-bottom: thin solid white;
+        background-color: white;
+      }
+      
+      &.sub {
+        background-color: #E0E0F0;
+        padding-top: 0.5em;
+        padding-left: 0.25em;
+        margin-right: 0.5em;
+        &:hover {
+          background-color: #E4E4F4;
+        }
+      }
+      
+      &.active, &:hover {
+        color:#333;
+        background-color: #F8F8FF;
+      }
+      
+      &.active {
+        border-bottom: 1px solid white;
+        background-color: white;
+      }
+      
+      a {
+        padding: 0 0.5em 0 0.5em;
+        color: black;
+        font-size: 1.0em;
+        white-space:nowrap;
+      }
+    }
+  }
+  
+  > ul {
+    padding-left: 0.5em;
+    padding-right: 2em;
+  }
+}
+
+/* Errors */
+div.notice {
+  background-color: #FCC;
+  border: thin solid red;
+  padding: 0.25em 1em 0.25em 1em;
+  margin: 1em;
+  font-weight: bold;
+  font-family: sans serif;
+}
+
+/* from scaffold */
+.fieldWithErrors {
+  padding: 2px;
+  background-color: red;
+  display: table;
+}
+
+#errorExplanation {
+  width: 400px;
+  border: 2px solid red;
+  padding: 7px 7px 12px 7px;
+  margin-bottom: 20px;
+  background-color: #f0f0f0;
+  
+  h2 {
+    text-align: left;
+    font-weight: bold;
+    padding: 5px 5px 5px 15px;
+    font-size: 12px;
+    margin: -7px;
+    background-color: #c00;
+    color: #fff;
+  }
+  
+  p {
+    color: #333;
+    margin-bottom: 0;
+    padding: 5px;
+  }
+  
+  ul li {
+    font-size: 12px;
+    list-style: square;
+  }
+}
+
+/* Form Entry */
+table.form {
+  border-collapse: separate;
+  border-spacing: 0.1em;
+  
+  caption {
+    font-size: 1.2em;
+    font-weight: bold;
+    text-align: left;
+    border-bottom: thin solid black;
+    margin-top: 1.0em;
+  }
+  th {
+    padding-left: 1em;
+    vertical-align: middle;
+    text-align: right;
+    background-color: #EEE;
+    font-weight: normal;
+  }
+  tr.required th {
+    font-weight: bold;
+  }
+}
+
+div.block {
+    float: left;
+}
+
+/* Status Page */
+div#key span {
+  padding: 0.5em;
+  border: thin solid black;
+  line-height: 2.5em;
+  white-space: nowrap; 
+}
+
+table#status {
+  border-collapse: separate;
+  border-spacing: 0.2em;
+  
+  td {
+    padding: 0.2em;
+    border: thin solid grey;
+    
+    &.header {
+      border: none;
+      text-align: center;
+    }
+    
+    div.time {
+      font-size: 0.8em;
+      float: right;
+    }
+  }
+}
+
+.pending { background-color: #F0F0FF; }
+.complete { background-color: #E0FFE0; }
+.ready { background-color: #FFFFE0; }
+.late { color: red; }
+
+/* Artwork Page */
+.message {
+    font-size: 0.8em;
+  p {
+      margin-top: 0.4em;
+      margin-bottom: 0.4em;
+  }
+}
+
+/* Item Page and Order Acknowledge Page */
+
+/* Acknowledge Page */
+div.invoice {
+  border: thin solid black;
+  padding: 0;
+  margin-bottom: 1em;
+  page-break-inside: avoid;
+  
+  > h3 {
+    font-family: sans-serif;
+    font-weight: bold;
+    padding: 0.2em 0 0.2em 0.5em;
+    font-size: 1.2em;
+    background-color: black;
+    color: white;
+    margin: 0;
+  }
+  
+  div.date {
+    float: right;
+    color: white;
+    margin-right: 0.5em;
+    margin-top: 0.3em;
+  }
+  
+  table, div.notes {
+    margin-left: 1em; margin-right: 1em;
+  }
+}
+
+
+/* Artwork Page */
+div.group {
+  border: medium solid #400000;
+  margin-bottom: 1em;  
+  
+  table.head {
+    width: 100%;
+    border-bottom: medium solid #400000;
+  }
+  
+  > table td:first-child {
+    width: 1%;
+  }
+  
+  table {
+    td {
+      position: relative;
+    }
+    
+    div.decorations {
+      width: 100%;
+      min-height: 4.5em;
+      bottom: 0;
+    }
+  }
+  
+  div.items {
+    background-color: #F0FFF0;
+    min-height: 2em;
+    border: thin solid black;
+  }
+  
+  div.item {
+    border: thin solid black;
+    background-color: white;
+    margin: 0.5em;
+  }
+}
+
+div.decorations {
+  min-height: 2em;
+  background-color: #F0F0FF;
+}
+
+div.decoration {
+  width: 1;
+  display: inline-block;
+  border: thin solid black;
+  background-color: white;
+  margin: 0.5em;
+  
+  h3 {
+    margin: 0;
+    padding: 0;
+    border-bottom: thin solid black;
+  }
+}
+
+/* Payment */
+div.lowlight {
+  background-color: #F0F0F0;
+  
+  h1 {
+    font-family: sans serif;
+    font-size: 1.5em;
+    color: red;
+  }
+}
+
+/* Acknowledge */
+div#ack {
+  text-align:center;
+  background-color: #FCC;
+  padding: 0.5em;
+}
+
+input.button {
+  font-size: 1.0em;
+  font-weight: bold;
+  padding-left: 28px;
+  background-repeat: no-repeat;
+  background-position: 2px 2px;
+  min-height: 28px;
+}
+
+input#submitbtn {
+  color: #006000;
+  background-image: url('/images/submit.png');
+}
+
+input#nextbtn {
+  color: #000080;
+  background-image: url('/images/forward.png');
+}
+
+input#addbtn {
+  color: #006000;
+  background-image: url('/images/addbtn.png');
+}
+
+input#rejectbtn {
+  color: #600000;
+  padding-left: 50px;
+  background-image: url('/images/reject.png');
+}
+
+
+table#list {
+  tr:nth-child(2n) {
+    background-color: $stripe-color;
+  }
+  
+  .products div {
+    text-align: center;
+    display: inline-block;
+    max-width: 250px;
+  }
+}
+

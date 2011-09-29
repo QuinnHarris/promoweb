@@ -212,6 +212,7 @@ private
   # KLUDGE REPLACE THIS CALENDAR
 private
   def apply_calendar_header
+    #raise "Fix Me"
     @javascripts = (@javascripts || []) + ["calendar", "lang/calendar-en", "calendar-setup"].collect { |n| "/jscalendar-1.0/#{n}" }
     @stylesheets = (@stylesheets || []) + ["calendar-blue"].collect { |n| "/jscalendar-1.0/#{n}"}    
   end
@@ -227,7 +228,7 @@ class OrdersController < AuthenticatedController
 private
   def set_order_id(order_id)
     session[:order_id] = order_id
-    return unless RAILS_ENV == "production"
+    return unless Rails.env.production?
 
     options = { :session_access_id => session[:ses_id], :order_id => order_id }
     unless OrderSessionAccess.find(:first, :conditions => options)
