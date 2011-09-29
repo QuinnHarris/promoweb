@@ -8,6 +8,10 @@ class Invoice < ActiveRecord::Base
   extend ActiveSupport::Memoizable
   memoize :total_item_price
 
+  def tax_rate_s
+    '%0.02f%' % (self.tax_rate * 100.0)
+  end
+
   def total_tax
     return Money.new(0) if tax_rate == 0.0
     (total_item_price * tax_rate).round_cents

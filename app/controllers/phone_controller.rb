@@ -31,7 +31,7 @@ class PhoneController < ActionController::Base
 
   # Provision Polycom
   def polycom_provision
-    @phone = Phone.find_by_identifier(params[:addr])
+    @phone = Phone.find_by_identifier(params[:id])
     @user = @phone.user
   end
 

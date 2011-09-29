@@ -29,7 +29,7 @@
 
 - list_shipping = order_item.send("list_shipping_#{aspect}")
 - has_shipping = order_item.shipping_type && !((order_item.shipping_type == 'NONE') and list_shipping.zero?)
-- additional_shipping = (!@static and order_item.entries.empty?)
+- additional_shipping = (!@static && order_item.entries.empty? && (order_item.purchase ? order_item.purchase.entries.empty? : true))
 - rows += 1 if has_shipping || additional_shipping
 
 - rows += 2 if tail
