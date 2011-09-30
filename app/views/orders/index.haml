@@ -29,5 +29,6 @@
           %div Created: #{format_time(order.created_at, false)}
           %div Updated: #{format_time(order.updated_at, false)}
         %td
-          - for line in order.customer_notes.split("\n")
-            %div= line
+          - if order.customer_notes
+            - for line in order.customer_notes.split("\n")
+              %div= line

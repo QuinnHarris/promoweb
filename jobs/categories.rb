@@ -1096,8 +1096,9 @@ private
             category('Drinkware', 'Cups') )
   ],[
      ['Aluminum Bottles',
-      [supplier('Leeds',
-                category('Drinkware', 'Aluminum & Stainless Sport Bottles') ),
+      [match(%w(name description material), 'aluminum', 1),
+       supplier('Leeds',
+                category('Drinkware', 'Aluminum Sport Bottles') ),
        supplier('Lanco',
                 category('Drinkware', 'Metal Bottles') ) ]],
      ['Can & Bottle Holders',
