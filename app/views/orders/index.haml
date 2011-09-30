@@ -3,6 +3,7 @@
     %td Order
     %td Product
     %td Info
+    %td Notes
   %tbody
     - for order in @order.customer.orders
       %tr
@@ -18,6 +19,7 @@
                 = image_tag(thumb_url)
                 %br
                 = item.product.name
+            (#{item.quantity})
         %td
           %div
           - unless order.closed
@@ -26,3 +28,6 @@
             SAMPLE
           %div Created: #{format_time(order.created_at, false)}
           %div Updated: #{format_time(order.updated_at, false)}
+        %td
+          - for line in order.customer_notes.split("\n")
+            %div= line

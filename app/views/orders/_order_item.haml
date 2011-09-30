@@ -29,7 +29,7 @@
 
 - list_shipping = order_item.send("list_shipping_#{aspect}")
 - has_shipping = order_item.shipping_type && !((order_item.shipping_type == 'NONE') and list_shipping.zero?)
-- additional_shipping = (!@static and order_item.entries.empty?)
+- additional_shipping = (!@static && order_item.entries.empty? && (order_item.purchase ? order_item.purchase.entries.empty? : true))
 - rows += 1 if has_shipping || additional_shipping
 
 - rows += 2 if tail
@@ -72,7 +72,7 @@
 
         - unless absolute
           %strong
-            = link_to order_item.product.name, url_for_product(order_item.product)
+            = link_to order_item.product.name.gsub('&amp;', '&'), url_for_product(order_item.product)
         - else
           %strong
             %a{ :href => "http://www.mountainofpromos.com/products/#{order_item.product.id}" }
@@ -235,14 +235,16 @@
           %th{ :colspan => fixed ? 3 : 2 } Total per Unit:
           %td.num= (total_sum / order_item.quantity).to_perty
 
-
     %tr
       %td{ :colspan => (tail ? 5 : 6) + (fixed ? 1 : 0) }
         - unless static and order_item.our_notes.blank?
           %h3 Notes
         - unless order_item.our_notes.blank?
           - for note in order_item.our_notes.split("\n")
-            %div= note
+            - if note.blank?
+              %br
+            - else
+              %div= note
         %div
           - if static
             - unless order_item.blank? || aspect == :cost
@@ -253,6 +255,7 @@
               Please make note of desired decoration method.
               %br
               e.g. Screen Print, Embroidery, Deboss
+
 
 
       

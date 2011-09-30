@@ -82,7 +82,7 @@ class Order < ActiveRecord::Base
       end
     end
     new_invoice = generate_invoice
-    @invoices << new_invoice if new_invoice
+    @invoices << new_invoice if new_invoice and !new_invoice.total_price.zero?
     @invoices
   end
   def invoice_entries
@@ -97,6 +97,7 @@ class Order < ActiveRecord::Base
     InvoiceEntry
     invoice = Invoice.new(:order => self, :tax_rate => tax_rate, :tax_type => tax_type)
     (items + po_entries + entries).each do |entry|
+      next if entry.new_record? # Kludge to deal with place holder record inserted on status page when there are no items on the order
       invoice_klass = Kernel.const_get(entry.class.reflections[:invoice_entries].class_name)
       entry_last = invoice_entries[[invoice_klass.to_s, entry.id]]
       included << entry_last if entry_last
@@ -206,6 +207,11 @@ class Order < ActiveRecord::Base
     self['total_price_cache'] = price = total_item_price.min.round_cents
     self['total_cost_cache'] = cost = total_item_cost.min.round_cents
     true
+  end
+  def touch
+    update_cache
+    save!
+    super
   end
 
   before_create :block_qb

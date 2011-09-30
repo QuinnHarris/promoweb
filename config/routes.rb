@@ -160,6 +160,7 @@ Promoweb::Application.routes.draw do
       post 'contact'
       get 'artwork'
       get 'payment'
+      post 'payment_submit'
       get 'payment_creditcard'
       post 'payment_creditcard'
       
@@ -235,9 +236,10 @@ Promoweb::Application.routes.draw do
 
 
 
-  match 'phone/:action(/:id)' => 'Phone'
-
   match '/qbwc/api' => 'qbwc#api'
+
+#  match '/phone/:addr.cfg' => 'phone#polycom_provision', :constraints => { :addr => /[0-9a-f]{12}/ }
+  match '/phone/:action(/:id)' => 'Phone'
 
   # Unidata Provisioning
   match '/e1_:addr.ini' => 'phone#unidata', :constraints => { :addr => /[0-9a-f]{12}/ }

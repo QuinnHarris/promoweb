@@ -224,7 +224,7 @@ Customer Comments:
     end
 
     return "No in hands date" if order.delivery_date.nil?
-    if !order.delivery_date_not_important && order.delivery_date <= Date.today+2
+    if !order.delivery_date_not_important && order.delivery_date <= Date.today+1
       problems << "In hands date too soon: #{order.delivery_date.inspect}"
     end
 
@@ -465,6 +465,7 @@ class ReOrderTask < OrderTask
   self.action_name = 'Mark as Exact ReOrder'
   self.customer = true
   self.roles = %w(Orders)
+  self.option = true
   
   def status
     active
@@ -585,12 +586,13 @@ class CancelOrderTask < OrderTask
   self.action_name = 'Cancel Order'
   self.completed_name = 'Order Canceled'
   self.roles = %w(Orders)
+  self.option = true
 
   def self.blocked(order)
     return super if super
     
     unless order.task_completed?(FinalPaymentOrderTask)
-      return nil if order.total_charge.zero?
+      return nil if order.total_billable.zero?
       if order.task_completed?(FirstPaymentOrderTask)
         return "first Payment made but not final payment"
       end

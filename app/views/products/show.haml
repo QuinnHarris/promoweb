@@ -98,7 +98,7 @@
                             - reset_cycle
                             - for prop in props
                               %span{ :class => cycle('odd', 'even') }
-                                = prop ? (prop.is_image? ? image_tag(prop.translate) : prop.translate) : 'NA'
+                                != prop ? (prop.is_image? ? image_tag(prop.translate) : prop.translate) : 'NA'
 
           - unless @locations.empty?
             #decorations.box
@@ -269,7 +269,7 @@
                 - for prop in @common_properties
                   %dl
                     %dt= "#{prop.name.capitalize}:"
-                    %dd= prop.is_image? ? image_tag(prop.translate) : prop.translate
+                    %dd!= prop.is_image? ? image_tag(prop.translate) : prop.translate
 
             - unless @product.description.nil? or @product.description.empty?
               .desc#features
@@ -301,7 +301,7 @@
                   %tr
                     %td= format_time(session.pages.last.created_at)
                     %td= link_to session.pages.last.address, admin_access_paths_path(:session_id => session.id)
-                    %td!= session.orders.collect { |o| link_to o.order_id, access_admin_order_path(o) }.join(', ')
+                    %td!= session.orders.collect { |o| link_to o.order_id, items_admin_order_path(o) }.join(', ')
                     - if gi = GEOIP.look_up(session.pages.last.address)
                       %td= gi[:region] && gi[:region].force_encoding("UTF-8")
                       %td= gi[:city] && gi[:city].force_encoding("UTF-8")

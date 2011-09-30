@@ -33,7 +33,7 @@
       %tr.defined
         %td<
           %strong
-            #{item.product.name} (M#{item.product.id}) - 
+            != "#{item.product.name} (M#{item.product.id}) - "
             %em= link_to "#{item.product.supplier.name}: #{item.product.supplier_num}", item.product.supplier_url
         = render :partial => 'order_item_entry_tail', :locals => { :object => item, :purchase_lock => purchase_lock, :null => false }
       %tr
@@ -62,7 +62,7 @@
                     - reset_cycle
                     - for name in names
                       %span{ :class => cycle('odd', 'even') }<
-                      %a{ :href => '#', :onclick => "variant_change(this);" }= (oiv.variant && (p = oiv.variant.properties.to_a.find { |p| p.name == name })) ? p.value : 'Not Specified'
+                      %a{ :href => '#', :onclick => "variant_change(this);" }!= (oiv.variant && (p = oiv.variant.properties.to_a.find { |p| p.name == name })) ? p.value : 'Not Specified'
                     %span{ :class => cycle('odd', 'even') }<
                       = text_field_tag "OrderItemVariant-#{oiv.meta_id}-quantity", oiv.quantity, :class => 'num shipset', :readonly => @price_lock, :tabindex => item.id*2
                     %span{ :class => cycle('odd', 'even') }<

@@ -52,7 +52,9 @@
         - for order in orders
           %tr
             %td= link_to order.id, status_order_path(order)
-            %td= format_time(order.tasks_active.first.created_at, false)
+            %td
+              - unless order.tasks_active.empty?
+                = format_time(order.tasks_active.first.created_at, false)
             %td.money= order.total_price_cache.to_perty
             %td.money= order.total_cost_cache.to_perty
             - total_price += order.total_price_cache

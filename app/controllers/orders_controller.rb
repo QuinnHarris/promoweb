@@ -624,6 +624,10 @@ public
     end
   end
 
+  def payment_submit
+    render_edit
+  end
+
   def payment_use
     PaymentInfoOrderTask.transaction do
       payment_method = PaymentMethod.find(params[:method_id], :include => :customer)
@@ -787,7 +791,8 @@ public
     end
   end
 
-  def_tasked_action :review, ReviewOrderTask do
+#  def_tasked_action :review, ReviewOrderTask do
+  def review
     unless params[:commit]
       @order_task = @order.task_find(ReviewOrderTask)
       company_person = !@order.customer.company_name.strip.empty?

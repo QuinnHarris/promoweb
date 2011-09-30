@@ -280,7 +280,7 @@ class ElementLayout
       end
     end
 
-    raise EPSError, "Can't fit elements: #{dims.inspect}" if layouts.empty?
+    raise EPSError, "Can't fit elements: #{dims.inspect} of #{elements.inspect}" if layouts.empty?
 
     layouts.sort_by { |s, l| s }.last.last
   end
@@ -476,7 +476,7 @@ class Admin::ArtworkController < Admin::OrdersController
     end
 
     # Header
-    product_name = decoration.order_item.product.name.gsub('”','"').gsub('’',"'")
+    product_name = decoration.order_item.product.name.encode('ASCII', :invalid => :replace, :undef => :replace, :replace => '')
 
     company_name = group.customer.company_name.strip.empty? ? group.customer.person_name : group.customer.company_name
 
@@ -515,7 +515,7 @@ class Admin::ArtworkController < Admin::OrdersController
     begin
       proof = ProofGenerate.new(placements, info_list)
     rescue EPSError => e
-      @error = e
+      render :inline => "Error: #{e}"
       return
     end
     proof.setup(:Title => 'Artwork Proof',
