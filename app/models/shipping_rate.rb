@@ -133,7 +133,9 @@ class UPSShippingRate < ShippingRate
       package = UPS::Shipping::Package.new
       package.weight = package_weight
       package.dimension = dim if dim
-      package_full_count.times { shipment.packages << package }
+      #package_full_count.times { shipment.packages << package }
+      # Can you really not tell UPS the number of packages ?????
+      shipment.packages << package
     end
 
     if package_tail_units > 0
@@ -164,7 +166,11 @@ class UPSShippingRate < ShippingRate
         tit = tits.find { |t| t.shipping_code == shipment.service_code }
         days = tit.days if tit and tit.guaranteed
       end
-      [shipment.service_code, shipment.total_price.to_f, days, shipment.time]
+      pkg_num = ((package_full_count > 0) ? 1 : 0) + ((package_tail_units > 0) ? 1 : 0)
+      return "Unexpected # of shipments: #{shipment.packages.length} != #{pkg_num}" unless shipment.packages.length == pkg_num
+      price = (package_full_count > 0) ? shipment.packages.first.total_price.to_f * package_full_count : 0.0
+      price += shipment.packages.last.total_price.to_f if package_tail_units > 0
+      [shipment.service_code, price, days, shipment.time]
     end.sort_by { |c, p, d, t| p }
 
     return data
