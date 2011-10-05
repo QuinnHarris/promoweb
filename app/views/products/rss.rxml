@@ -40,6 +40,8 @@ xml.rss :version => '2.0', 'xmlns:g' => 'http://base.google.com/ns/1.0' do
 
 	description += product.description.gsub("\n",".\n")
 	xml.description description #.gsub(/[\x80-\xff]/, "")
+
+	#xml.tag!('g:google_product_category',)
         
         prop = product.properties_get
         %w(color material size).each do |name|
@@ -73,6 +75,7 @@ xml.rss :version => '2.0', 'xmlns:g' => 'http://base.google.com/ns/1.0' do
         xml.tag!('g:brand', product.supplier.name)
         xml.tag!('g:mpn', product.supplier_num)
         
+	xml.tag!('g:availability', 'available for order')
         xml.tag!('g:price', product.price_comp_cache)
 
         for c in product.categories.to(9)
