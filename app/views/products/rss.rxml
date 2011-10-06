@@ -40,8 +40,6 @@ xml.rss :version => '2.0', 'xmlns:g' => 'http://base.google.com/ns/1.0' do
 
 	description += product.description.gsub("\n",".\n")
 	xml.description description #.gsub(/[\x80-\xff]/, "")
-
-	#xml.tag!('g:google_product_category',)
         
         prop = product.properties_get
         %w(color material size).each do |name|
@@ -82,6 +80,10 @@ xml.rss :version => '2.0', 'xmlns:g' => 'http://base.google.com/ns/1.0' do
 	  cat = Category.find_by_id(c.id)
           xml.tag!('g:product_type', cat.path_name_list.join(' > ')) if cat
 	end
+
+	if google_category = product.categories.collect { |c| c.google_category.blank? ? nil : c.google_category }.compact.sort_by { |c| [c.split('>').length, c.length] }.last
+	  xml.tag!('g:google_product_category', google_category)
+        end
 
 	xml.tag!('online_only', 'y')
         
