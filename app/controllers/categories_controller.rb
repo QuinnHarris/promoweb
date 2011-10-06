@@ -116,7 +116,7 @@ public
 
   # redirect to appropriate method
   def main
-    @javascripts = ['rails.js'] if @user
+    @javascripts = ['rails.js', 'effects', 'controls'] if @user
     
     @path = params[:path] ? params[:path].split('/') : []
     

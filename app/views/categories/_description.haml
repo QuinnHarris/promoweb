@@ -12,5 +12,8 @@
     - form_for @category, { :url => admin_category_path(@category), :html => { :method => :put } } do |cat|
       = cat.text_area :description, :cols => 100, :rows => 4
       %br
+      Google:
+      = text_field_with_auto_complete :category, :google_category, { :size => 100 }, :url => auto_complete_for_google_category_admin_categories_path
+      %br
       = submit_tag 'Update'
 

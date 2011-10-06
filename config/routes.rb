@@ -120,7 +120,8 @@ Promoweb::Application.routes.draw do
     resources :categories, :only => [:update, :destroy] do
       collection do
         post 'product_add'
-        get 'auto_complete_for_path'
+        post 'auto_complete_for_path'
+        post 'auto_complete_for_google_category'
       end
 
       member do
