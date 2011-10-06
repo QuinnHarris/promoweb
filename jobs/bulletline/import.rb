@@ -108,7 +108,8 @@ class BulletLine < GenericImport
     "White with Translucent Red Trim" => "WRE",# SM-3220
   }
 
-  def initialize(file)
+  def initialize
+    file = 'Bullet_All-SKUs_11-23.xls'
     @data = BulletLineXLS.new(File.join(JOBS_DATA_ROOT, file))
     super "Bullet Line"
   end
@@ -158,7 +159,9 @@ class BulletLine < GenericImport
       # Pricing
       last_minimum = nil
       prices = (1..5).collect do |num|
-        minimum = Integer(@data.get(row, "PriceQtyCol#{num}"))
+        minimum = @data.get(row, "PriceQtyCol#{num}")
+        next unless minimum
+        minimum = Integer(minimum)
         minimum = 1 if minimum < 1
         raise "Last Max doesn't match this min: #{maximum} + 1 != #{minimum} for #{supplier_num}" if last_minimum and minimum < last_minimum
         last_minimum = minimum
@@ -172,7 +175,10 @@ class BulletLine < GenericImport
         }
       end.compact
 
-      raise "No Price" if prices.empty?
+      if prices.empty?
+        puts "No Price"
+        next
+      end
 
       costs = [
         { :fixed => Money.new(0),
@@ -185,7 +191,7 @@ class BulletLine < GenericImport
       costs.unshift({
         :fixed => Money.new(36.00),
         :minimum => ((prices.first[:minimum] + 0.5) / 2).to_i,
-        :marginal => (prices.last[:marginal] * 0.6).round_cents
+        :marginal => prices.last[:marginal] * 0.6
       }) if prices.first[:minimum] > 1
 
       color_string = @data.get(row, 'ColorList')

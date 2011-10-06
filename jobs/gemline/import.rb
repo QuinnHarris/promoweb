@@ -13,7 +13,8 @@ class GemlineXML < GenericImport
   'Initials' => ['Personalization', nil],
   'Laser Engraving' => ['Laser Engrave', 1]}
 
-  def initialize(file_name)
+  def initialize
+    file_name = "Gemline.xml"
     @src_file = File.join(JOBS_DATA_ROOT,file_name)
     super "Gemline"
   end

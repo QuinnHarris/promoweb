@@ -1,7 +1,8 @@
 require 'net/ftp'
 
 class LogoIncludedXML < GenericImport
-  def initialize(file_name)
+  def initialize
+    file_name = "LogoIncluded.xml"
     @src_file = File.join(JOBS_DATA_ROOT,file_name)
     super "LogoIncluded"
   end

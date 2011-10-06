@@ -316,9 +316,12 @@ class LeedsXLSDecorations < XLSFile
 end
 
 class LeedsXLS < GenericImport
-  def initialize(files, decoration)
-    @prod_files, @dec_file = files, decoration
-    @src_files = files + [decoration]
+  def initialize
+    @prod_files = %w(USDcatalog USDMemorycatalog).collect do |name|
+      WebFetch.new("http://media.leedsworld.com/ms/?/excel/#{name}/EN").get_path(Time.now-24*60*60)
+    end
+    @dec_file = WebFetch.new('http://media.leedsworld.com/ms/?/excel/WebDocrationMethodByItem/EN').get_path(Time.now-24*60*60)
+    @src_files = @prod_files + [@dec_file]
     super "Leeds"
   end
   

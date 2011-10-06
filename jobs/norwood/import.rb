@@ -1,5 +1,34 @@
 require 'rexml/document'
 
+class NorwoodAll
+  def initialize
+
+    @colors = %w(Black White 186 202 208 205 211 1345 172 Process\ Yellow 116 327 316 355 341 Process\ Blue 293 Reflex\ Blue 281 2587 1545 424 872 876 877)
+    @list =
+[['AUTO', 'Barlow'],
+ ['AWARD', 'Jaffa'],
+ ['BAG', 'AirTex'],
+ ['CALENDAR', 'TRIUMPH', %w(Reflex\ Blue Process\ Blue 032 185 193 431 208 281 354 349 145 469 109 Process\ Yellow 165)],
+ ['DRINK', 'RCC'],
+ ['GOLF', 'TeeOff'],
+ ['GV', 'GOODVALU'],
+ ['HEALTH', 'Pillow'],
+ ['OFFICE', 'EOL'],
+ ['WRITE', 'Souvenir', colors + %w(569 7468 7433)],
+ ['FUN', 'Fun'],
+ ['HOUSEWARES', 'Housewares'],
+ ['MEETING', 'Meeting'],
+ ['TECHNOLOGY', 'Technology'],
+ ['OUTDOOR', 'Outdoor'],
+ ['TRAVEL', 'Travel'],
+]
+  end
+
+  def apply_all
+    
+  end
+end
+
 class NorwoodXML < GenericImport
   include REXML
 

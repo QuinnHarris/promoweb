@@ -1,5 +1,4 @@
 require '../generic_import'
-
 require './import'
 #require 'fetch'
 
