@@ -67,8 +67,8 @@ private
   end
 
   def match(properties, values, exclude = nil)
-    properties = [properties].flatten.dup
-    values = [values].flatten.collect { |v| v.is_a?(String) ? v.downcase : v }.dup
+    properties = [properties].flatten
+    values = [values].flatten.collect { |v| v.is_a?(String) ? v.downcase : v }
     Proc.new do |record, match_category|
       if exclude
         if exclude.is_a?(Integer)
@@ -83,9 +83,9 @@ private
         if record[property]
           val = record[property].downcase
         else
-          list = record['variants'].collect { |v| v[property] }.compact
+          list = record['variants'].collect { |v| v[property] }.compact.uniq
           next if list.empty?
-          val = list.join(' ')
+          val = list.join(' ').downcase
         end
         res = values.find do |v|
           if v.is_a?(String)
@@ -577,8 +577,7 @@ private
          dup('Bags', 'Duffel Bags', 'Wheeled Duffel Bags')
         ] ],
      ['Tote Bags',
-      [match('name', ['shopper', 'trade show'], 1),
-       match('name', 'tote'),
+      [match('name', 'tote'),
        supplier('Leeds',
                 category('Totes', 'Totes')),
        supplier('Gemline',
@@ -596,11 +595,11 @@ private
        supplier('Bullet Line',
                 category('Bags', 'Totes'))
       ],[
-         ['Business Tote Bags',
-          [supplier('Gemline',
-                    category('Totes', 'Business Bags') ) ]],
+         ['Business & Meeting Totes',
+          [match(%w(name description), %w(business meeting), 1),
+           exclude(match('description', 'business card')) ] ],
          ['Cotton Canvas Totes',
-          [match('material', %w(cotton canvas), 1),
+          [match(%w(name description material), %w(cotton canvas), 1),
            supplier('Leeds',
                     category('Totes', 'Cotton') ),
            supplier('Gemline',
@@ -608,26 +607,43 @@ private
                     category('Living Green', 'Organic'))]],
          ['Non-woven Polypropylene Totes',
           [match('material', %w(poly non-woven non\ woven), 1),
-           match(%w(name description), ['polypropylene', 'pet plastic', 'non-woven'], 1),
+           match(%w(name description), ['poly', 'pet plastic', 'non-woven'], 1),
            supplier('Leeds',
                     category('Totes', 'Non-Woven') ),
            supplier('Gemline',
                     category('Totes', 'Non-woven') ),
            supplier('Prime Line',
                     category('Non-Woven') )]],
+         ['Shopper Totes',
+          [match(%w(name description), %w(shopper grocery), 2),
+           supplier('Gemline',
+                    category('Totes', 'Shoppers'))]],
+         ['Tradeshow Totes',
+          [match(%w(name description), %w(trade\ show tradeshow expo convention), 1),
+           supplier('Gemline',
+                    category('Totes', 'Expo'))]],
          ['Kid Friendly Totes',
           [supplier('Gemline',
                     category('Kid-friendly', 'Totes') ) ] ],
          ['Recycled & Organic Totes',
-          [supplier('Leeds',
+          [match(%w(name description), 'recycled', 1),
+           supplier('Leeds',
                     category('Totes', 'EcoSmart'),
                     category('EcoSmart', 'Totes') ) ]],
-         ['Drawstring Totes',
-          [match(%w(name description), 'drawstring', 1),
-           match('name', %w(cinch sling), ['Bags', 'Backpacks', 'Drawstring Backpacks'])]],
+         ['Backpack Totes',
+          [match(%w(name description), 'backpack', 1)],
+          [
+           ['Drawstring Totes',
+            [match(%w(name description), 'drawstring', 2),
+             match('name', %w(cinch sling), ['Bags', 'Backpacks', 'Drawstring Backpacks'])]],
+          ] ],
          ['Womens Totes',
           [supplier('Gemline',
                     category('Women`s', 'Totes')) ]],
+         ['Wine Totes',
+          [match(%w(name description), 'wine', 1)]],
+         ['Zippered Totes',
+          [match(%w(name description), 'zipper', 1)]],
         ] ],
      ['Wine Bags',
       [match('name', 'Wine', 1),
@@ -1588,7 +1604,7 @@ private
        supplier('Bullet Line',
                 category('Fitness & Recreation', 'Umbrellas') ),
       ] ],
-     ['PDA/Phone Holder',
+     ['PDAs & Phone Holders',
       [supplier('Lanco',
                 category('Bags / Containers', 'PDA Holder') ),
        supplier('LogoIncluded',

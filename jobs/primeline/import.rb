@@ -194,8 +194,8 @@ class PrimeLineWeb < GenericImport
     price_codes = {}
     
     # Price Code
-    price_list = (doc.xpath("span[@id='ctl00_content_DiscountCode']") +
-                  doc.xpath("span[@id='ctl00_content_DiscountCodeCloseout']")).first
+    price_list = (doc.xpath("//span[@id='ctl00_content_DiscountCode']") +
+                  doc.xpath("//span[@id='ctl00_content_DiscountCodeCloseout']")).first
     if price_list
       price_str = price_list.inner_html.strip.gsub(/<.+>/,'')
       price_str += 'C' if price_str.length == 1 and price_str[0] > ?0 and price_str[0] <= ?9 #Kludge for 4 without C price
@@ -208,7 +208,7 @@ class PrimeLineWeb < GenericImport
       rows = price_row.xpath("table/tr/td/table/tr[td/font]")
       next unless rows and rows.length > 1
       
-      minimums = rows.shift.xpath("/td[@align='right']/font/b").to_a.compact
+      minimums = rows.shift.xpath("//td[@align='right']/font/b").to_a.compact
       next if minimums.empty?
       minimums = minimums.collect { |m| m.inner_html.to_i }
       

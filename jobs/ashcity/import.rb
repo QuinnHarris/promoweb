@@ -1,5 +1,6 @@
 class AshCityXML < GenericImport
-  def initialize(file_name)
+  def initialize
+    file_name = 'AshCity/US_ProductDataFile_Styles.xml'
     @src_file = File.join(JOBS_DATA_ROOT,file_name)
     super "Ash City"
   end
