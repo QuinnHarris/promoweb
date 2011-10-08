@@ -83,7 +83,7 @@ private
         if record[property]
           val = record[property].downcase
         else
-          list = record['variants'].collect { |v| v[property] }.compact.uniq
+          list = record['variants'].collect { |v| v[property] || v['properties'][property] }.compact.uniq
           next if list.empty?
           val = list.join(' ').downcase
         end
@@ -605,6 +605,8 @@ private
            supplier('Gemline',
                     category('Totes', 'Canvas Bags'),
                     category('Living Green', 'Organic'))]],
+         ['Jute Totes',
+          [match(%w(name description material), %w(jute), 1)]],
          ['Non-woven Polypropylene Totes',
           [match('material', %w(poly non-woven non\ woven), 1),
            match(%w(name description), ['poly', 'pet plastic', 'non-woven'], 1),
@@ -619,7 +621,7 @@ private
            supplier('Gemline',
                     category('Totes', 'Shoppers'))]],
          ['Cooler & Insulated Totes',
-          [match(%w(name description), %w(lunch six\ pack insulate), 2)]],
+          [match(%w(name description), %w(cooler lunch six\ pack insulate), 2)]],
          ['Trade Show Totes',
           [match(%w(name description), %w(trade\ show tradeshow expo convention), 1),
            supplier('Gemline',
