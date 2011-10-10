@@ -80,7 +80,7 @@ class LogoIncludedXML < GenericImport
         std_time = product.at_xpath('ProductionTimes/StandardProductionTime').text
         unless std_time.blank?
           case std_time
-          when /(\d+)(?:-(\d+))? days/
+          when /(\d+)(?:-(\d+))? days/i
             product_data.merge!({ 'lead_time_normal_min' => Integer($1),
                                   'lead_time_normal_max' => Integer($2 || $1) })
           when /(\d+) weeks/

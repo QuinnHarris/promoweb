@@ -49,6 +49,19 @@ class NorwoodAll
       import.run_apply_cache
     end
   end
+
+  def import_list
+    return @import_list if @import_list
+    @import_list = list.collect do |file, name, c|
+      NorwoodCSV.new("norwood/#{year} CSV #{file}.csv", name)
+    end
+  end
+
+  %w(parse_cache transform apply_cache).each do |name|
+    define_method "run_#{name}" do
+      import_list.each { |i| i.send("run_#{name}") }
+    end
+  end
 end
 
 #"Brand","Brand Name","Price Includes","Keywords","Country of Origin","Features","Small Image","Medium Image","Large Image","Zoom Image","Small Image URL","Medium Image URL","Large Image URL","Zoom Image URL",""Page Number","Price Message","Price Start Date","Quantity","Price","Net Price","Late Pricing Start Date","Late Quantities","Late Prices","Late Net Prices","EQP Net Minus 3%","EQP Net Minus 5%","Customer Price","Unit of Measure","Sizes","Size Name","Size Width","Size Length","Size Height","Rush Lead Time","Additional Lead Time to Canada","Canadian Lead Time","Selections","Proofs","Item Color Charges","Option Charges","Additional Product Information","FOB Ship From City","FOB Ship From State","FOB Ship From Zip","FOB Bill From City","FOB Bill From State","FOB Bill From Zip"

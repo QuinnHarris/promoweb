@@ -101,14 +101,16 @@ class PrimeLineWeb < GenericImport
     puts "Category: #{url}  #{category}"
     fetch = WebFetch.new(url)
     return unless path = fetch.get_path
-    doc = Nokogiri::HTML(open(path))
-    doc.xpath("//table[@id='Table4']/tr/td/div/a").each do |a|
+    count = 0
+    Nokogiri::HTML(open(path)).xpath("//table[@id='Table4']/tr/td/div/a").each do |a|
       next unless a['href'].index('ProductDetail')
       path = a['href'].strip.gsub(/^\.\.\//, '')
 #      puts "Product: #{path} : #{category}"
       @product_pages[path] = (@product_pages[path] || []) + [category]
+      count += 1
       #      process_product(category, "http://www.primeline.com/Products/#{a['href'].strip}", @tags[a['href']])
     end
+    puts "  Products: #{count}"
   end
   
   def parse_method(method, data, log)
@@ -336,6 +338,7 @@ class PrimeLineWeb < GenericImport
       }
     end
     
+    puts "Categories: #{categories.inspect}"
     
     data.merge!({
       'description' => features ? features.join("\n").strip : '',
