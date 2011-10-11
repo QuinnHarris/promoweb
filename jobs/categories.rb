@@ -1167,7 +1167,8 @@ private
             category('Drinkware', 'Cups') )
   ],[
      ['Aluminum Bottles',
-      [supplier('Leeds',
+      [match(%w(name description material), 'aluminum', 1),
+       supplier('Leeds',
                 category('Drinkware', 'Aluminum Bottles'),
                 category('Drinkware', 'Aluminum Sports Bottles')),
        supplier('Lanco',
