@@ -89,7 +89,7 @@
     - unless oivs.empty?
       %tr
         %td{ :colspan => fixed ? 7 : 6 }
-          %dl
+          %dl.variants
             %dt
               - reset_cycle
               - names = order_item.product.property_group_names

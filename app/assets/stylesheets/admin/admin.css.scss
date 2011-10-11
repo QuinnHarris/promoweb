@@ -27,7 +27,13 @@ table#fatlist {
       
       td {
         vertical-align: center;
-        padding: 0.2em 0 0.2em 0;
+        padding: 0.2em;
+        
+        &:nth-child(2) {
+          width: 250px;
+          text-align: center;
+        }
+        
         h2 {
           font-size: 1.2em;
           font-weight: bold;

@@ -10,7 +10,6 @@
     %link{ :href => image_path('icon.png'), :rel => "icon", :type => "image/png" }
     = stylesheet_link_tag 'http://fonts.googleapis.com/css?family=Holtwood+One+SC'
     = stylesheet_link_tag 'screen.css', :media => 'screen, projection'
-    = stylesheet_link_tag 'print.css', :media => 'print'
     - for sheet in controller.class.stylesheets
       = stylesheet_link_tag sheet
     - if @user
@@ -28,8 +27,8 @@
     %table.layout
       %tr
         %td{ :colspan => 2}
-          #header
-            - unless @user
+          - unless @user
+            #header
               = link_to('/', :id => 'logo') do
                 %span Mountain of Promos
                 
@@ -59,19 +58,15 @@
                 %ul#static
                   - for name, action, desc in StaticController.pages
                     %li= link_to(name, { :controller => '/static', :action => action })
-            - else
-              - if allowed?(%w(Super Orders))
-                = link_to image_tag('phone.png'), { :controller => '/admin/access', :action => :inbound }, :id => 'phone'
-                #buttonn.nav
-                  = link_to image_tag('find.png') + "Find", find_admin_orders_path, :class => 'button'
-                  = link_to image_tag('add.png') + "New", admin_orders_path, { :method => :post, :class => 'button', :confirm => 'Create a new customer and order?' }
-              %ul#leftmenu.nav
+          - else
+            #adminheader.nav
+              %ul#leftmenu
                 != li_to 'Orders', {:controller => '/admin/orders', :action => :show } do params[:controller].index('order') or !params[:controller].index('admin') end
                 != li_to 'Admin', { :controller => '/admin/employees', :action => :index } do  !params[:controller].index('order') and params[:controller].index('admin') end
       
-              #sublist.nav
+              #admincontent
                 - if !params[:controller].index('order') and params[:controller].index('admin')
-                  .tabs{ :style => "padding-top: 2.5em;" }
+                  .tabs
                     %ul
                       - if allowed?('Orders')
                         != li_to 'Commission', { :controller => '/admin/employees', :action => 'index' } do params[:controller].include?('employees') end
@@ -87,7 +82,11 @@
                       != li_to 'Other', { :controller => '/admin/system', :action => :other }
                 - elsif @order
                   #custinfo
-                    = link_to(status_order_path(@order)) do
+                    = link_to('Status', status_order_path(@order))
+                    \:
+                    = link_to('Items', items_admin_order_path(@order))
+                    \:                    
+                    = link_to(contact_order_path(@order)) do
                       %strong
                         = @order.customer.company_name
                       \:
@@ -95,9 +94,9 @@
                       - for pn in @order.customer.phone_numbers
                         \:
                         = pn.number_string
-                    - if (addr = (@order.customer.ship_address || @order.customer.default_address)) and !addr.postalcode.blank?
-                      \:
-                      = addr.postalcode
+                      - if (addr = (@order.customer.ship_address || @order.customer.default_address)) and !addr.postalcode.blank?
+                        \:
+                        = addr.postalcode
                     - for email in @order.customer.email_addresses
                       \:
                       = mail_to "#{@order.customer.person_name} <#{email.address}>", email.address, :cc => ((@order.user && @order.user != @user) ? @order.user.email_string : nil)
@@ -115,6 +114,12 @@
                       %strong
                         = @customer_zone.now.strftime("%I:%M %p")
                     = link_to("(Deliver: #{@order.delivery_date ? @order.delivery_date.strftime("%A %b %d") + " : #{@order.days_to_deliver} days" : 'unknown'})", info_order_path(@order))
+              - if allowed?(%w(Super Orders))
+                #buttonn.nav
+                  = link_to image_tag('find.png') + "Find", find_admin_orders_path, :class => 'button'
+                  = link_to image_tag('add.png') + "New", admin_orders_path, { :method => :post, :class => 'button', :confirm => 'Create a new customer and order?' }
+                = link_to image_tag('phone.png'), { :controller => '/admin/access', :action => :inbound }, :id => 'phone'
+
 
       %tr
         %td#nav

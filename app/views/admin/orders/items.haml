@@ -62,42 +62,43 @@
                 = link_to image_tag('html.png'), :action => :po, :id => purchase
                 = link_to image_tag('pdf.png'), :action => :po, :id => purchase, :format => 'pdf'
             
-            - common_tasks = all_tasks = purchase.items.first.tasks_ready.collect { |t| t.class }
-            - purchase.items.each { |i| t = i.tasks_ready.collect { |t| t.class }; common_tasks &= t; all_tasks |= t; }
-            - common_tasks.each do |klass|
-              = form_for @order, { :url => purchase_mark_admin_order_path(@order, :purchase_id => purchase.id), :html => { :method => :post }} do |order|
-                = hidden_field_tag(:class, klass.to_s)
-                - case klass.to_s
-                - when 'OrderSentItemTask'
-                  = submit_tag "Send by #{purchase.fax? ? 'FAX' : 'eMail'} #{OrderSentItemTask.status_name}"
-                  = submit_tag "Mark #{OrderSentItemTask.status_name} (Without email)"
-                - when 'ConfirmItemTask', 'ReceivedItemTask', 'AcceptedItemTask', 'ReconciledItemTask'
-                  - if klass.allowed?(@permissions)
-                    = submit_tag klass.status_name
-                    - if klass.instance_method_already_implemented?(:email_complete)
-                      = submit_tag klass.status_name + ' (Without Email)'
-                  - else
-                    = klass.waiting_name
-                - when 'EstimatedItemTask', 'ShipItemTask'
-                  = klass.status_name
-                  - if klass == EstimatedItemTask
-                    != calendar_input('data[ship_date]', '', { :class => 'ignore' }, {}, "_#{purchase.id}")
-                    Days Shipping:
-                    = text_field(:data, :ship_days, { :size => 3, :value => purchase.items.first.shipping && purchase.items.first.shipping.days, :class => 'ignore' })
-                    = check_box :data, :ship_saturday
-                    Saturday Delivery
-                  - else
-                    = select(:data, :carrier, ShippingRate.carriers)
-                    = text_field(:data, :tracking, { :size => 20, :class => 'ignore' })
+            .purchaseaction
+              - common_tasks = all_tasks = purchase.items.first.tasks_ready.collect { |t| t.class }
+              - purchase.items.each { |i| t = i.tasks_ready.collect { |t| t.class }; common_tasks &= t; all_tasks |= t; }
+              - common_tasks.each do |klass|
+                = form_for @order, { :url => purchase_mark_admin_order_path(@order, :purchase_id => purchase.id), :html => { :method => :post }} do |order|
+                  = hidden_field_tag(:class, klass.to_s)
+                  - case klass.to_s
+                  - when 'OrderSentItemTask'
+                    = submit_tag "Send by #{purchase.fax? ? 'FAX' : 'eMail'} #{OrderSentItemTask.status_name}"
+                    = submit_tag "Mark #{OrderSentItemTask.status_name} (Without email)"
+                  - when 'ConfirmItemTask', 'ReceivedItemTask', 'AcceptedItemTask', 'ReconciledItemTask'
+                    - if klass.allowed?(@permissions)
+                      = submit_tag klass.status_name
+                      - if klass.instance_method_already_implemented?(:email_complete)
+                        = submit_tag klass.status_name + ' (Without Email)'
+                    - else
+                      = klass.waiting_name
+                  - when 'EstimatedItemTask', 'ShipItemTask'
+                    = klass.status_name
+                    - if klass == EstimatedItemTask
+                      != calendar_input('data[ship_date]', '', { :class => 'ignore' }, {}, "_#{purchase.id}")
+                      Days Shipping:
+                      = text_field(:data, :ship_days, { :size => 3, :value => purchase.items.first.shipping && purchase.items.first.shipping.days, :class => 'ignore' })
+                      = check_box :data, :ship_saturday
+                      Saturday Delivery
+                    - else
+                      = select(:data, :carrier, ShippingRate.carriers)
+                      = text_field(:data, :tracking, { :size => 20, :class => 'ignore' })
+  
+                    = submit_tag 'Completed'
+                    = submit_tag 'Completed (Without Email)'
 
-                  = submit_tag 'Completed'
-                  = submit_tag 'Completed (Without Email)'
-
-            - if purchase.reconciled
-              %strong= ReconciledItemTask.completed_name
-            - unless (partial_tasks = (all_tasks - common_tasks)).empty?
-              Partially Complete:
-              = partial_tasks.collect { |t| t.status_name }.join(', ')
+              - if purchase.reconciled
+                %strong= ReconciledItemTask.completed_name
+              - unless (partial_tasks = (all_tasks - common_tasks)).empty?
+                Partially Complete:
+                = partial_tasks.collect { |t| t.status_name }.join(', ')
 
             - for item in purchase.items.sort_by { |i| [i.product_id, i.quantity] }
               = render :partial => 'order_item', :locals => { :item => item, :purchase_lock => purchase_lock }

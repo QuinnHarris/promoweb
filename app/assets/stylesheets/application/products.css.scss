@@ -248,6 +248,21 @@ div#prod {
     dl { padding-left: 0.5em; }
   }
   
+  a.submit {
+    border: thin solid black;
+    padding: 0.15em 0.25em 0.15em 0.25em;
+    margin: 0.15em;
+    background-color: #E8E0E0;
+    @include background(linear-gradient(top, white, #E8E0E0 50%, #D8D0D0 50%, #E8E0E0));
+    
+    &:hover {
+      background-color: #D8D0D0;
+      @include background(linear-gradient(bottom, white, #E8E0E0 50%, #D8D0D0 50%, #E8E0E0));
+    }
+    
+    span { font-weight: bold; }
+  }
+  
   div#prices {
     margin-top: 0;
     background-color: lighten($alt-background, 2%);
@@ -281,21 +296,9 @@ div#prod {
         
         td#addtoorder {
           padding-left: 0.5em;
-            
+          
           a.submit {
             display: block;
-            border: thin solid black;
-            padding: 0.15em 0.25em 0.15em 0.25em;
-            margin: 0.15em;
-            background-color: #E8E0E0;
-            @include background(linear-gradient(top, white, #E8E0E0 50%, #D8D0D0 50%, #E8E0E0));
-            
-            &:hover {
-              background-color: #D8D0D0;
-              @include background(linear-gradient(bottom, white, #E8E0E0 50%, #D8D0D0 50%, #E8E0E0));
-            }
-            
-            span { font-weight: bold; }
           }
         }
       }

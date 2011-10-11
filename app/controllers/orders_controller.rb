@@ -269,7 +269,7 @@ public
     
     @static = @order.task_completed?(AcknowledgeOrderTask)
     
-    @javascripts = ['quote.js', 'autosubmit.js', 'rails.js']   
+    @javascripts = ['autosubmit.js', 'rails.js']   
     
     if params[:order_items]
       OrderItem.transaction do      
@@ -297,7 +297,7 @@ public
     
   # Order Information
   def_tasked_action :info, InformationOrderTask do    
-    @javascripts = ['quote.js', 'autosubmit.js']
+    @javascripts = ['autosubmit.js']
 #    apply_calendar_header
 
     @static = @order.task_completed?(AcknowledgeOrderTask) && (!@user || !params[:unlock])

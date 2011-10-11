@@ -276,15 +276,15 @@
                 %h2 Features
                 %ul#description
                   - for desc in @product.description.split("\n")
-                    %li= desc
+                    %li!= desc
 
       - if @user
         .admin
           - form_for @product, { :url => product_add_admin_categories_path(:product_id => @product) } do |prod|
             = text_field_with_auto_complete nil, :path, {}, :url => { :controller => '/admin/categories', :action => :auto_complete_for_path }
             = submit_tag 'Add to Category'
-        .admin
-          %br
+          = link_to "Edit Product", edit_product_path(@product)
+          %hr
           - unless @sessions.empty?
             %table#access
               %thead
@@ -337,7 +337,7 @@
           %table
             %thead
               %tr
-                %th Quantity
+                %td Quantity
                 - for min in @prices.all_minimums
                   %td= min
             %tbody
@@ -357,7 +357,7 @@
 
           = link_to 'Price Chart', chart_product_path(@product)
 
-          - if @page_products
+          - if @page_products and !@page_products.empty?
             %hr
             %table
               %thead
@@ -373,6 +373,3 @@
                     %td= pp.score
                     %td= pp.correct
                     %td= link_to pp.page.request_uri, pp.page.url
-
-          %hr
-          = link_to "Edit Product", edit_product_path(@product)

@@ -1,0 +1,200 @@
+h1 {
+  margin: 0;
+  margin-bottom: 0.5em;
+  border-bottom: medium solid black;
+}
+
+a { color: #0000B0; }
+
+table.block {
+  border-collapse: separate;
+  border-spacing: 0.1em;
+
+  thead {
+    th.head {
+      background-color: #F0F0F0;
+    }
+    
+    th.admin {
+      background-color: #F0E0E0;
+    }
+  }
+
+  tfoot td {
+    vertical-align: top;
+  }
+  
+  td {
+    font-size: 1em;
+    font-family: sans-serif;
+    vertical-align: middle;
+    
+    &.num {
+      text-align: right;
+    }
+    
+    &.description input {
+        width: 92%;
+    }
+    
+    input, textarea {
+      font-size: 1em;
+      font-family: sans-serif;
+      background-color: #FFFFD0;
+      border: none;
+      border-top: thin solid #E0E0E0;
+      border-bottom: thin solid #E0E0E0;
+      
+      &.sending {
+        border-top: thin solid red;
+        border-bottom: thin solid red;
+      }
+    }
+
+    input {
+      &.money {
+        width: 3.75em;
+        text-align: right;
+      }
+      
+      &.margin  { width: 3em; }
+      &.num     { width: 4em; }
+      &.imprint { width: 6em; }
+      
+      &.default { font-style: italic; }
+      
+      &.changed { background-color: #D0D0FF; }
+      &.predicate { background-color: #D0FFD0; }
+    }
+  }
+}
+
+img {
+  position: relative;
+  top: 3px;
+}
+
+div.thumb { float: left; }
+
+.late {
+  color: red;	
+}
+
+div.subject, div.date {
+  border-bottom: thin solid black;
+}
+
+div.date { text-align: right; }
+
+div.invoice {
+  div.supplier {
+    border: thin solid #004000;
+    background-color: #E0FFE0;
+    
+    h2 {
+      color: white;
+      margin: 0;
+      padding: 0.25em;
+      font-size: 1.1em;
+      > a { color: #C0C0FF; }
+    }
+    
+    > h2 {
+      background-color: #004000;
+    }
+    
+    
+    div.purchase {
+      border: thin solid #400000;
+      background-color: #FFE0E0;
+      margin: 0.5em;
+      
+      h2 {
+        background-color: #400000;
+        padding-left: 0.25em;
+        
+        div {
+          margin-right: 0.5em;
+          float: right;
+        }
+      }
+      
+      div.purchaseaction {
+        margin: 0.5em;
+        background-color: #FFF0F0;
+      }
+      
+      div.item {
+        background-color: white;
+        margin: 0.5em;
+        clear: both;
+
+	div.notes { float: right; }
+
+	div.add_dec {
+	  background-color: #F0F0FF;
+
+	  h4 {
+	    text-align: left;
+	    border-bottom: thin solid black;
+	    margin: 0;
+	    margin-top: 0.5em;
+	    padding: 0;
+	  }
+	}
+      }
+      
+      div.notes {
+          background-color: white;
+          margin: 0.5em;
+          margin-left: 0.75em;
+          margin-right: 0.75em;
+      }
+    }
+  }
+  
+  div.general {
+    background-color: white;
+    margin: 0.5em;
+    margin-left: 1em;
+    margin-right: 1em;
+    
+    table {
+      margin-left: auto;
+      margin-right: auto;
+    }
+  }
+}
+
+/* Lifted from Autocomplete */
+div.auto_complete {
+  z-index: 100;
+  width: 350px;
+  background: #fff;
+  ul {
+    border:1px solid #888;
+    margin:0;
+    padding:0;
+    width:100%;
+    list-style-type:none;
+    
+    li {
+      margin:0;
+      padding:3px;
+        
+      &.selected {
+        background-color: #ffb;
+      }
+    }
+    
+    strong.highlight {
+      color: #800; 
+      margin:0;
+      padding:0;
+    }
+  }
+}
+
+div.hide {
+  display: none;
+}

@@ -1,0 +1,124 @@
+@import "compass/css3";
+
+/* ADMIN */
+.admin {
+  background-color: #FFE0E0;
+  font-size: 0.8em;
+}
+
+div.admin {
+  clear: both;
+  padding: 0.5em 1em 0.5em 1em;
+  
+  h2 {
+    background-color: #400000;
+    color: white;
+    margin: 0;
+    margin-bottom: 0.5;
+    padding: 0.25em;
+  }
+  
+  ul {
+    margin: 0;
+  }
+}
+
+div#adminheader {
+  width: 100%;
+  @include display-box;
+  @include box-align(stretch);
+  @include box-orient(horizontal);
+  
+  div.tabs {
+    padding-top: 1em;
+    padding-left: 4em;
+    margin-bottom: 0;
+  }
+  
+  ul#leftmenu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    margin-right: 0.5em;
+    border-right: thin solid black;
+    
+    li {
+      border: thin solid black;
+      -moz-border-radius: 1em 0 0 1em;
+      background-color: #F0F0F8;
+      padding: 0.1em;
+      margin-left: 0.2em;
+      margin-top: 0.2em;
+      margin-bottom: 0.2em;
+      margin-right: -1px;
+      
+      &.sel {
+        border-right:thin solid white;
+        background-color: white;
+      }
+    }
+    
+    a {
+      padding: 0 0.25em 0 0.5em;
+      color: black;
+      font-size: 1.2em;
+      white-space:nowrap;
+    }
+  }
+  
+  div#admincontent {
+    @include box-flex(1);
+    padding: 0.5em;
+  }
+  
+  div#buttonn a {
+    display: block;
+    border: thin solid black;
+    @include border-radius(1em);
+    margin: 0.25em;
+    white-space: nowrap;
+    padding: 0 0.5em 0.25em 0.5em;
+    
+    &:hover {
+      background-color: #F0F0F8;
+    }
+  }
+  
+  a#phone {
+      margin-top: 8px;
+      float: left;
+  }
+}
+
+table#status td.admin {
+	border: thin solid red;
+}
+
+div#sublist{
+  background-color: blue;
+  div.tabs {
+
+  }
+}
+
+div.action {
+  border: thin solid black;
+  margin-top: 0.5em;
+  
+  div.delegate {
+    padding-left: 0.5em;
+    background-color: #FFF0F0;
+  }
+  
+  a, span { margin-left: 0.5em; }
+}
+
+
+/* Order Artwork */
+span.checkbox {
+    display: inline-block;
+    vertical-align: top;
+    width: 22px;
+    height: 22px;
+    border: thin solid #DDD;
+}

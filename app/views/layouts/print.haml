@@ -3,8 +3,7 @@
   %head{ :profile => "http://www.w3.org/2005/10/profile" }
     %title= @title
     %meta{ :content => "text/html; charset=UTF-8", "http-equiv" => "Content-Type" }
-    %style{ :type => 'text/css' }
-      != File.open("#{RAILS_ROOT}/public/stylesheets/global.css") { |f| f.read }
-      != File.open("#{RAILS_ROOT}/public/stylesheets/orders.css") { |f| f.read }
+    = stylesheet_link_tag 'http://fonts.googleapis.com/css?family=Holtwood+One+SC'
+    = stylesheet_link_tag 'print', :media => 'print'
   %body
     = yield

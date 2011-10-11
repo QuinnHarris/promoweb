@@ -5,6 +5,7 @@
   = @count
   )
 = link_to((params[:closed] ? "Exclude" : "Include") + " Closed", { :closed => !params[:closed] })
+
 %table#fatlist
   %thead
     %tr
