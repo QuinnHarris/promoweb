@@ -5,11 +5,14 @@ class NewCategoryTransform
     record['categories'] ||= []
     @rules.each do |rule, category|
       if res = rule.call(record, category)
-        record['categories'].delete_if do |sub|
-          res.find { |s| s[0...(sub.size)] == sub }
-        end
         record['categories'] += res
+        record['categories'].uniq!
       end
+    end
+
+    # Remove parent categories after all rules to work correct with exclude
+    record['categories'].delete_if do |sub|
+      record['categories'].find { |s| (s.length > sub.length) && (s[0...(sub.size)] == sub) }
     end
 
     if RAILS_ENV == "production"
@@ -83,7 +86,7 @@ private
         if record[property]
           val = record[property].downcase
         else
-          list = record['variants'].collect { |v| v[property] || v['properties'][property] }.compact.uniq
+          list = record['variants'].collect { |v| v[property] || (v['properties'] && v['properties'][property]) }.compact.uniq
           next if list.empty?
           val = list.join(' ').downcase
         end
@@ -139,10 +142,12 @@ private
   def data
 [
   ['Apparel',
-  [
+  [supplier('Ash City',
+            category('Catalog', 'NESPORT')) # Kludge for 68627
   ],[
      ['Hats & Caps',
       [match('name', /(?:^| )hat(?:$| |\/)/),
+       exclude(match('name', 'stress')), # Remove Stree Reliever
        supplier('High Caliber Line',
                 category('Headwear', 'Regular') ),
        supplier('Norwood',
@@ -243,6 +248,8 @@ private
                 category('Active Wear') ) ],
       [
       ] ],
+     ['Pants',
+      [match('name', 'pants', 1)]],
      ['Safety',
       [supplier('Ash City',
                 category('Safety') ) ],
@@ -259,7 +266,8 @@ private
       [supplier('Norwood',
                 category('AWARD', 'ART') ) ] ],
      ['Awards & Plaques',
-      [supplier('Norwood',
+      [match('name', 'trophy'),
+       supplier('Norwood',
                 category('AWARD', 'AWARDS') ),
        supplier('Leeds',
             all(category('Awards', 'Awards'),
@@ -359,11 +367,13 @@ private
             all(category('BAG', 'COMPBAG'),
                 match('name', %w(bag brief))) ),
    supplier('High Caliber Line',
-            all(category('Bags'),
-                match('name', /[^(cooler)] bag/i) ) ),
+            category('Bags') ),
    supplier('Ash City',
             all(category('Accessories'),
-                match('name', %w(bag pack portfolio tote brief))))
+                match('name', %w(bag pack portfolio tote brief)))),
+   supplier('Prime Line',
+            category('Bags'),
+            exclude(match(%w(name description), 'cooler'))),
   ],[
      ['Backpacks',
       [match('name', %w(Backpack Daypack)),
@@ -566,7 +576,11 @@ private
                 match('name', ['computer sleeve', 'laptop sleeve']) )
                
       ],[dup('Bags', 'Backpacks', 'Computer Backpacks'),
-         dup('Bags', 'Business Bags', 'Computer Business Bags')
+         ['Laptop Sleeves',
+          [match('name', 'laptop sleeve'),
+           supplier('Prime Line',
+                    category('Laptop/Tablet Sleeves'))
+          ]],
         ] ],
      ['Wheeled Bags',
       [match('name', 'wheel', 1),
@@ -587,9 +601,7 @@ private
        supplier('Lanco',
                 category('Bags / Containers', 'Tote Bags')),
        supplier('Prime Line',
-                category('Totes'),
-                category('Jute Bags'),
-                match('name', 'tote') ),
+                category('Totes')),
        supplier('Norwood',
                 category('BAG', 'TOTE') ),
        supplier('Bullet Line',
@@ -606,7 +618,10 @@ private
                     category('Totes', 'Canvas Bags'),
                     category('Living Green', 'Organic'))]],
          ['Jute Totes',
-          [match(%w(name description material), %w(jute), 1)]],
+          [match(%w(name description material), %w(jute), 1),
+           supplier('Prime Line',
+                    all(category('Jute Bags'),
+                        match('name', 'tote')))]],
          ['Non-woven Polypropylene Totes',
           [match('material', %w(poly non-woven non\ woven), 1),
            match(%w(name description), ['poly', 'pet plastic', 'non-woven'], 1),
@@ -650,6 +665,11 @@ private
          ['Zippered Totes',
           [match(%w(name description), 'zipper', 1)]],
         ] ],
+     ['Tool Bags',
+      [match('name', ['tool', 'utility case'], 1),
+       supplier('Gemline',
+                all(category('Gifts', 'Home Improvement'),
+                    match('name', %w(bag case))))]],
      ['Wine Bags',
       [match('name', 'Wine', 1),
        match('name', 'Wine Tote')]],
@@ -695,13 +715,13 @@ private
  ['Collections',
   [supplier('Gemline', duplicate(['Collections'], 'supplier_categories'))
   ],[
-     ['Cleveland',
+     ['Cleveland®',
       [supplier('Norwood', category('GOLF', 'CLEVE')) ]],
-     ['Titleist',
+     ['Titleist®',
       [supplier('Norwood', category('GOLF', 'TITLEIST')) ]],
-     ['Callaway',
+     ['Callaway®',
       [supplier('Norwood', category('GOLF', 'GALLAWAY')) ]],
-     ['Wilson',
+     ['Wilson®',
       [supplier('Norwood', category('GOLF', 'WILSON')) ]],
      ['Gusto!',
       [supplier('Leeds',
@@ -716,12 +736,15 @@ private
       [supplier('Gemline', duplicate(['Elements'], 'supplier_categories'))]],
      ['Equity',
       [supplier('Gemline', duplicate(['Equity'], 'supplier_categories'))]],
-     ['Nike',
+     ['Nike®',
       [match('name', 'nike'),
        supplier('Norwood', category('GOLF', 'NIKE')) ] ],
-     ['Callaway',
+     ['Callaway®',
       [match('name', 'callaway'),
        supplier('Norwood', category('GOLF', 'CALLAWAY')) ] ],
+     ['Built®',
+      [supplier('Prime Line',
+                category('BUILT')) ]]
 
     ] ],
 
@@ -736,6 +759,10 @@ private
    supplier('LogoIncluded',
             category('Card Reader') )
   ],[
+     ['Apple Accessories',
+      [match('name', /iP(o|a)d/),
+       supplier('LogoIncluded', category('Mobile / Apple Accessories')),
+      ]],
      ['CD Products',
       [match('name', ['CD case', 'DVD case']),
        supplier('Lanco',
@@ -748,6 +775,8 @@ private
                 category('Office / Computer Essentials', 'Computer Brush') ) ]],
      ['Cables & Cords',
       [match('name', %w(cable cord), 1),
+       match('name', %w(phone\ cord)),
+       match('name', /((usb)|(network)).+cable/i),
        supplier('Lanco',
                 category('Office / Computer Essentials', 'Modem Cord') ) ]],
      ['Computer Mice',
@@ -805,7 +834,9 @@ private
       [all(match('name', 'usb'),
            match('name', ['charger']) ),
        supplier('LogoIncluded',
-                category('USB Accessories') ) ]],
+                category('USB Accessories'),
+                all(category('Tech Accessories'),
+                    match(%w(name description), 'USB'))) ]],
      ['USB Flash Drives',
       [match('name', %w(flash memory mb gb), 1),
        supplier('Leeds',
@@ -855,7 +886,8 @@ private
             category('Desktop', 'Essentials'),
             category('Gusto', 'Work') ),
    supplier('Prime Line',
-            category('Office') ),
+            category('Office'),
+            category('Desk Helpers')),
    supplier('Norwood',
             category('GOLF', 'DESKFUN') ),
    supplier('Bullet Line',
@@ -913,7 +945,11 @@ private
        supplier('Norwood',
                 category('OFFICE', 'PHOTO') ),
        supplier('High Caliber Line',
-                category('Photo Frames') )]],
+                category('Picture Frames') ),
+       supplier('Prime Line',
+                match('name', 'frame'))]],
+     ['Photo Albums',
+      [match('name', %w(photo\ album brag\ book)) ] ],
      ['Desktop Novelties',
       [supplier('Leeds',
                 category('Desktop Gifts', 'Desktop Novelty'),
@@ -956,7 +992,7 @@ private
                 all(category('Technology', 'Music & Media'),
                     match(%w(name description), 'speaker') ) )] ],
      ['Headphones & Earbuds',
-      [match('name', %w(headphones earbuds earphones ear\ plugs ear\ phones)),
+      [match('name', %w(headphones head\ phones earbuds earphones ear\ plugs ear\ phones)),
        supplier('Leeds',
                 all(category('Technology', 'Music & Media'),
                     match('name', %w(headph ear)) ) ),
@@ -975,9 +1011,11 @@ private
        supplier('Bullet Line',
                 match('name', 'card case') )] ],
      ['Note Holders',
-      [match('name', ['note holder', 'memo clip', 'memo holder', 'notenest'], 1),
+      [match('name', ['note holder', 'memo clip', 'memo holder', 'notenest', 'note dispenser', 'message pad holder', 'Post-it holder']), #, 1),
        supplier('Lanco',
-                category('Office / Computer Essentials', 'Memo Holder') ),
+                category('Office / Computer Essentials', 'Memo Holder'),
+                category('Office / Computer Essentials', 'Memo Dispenser'),
+                category('Journals / Portfolios', 'Sticky Holder')),
        supplier('Prime Line',
                 match('name', 'notenest'),
                 all(category('Desk Helpers'),
@@ -986,17 +1024,11 @@ private
                 all(category('Office'),
                     match('name', ' clip') ),
                 match('name', 'note holder') ),
+       supplier('Norwood',
+                category('OFFICE', 'NOTES') ),
        supplier('Bullet Line',
                 all(category('Desktop', 'Memo Holders/Clips'),
                     match('name', 'memo') ) ) ]],
-     ['Note Dispensers',
-      [match('name', 'note dispenser'),
-       supplier('Lanco',
-                category('Office / Computer Essentials', 'Memo Dispenser') ),
-       supplier('Norwood',
-                category('OFFICE', 'NOTES') ),
-       supplier('Lanco',
-                category('Journals / Portfolios', 'Sticky Holder') )]],
      ['Paper Clips & Fasteners',
       [#match('name', 'paper clip'),
        supplier('Norwood',
@@ -1010,6 +1042,8 @@ private
                 match('name', 'cache') )]],
      ['Piggy Bank',
       [match('name', /(pig(gy)?)|(coin) bank/i)] ],
+     ['Push Pins',
+      [match('name', 'push pin')] ],
      ['Rulers',
       [match('name', 'ruler'),
        supplier('Lanco',
@@ -1053,7 +1087,9 @@ private
    supplier('Lanco',
             category('Bags / Containers', 'Lunch Bag & Coolers')),
    supplier('Prime Line',
-            category('Coolers - Ice') ),
+            category('Coolers - Ice'),
+            all(category('Bags'),
+                match(%w(name description), 'cooler'))),
    supplier('Norwood',
             category('BAG', 'COOLERS') ),
    supplier('High Caliber Line',
@@ -1119,9 +1155,13 @@ private
      ['Aluminum Bottles',
       [match(%w(name description material), 'aluminum', 1),
        supplier('Leeds',
-                category('Drinkware', 'Aluminum Sport Bottles') ),
+                category('Drinkware', 'Aluminum Bottles'),
+                category('Drinkware', 'Aluminum Sports Bottles')),
        supplier('Lanco',
                 category('Drinkware', 'Metal Bottles') ) ]],
+     ['Stainless Bottles',
+      [supplier('Leeds',
+                category('Drinkware', 'Stainless Sport Bottles'))]],
      ['Can & Bottle Holders',
       [match('name', ['can holder', 'bottle holder', 'bottle insulator']),
        match('name', 'holder', 1),
@@ -1227,10 +1267,11 @@ private
       [supplier('Lanco',
                 category('Food Gifts', 'Boxes with Gourmet Fills') ) ]],
      ['Mints',
-      [supplier('Lanco',
+      [match('name', 'mint'),
+       supplier('Lanco',
                 category('Food Gifts', 'Mints') ),
       supplier('High Caliber Line',
-               match('name', 'mint') )]],
+               category('Mints') )]],
      ['Coffee, Hot Chocolate, Ice Tea',
       [supplier('Lanco',
                 category('Food Gifts', 'Coffee, Hot Chocolate, Ice Tea') ) ]],
@@ -1276,7 +1317,7 @@ private
    supplier('High Caliber Line',
             category('Toys & Games')),
    supplier('Prime Line',
-            category('Toys') ),
+            category('Toys Executive') ),
    supplier('Norwood',
             match('name', 'hockey'),
             category('GOLF', 'FUN'),
@@ -1349,6 +1390,8 @@ private
             category('Gusto', 'Voyage') ),
    supplier('Gemline',
             category('Gifts', 'Travel') ),
+   supplier('High Caliber Line',
+            category('Travel') )
   ],[
      ['Luggage Tags',
       [match('name', 'luggage'),
@@ -1361,7 +1404,8 @@ private
                 category('Travel Gifts', 'Accessories'),
                 exclude(match('name', 'charge')))] ],
      ['Phone Chargers',
-      [supplier('Leeds',
+      [match('name', ['charger', 'charging']),
+       supplier('Leeds',
                 all(category('Travel Gifts', 'Accessories'),
                     match('name', 'charge'))),
        supplier('LogoIncluded',
@@ -1462,7 +1506,10 @@ private
                 match('name', ['flu', 'CPR'])), # Only 400693, 50049
             category('HEALTH', 'SPA') ),
    supplier('High Caliber Line',
-            category('Healthy Living') )
+            category('Healthy Living') ),
+   supplier('Prime Line',
+            category('Health Wellness'),
+            category('Personal Care')),
   ],[
      ['First Aid Kits',
       [match('name', 'first aid'),
@@ -1474,6 +1521,12 @@ private
                 category('Health', 'First Aid Kit') ),
        supplier('Norwood',
                 category('HEALTH', 'FIRSTAID') )]],
+     ['Bandage Dispensers',
+      [match('name' ,['bandage caddy', 'bandage dispenser', 'bandage case']),
+       supplier('Lanco',
+                category('Health', 'Bandage Dispenser') ),
+       supplier('Norwood',
+                category('HEALTH', 'BANDAGE') )]],
      ['Sanitizers',
       [match('name', ['hand cleaner', 'hand sanitizers']),
        supplier('Lanco',
@@ -1512,9 +1565,9 @@ private
       [supplier('Leeds',
                 category('Health & Wellness', 'Personal Wellness & Fitness') ) ]],
      ['Dental Products',
-      [match('name', ['floss', 'toothbrush', 'toothpick'])]],
+      [match('name', %w(floss toothbrush tooth\ brush toothpick))]],
      ['Pill Cases',
-      [match(%w(name description), ['pill hold', 'pill case', 'pill box', 'pill tube']),
+      [match(%w(name description), ['pill hold', 'pill case', 'pill box', 'pill tube', 'pill caddy']),
        supplier('Lanco',
                 category('Health', 'Pill Cases') ),
        supplier('Norwood',
@@ -1523,12 +1576,6 @@ private
       [match('name', 'pill cut'),
        supplier('Lanco',
                 category('Health', 'Pill Cutters') )]],
-     ['Bandage Dispensers',
-      [match('name' ,'bandage caddy'),
-       supplier('Lanco',
-                category('Health', 'Bandage Dispenser') ),
-       supplier('Norwood',
-                category('HEALTH', 'BANDAGE') )]],
      ['Bug Repellant',
       [match('name', ['bug zapper', 'bug repellant']),
        supplier('Lanco',
@@ -1537,13 +1584,14 @@ private
      ['Outlet Covers',
       [supplier('Lanco',
                 category('Health', 'Outlet Cover') )]],
-     ['Shoe Items',
-      [supplier('Lanco',
+     ['Shoe Accessories',
+      [match('name', %w(shoe callus)),
+       supplier('Lanco',
                 category('Travel / Personal Care', 'Shoe Items') ) ]],
      ['Soap',
       [match('name', 'soap') ] ],
-     ['Wipes',
-      [match('name', 'wipes') ] ],
+     ['Wipes & Cleaning Cloths',
+      [match('name', ['wipes', 'cleaning cloth', 'towelette']) ] ],
      ['Jump Rope',
       [match('name', 'jump rope') ] ],
      ['Fans',
@@ -1644,7 +1692,8 @@ private
        supplier('Lanco',
                 category('Badge Holders / Ribbons', 'Badge Holder Accessories') ),
        supplier('High Caliber Line',
-                category('Lanyards') )
+                category('Lanyards'),
+                category('Lanyards', 'Econo Lanyards'))
       ],[
          ['Eco Friendly Lanyards',
           [supplier('High Caliber Line',
@@ -1664,7 +1713,7 @@ private
                 category('Keytags & Badge Holders', 'Carabiners'),
                 category('Lighting', 'Carabiners') ) ]],
      ['Key Chains',
-      [match(%w(name description), ['key chain', 'keychain', 'key holder']),
+      [match(%w(name description), ['key chain', 'keychain', 'key holder', 'key tag']),
        supplier('High Caliber Line',
                 category('Key Chains'),
                 category('Key Chains', 'Alcraft Key Chains')),
@@ -1695,9 +1744,8 @@ private
           [supplier('LogoIncluded', match(%w(name description), ['key chain', 'keychain', 'key holder']))]],
         ] ],
      ['Wallets',
-      [match('name', 'wallet'),
-       supplier('Norwood',
-                match('name', 'budget traveler')), # Just 15098
+      [match('name', %w(wallet checkbook)),
+       match('description', ['travel wallet', 'leather organizer', 'passport jacket']),
        supplier('Leeds',
                 all(category('Travel Gifts', 'Clocks & Wallets'),
                     match('name', ['wallet', 'passport'])) ),
@@ -1706,7 +1754,7 @@ private
      ['Money Clips',
       [match('name', ['money clip', 'money band'])] ],
      ['Wristbands',
-      [match(%w(name description), [/wrist ?band/, 'bracelet']) ] ],
+      [match(%w(name description), [/wrist.*band/, 'bracelet']) ] ],
      ['Watches',
       [supplier('Leeds',
                 category('Watches', 'Watches') )
@@ -1734,7 +1782,9 @@ private
   [supplier('Leeds',
             category('Gusto', 'Explore') ),
    supplier('High Caliber Line',
-            category('Sports and Recreation') )
+            category('Sports and Recreation') ),
+   supplier('Bullet Line',
+            category('Fitness & Recreation', 'Summer/Outdoor Items')),
   ],[
      ['Binoculars & Telescopes',
       [match('name', %w(binocular telescope monocular)),
@@ -1752,6 +1802,7 @@ private
                     match('name', 'compass') ) ) ]],
      ['Beach ware',
       [match('name',%w(beach)),
+       match('name', 'towel', 1),
        supplier('Leeds',
                 category('Towels', 'Beach Towels') )]],
      ['Golf',
@@ -1806,8 +1857,10 @@ private
      ['Camping',
       [match('name', 'tent') ]],
      ['Outdoor Seating',
-      [match('name', ['stadium seat', 'stadium cushion', 'stadium kushion', 'outdoor lounger', 'chair', 'recliner', 'seat cushion']),
+      [match('name', ['chair', 'recliner']),
+       match(%w(name description), ['stadium seat', 'stadium cushion', 'stadium kushion', 'outdoor lounger', 'seat cushion', /chair.+fold/i]),
        all(match('name', %w(chair seat)), match('description', %w(outdoor beach sporting stadium))),
+       exclude(match('name', 'stress reliever')),
        supplier('Norwood',
                 category('OUTDOOR', 'CHAIRS') ),
        supplier('Lanco',
@@ -1909,7 +1962,9 @@ private
    supplier('PrimLine',
             category('Tools') ),
    supplier('Norwood',
-            category('AUTO', 'TOOLS') )
+            category('AUTO', 'TOOLS') ),
+   supplier('High Caliber Line',
+            category('Tools') )
   ],[
      dup('Tools / Knives', 'Ice Scraper'),
      ['Bag Clips',
@@ -1991,7 +2046,7 @@ private
       [match('name', 'pliers', 1)
       ] ],
      ['Screwdrivers',
-      [match(%w(name description), 'screwdriver'),
+      [match(%w(name description), %w(screwdriver screw\ driver)),
        supplier('Lanco',
                 all(category('Tools / Knives', 'Screwdriver & Tool Set'),
                     match('name', 'screwdriver') ) ) ]],
@@ -2037,7 +2092,7 @@ private
       [match('name', 'highlighter', 1),
        match('description', ['hi-lighter', 'highlighters']),
        supplier('High Caliber Line',
-                category('Writing Instruments', 'Highlighters,Markers and Accessories') ),
+                category('Writing Instruments', 'Highlighters, Markers and Acceso') ),
        supplier('Lanco',
                 category('Writing Instruments', 'Highlighters'),
                 category('Office / Computer Essentials', 'Highlighters')),
@@ -2184,6 +2239,8 @@ private
        supplier('High Caliber Line',
                 category('Dog Collars & Leashes'),
                 category('Lanyards', 'Dog Leashes Lanyards') ) ] ],
+     ['Pet Accessories',
+      [match('name', 'pet'), ]],
      ['Light Ups',
       [supplier('High Caliber Line',
                 category('Light Up') )
@@ -2223,10 +2280,7 @@ private
       [all(match('name', 'case'),
            match('name', %w(ipod nano camera)))]],
      ['Gardening',
-      [match('name', 'garden') ]],
-     ['Shoe Accessories',
-      [match('name', 'shoe') ]],
-                
+      [match('name', 'garden') ]],                
     ] ],
 
  ['Ecologically Friendly',
