@@ -211,7 +211,7 @@ class PhoneController < ActionController::Base
     call_record = CallLog.find_by_uuid(uuid)
     if call_record
       attr.each do |name, value|
-        raise "Mismatch: #{call_record.send(name)} != #{value}" if call_record.send(name) != value
+        raise "Mismatch: #{name} : #{call_record.send(name)} != #{value}" if call_record.send(name) != value
       end
     else
       call_record = CallLog.new(:uuid => uuid)

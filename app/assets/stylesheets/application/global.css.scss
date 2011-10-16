@@ -13,18 +13,20 @@ div#header {
   min-width: 50em;
   background-color: $alt-background;
   width: 100%;
-  
+
   a#logo {
     position: absolute;
     top: 0px;
     left: 0px;
     height: 85px;
     width: 420px;
+    background-color: transparent;
     background-image: image-url('logo.png');
     background-image: none, image-url('logo.svg');
+    background-repeat: no-repeat;
     span { display: none; }
   }
-  
+    
   div#htop {
     height: 50px;
     margin: 0;
@@ -177,7 +179,10 @@ td#nav {
             @include box-shadow(none); 
             opacity: 1.0;
           }
-          > a { background-color: lighten($highlight-color, 35%); }
+          > a {
+	    //background-color: lighten($highlight-color, 35%);
+	    @include fb-color(lighten($highlight-color, 35%), "default");
+	  }
         }
       }
     }
@@ -198,7 +203,7 @@ td#nav div#leftbar div ul, ul#search {
   
       li {
         margin: 0;
-        padding: 0.1em 0;
+	padding: 0;
         position: relative;
         background-color: lighten($nav-background, 10%);
   
@@ -208,11 +213,13 @@ td#nav div#leftbar div ul, ul#search {
           font-weight: bold;
           text-decoration: none;
           white-space: nowrap;
-          padding: 0 0.3em;
+	  margin: 0;
+          padding: 0.1em 0.3em 0.2em 0.3em;
         }
         
         &:hover {
-          background-color: lighten($highlight-color, 35%);
+          //background-color: lighten($highlight-color, 35%);
+	  @include fb-color(lighten($highlight-color, 35%), "default");
           @include transition(background-color 2s cubic-bezier(0.00,0.8,0.5,1.00));
         }
       }
@@ -236,7 +243,19 @@ h1#path {
   margin: 0;
   padding: 0.2em 0 0.2em 0.5em;
 
-  a { color: white };
+  span {
+    font-family: sans serif;
+    font-weight: bold;
+    font-size: 0.8em;
+  }
+
+  a { 
+    color: white;
+    padding: 0;
+    &:hover {
+      @include fb-color(mix($head-color, $highlight-color, 70%), "default");
+    }
+  };
 }
 span#num {
   float: right;
@@ -304,9 +323,41 @@ table {
   td { vertical-align: top; }
 }
 
-h2 { border-bottom: thin solid black; }
-h3 { margin-left: 1em; }
-p, h4, ul { margin-left: 1.5em; }
+div#static {
+  padding: 1em;
+
+  h1 {
+    font-weight: bold;
+    font-size: 1.5em;
+    margin-bottom: 0.5em;
+  }
+  h2 {
+    font-weight: bold;
+    font-size: 1.3em;
+    border-bottom: thin solid black;
+    margin: 1em 0.5em 0.5em 0.5em;
+  }
+  h3 {
+    font-weight: bold;
+    font-size: 1.1em;
+    margin: 1em 0.5em 0.5em 1em;
+  }
+  h4 {
+    font-weight: bold;
+    margin: 1em 0.5em 0.5em 1.5em;
+  }
+
+  div, table, p { margin-left: 1.5em; line-height: 110%; }
+
+  ul {
+    margin: 0.5em 1em 0.5em 3em;
+    list-style-type:  disc;
+
+    li { margin-bottom: 0.5em; }
+  }
+}
+//h3 { margin-left: 1em; }
+//p, h4, ul { margin-left: 1.5em; }
 p.head { margin-left: 0; }
 
 

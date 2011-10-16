@@ -18,23 +18,32 @@ table.block {
     th.admin {
       background-color: #F0E0E0;
     }
+
+    td, th {
+      text-align: center;
+      font-weight: bold;
+    }
   }
 
-  tfoot td {
-    vertical-align: top;
+  tfoot {
+    tr:first-child td {
+      border-top: thin solid black;
+    }
+    td { vertical-align: top; }
+    th { font-weight: bold; text-align: right; }
   }
+
+  tr.num td, tr td.num { text-align: right; }
   
   td {
     font-size: 1em;
     font-family: sans-serif;
     vertical-align: middle;
-    
-    &.num {
-      text-align: right;
-    }
+
+    strong { font-weight: bold; }
     
     &.description input {
-        width: 92%;
+      width: 92%;
     }
     
     input, textarea {

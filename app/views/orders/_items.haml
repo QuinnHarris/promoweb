@@ -1,4 +1,4 @@
-%table#items_table
+%table.items
   %tbody
     - for order_item in @order.items.sort_by { |i| [i.quantity, i.product_id, i.order_item_variants.first.variant_id] }
       %tr

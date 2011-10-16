@@ -67,42 +67,41 @@
             - if method.billing_id and !@order.task_completed?(PaymentInfoOrderTask)
               = link_to(image_tag('add.png') + 'Use as Payment', payment_use_order_path(@order, :method_id => method), :method => :post, :confirm => "Use #{method.type_name} for #{method.name} as payment information")
 
-          .block
-            = form_tag(payment_apply_admin_order_path(@order, :method_id => method.id, :txn_id => params[:txn_id]), :onsubmit => "return charge(this)") do
-              %table
-                %thead
+          = form_tag(payment_apply_admin_order_path(@order, :method_id => method.id, :txn_id => params[:txn_id]), :onsubmit => "return charge(this)") do
+            %table.items
+              %thead
+                %tr
+                  %td Date
+                  %td Order
+                  %td Amount
+                  %td Comment
+              %tbody
+                - if chargeable and method.useable? and (@order.total_billable.to_i > 0 ? !method.creditable? : method.creditable?)
+                  %tr{ :id => "method-#{method.id}" }
+                    %td TODAY
+                    %td= link_to @order.id, status_order_path(@order)
+                    %td
+                      = method.creditable? ? '-' : ''
+                      = text_field :transaction, :amount, :value => @order.total_billable.abs, :size => 8, :class => 'money negative', :onkeypress => 'input_press(event)'
+                    %td
+                      = text_field :transaction, :comment
+                    %td
+                      = submit_tag method.creditable? ? "Credit" : "Charge"
+                - for transaction in method.transactions
                   %tr
-                    %td Date
-                    %td Order
-                    %td Amount
-                    %td Comment
-                %tbody
-                  - if chargeable and method.useable? and (@order.total_billable.to_i > 0 ? !method.creditable? : method.creditable?)
-                    %tr{ :id => "method-#{method.id}" }
-                      %td TODAY
-                      %td= link_to @order.id, status_order_path(@order)
-                      %td
-                        = method.creditable? ? '-' : ''
-                        = text_field :transaction, :amount, :value => @order.total_billable.abs, :size => 8, :class => 'money negative', :onkeypress => 'input_press(event)'
-                      %td
-                        = text_field :transaction, :comment
-                      %td
-                        = submit_tag method.creditable? ? "Credit" : "Charge"
-                  - for transaction in method.transactions
-                    %tr
-                      %td= transaction.created_at.strftime("%Y-%m-%d")
-                      %td= link_to transaction.order_id, :action => :status_page, :id => transaction.order_id
-                      - if transaction.is_a?(PaymentError)
-                        %td{ :colspan => "2" }= transaction.message
-                      - else
-                        %td= transaction.amount.to_perty
-                      %td
-                        = transaction.comment
-                      - if @user and transaction.method.refundable?
-                        - if method.creditable? == transaction
-                          %td Refunding
-                        - elsif transaction.is_a?(PaymentCharge) and @order.total_billable.to_i < 0
-                          %td= link_to "Refund", { :order_id => @order, :txn_id => transaction.id }
+                    %td= transaction.created_at.strftime("%Y-%m-%d")
+                    %td= link_to transaction.order_id, :action => :status_page, :id => transaction.order_id
+                    - if transaction.is_a?(PaymentError)
+                      %td{ :colspan => "2" }= transaction.message
+                    - else
+                      %td= transaction.amount.to_perty
+                    %td
+                      = transaction.comment
+                    - if @user and transaction.method.refundable?
+                      - if method.creditable? == transaction
+                        %td Refunding
+                      - elsif transaction.is_a?(PaymentCharge) and @order.total_billable.to_i < 0
+                        %td= link_to "Refund", { :order_id => @order, :txn_id => transaction.id }
 
   %hr
   %div

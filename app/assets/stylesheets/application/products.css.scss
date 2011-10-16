@@ -2,6 +2,8 @@
 
 @import "variables";
 
+$select-color: #FFFFE0;
+
 // Replace Someday
 td#prod_nav {
   border-right: thin solid black;
@@ -51,9 +53,9 @@ div#prod {
       @include border-radius(1em);
       opacity: 0.8;
     }
-    div#share {
+    #share {
       float: right;
-      margin: 0.2em;
+      padding: 0.3em;
     }
     ul {
       list-style: none;
@@ -133,9 +135,15 @@ div#prod {
       padding: 0.1em 0 0.1em 0;
       display: block;
       //background-color: yellow;
+
+      span {
+	display: block;
+        padding: 0.15em 0.3em 0.15em 0.3em;
+      }
       
       dt {
         //display: inline-block;
+	display: block;
         float: left;
         margin: 0;
         padding: 0;
@@ -153,6 +161,7 @@ div#prod {
         
         ul {
           //display: inline;
+	  //display: inline-block;
           list-style: none;
           
           li {
@@ -162,7 +171,7 @@ div#prod {
             margin: 0;
             margin-left: 0.3em;
             margin-bottom: 0.3em;
-            padding: 0.1em 0.3em 0.1em 0.3em;
+	    padding: 0;
             text-align: center;
             border: thin solid #808080;
             @include background(linear-gradient(top, white, #E0E0E8 50%, #D0D0D8 50%, #E0E0E8));
@@ -192,7 +201,7 @@ div#prod {
         }
         
         &.sel {
-          background-color: #FFFFE0;
+          background-color: $select-color;
           @include background(linear-gradient(top, #F0F0E8, #E0E0D8 50%, #F0F0E8 50%, white));
           border: thin solid #D0D050;
           
@@ -275,6 +284,8 @@ div#prod {
       &#price_calc {
         margin-top: 0.5em;
         margin-left: 0.5em;
+
+	td { padding: 0.15em; }
         
         td.num { text-align: right; }
         tr.dec { background-color: $alt-background; }
@@ -309,8 +320,10 @@ div#prod {
         vertical-align: top;
         
         thead tr {
-          font-weight: bold;
-          th, td { border-bottom: thin solid black; }
+          th, td {
+            font-weight: bold;
+	    border-bottom: thin solid black;
+	  }
           
           th {
             text-align: right;
@@ -319,12 +332,18 @@ div#prod {
           td { text-align: center; }
         }
         
+	th { font-weight: bold; }
+
+	th, td {
+          padding: 0 0.25em 0 0.25em;
+	}
+
         td {
           border-left: thin solid black;
           border-right: thin solid black;
-          padding: 0 0.25em 0 0.25em;
           
           &.sel {
+	    background-color: $select-color;
             font-weight: bold;
           }
         }

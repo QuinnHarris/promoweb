@@ -148,9 +148,9 @@ table.form {
   }
 }
 
-div.block {
+/*div.block {
     float: left;
-}
+}*/
 
 /* Status Page */
 div#key span {
@@ -197,13 +197,35 @@ table#status {
 /* Item Page and Order Acknowledge Page */
 
 /* Acknowledge Page */
+div#aknowledgement {
+  h2 {
+    font-family: sans-serif;
+    font-weight: bold;    
+    font-size: 1.4em;
+  }
+
+  h3 {
+    font-family: sans-serif;
+    font-weight: bold;    
+    font-size: 1.2em;
+    margin-top: 0.5em;
+  }
+
+  h4 {
+    font-family: sans-serif;
+    font-weight: bold;    
+    font-size: 1.1em;
+    margin-top: 0.5em;
+  }
+}
+
 div.invoice {
   border: thin solid black;
   padding: 0;
   margin-bottom: 1em;
   page-break-inside: avoid;
   
-  > h3 {
+  h3 {
     font-family: sans-serif;
     font-weight: bold;
     padding: 0.2em 0 0.2em 0.5em;
@@ -226,63 +248,6 @@ div.invoice {
 }
 
 
-/* Artwork Page */
-div.group {
-  border: medium solid #400000;
-  margin-bottom: 1em;  
-  
-  table.head {
-    width: 100%;
-    border-bottom: medium solid #400000;
-  }
-  
-  > table td:first-child {
-    width: 1%;
-  }
-  
-  table {
-    td {
-      position: relative;
-    }
-    
-    div.decorations {
-      width: 100%;
-      min-height: 4.5em;
-      bottom: 0;
-    }
-  }
-  
-  div.items {
-    background-color: #F0FFF0;
-    min-height: 2em;
-    border: thin solid black;
-  }
-  
-  div.item {
-    border: thin solid black;
-    background-color: white;
-    margin: 0.5em;
-  }
-}
-
-div.decorations {
-  min-height: 2em;
-  background-color: #F0F0FF;
-}
-
-div.decoration {
-  width: 1;
-  display: inline-block;
-  border: thin solid black;
-  background-color: white;
-  margin: 0.5em;
-  
-  h3 {
-    margin: 0;
-    padding: 0;
-    border-bottom: thin solid black;
-  }
-}
 
 /* Payment */
 div.lowlight {
@@ -311,23 +276,23 @@ input.button {
 
 input#submitbtn {
   color: #006000;
-  background-image: url('/images/submit.png');
+  background-image: image-url('submit.png');
 }
 
 input#nextbtn {
   color: #000080;
-  background-image: url('/images/forward.png');
+  background-image: image-url('forward.png');
 }
 
 input#addbtn {
   color: #006000;
-  background-image: url('/images/addbtn.png');
+  background-image: url('addbtn.png');
 }
 
 input#rejectbtn {
   color: #600000;
   padding-left: 50px;
-  background-image: url('/images/reject.png');
+  background-image: url('reject.png');
 }
 
 

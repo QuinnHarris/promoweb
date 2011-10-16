@@ -2,10 +2,6 @@ class CustomerSend < ActionMailer::Base
   helper ApplicationHelper
   helper OrdersHelper
   
-  def self.controller_path
-    "../order"
-  end
-  
   def self.dual_send(task, subject, header)
     order = task.object
     order = order.order if order.respond_to?(:order)

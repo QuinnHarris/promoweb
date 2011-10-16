@@ -765,7 +765,9 @@ public
   def invoices
     @static = true
     respond_to do |format|
-      format.html
+      format.html do
+        render :layout => 'print'
+      end
       format.pdf do
         render :pdf => "Order #{@order.id} Invoice", :layout => 'print'
       end

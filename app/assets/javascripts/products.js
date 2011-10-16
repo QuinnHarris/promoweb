@@ -489,6 +489,8 @@ var ProductPricing = Class.create(PricingBase, {
 	    form.unit_count.value = this.params.dec_count || '';
 	    form.disposition.value = btn.id;
 	    form.submit();
+
+	    btn.innerHTML = btn.innerHTML + "<img src='/images/spinsmall.gif'>"
 	}
     });
 

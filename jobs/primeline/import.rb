@@ -51,7 +51,7 @@ class PrimeLineWeb < GenericImport
       next unless a['href'].include?('/Products/ProductList.aspx')
       next if a.inner_html.include?('<img')
       url = a['href'].gsub(/^\.\.\//, '')
-      categories[url] = (categories[url] || []) + [a.inner_html.strip.gsub(/\s+/, ' ').gsub(/<.*?>/,'').gsub(/&.+;/, '')]
+      categories[url] = (categories[url] || []) + [a.inner_html.encode('ASCII', :invalid => :replace, :undef => :replace, :replace => '').strip.gsub(/\s+/, ' ').gsub(/<.*?>/,'').gsub(/&.+;/, '')]
     end
 
     categories.each do |path, category_list|
@@ -72,7 +72,7 @@ class PrimeLineWeb < GenericImport
   end
   
   def parse_web
-    @products = cache_marshal('PrimeLine_pre') do
+    @products = cache_marshal('Prime Line_pre') do
       @tags = {}
       @product_pages = {}
       @product_pages.default = []
@@ -101,14 +101,16 @@ class PrimeLineWeb < GenericImport
     puts "Category: #{url}  #{category}"
     fetch = WebFetch.new(url)
     return unless path = fetch.get_path
-    doc = Nokogiri::HTML(open(path))
-    doc.xpath("//table[@id='Table4']/tr/td/div/a").each do |a|
+    count = 0
+    Nokogiri::HTML(open(path)).xpath("//table[@id='Table4']/tr/td/div/a").each do |a|
       next unless a['href'].index('ProductDetail')
       path = a['href'].strip.gsub(/^\.\.\//, '')
 #      puts "Product: #{path} : #{category}"
       @product_pages[path] = (@product_pages[path] || []) + [category]
+      count += 1
       #      process_product(category, "http://www.primeline.com/Products/#{a['href'].strip}", @tags[a['href']])
     end
+    puts "  Products: #{count}"
   end
   
   def parse_method(method, data, log)
@@ -137,12 +139,18 @@ class PrimeLineWeb < GenericImport
     end
   end
 
+  private
+  def iconv(str)
+    Iconv.iconv('UTF-8', 'UTF-8', str).first
+  end
+  public
+
   def process_product(categories, url, tag)
     fetch = WebFetch.new(url)
-    doc = Nokogiri::HTML(open(fetch.get_path))
+    doc = Nokogiri::HTML(open(fetch.get_path), 'ASCII')
     return nil unless doc
 
-    prod_name = doc.xpath("//span[@id='ctl00_content_ProductName']").inner_html.split(' ').collect do |c|
+    prod_name = iconv(doc.xpath("//span[@id='ctl00_content_ProductName']").inner_html).split(' ').collect do |c|
       @@upcases.index(c.upcase.gsub(/\d/,'')) ? c.upcase : c.capitalize
     end.join(' ')
 
@@ -162,7 +170,7 @@ class PrimeLineWeb < GenericImport
     properties = []
     doc.xpath("//td[@id='ctl00_content_TableCell1']/span").each do |span|
       raise "Unkonown prop" unless /^\s*<b>\s*(.+?)\s*:\s*<\/b>\s*(.+?)$/ =~ span.inner_html
-      name, value = $1.strip, $2.strip
+      name, value = $1.strip, iconv($2.strip)
       puts "  - #{name.inspect} : #{value.inspect}"
       properties << [name, value]
     end    
@@ -170,7 +178,7 @@ class PrimeLineWeb < GenericImport
     
     # Features
     features = doc.xpath("//img[@src='images/bulletArrow.gif']").collect do |img|
-      img.next_sibling.inner_html.gsub(/(<[^>]+>)|(<--.*)/,'').strip
+      iconv(img.next_sibling.inner_html).gsub(/(<[^>]+>)|(<--.*)/,'').strip
     end
 #    log << " * NO FEATURES" if features.empty?
     
@@ -194,8 +202,8 @@ class PrimeLineWeb < GenericImport
     price_codes = {}
     
     # Price Code
-    price_list = (doc.xpath("span[@id='ctl00_content_DiscountCode']") +
-                  doc.xpath("span[@id='ctl00_content_DiscountCodeCloseout']")).first
+    price_list = (doc.xpath("//span[@id='ctl00_content_DiscountCode']") +
+                  doc.xpath("//span[@id='ctl00_content_DiscountCodeCloseout']")).first
     if price_list
       price_str = price_list.inner_html.strip.gsub(/<.+>/,'')
       price_str += 'C' if price_str.length == 1 and price_str[0] > ?0 and price_str[0] <= ?9 #Kludge for 4 without C price
@@ -208,7 +216,7 @@ class PrimeLineWeb < GenericImport
       rows = price_row.xpath("table/tr/td/table/tr[td/font]")
       next unless rows and rows.length > 1
       
-      minimums = rows.shift.xpath("/td[@align='right']/font/b").to_a.compact
+      minimums = rows.shift.xpath("//td[@align='right']/font/b").to_a.compact
       next if minimums.empty?
       minimums = minimums.collect { |m| m.inner_html.to_i }
       
@@ -330,6 +338,7 @@ class PrimeLineWeb < GenericImport
       }
     end
     
+    puts "Categories: #{categories.inspect}"
     
     data.merge!({
       'description' => features ? features.join("\n").strip : '',

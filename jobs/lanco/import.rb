@@ -257,7 +257,7 @@ class LancoSOAP < GenericImport
         color_image.collect do |color, images|
 #          puts "Color: #{color}  Img: #{images && images.join(', ')}"
           # For Each Variant
-          { 'supplier_num' => prod[:web_id] + (color && "-#{color}").to_s,
+          { 'supplier_num' => (prod[:web_id] + (color && "-#{color}").to_s)[0...32],
             'color' => color,
             'images' => images
           }.merge(price_data)

@@ -1,13 +1,20 @@
+@import "variables";
+
 div.session {
-  background-color: #E0E0E0;
-  padding: 0.25em 0 0.25em 0;
-  margin-bottom: 1em;
+  //background-color: #E0E0E0;
+  padding: 0;
+  margin: 1em;
+  border: thin solid black;
   
   > div {
-    background-color: white;
-    margin: 0.5em;
+    //background-color: white;
+    padding: 0.2em;
 
-    div.session > div > div {
+    &:nth-child(2n) {
+      background-color: $stripe-color; 
+    }
+
+    > div {
       padding-left: 0.5em;
       
       &.date_addr {
@@ -20,19 +27,12 @@ div.session {
     &.agent {
       float:right;
       background-color: white;
-      padding: 0.5em;
-      padding-bottom: 1em;
-      margin-top: -0.25em;
-      margin-right: 0;
-      border-left: thin solid #E0E0E0;
-      border-bottom: thin solid #E0E0E0;
     }
   }
 }
 
 span.referer {
-  border: thin solid grey;
-  padding: 0.1em 0.1em 0.1em 0;
+  background-color: #F0F0F0;
   
   span {
     background-color: #F0F0F0;

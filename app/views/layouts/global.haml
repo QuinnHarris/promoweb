@@ -125,7 +125,8 @@
         %td#nav
           #leftbar
             %div
-              %span.head Search
+              %span.head
+                Search
               = form_tag({:controller => '/search', :action => 'index'}, {:method => 'get'}) do
                 = text_field_tag 'terms', params[:terms]
                 %input{ :value => "GO", :type => "submit" }

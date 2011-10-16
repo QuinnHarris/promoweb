@@ -493,9 +493,12 @@ public
     # check all variants have the same set of properties
     prop_list = @@properties.find_all { |p| product_data['variants'].find { |v| v[p] } }
     prop_list += product_data['variants'].collect { |v| v['properties'] && v['properties'].keys }.flatten.compact
-    prop_list.each do |prop_name|
-      product_data['variants'].each do |variant|
-        unless variant[prop_name] or variant['properties'][prop_name]
+    prop_list = prop_list.uniq.sort
+    product_data['variants'].each do |variant|
+      next if variant['properties'] && (variant['properties'].keys.sort == prop_list)
+      properties = variant['properties']
+      prop_list.each do |prop_name|
+        unless variant[prop_name] or properties[prop_name]
           raise ValidateError, "Variant property mismatch", "Variant \"#{variant['supplier_num']}\" doesn't have property \"#{prop_name}\" unlike [#{(product_data['variants'].collect { |v| v['supplier_num'] } - [variant['supplier_num']]).join(',')}]"
         end
       end

@@ -1,4 +1,6 @@
 class StaticController < ApplicationController
+  layout 'static'
+
   @@pages = [
    ['About Us', 'about', 'About Us'],
    ['Ordering', 'order', 'Order Information'],

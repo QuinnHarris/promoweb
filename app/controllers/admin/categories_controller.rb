@@ -13,7 +13,7 @@ class Admin::CategoriesController < Admin::BaseController
   def update
     Category.transaction do
       category = Category.find(params[:id])
-      category.description = params[:category][:description]
+      category.update_attributes(params[:category])
       category.save!
     end
     redirect_to :back
@@ -33,7 +33,7 @@ private
   def find_categories(list, phrase, limit)
     #logger.info("List: #{list.collect { |l| l.name }.join(', ')}")
     result = []
-    list.find do |elem|
+    list.to_a.find do |elem|
       next unless elem.children
       result += elem.children.find_all { |child| child.name.downcase.include?(phrase) }
       #logger.info("Result: #{result.collect { |l| l.name }.join(', ')}")
@@ -60,7 +60,22 @@ public
       limit /= 10
     end
 
+    logger.info("Cats: #{@categories}")
+
     render :inline => "<%= content_tag('ul', @categories.collect { |e| content_tag('li', h(e.path)) }) %>"
+  end
+
+  @@google_categories = nil
+  def auto_complete_for_google_category
+    unless @@google_categories
+      @@google_categories = File.open(File.join(Rails.root,'lib/taxonomy.en-US.txt')).collect { |l| l.strip }
+      logger.info("Loaded Google Categories: #{@@google_categories.length}")
+    end
+
+    @list = @@google_categories.find_all { |c| c.include?(params[:category][:google_category]) }
+    logger.info("Found: #{@list.inspect}")
+
+    render :inline => "<%= content_tag('ul', @list.collect { |e| content_tag('li', h(e)) }) %>"
   end
 
   def product_add

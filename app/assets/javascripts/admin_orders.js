@@ -55,7 +55,7 @@ function profit_margin_calculate(cells, index, price, cost)
     if (inputs.length == 1)
 	inputs[0].value = str;
     else
-	cells[index+1].innerHTML = str + '%';
+	cells[index+1].innerHTML = str;
 }
 
 function order_item_quantity(node)
@@ -155,35 +155,41 @@ function order_item_calculate(table)
 
 function order_entry_calculate(table, other_price, other_cost)
 {
-    var tbody = table.getElementsByTagName('tbody')[0];
-    var tfoot = table.getElementsByTagName('tfoot')[0];
-    var sum_tr = tfoot.rows[0];
-    var grand_tr = tfoot.rows[1];
-	
     var price_sum = 0.0;
     var cost_sum = 0.0;
-    for (var j = 0; j < tbody.rows.length; j++) {
-	var tr = tbody.rows[j];
-	var price = parseMoney(tr.cells[1].getElementsByTagName('input')[0].value);
-	if (isNaN(price))
-	    price = 0.0;
-	var cost = parseMoney(tr.cells[2].getElementsByTagName('input')[0].value);
-	if (isNaN(cost))
-	    cost = 0.0;
-	var units = parseInt(tr.cells[3].getElementsByTagName('input')[0].value);
-	var total_price = price * units;
-	var total_cost = cost * units;
-	tr.cells[4].innerHTML = displayMoney(total_price);
-	tr.cells[5].innerHTML = displayMoney(total_cost);
-	profit_margin_calculate(tr.cells, 6, total_price, total_cost);
 
-	price_sum += total_price;
-	cost_sum += total_cost;
+    var tbody = table.getElementsByTagName('tbody')[0];
+    if (tbody) {
+	for (var j = 0; j < tbody.rows.length; j++) {
+	    var tr = tbody.rows[j];
+	    var price = parseMoney(tr.cells[1].getElementsByTagName('input')[0].value);
+	    if (isNaN(price))
+		price = 0.0;
+	    var cost = parseMoney(tr.cells[2].getElementsByTagName('input')[0].value);
+	    if (isNaN(cost))
+		cost = 0.0;
+	    var units = parseInt(tr.cells[3].getElementsByTagName('input')[0].value);
+	    var total_price = price * units;
+	    var total_cost = cost * units;
+	    tr.cells[4].innerHTML = displayMoney(total_price);
+	    tr.cells[5].innerHTML = displayMoney(total_cost);
+	    profit_margin_calculate(tr.cells, 6, total_price, total_cost);
+	    
+	    price_sum += total_price;
+	    cost_sum += total_cost;
+	}
     }
+
+    var tfoot = table.getElementsByTagName('tfoot')[0];
+    var grand_tr = tfoot.rows[0];
+    if (tbody) {
+	var sum_tr = tfoot.rows[0];
+	grand_tr = tfoot.rows[1];
 	
-    sum_tr.cells[2].innerHTML = displayMoney(price_sum);
-    sum_tr.cells[3].innerHTML = displayMoney(cost_sum);
-    profit_margin_calculate(sum_tr.cells, 4, price_sum, cost_sum);
+	sum_tr.cells[2].innerHTML = displayMoney(price_sum);
+	sum_tr.cells[3].innerHTML = displayMoney(cost_sum);
+	profit_margin_calculate(sum_tr.cells, 4, price_sum, cost_sum);
+    }
 	
     grand_tr.cells[1].innerHTML = displayMoney(price_sum + other_price);
     grand_tr.cells[2].innerHTML = displayMoney(cost_sum + other_cost);

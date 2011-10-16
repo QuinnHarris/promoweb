@@ -74,6 +74,7 @@ module Paperclip
 
     # Returns the command ImageMagick's +convert+ needs to transform the image
     # into the thumbnail.
+    # use -density to set resolution in dpi extract EPS dimentions from file.
     def transformation_command
 #      scale, crop = @current_geometry.transformation_to(@target_geometry, crop?)
       scale = @target_geometry.to_s

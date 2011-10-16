@@ -112,7 +112,7 @@ public
 
   # redirect to appropriate method
   def main
-    @javascripts = ['rails.js'] if @user
+    @javascripts = ['rails.js', 'effects', 'controls'] if @user
     
     @path = params[:path] ? params[:path].split('/') : []
     
@@ -165,6 +165,8 @@ private
       redirect_to :path => @path_web + %w(price 1)
       return
     end
+
+    @per_page = @@columns * @@rows
     
     @direct_children = @category.children.sort { |l, r| l.name <=> r.name }
     direct_children_names = @direct_children.collect { |c| c.name }.join(', ')

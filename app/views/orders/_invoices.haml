@@ -100,7 +100,7 @@
         - else
           Quote
 
-      %table#items_table
+      %table.items
         %tbody
           - entries = invoice.entries
           - order_item_entries = entries.find_all { |e| e.is_a?(InvoiceOrderItem) }
