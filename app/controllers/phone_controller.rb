@@ -85,7 +85,7 @@ class PhoneController < ActionController::Base
                    "WHERE NOT orders.closed AND orders.user_id IS NOT NULL)) AS sub GROUP BY id)")
 
     Haml::Template.options[:format] = :xhtml
-    render
+    render :content_type => 'text/html'
     Haml::Template.options[:format] = :html5
   end
   
