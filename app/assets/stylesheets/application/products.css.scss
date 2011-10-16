@@ -108,6 +108,7 @@ div#prod {
       li {
         display: inline-block;
         border: thin solid white;
+	margin-bottom: 0.3em;
         
         &.active {
           border: thin solid #DDD;
@@ -349,11 +350,6 @@ div#prod {
         }
       }
     }
-  }
-  
-  div#static {
-    margin-left: 0.5em;
-    margin-bottom: 1em;
   }
 }
 

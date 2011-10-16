@@ -6,7 +6,7 @@
 %table.layout
   %tr
     - if @link_context
-      %td#prod_nav.layout
+      %td#prod_nav.nav
         #order
           %span Order by:
           - for sort in Category.order_list.find_all { |o| o != @context[:sort] }

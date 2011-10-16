@@ -2,19 +2,8 @@
  * Import this file using the following HTML or equivalent:
  * <link href="/stylesheets/print.css" media="print" rel="stylesheet" type="text/css" /> */
 
-
 // OLD
-.nav { display: none; }
+.nav, td#nav { display: none; }
 div#content { display: block; border: none; }
-
-h1 { border-bottom: medium solid black; }
-
 div.box, div.desc { page-break-inside: avoid; }
 div.item { page-break-inside: avoid; }
-div.box h2 { border-bottom: thin solid black; }
-
-a { color: black; }
-
-span#prod_num { float: right; }
-
-td { font-size: 10pt; }

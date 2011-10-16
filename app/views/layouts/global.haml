@@ -12,7 +12,7 @@
     /[]
       = controller.class
     - for sheet in controller.class.stylesheets.uniq
-      = stylesheet_link_tag sheet
+      = stylesheet_link_tag sheet, :media => 'all'
     - if @user
       = stylesheet_link_tag "admin"
     = stylesheet_link_tag 'print', :media => 'print'
@@ -49,13 +49,13 @@
                       #{@order.user.extension_s}
                       
                 - if @order
-                  = link_to((image_tag('cart.png') + "Items (#{@order.items.count})"), items_order_path(@order), :id => 'items')
+                  = link_to((image_tag('cart.png') + "Items (#{@order.items.count})"), items_order_path(@order), :id => 'items', :class => 'nav')
                 - else
                   %div#tagline
                     Your logo on custom imprinted
                     %br
                     promotional products / ad specialties
-              #hbottom
+              #hbottom.nav
                 %ul#static
                   - for name, action, desc in StaticController.pages
                     %li= link_to(name, { :controller => '/static', :action => action })
