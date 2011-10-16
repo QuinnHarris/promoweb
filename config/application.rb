@@ -46,7 +46,9 @@ module Promoweb
     config.assets.version = '1.0'
 
     # Load SASS/Compass plugins
-    config.sass.load_paths << "#{Gem.loaded_specs['fancy-buttons'].full_gem_path}/stylesheets"
+    unless Rails.env.production?
+      config.sass.load_paths << "#{Gem.loaded_specs['fancy-buttons'].full_gem_path}/stylesheets"
+    end
   end
 end
 
