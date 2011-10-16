@@ -8,7 +8,7 @@
     - if @keywords
       %meta{ :name => "keywords", :content => @keywords }
     %link{ :href => image_path('icon.png'), :rel => "icon", :type => "image/png" }
-    = stylesheet_link_tag '://fonts.googleapis.com/css?family=Holtwood+One+SC'
+    %link{ :href => "://fonts.googleapis.com/css?family=Holtwood+One+SC.css", :rel => "stylesheet", :type => "text/css" }
     /[]
       = controller.class
     - for sheet in controller.class.stylesheets.uniq
