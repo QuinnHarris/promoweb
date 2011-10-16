@@ -1,0 +1,19 @@
+table#email {
+  border-spacing: 0 0.5em;
+
+  tr {
+    background-color: #F8F8F8;
+    &.our { background-color: #FFF8F8; }
+  }
+
+  td {
+    vertical-align: top;
+  }
+}
+
+div.preview {
+  border-left: 0.5em solid black;
+  padding-left: 1em;
+  font: monospace;
+  font-size: 0.8em;
+}

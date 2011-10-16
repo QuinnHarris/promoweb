@@ -1,0 +1,105 @@
+@import "variables";
+
+table.items {
+  > tbody {
+    > tr.spacer { height: 1em; }
+  }
+    
+  > tfoot tr.total {
+    font-size: 1.2em;
+    font-weight: bold;
+    
+    td { border-top: medium solid black; font-weight: bold; }
+  }
+
+  textarea { width: 100%; }
+    
+  thead tr td, tr.thead td {
+    text-align: center;
+    font-weight: bold;
+    border-bottom: medium solid black;
+  }
+  
+  tr.total td, tr td.total {
+    border-top: thin solid black;
+  }
+  tr td.total, td.subtotal {
+    font-weight: bold;
+  }
+  
+  tr td, tr th { padding: 0.15em 0 0.15em 0.25em;}
+  
+  tbody th, tfoot th { text-align: right; }
+  tr td.num, tr.num td { text-align: right; }
+  
+  table.item {
+    margin: 0;
+    width: 100%;
+    clear: both;
+    overflow: hidden;
+    
+    h3 { // Notes Text
+      margin-top: 0.25em;
+      margin-bottom: 0;
+      font-size: 1.0em;
+      text-align: center;
+      border-bottom: medium solid black;
+    }
+    
+    tbody {
+      tr td { padding-right: 1em; }
+      tr.num td, tr td.num { padding-right: 0; }
+      tr {
+        td {          
+          &.thumb {
+            text-align: center;
+            min-width: 120px;
+          }
+        }
+        
+        &.special { font-style: italic; color: grey; }
+      }
+    }
+  }
+}
+
+// Used on this and admin page
+dl.variants {
+  margin: 0;
+  margin-top: 0.25em;
+  
+  span {
+    display: block;
+    padding: 0em 0.25em 0em 0.25em;
+    
+    &.even { background-color: $stripe-color; }
+  }
+
+  dt, dd {
+    margin: 0.25em 0 0.25em 0;
+    padding: 0;
+  }
+  dt {  
+    text-align: right;
+    float: left;
+    font-weight: bold;
+  }
+  dd {
+    display: block;
+    overflow: hidden;
+  }
+  
+  dd ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+     
+    li {
+      float: left;
+      margin: 0.25em 0 0 0.25em;
+      padding: 0;
+      text-align: center;
+      border: thin outset black;
+    }
+  }
+}

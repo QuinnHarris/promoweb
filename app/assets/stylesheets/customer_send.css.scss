@@ -1,0 +1,43 @@
+/*
+ * This is a manifest file that'll automatically include all the stylesheets available in this directory
+ * and any sub-directories. You're free to add application-wide styles to this file and they'll appear at
+ * the top of the compiled file, but it's generally better to create a new file per style scope.
+ *= require_self
+ *= require ./orders/items.css
+ *= require ./orders/artwork.css
+*/
+
+@import "compass/css3";
+
+@import "variables";
+
+img { border: none; }
+      
+table.info th {
+  text-align: right;
+}
+
+a#logo { padding: 0; float: left; }
+
+div#links {
+  padding: 0.5em;
+  font-weight: bold;
+
+  a {
+    border: thin solid black; 
+    margin: 0.25em;
+    padding: 0.25em 0.5em 0.25em 0.5em;
+    background-color: lighten($nav-background, 10%);
+    &:hover { background-color: lighten($nav-background, 5%); }
+  }
+}
+
+div#note {
+  clear: left;
+  background-color: #eee;
+  padding: 0.5em;
+  margin-top: 0.5em;
+  
+  p { margin: 0; margin-bottom: 0.5em; }
+}
+
