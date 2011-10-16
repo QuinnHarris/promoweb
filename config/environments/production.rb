@@ -45,7 +45,7 @@ Promoweb::Application.configure do
   # config.action_controller.asset_host = "http://assets.example.com"
 
   # Precompile additional assets (application.js, application.css, and all non-JS/CSS are already added)
-  config.assets.precompile += %w( orders.css admin.css customer_send.css print.css screen.css )
+  config.assets.precompile += %w( orders.css admin.css customer_send.css print.css screen.css prototype.js controls.js dragdrop.js effects.js)
 
   # Disable delivery errors, bad email addresses will be ignored
   # config.action_mailer.raise_delivery_errors = false
