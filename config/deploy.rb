@@ -1,5 +1,12 @@
+require "bundler/capistrano"
+load 'deploy/assets'
+
 set :application, "mountainofpromos.com"
-set :repository,  "bigmux.qutek.net:promoweb"
+set :repository,  "git@bigmux.qutek.net:promoweb"
+
+set :deploy_to, "/var/www/#{application}"
+
+ssh_options[:forward_agent] = true
 
 set :scm, :git
 set :deploy_via, :remote_cache # Don't duplicate repository
