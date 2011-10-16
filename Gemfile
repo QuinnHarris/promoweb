@@ -13,6 +13,8 @@ gem 'pg'
 group :assets do
   gem 'sass-rails', "  ~> 3.1.0"
   gem 'coffee-rails', "~> 3.1.0"
+  gem "compass", ">= 0.12.alpha.0"
+  gem "fancy-buttons"
   gem 'uglifier'
   gem 'therubyracer'
 end
@@ -42,12 +44,8 @@ end
 # Bundle the extra gems:
 # gem 'bj'
 # gem 'aws-s3', :require => 'aws/s3'
-gem "compass", ">= 0.12.alpha.0"
-gem "fancy-buttons"
 gem 'nokogiri'
-#gem 'uuidtools'
 gem 'haml'
-#gem 'coffee-rails'
 gem 'activemerchant'
 gem 'foreigner'
 gem 'acts_as_tree'
