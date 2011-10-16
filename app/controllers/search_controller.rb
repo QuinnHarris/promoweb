@@ -42,7 +42,7 @@ class SearchController < ApplicationController
       scope = Product.search(@terms).where(:deleted => false)
       list = scope.includes(:product_images).limit(per_page).offset((@page-1)*per_page)
       pager.replace list[0...per_page]
-      pager.total_entries = list.length > per_page ? scope.count : ((@page-1)*per_page + list.length)
+      pager.total_entries = list.length >= per_page ? scope.count : ((@page-1)*per_page + list.length)
     end
 
     @paginate_options = {}
