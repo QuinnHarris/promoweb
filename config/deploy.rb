@@ -1,19 +1,25 @@
 set :application, "mountainofpromos.com"
-set :repository,  "http://svn.qutek.net/svn-code/promoweb/trunk"
+set :repository,  "bigmux.qutek.net:promoweb"
 
-# If you aren't deploying to /u/apps/#{application} on the target
-# servers (which is the default), you can specify the actual location
-# via the :deploy_to variable:
-set :deploy_to, "/var/www/#{application}"
+set :scm, :git
+set :deploy_via, :remote_cache # Don't duplicate repository
+set :git_enable_submodules, 1 # Fetch submodules
 
-# If you aren't using Subversion to manage your source code, specify
-# your SCM below:
-# set :scm, :subversion
+# Or: `accurev`, `bzr`, `cvs`, `darcs`, `git`, `mercurial`, `perforce`, `subversion` or `none`
 
-role :app, "main.mountainofpromos.com"
-role :web, "main.mountainofpromos.com"
-role :db,  "main.mountainofpromos.com", :primary => true
+role :web, "main.mountainofpromos.com"                          # Your HTTP server, Apache/etc
+role :app, "main.mountainofpromos.com"                          # This may be the same as your `Web` server
+role :db,  "main.mountainofpromos.com", :primary => true # This is where Rails migrations will run
+#role :db,  "your slave db-server here"
 
-# Mongrel Recipes
-require 'mongrel_cluster/recipes'
-set :mongrel_conf, "#{current_path}/config/mongrel_cluster.yml"
+# if you're still using the script/reaper helper you will need
+# these http://github.com/rails/irs_process_scripts
+
+# If you are using Passenger mod_rails uncomment this:
+namespace :deploy do
+  task :start do ; end
+  task :stop do ; end
+  task :restart, :roles => :app, :except => { :no_release => true } do
+    run "#{try_sudo} touch #{File.join(current_path,'tmp','restart.txt')}"
+  end
+end

@@ -20,9 +20,9 @@
     - for script in @javascripts || []
       = javascript_include_tag script
     /[if lte IE 6]
-      %link{ :href => "/stylesheets/iehacks.css", :rel => "stylesheet", :type => "text/css" } 
+      = stylesheet_link_tag 'iehacks.css'
     /[if IE 7]
-      %link{ :href => "/stylesheets/ie7hacks.css", :rel => "stylesheet", :type => "text/css" } 
+      = stylesheet_link_tag 'ie7hacks.css'
   %body
     %table.layout
       %tr
