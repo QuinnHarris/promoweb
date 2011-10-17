@@ -4,8 +4,9 @@
     <title>Mountain of Promos Products</title>
     <link>http://www.mountainofpromos.com/</link>
     <description>Promotional Products</description>
-<% @products_scope.find_in_batches(:batch_size => 200) do |products|
-   products.each do |product| %>
+<% @products_scope.find_in_batches(:batch_size => 200) do |products| %>
+
+<%   products.each do |product| %>
     <item>
       <id><%= product.id %></id>
 <%
@@ -53,7 +54,8 @@
       <g:google_product_category>Apparel &amp; Accessories &gt; Handbags &gt; Totes</g:google_product_category>
       <online_only>y</online_only>
     </item>
-<%   end
-   end %>
+<%   end %>
+
+<% end %>
   </channel>
 </rss>

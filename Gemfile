@@ -23,9 +23,6 @@ end
 gem 'prototype-rails', :git => 'git://github.com/rails/prototype-rails.git'
 #gem 'jquery-rails'
 
-# Use unicorn as the web server
-# gem 'unicorn'
-
 # Deploy with Capistrano
 # gem 'capistrano'
 
@@ -34,6 +31,9 @@ gem 'prototype-rails', :git => 'git://github.com/rails/prototype-rails.git'
 group :development do
   gem 'ruby-debug19', :require => 'ruby-debug'
   gem 'ruby-prof'
+  
+  # Use unicorn as the web server
+  gem 'unicorn'
 end
 
 group :test do

@@ -55,6 +55,7 @@ Promoweb::Application.routes.draw do
   match 'products/sitemap' => 'products#sitemap'
   match 'products/rss' => 'products#rss'
   match 'products/newrss' => 'products#newrss'
+  match 'products/stream' => 'products#stream'
   resources :products, :controller => 'admin::Products', :except => [:show] do
     member do
       get 'chart'

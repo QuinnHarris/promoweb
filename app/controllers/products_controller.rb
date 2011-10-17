@@ -69,9 +69,13 @@ class ProductsController < ApplicationController
   end
 
   def newrss
-    @products_scope = Product.where('NOT(products.deleted) AND products.price_comp_cache IS NOT NULL').order('products.id').includes([:supplier, :categories, :product_images, { :decorations => :technique } ])
+    @products_scope = Product.where('NOT(products.deleted) AND products.price_comp_cache IS NOT NULL').order('products.id').includes([:supplier, :categories, :product_images, { :decorations => :technique } ]).scoped
 
-    render :layout => false, :stream => true
+    render :stream => true, :layout => 'blank'
+  end
+
+  def stream
+    render :stream => true, :layout => 'blank'
   end
   
   # THIS USES GET TO CHANGE SERVER STATE!!!
