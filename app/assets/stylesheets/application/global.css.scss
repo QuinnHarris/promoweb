@@ -22,7 +22,7 @@ div#header {
     width: 420px;
     background-color: transparent;
     background-image: image-url('logo.png');
-    background-image: none, image-url('logo.svg');
+    background-image: none, image-url('logo.svg'), image-url('logo.png');
     background-repeat: no-repeat;
     span { display: none; }
   }
