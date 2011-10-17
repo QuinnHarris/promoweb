@@ -71,7 +71,7 @@ module QbwcHelper
 
     (item.respond_to?(:order_item_variants) ? item.order_item_variants : [item]).each do |oiv|
       next if oiv.quantity == 0
-      oiv.order_item.target = item if oiv.respond_to?(:order_item)
+      oiv.association(:order_item).target = item if oiv.respond_to?(:order_item)
 
       sub_item_aspect(xml, oiv, new_item, qb_type, bill_po, nil, price.marginal.nil?) do
         xml.Desc oiv.description
