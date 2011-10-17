@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
+  <channel>
+    <title>Mountain of Promos Products</title>
+    <link>http://www.mountainofpromos.com/</link>
+    <description>Promotional Products</description>
+<% @products_scope.find_in_batches(:batch_size => 200) do |products|
+   products.each do |product| %>
+    <item>
+      <id><%= product.id %></id>
+<%
+	description = ''
+
+	# Product name with price
+	suffix = " (#{product.price_shortstring_cache})"
+	midfix = []
+	name = product.name
+	max_length = 48
+	if name.length + suffix.length > max_length
+	  description += "#{name} - Custom Printed\n"
+	  name = name[0...(max_length - suffix.length)]
+        else
+	  [' - Custom', 'Printed'].each do |word|
+  	    if name.length + suffix.length + midfix.join(' ').length + word.length <= max_length
+	       midfix << word
+            end
+          end
+        end
+
+	# Description
+	description += "(#{product.price_fullstring_cache})\n"
+
+	imprints = product.decorations.collect { |d| d.technique.name }.uniq.find_all { |n| n != 'None' }
+	description += "Custom #{imprints.join(', ')}\n" unless imprints.empty?
+
+	description += product.description.gsub("\n",".\n")
+-%>
+      <title><%= name.strip + midfix.join(' ') + suffix %></title>
+      <link>http://www.mountainofpromos.com/products/<%= product.web_id %></link>
+      <description><%= description %></description>
+      <g:color>***</g:color>
+      <g:material>***</g:material>
+      <g:condition>new</g:condition>
+      <g:image_link>http://www.mountainofpromos.com/data/product/1024/8_medium.jpg</g:image_link>
+      <g:additional_image_link>http://www.mountainofpromos.com/data/product/1024/9_medium.jpg</g:additional_image_link>
+      <g:additional_image_link>http://www.mountainofpromos.com/data/product/1024/1714_medium.jpg</g:additional_image_link>
+      <g:brand><%= product.supplier.name %></g:brand>
+      <g:mpn><%= product.supplier_num %></g:mpn>
+      <g:availability>available for order</g:availability>
+      <g:price><%= product.price_comp_cache %></g:price>
+      <g:product_type>Bags &gt; Tote Bags &gt; Non-woven Polypropylene Totes</g:product_type>
+      <g:product_type>Bags &gt; Tote Bags &gt; Trade Show Totes</g:product_type>
+      <g:google_product_category>Apparel &amp; Accessories &gt; Handbags &gt; Totes</g:google_product_category>
+      <online_only>y</online_only>
+    </item>
+<%   end
+   end %>
+  </channel>
+</rss>

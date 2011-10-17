@@ -44,7 +44,7 @@ class ProductsController < ApplicationController
   end
   
   # RSS feed with Googleness
-  def rss  
+  def rss
     @products = Product.find(:all,
                              :include => [:supplier, :categories, :product_images, { :decorations => :technique } ],
       :conditions => 'NOT(products.deleted) AND products.price_comp_cache IS NOT NULL',
@@ -65,7 +65,13 @@ class ProductsController < ApplicationController
     end
 
 #    @expiration_date = Time.now.months_ago(-1).iso8601
-    render :layout=>false
+    render :layout => false
+  end
+
+  def newrss
+    @products_scope = Product.where('NOT(products.deleted) AND products.price_comp_cache IS NOT NULL').order('products.id').includes([:supplier, :categories, :product_images, { :decorations => :technique } ])
+
+    render :layout => false, :stream => true
   end
   
   # THIS USES GET TO CHANGE SERVER STATE!!!

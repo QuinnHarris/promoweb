@@ -29,4 +29,15 @@ namespace :deploy do
   task :restart, :roles => :app, :except => { :no_release => true } do
     run "touch #{File.join(current_path,'tmp','restart.txt')}"
   end
+
+  namespace :phone do
+    task :symlink, :roles => :web, :except => { :no_release => true } do
+      run <<-CMD
+        rm -rf #{latest_release}/public/phone &&
+        ln -s #{shared_path}/phone #{latest_release}/public/phone
+      CMD
+    end
+  end
 end
+
+before 'deploy:finalize_update', 'deploy:phone:symlink'
