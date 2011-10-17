@@ -12,7 +12,7 @@
   clear: both;
   }
 
-  = File.open("#{Rails.root}/public/stylesheets/orders.css") { |f| f.read }
+  = Promoweb::Application.assets['applications/orders.css'].to_s
   
 %table
   %tr
