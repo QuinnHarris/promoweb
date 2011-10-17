@@ -10,6 +10,17 @@ class QbwcController < ActionController::Base
   end
   
   before_filter :set_soap_header
+
+  def log_error(exception)
+    return unless logger
+    
+    ActiveSupport::Deprecation.silence do
+      message = "\n#{exception.class} (#{exception.message}):\n"
+      message << exception.annoted_source_code.to_s if exception.respond_to?(:annoted_source_code)
+      message << "  " << application_trace(exception).join("\n  ")
+      logger.fatal("#{message}\n\n")
+    end
+  end
   
   def qwc
     qwc = %(
