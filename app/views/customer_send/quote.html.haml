@@ -15,6 +15,7 @@
         -# = link_to "Login", uri_param.merge(:action => 'login')
         = link_to 'Status', uri_param.merge(:action => 'status_page')
         - for task in @waiting_tasks
+          - next unless task.uri
           - unless task == ReviewOrderTask
             = link_to task.waiting_name, task.uri.merge(uri_param)
           - else
