@@ -73,10 +73,6 @@ class ProductsController < ApplicationController
 
     render :stream => true, :layout => 'blank'
   end
-
-  def stream
-    render :stream => true, :layout => 'blank'
-  end
   
   # THIS USES GET TO CHANGE SERVER STATE!!!
 private
