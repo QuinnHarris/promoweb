@@ -28,13 +28,12 @@
       - for artwork in group.artworks
         - next if filter_tag and !artwork.has_tag?(filter_tag)
         .item{ :id => "artwork=#{artwork.id}" }
-          .block.thumb
+          .thumb
             - if File.exists?(artwork.art.path(:thumb))
               %a{ :href => artwork.art.url }
                 = image_tag artwork.art.url(:thumb)
             - else
               = image_tag 'nopreview.png'
-
 
           %table.form
             %tbody

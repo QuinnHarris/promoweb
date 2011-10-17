@@ -115,7 +115,7 @@ GEM
     net-http-persistent (1.9)
     nokogiri (1.5.0)
     nori (1.0.2)
-    paperclip (2.4.3)
+    paperclip (2.3.16)
       activerecord (>= 2.3.0)
       activesupport (>= 2.3.2)
       cocaine (>= 0.0.2)
@@ -231,7 +231,7 @@ DEPENDENCIES
   mechanize
   nested_set
   nokogiri
-  paperclip
+  paperclip (= 2.3.16)
   pg
   prototype-rails!
   rails (= 3.1.1)
