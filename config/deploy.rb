@@ -34,7 +34,8 @@ namespace :deploy do
     task :symlink, :roles => :web, :except => { :no_release => true } do
       run <<-CMD
         rm -rf #{latest_release}/public/phone &&
-        ln -s #{shared_path}/phone #{latest_release}/public/phone
+        ln -s #{shared_path}/phone #{latest_release}/public/phone &&
+        ln -s #{shared_path}/secrets #{latest_release}/config/secrets
       CMD
     end
   end

@@ -1,5 +1,5 @@
 = error_messages_for :supplier
-- form_for @supplier, { :url => @supplier.new_record? ? admin_suppliers_path : admin_supplier_path(@supplier) } do |supplier|
+= form_for @supplier, { :url => @supplier.new_record? ? admin_suppliers_path : admin_supplier_path(@supplier) } do |supplier|
   %table
     - %w(name account_number description fax phone artwork_email po_email samples_email web status).each do |name|
       %tr

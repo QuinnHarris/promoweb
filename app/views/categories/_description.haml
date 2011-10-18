@@ -9,7 +9,7 @@
       - if @category.products.empty? and @category.children.empty?
         = link_to 'Remove Category', admin_category_path(@category), :method => :delete
 
-    - form_for @category, { :url => admin_category_path(@category), :html => { :method => :put } } do |cat|
+    = form_for @category, { :url => admin_category_path(@category), :html => { :method => :put } } do |cat|
       = cat.text_area :description, :cols => 100, :rows => 4
       %br
       Google:

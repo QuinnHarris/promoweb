@@ -280,7 +280,7 @@
 
       - if @user
         .admin
-          - form_for @product, { :url => product_add_admin_categories_path(:product_id => @product) } do |prod|
+          = form_for @product, { :url => product_add_admin_categories_path(:product_id => @product) } do |prod|
             = text_field_with_auto_complete nil, :path, {}, :url => { :controller => '/admin/categories', :action => :auto_complete_for_path }
             = submit_tag 'Add to Category'
           = link_to "Edit Product", edit_product_path(@product)

@@ -8,7 +8,7 @@
 %h1= "Commissions for #{@user.name}"
 
 %h2 Commission Payments
-- form_for @commission, :url => apply_commission_admin_employee_path(@user), :html => { :method => :put } do |comm|
+= form_for @commission, :url => apply_commission_admin_employee_path(@user), :html => { :method => :put } do |comm|
   %table
     %thead
       %td Date
