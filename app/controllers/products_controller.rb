@@ -45,31 +45,16 @@ class ProductsController < ApplicationController
   
   # RSS feed with Googleness
   def rss
-    @products = Product.find(:all,
-                             :include => [:supplier, :categories, :product_images, { :decorations => :technique } ],
-      :conditions => 'NOT(products.deleted) AND products.price_comp_cache IS NOT NULL',
-      :order => 'products.id')
+    @products_scope = Product.where('NOT(products.deleted) AND products.price_comp_cache IS NOT NULL').order('products.id').includes([:supplier, :categories, { :product_images => :variants }, { :decorations => :technique } ]).scoped
 
-    properties = Property.find_by_sql([
-      "SELECT DISTINCT properties.name, properties.value, variants.product_id FROM properties JOIN properties_variants ON properties.id = properties_variants.property_id "+
-      "JOIN variants ON properties_variants.variant_id = variants.id WHERE variants.product_id IN (?)" +
-      "ORDER BY variants.product_id", @products.collect { |p| p.id }])
 
-    @products.each do |product|
-      hash = {}
-      while (prop = properties.first) and (prop.product_id.to_i == product.id)
-        hash[prop.name] = (hash[prop.name] || []) + [prop.translate]
-        properties.shift
-      end
-      product.instance_variable_set("@properties_get", hash)
-    end
 
 #    @expiration_date = Time.now.months_ago(-1).iso8601
     render :layout => false
   end
 
   def newrss
-    @products_scope = Product.where('NOT(products.deleted) AND products.price_comp_cache IS NOT NULL').order('products.id').includes([:supplier, :categories, :product_images, { :decorations => :technique } ]).scoped
+    @products_scope = Product.where('NOT(products.deleted) AND products.price_comp_cache IS NOT NULL AND products.price_max_cache IS NOT NULL').order('products.id').includes([:supplier, :categories, { :product_images => :variants }, { :decorations => :technique } ]).scoped
 
     render :stream => true, :layout => 'blank'
   end
