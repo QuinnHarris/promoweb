@@ -5,6 +5,7 @@ class StaticController < ApplicationController
    ['About Us', 'about', 'About Us'],
    ['Ordering', 'order', 'Order Information'],
    ['Artwork', 'artwork', 'Artwork Requirements'],
+   ['Decorations', 'decorations', 'Product Decorations'],
    ['Colors', 'color_chart', 'Pantone Color Chart'],
   ]
   

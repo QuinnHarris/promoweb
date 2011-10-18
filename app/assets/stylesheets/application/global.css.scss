@@ -15,6 +15,7 @@ div#header {
   width: 100%;
 
   a#logo {
+    span { display: none; }
     position: absolute;
     top: 0px;
     left: 0px;
@@ -22,9 +23,8 @@ div#header {
     width: 420px;
     background-color: transparent;
     background-image: image-url('logo.png');
-    background-image: none, image-url('logo.svg'), image-url('logo.png');
+    //background-image: none, image-url('logo.svg'), image-url('logo.png');
     background-repeat: no-repeat;
-    span { display: none; }
   }
     
   div#htop {
@@ -336,11 +336,13 @@ div#static {
     font-size: 1.3em;
     border-bottom: thin solid black;
     margin: 1em 0.5em 0.5em 0.5em;
+    strong { display: none; }
   }
   h3 {
     font-weight: bold;
     font-size: 1.1em;
     margin: 1em 0.5em 0.5em 1em;
+    strong { display: none; }
   }
   h4 {
     font-weight: bold;
@@ -348,6 +350,7 @@ div#static {
   }
 
   div, table, p { margin-left: 1.5em; line-height: 110%; }
+  p { margin-bottom: 1em; }
 
   ul {
     margin: 0.5em 1em 0.5em 3em;
