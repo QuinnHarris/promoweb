@@ -30,7 +30,9 @@ end
         
 
 class Category < ActiveRecord::Base
+  attr_accessible :lft, :rgt, :name, :parent, :parent_id
   acts_as_nested_set
+  
 #  has_and_belongs_to_many :products
   has_many :category_products
   has_many :products, :through => :category_products
@@ -395,9 +397,7 @@ public
     end
     
     cat.each do |sub|
-      new_cat = Category.create({ :name => sub,:lft=>0,:rgt=>0 })
-      new_cat.move_to_child_of(current)
-      current = new_cat
+      current = current.children.create(:name => sub)
     end
 
     reload unless cat.empty?

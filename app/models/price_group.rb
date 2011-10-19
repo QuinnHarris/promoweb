@@ -43,7 +43,7 @@ class PriceGroup < ActiveRecord::Base
   def update_prices(dst)
     # What about reusing existing entries?
     price_entries.each { |pe| pe.destroy }
-    price_entries.target = []
+    self.association(:price_entries).target = []
     create_prices(dst)
   end
   

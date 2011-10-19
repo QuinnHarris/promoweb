@@ -5,7 +5,7 @@ require 'open-uri'
 require File.dirname(__FILE__) + '/progressbar'
 require File.dirname(__FILE__) + '/categories'
 
-JOBS_DATA_ROOT = Rails.root + "/jobs/data"
+JOBS_DATA_ROOT = File.join(Rails.root, 'jobs/data')
 
 def apply_decorations(supplier_name)
   supplier = Supplier.find_by_name(supplier_name)
@@ -713,7 +713,7 @@ public
           recache_prices = true unless log.empty?
           product_log += log
         end
-
+        
         # Check shit
         product_record.variants.each do |variant|
           srcs = variant.price_groups.collect { |g| g.source }
@@ -728,7 +728,12 @@ public
           pc.calculate_price(product_data['price_params'] || {})
         end
 
-        product_record.variants.target = variant_records
+        product_record.association(:variants).target = variant_records
+      end
+
+      unless product_new or product_log.empty?
+        product_record.updated_at_will_change!
+        product_record.save! # Update updated_at
       end
     rescue Exception
       puts product_data.inspect
@@ -739,8 +744,6 @@ public
         puts " Product: #{product_data['supplier_num']} (#{product_record.id}) (NEW)"
       elsif !product_log.empty?
         puts " Product: #{product_data['supplier_num']} (#{product_record.id})\n" + product_log
-        product_record.updated_at_will_change!
-        product_record.save! # Update updated_at
       end
     end
     

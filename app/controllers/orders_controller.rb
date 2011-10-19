@@ -523,7 +523,7 @@ public
       order_item = OrderItem.new
       order_item.order = @order
       order_item.product = Product.find(8248)
-      @order.items.target = [order_item]
+      @order.association(:items).target = [order_item]
     end
 
     determine_pending_tasks

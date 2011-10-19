@@ -752,7 +752,7 @@ class Product < ActiveRecord::Base
     })
     
     if var
-      var.product.target = self
+      var.association(:product).target = self
       var.deleted = false
     else
       var = Variant.new({
@@ -830,7 +830,7 @@ class Product < ActiveRecord::Base
     end
     
     src.each { |deleted| str << "   - #{deleted.path}\n" }
-    added.each { |add| str << "   + #{add.path}\n"}
+    added.each { |add| str << "   + #{add.path} (#{add.id})\n"}
     
 #    assign_to_featured unless str.empty?
     

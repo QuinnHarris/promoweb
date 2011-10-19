@@ -54,7 +54,7 @@ gem 'paperclip', "= 2.3.16"
 gem 'rghost'
 gem 'exception_notification'
 #gem 'exifr'
-gem 'nested_set'
+gem 'awesome_nested_set'
 gem 'dynamic_form'
 #gem 'pg_search'
 gem 'scruffy'
