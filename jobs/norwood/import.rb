@@ -165,14 +165,13 @@ class NorwoodCSV < GenericImport
           'limit' => limit && limit.to_i
         }.merge(area || {})
       end
-      puts "Decorations: #{supplier_num} #{decorations.inspect}"
       product_data['decorations'] = decorations
       
       
       # Price/Cost
       pre = ''
       if !(late_date = row['Late Pricing Start Date']).blank? and
-          (Date.parse(late_date) > Date.today)
+          (Date.today > Date.parse(late_date))
         pre = 'Late '
       end
       prices = []
@@ -224,8 +223,6 @@ class NorwoodCSV < GenericImport
           values.collect { |v| prop.merge(name => v) }
         end.flatten
       end
-
-      puts "Variants: #{supplier_num} #{variants.length}"
 
       product_data['variants'] = variants.collect do |properties|
         num_w = (32 - supplier_num.length-properties.length) / [properties.length,1].max
