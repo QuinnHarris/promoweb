@@ -49,7 +49,7 @@
     - unless @permited.empty? or !allowed?('Super')
       - for perm in @permited
         .admin.action
-          = link_to "Revoke #{perm.name} from #{perm.user.name}", { :controller => '/admin/orders', :action => :permission_revoke, :name => perm.name, :user_id => perm.user_id, :order_id => perm.order_id }
+          = link_to "Revoke #{perm.name} from #{perm.user.name}", permission_revoke_admin_order_path(@order, :name => perm.name, :user_id => perm.user_id), :method => :delete, :confirm => "Really revoke permission"
       %hr
     = render :partial => '/orders/pending_tasks'
     %hr

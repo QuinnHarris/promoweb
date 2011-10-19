@@ -390,9 +390,7 @@ class Admin::OrdersController < Admin::BaseController
   
   def permission_revoke
     User.transaction do
-      perm = Permission.find(:first,
-        :conditions => ["name = ? AND user_id = ? AND order_id = ?",
-          params[:name], params[:user_id], params[:order_id]])
+      perm = @order.permissions.where(:user_id => params[:user_id], :name => params[:name]).first
       perm.destroy
     end
     

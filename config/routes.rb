@@ -210,6 +210,8 @@ Promoweb::Application.routes.draw do
 
         get 'contact_merge'
         put 'contact_merge'
+
+        delete 'permission_revoke'
       end
     end
 
