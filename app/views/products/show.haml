@@ -60,7 +60,7 @@
             %a.submit#customer{ :href => '#' } New Customer
 
         - setup_main if @user
-        - cache do
+        - cache(:id => @product.id) do
           - setup_main unless @user
           #prod_img
             - if @product.product_images.empty?

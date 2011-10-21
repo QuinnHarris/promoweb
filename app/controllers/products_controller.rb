@@ -1,35 +1,21 @@
-#class Context
-#  def initialize(params)
-#    @order = params[:order]
-#    @order = 'name' unless @order
-#    
-#    @tag_name = params[:tag]
-#    @include_children = params[:children]    
-#    
-#    raise ::ActionController::RoutingError, "Sort order must be #{Category.order_list.join(', ')}" unless Category.valid_order?(@order)
-#  end
-#  
-#  attr_accessor :path, :tag_name, :order, :offset, :terms
-#end
+class ProductSweeper < ActionController::Caching::Sweeper
+  observe Product
 
-#class ProductSweeper < ActiveRecord::Observer
-#  observe Product
-#
-#  def after_create(product); expire_cache_for(product); end
-#  def after_update(product); expire_cache_for(product); end
-#  def after_destroy(product); expire_cache_for(product); end
-#
-#private
-#  def expire_cache_for(product)
-#    puts "Expire: #{product.inspect}"
-#    hash = { :controller => :products, :action => :main, :id => product.id }
-#    expire_page(hash)
-#    expire_fragment(hash)
-#  end
-#end
-#ActiveRecord::Base.observers << :product_sweeper
+  def after_create(product); expire_cache_for(product); end
+  def after_update(product); expire_cache_for(product); end
+  def after_destroy(product); expire_cache_for(product); end
+
+private
+  def expire_cache_for(product)
+    Rails.logger.info "Expire Product: #{product.id}"
+    ApplicationController.cache_store.delete_matched(Regexp.new("products/#{product.id}"))
+  end
+end
+ActiveRecord::Base.observers << :product_sweeper
 
 class ProductsController < ApplicationController
+#  cache_sweeper :product_sweeper
+
   before_filter :setup_context
 
   # Google sitemap
