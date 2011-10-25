@@ -123,13 +123,16 @@ class GemlineXML < GenericImport
       #prod['related'] = prods
   
       prod_categories = nil
-  
+
       # items
-      items = product.xpath('items/item').collect do |item|
+      xml_items = product.xpath('items/item')
+      material = xml_items.first && xml_items.first['fabric'] # Kludge to assume same material for all variants
+        
+      items = xml_items.collect do |item|
         val = {
           'num' => item['style'],
           'color' => item['color'],
-          'material' => item['fabric']
+          'material' => material
         }
 
         if swatches_element = item.at_xpath('swatches')
