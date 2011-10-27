@@ -95,9 +95,11 @@ public
     # Set @order for all controllers
     @order = Order.find(session[:order_id]) unless @order or session[:order_id].nil?
     @user = User.find(session[:user_id]) unless @user or session[:user_id].nil?
-    @permissions = @user.permissions
-      .where('order_id IS NULL OR order_id = ?', @order && @order.id)
-      .select('name').collect { |p| p.name }
+    if @user
+      @permissions = @user.permissions
+        .where('order_id IS NULL OR order_id = ?', @order && @order.id)
+        .select('name').collect { |p| p.name }
+    end
   end
 
 protected
