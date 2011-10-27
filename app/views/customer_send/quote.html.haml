@@ -25,7 +25,7 @@
       - main_waiting_task = @waiting_tasks.find { |t| t.depends_on.include?(@task) }
       - main_waiting_task = @waiting_tasks.first unless main_waiting_task
       - @header_text.split("\n").each do |line|
-        - line = auto_link(line)
+        - line = auto_link(line).strip
         - line.gsub!(/\{((?:\w+\:)?[^\}]*)\}/) { |s| link_to($1, uri_param.merge(main_waiting_task.uri)) } if main_waiting_task
         %p!= line
 
