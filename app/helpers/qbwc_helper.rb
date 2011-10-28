@@ -74,7 +74,7 @@ module QbwcHelper
       oiv.association(:order_item).target = item if oiv.respond_to?(:order_item)
 
       sub_item_aspect(xml, oiv, new_item, qb_type, bill_po, nil, price.marginal.nil?) do
-        xml.Desc oiv.description
+        xml.Desc oiv.description.encode('ASCII', :invalid => :replace, :undef => :replace, :replace => '')
         xml.Quantity oiv.quantity
         #xml.UnitOfMeasure
         xml.tag!(bill_po ? 'Cost' : 'Rate', negate ? -price.marginal : price.marginal)
@@ -196,7 +196,7 @@ module QbwcHelper
 
     purchase.entries.each do |entry|
       sub_item_aspect(xml, entry, new_item, qb_type, bill && purchase.purchase_order) do
-        xml.Desc entry.description  
+        xml.Desc entry.description.encode('ASCII', :invalid => :replace, :undef => :replace, :replace => '')
         xml.Quantity entry.quantity 
         xml.tag!(bill ? 'Cost' : 'Rate',  entry.cost)
       end
