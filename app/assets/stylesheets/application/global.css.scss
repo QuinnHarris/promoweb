@@ -282,7 +282,6 @@ div.tags {
     padding: 0.1em 0.3em;
     
     img {
-      margin-bottom: -3px;
       margin-right: 0.25em;
     }
   }
@@ -295,15 +294,15 @@ a.thumb {
   text-align: center;
   font-size: 0.8em;
   span {
-  	display: block;
-  	color: black;
+    display: block;
+    color: black;
   }
   span.price {
-  	font-size: 0.9em;
-  	color: darken($highlight-color, 10%);
+    font-size: 0.9em;
+    color: darken($highlight-color, 10%);
   }
   &:hover span {
-	  text-decoration: underline;
+    text-decoration: underline;
   }
 }
 img { border: 0; }

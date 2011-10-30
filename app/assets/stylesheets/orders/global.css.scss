@@ -150,7 +150,8 @@ table.form {
 }
 
 div.left {
-    float: left;
+  float: left;
+  clear: left;
 }
 
 /* Status Page */
@@ -261,6 +262,19 @@ div.lowlight {
   }
 }
 
+div.info_block {
+  clear: left;
+  h3 {
+    font-weight: bold;
+    font-size: 1.1em;
+    border-bottom: medium solid black;
+  }
+  div.left {
+    margin-bottom: 1em;
+    margin-right: 1em;
+  }
+}
+
 /* Acknowledge */
 div#ack {
   text-align:center;
@@ -308,4 +322,3 @@ table#list {
     max-width: 250px;
   }
 }
-
