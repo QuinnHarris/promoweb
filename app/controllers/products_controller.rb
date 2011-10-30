@@ -11,7 +11,7 @@ private
     ApplicationController.cache_store.delete_matched(Regexp.new("products/#{product.id}"))
   end
 end
-ActiveRecord::Base.observers << :product_sweeper
+#ActiveRecord::Base.observers << :product_sweeper
 
 class ProductsController < ApplicationController
 #  cache_sweeper :product_sweeper
@@ -209,8 +209,7 @@ public
                                        :order => "access.page_accesses.id DESC")
 
         @customers = Customer.find(:all, :include => { :orders => :items}, :limit => 20,
-                             :conditions => "customers.person_name != '' AND " +
-                             "order_items.product_id = #{@product.id}")
+                             :conditions => "order_items.product_id = #{@product.id}")
       end
       
       render :layout => 'simple' if params[:layout] == 'false'

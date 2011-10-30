@@ -7,7 +7,7 @@
 - if @order.task_completed?(AcknowledgeOrderTask)
   %div
     Current amount owed:
-    %strong= @order.total_billable.to_perty
+    %strong= @order.total_chargeable.to_perty
 
 %hr
 .nav

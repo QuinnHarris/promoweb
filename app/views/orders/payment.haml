@@ -16,19 +16,19 @@
 
   = render :partial => 'payment_creditcard'
   %hr
-  = link_to("Send a check for payment.", { :action => :payment_sendcheck, :order_id => @order }, { :confirm => "Aknowledge that you will mail a check as payment for this order." })
+  = link_to("Send a check for payment.", { :action => :payment_sendcheck }, { :confirm => "Aknowledge that you will mail a check as payment for this order." })
 
 - else
-  - if chargeable = (@user and @order.task_ready_completed?(FirstPaymentOrderTask, [PaymentInfoOrderTask]) and !@order.total_billable.zero?)
+  - if chargeable = (@user and @order.task_ready_completed?(FirstPaymentOrderTask, [PaymentInfoOrderTask]) and !@amount.zero?)
     :javascript
       function charge(form)
       {
         var string = form.getElementsByClassName('money')[0].value;
         var amount = parseMoney(string);
         if (!amount ||
-            (amount > #{@order.total_billable.to_i.abs}) ||
+            (amount > #{@amount.to_i}) ||
             (amount < 0)) {
-          alert('Amount must be between 0 and #{@order.total_billable}');
+          alert('Amount must be between 0 and #{@amount}');
           return false;
         }
         if ((amount/multiplier).toFixed(2) != string) {
@@ -44,16 +44,21 @@
       - unless current
         %h1 Previous Payments
         %p Credit cards or checks listed below can not be charged.  We do not retain credit card information for more than 30 days after a customers order is closed.
+        %hr
       - for method in methods
         .item.info_block
-          .block
+          .left
             %h3= method.type_name
             - if method.has_name?
               %strong Name:
               = method.name
               %br
+            - unless method.sub_type.blank?
+              %strong Type:
+              = method.sub_type.humanize
+              %br
             - if method.has_number?
-              %strong Number:
+              %strong Last Digits:
               = method.display_number
               %br
             %strong Date Added:
@@ -73,24 +78,27 @@
                 %tr
                   %td Date
                   %td Order
+                  %td Type
                   %td Amount
                   %td Comment
               %tbody
-                - if chargeable and method.useable? and (@order.total_billable.to_i > 0 ? !method.creditable? : method.creditable?)
+                - if chargeable and method.useable? and (params[:txn_id] ? method.creditable? : @amount.to_i > 0)
                   %tr{ :id => "method-#{method.id}" }
                     %td TODAY
                     %td= link_to @order.id, status_order_path(@order)
                     %td
+                    %td
                       = method.creditable? ? '-' : ''
-                      = text_field :transaction, :amount, :value => @order.total_billable.abs, :size => 8, :class => 'money negative', :onkeypress => 'input_press(event)'
+                      = text_field :transaction, :amount, :value => @amount, :size => 8, :class => 'money negative', :onkeypress => 'input_press(event)'
                     %td
                       = text_field :transaction, :comment
                     %td
-                      = submit_tag method.creditable? ? "Credit" : "Charge"
+                      = submit_tag @operation
                 - for transaction in method.transactions
                   %tr
                     %td= transaction.created_at.strftime("%Y-%m-%d")
                     %td= link_to transaction.order_id, :action => :status_page, :id => transaction.order_id
+                    %td= transaction.class.to_s.gsub(/^Payment/,'')
                     - if transaction.is_a?(PaymentError)
                       %td{ :colspan => "2" }= transaction.message
                     - else
@@ -100,17 +108,17 @@
                     - if @user and transaction.method.refundable?
                       - if method.creditable? == transaction
                         %td Refunding
-                      - elsif transaction.is_a?(PaymentCharge) and @order.total_billable.to_i < 0
-                        %td= link_to "Refund", { :order_id => @order, :txn_id => transaction.id }
+                      - elsif transaction.is_a?(PaymentCharge) and @order.total_chargeable.to_i < 0
+                        %td= link_to "Refund", { :txn_id => transaction.id }
 
   %hr
   %div
-    = link_to "Add Credit Card", :action => :payment_creditcard, :order_id => @order
+    = link_to "Add Credit Card", :action => :payment_creditcard
     %br
     = link_to "Send a check for payment", payment_sendcheck_order_path(@order), { :method => :post, :confirm => "Aknowledge that you will mail a check as payment for this order." }
-    - if @user && @order.total_billable.to_i < 0
+    - if @user && @order.total_chargeable.to_i < 0
       .admin
-      = link_to "Send refund check", { :action => :payment_sendcheck, :order_id => @order, :refund => true }, { :confirm => "A refund check will be sent to the customer." }
+        = link_to "Send refund check", { :action => :payment_sendcheck, :refund => true }, { :confirm => "A refund check will be sent to the customer." }
 
   %hr
   = form_for PaymentMethod.new, :url => payment_submit_order_path(@order) do

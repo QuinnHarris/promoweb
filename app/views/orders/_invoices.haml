@@ -61,21 +61,23 @@
         %div
           - customer = @order.customer
           %h3 Ship To
-          - if valid?(customer, :company_name)
-            = customer.company_name
-            %br
           - if valid?(customer.ship_address, :name)
             = customer.ship_address.name
             %br
-          - elsif valid?(customer, :person_name)
-            = customer.person_name
-            %br
+          - else
+            - if valid?(customer, :company_name)
+              = customer.company_name
+              %br
+            - if valid?(customer, :person_name)
+              = customer.person_name
+              %br
           = render :partial => '/orders/address', :locals => { :address => customer.ship_address || customer.default_address }
         - unless customer.payment_methods.empty?
           %div
             %h3 Bill To
             - if valid?(customer, :company_name)
               = customer.company_name
+              %br
             - if payment = customer.payment_methods.find(:first)
               = payment.name
             - elsif valid?(customer, :person_name)
@@ -84,7 +86,7 @@
             = render :partial => '/orders/address', :locals => { :address => payment.address, :customer => customer }
 
   %hr
-- for invoice in (@order.invoices + @order.payment_transactions.find_all { |t| !t.amount.zero? }).sort_by { |i| i.created_at || Time.now }
+- for invoice in (@order.invoices + @order.payment_charges.sort_by { |i| i.created_at || Time.now })
   .invoice
     .date
       - if invoice.created_at

@@ -31,4 +31,9 @@ function enable_disable_forum(object, input) {
 	if (elements[i] != input)
 	    elements[i].disabled = !input.checked;
     }
+    elements = $(object).getElementsByTagName('select');
+    for (i = 0; i < elements.length; ++i) {
+	if (elements[i] != input)
+	    elements[i].disabled = !input.checked;
+    }
 }

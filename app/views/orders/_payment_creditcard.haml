@@ -1,7 +1,6 @@
 %p
-  Your credit card information will be retained for the duration of this order by CISP/PCI Compliant
-  %a{:href => 'http://www.trustcommerce.com/', :target => 'other'} TrustCommerce.
-  The card will not be billed until you acknowledge the invoice for the amount that will be billed.  After your order has shipped, you could be charged or credited for any differences in the shipping estimate and product over run or under runs within 10% of the requested quantity.
+  Your card will not be charged until you acknowledge the invoice for the amount that will be billed.
+
 = form_for(@credit_card, :as => :credit_card, :url => payment_creditcard_order_path(@order)) do |cc|
   %table.form
     %caption Add Credit Card
@@ -13,11 +12,11 @@
       %td= cc.text_field :name
     %tr
       %th Number:
-      %td= cc.text_field :number, :size=>19
+      %td= cc.text_field :number, :size => 19
     %tr
       %th Expiration:
       %td
-        = select_month(@credit_card && @credit_card.month, :prefix => 'credit_card', :use_month_numbers => true)
+        = select_month(@credit_card && @credit_card.month, :prefix => 'credit_card', :add_month_numbers => true)
         \/
         = select_year(@credit_card && @credit_card.year, :prefix => 'credit_card', :start_year => Date.today.year, :end_year => Date.today.year + 10 )
     %tr
@@ -36,21 +35,9 @@
   = check_box :options, :different, { :onclick => "enable_disable_forum('address', this)" }
   Specify different billing address
   %br
-  = fields_for :address, @address do |add|
+  = fields_for @address do |add|
     %table#address.form
-      %tr
-        %th{ :rowspan => "2" } Address:
-        %td= add.text_field(:address_1, :disabled => !@options.different)
-      %tr
-        %td= add.text_field(:address_2, :disabled => !@options.different)
-      %tr
-        %th Zipcode:
-        %td= add.text_field(:postalcode, :disabled => !@options.different)
-      %tr
-        %th City:
-        %td= add.text_field(:city, :disabled => !@options.different)
-      %tr
-        %th State:
-        %td= add.text_field(:state, :disabled => !@options.different)
+      = render :partial => 'address_edit', :locals => { :field_name => :address, :disabled => !@options.different, :nonotes => true}
 
+  %hr
   = submit_tag "Add Credit Card", :class => 'button', :id => 'addbtn'

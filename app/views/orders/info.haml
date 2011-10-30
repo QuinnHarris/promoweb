@@ -25,6 +25,9 @@
       %tr.admin
         %th FOB:
         %td= @static ? @order.fob : order.text_field(:fob)
+      %tr.admin
+        %th Purchase Order #:
+        %td= @static ? @order.purchase_order : order.text_field(:purchase_order)
     %tr.required
       %th Delivery Date:
       %td= @static ? @order.delivery_date : order.date_select(:delivery_date, { :order => [:month, :day, :year], :start_year => Time.now.year, :end_year => Time.now.year+1, :include_blank => false } )

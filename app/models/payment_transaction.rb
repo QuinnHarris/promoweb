@@ -8,12 +8,12 @@ end
 
 class PaymentError < PaymentTransaction
   def message
-    method.class.message_from(data)
+    data.collect { |k, v| "#{k}: #{v}" }.join(', ')
   end
 end
 
 class PaymentAuthorize < PaymentTransaction
-
+  validates_numericality_of :amount, :greater_than => 0
 end
 
 class PaymentCharge < PaymentTransaction

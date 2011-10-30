@@ -69,51 +69,54 @@ class Admin::OrdersController < Admin::BaseController
     end
     
     payment_method = PaymentMethod.find(params[:method_id], :include => :customer)
-    throw "Payment Method doesn't match order" unless @order.customer_id == payment_method.customer_id
+    raise "Payment Method doesn't match order" unless @order.customer_id == payment_method.customer_id
+    raise "Unexpected Charge" if payment_method.creditable?
 
     # Must wrap required payment read in transaction
     PaymentTransaction.transaction do
-      if params[:commit] == 'Charge'
-        raise "Unexpected Charge" if payment_method.creditable?
-        max = @order.total_billable
+      if %w(Authorize Charge).include?(params[:commit])
+        max = @order.send("total_#{params[:commit].downcase}able")
         raise "Expected positive billable for Charge" unless max.to_i > 0
+        if amount > max
+          render :inline => "Charge must be less than $#{max}"
+          return
+        end
         if @order.invoices.last.new_record?
           @order.save_price!
           @order.invoices.last.save!
         end
+
+        case params[:commit]
+        when 'Authorize'
+          transaction = payment_method.authorize(@order, amount, params[:transaction][:comment])
+          if !transaction.is_a?(PaymentError) and
+              @order.task_ready?(FirstPaymentOrderTask)
+            task_complete({}, FirstPaymentOrderTask)
+          end
+
+        when 'Charge'
+          transaction = payment_method.charge(@order, amount, params[:transaction][:comment])
+          if !transaction.is_a?(PaymentError)
+            @order.save_invoice!
+            if @order.task_ready?(FinalPaymentOrderTask) and
+                !@order.task_blocked?(FinalPaymentOrderTask)
+              task_complete({}, FinalPaymentOrderTask)
+            end
+          end
+        end
+
       elsif params[:commit] == 'Credit'
-        if params[:txn_id]
-          charge_transaction = PaymentTransaction.find(params[:txn_id])
-          payment_method.credit_to(charge_transaction)
-          max = charge_transaction.amount
-        else
-          charge_transaction = true
-        end
-        raise "Unexpected Credit" unless payment_method.creditable?
-        max = -@order.total_billable
+        max = -@order.total_chargeable
         raise "Expected negative billable for Credit" unless max.to_i > 0
-      else
-        raise "Unknown Action: #{params[:commit].inspect}"
-      end
-
-      max *= 1.1 if payment_method.is_a?(PaymentSendCheck)
-
-      if amount > max
-        render :inline => "Charge must be less than $#{max}"
-        return
-      end
-    
-      unless charge_transaction
-        transaction = payment_method.charge(@order, amount, params[:transaction][:comment])
-
-        logger.info("Trans: #{transaction.inspect}")
-        
-        unless transaction.is_a?(PaymentError) or @order.task_completed?(FirstPaymentOrderTask)
-          task_complete({}, PaymentInfoOrderTask) unless @order.task_completed?(PaymentInfoOrderTask)
-          task_complete({}, FirstPaymentOrderTask)
+        if amount > max
+          render :inline => "Charge must be less than $#{max}"
+          return
         end
-      else
-        payment_method.credit(@order, amount, params[:transaction][:comment], charge_transaction)
+        raise "Need txn_id" unless params[:txn_id]
+        charge_transaction = PaymentTransaction.find(params[:txn_id])
+        payment_method.credit_to(charge_transaction)
+        transaction = payment_method.credit(@order, amount, params[:transaction][:comment], charge_transaction)
+        @order.save_invoice! unless transaction.is_a?(PaymentError)
       end
     end
     
@@ -370,10 +373,7 @@ class Admin::OrdersController < Admin::BaseController
 
   def invoice_create
     Invoice.transaction do
-      @order.save_price!
-      invoice = @order.generate_invoice
-      invoice.comment = params[:invoice][:comment]
-      invoice.save!
+      @order.save_invoice!(params[:invoice][:comment])
     end
     redirect_to :controller => '/orders', :action => :acknowledge_order
   end

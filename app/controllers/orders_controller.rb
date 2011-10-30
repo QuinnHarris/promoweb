@@ -607,6 +607,10 @@ public
     
     determine_pending_tasks
 
+    authorize = !@order.items.find { |i| i.task_completed?(ShipItemTask) }
+    @amount = authorize ? [Money.new(0), @order.total_authorizeable].max : @order.total_chargeable
+    @operation = authorize ? 'Authorize' : 'Charge'
+
     @payment_methods = @customer.payment_methods.find(:all, :include => :transactions)
     if @payment_methods.empty?
       @address = @customer.default_address
@@ -616,6 +620,8 @@ public
     elsif @user and params[:txn_id]
       # If this is a refund setup the refund method
       txn_id = Integer(params[:txn_id])
+      @amount *= -1
+      @operation = 'Credit'
       @payment_methods.each do |method|
         method.transactions.each do |transaction|
           method.credit_to(transaction) if transaction.id == txn_id
@@ -670,44 +676,49 @@ public
   end
 
   def payment_creditcard
-    @customer = @order.customer
+    customer = @order.customer
     @options = Struct.new(:different).new(params[:options] ? (params[:options][:different] == '1') : nil)
-    @address = @options.different ? Address.create(params[:address]) : @customer.default_address
-    
+    @address = @options.different ? Address.create(params[:address]) : customer.default_address
+
     return unless params[:credit_card]
-  
-    @credit_card = ActiveMerchant::Billing::CreditCard.new(params[:credit_card])
-    
+
     # Validate basic info
+    @credit_card = ActiveMerchant::Billing::CreditCard.new(params[:credit_card])  
     return unless @credit_card.valid?
-    
-    PaymentMethod.transaction do      
-      payment, response = PaymentCreditCard.store(@order, @credit_card, @address)
+
+    logger.info("Card Valid")
+      
+    PaymentMethod.transaction do
+      transaction, response = PaymentCreditCard.store(@order, @credit_card, @address)
       logger.info("Response: #{response.inspect}")
-      unless response.success?
+
+      success = response.success?
+      unless response.cvv_result['code'] == 'M'
+        @credit_card.errors.add(:verification_value, response.cvv_result['message'])
+        success = false
+      end
+
+      unless response.avs_result['code'] == 'Y'
+#        @address.errors.add_to_base("Address Verfification Failed")
+        unless response.avs_result['street_match'] == 'Y'
+          @address.errors.add(:address1, response.avs_result['message'])
+        end
+
+        unless response.avs_result['postal_match'] == 'Y'
+          @address.errors.add(:postalcode, response.avs_result['message'])
+        end
+        success = false
+      end
+
+      unless success
         if %w(baddata error).include?(response.params['status'])
           raise StandardError, "CreditCard Process Error: #{response.params['status']}: #{response.message}: #{response.params.inspect}"
         end
-        
-        case response.params['declinetype']
-          when 'decline'
-            @credit_card.errors.add_to_base(response.message)
-          when 'call'
-            @credit_card.errors.add_to_base(response.message)
-          when 'avs'
-            @address.errors.add_to_base(response.message)
-          when 'cvv'
-            @credit_card.errors.add(:verification_value, response.message)
-          when 'carderror'
-            @credit_card.errors.add(:number, response.message)
-          else
-            @credit_card.errors.add_to_base("Authorization Failed")
-          end
-        
+
         return
       end
       
-      task_complete({ :data => { :id => payment.id } },
+      task_complete({ :data => { :id => transaction.id } },
                     PaymentInfoOrderTask, nil, false)
       flash[:notice] = "Successfully added Credit Card"
     end
@@ -750,7 +761,7 @@ public
         @order.task_revoke([AcknowledgeOrderTask, RevisedOrderTask], { :customer_comment => @order_task.comment })
         redirect_to :action => :status
       elsif params[:commit].include?('Acknowledge')
-        (invoice = @order.generate_invoice) && invoice.save!
+        @order.save_invoice!
         task_complete({:data => { :email_sent => !params[:commit].include?('Without Email'), :customer_comment => @order_task.comment }}, AcknowledgeOrderTask)
         if @order.total_item_price.zero? and !@order.task_completed?(PaymentInfoOrderTask)
           task_complete({}, PaymentNoneOrderTask)

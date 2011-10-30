@@ -487,7 +487,7 @@ class FinalPaymentOrderTask < OrderTask
 #  self.roles = %w(Orders)
   
   def self.blocked(order)
-    super || (!order.total_billable.zero? && "Outstanding balance")
+    super || (!order.total_chargeable.zero? && "Outstanding balance")
   end
 
   def execute_duration
@@ -592,7 +592,7 @@ class CancelOrderTask < OrderTask
     return super if super
     
     unless order.task_completed?(FinalPaymentOrderTask)
-      return nil if order.total_billable.zero?
+      return nil if order.total_chargeable.zero?
       if order.task_completed?(FirstPaymentOrderTask)
         return "first Payment made but not final payment"
       end

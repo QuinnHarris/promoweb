@@ -212,16 +212,16 @@ module QbwcHelper
   end
   
   def generic_address(xml, address)
-    xml.Addr1((address.address_1 || '')[0...41])
-    xml.Addr2((address.address_2 || '')[0...41])
+    xml.Addr1((address.address1 || '')[0...41])
+    xml.Addr2((address.address2 || '')[0...41])
     common_address(xml, address)
   end
   
   def customer_address(xml, customer, address)
     xml.Addr1 customer.company_name[0...41]
     xml.Addr2 "ATTN: #{(address.name and !address.name.strip.empty?) ? address.name : customer.person_name}"[0...41]
-    xml.Addr3((address.address_1 || '')[0...41])
-    xml.Addr4((address.address_2 || '')[0...41])
+    xml.Addr3((address.address1 || '')[0...41])
+    xml.Addr4((address.address2 || '')[0...41])
     common_address(xml, address)
   end
   

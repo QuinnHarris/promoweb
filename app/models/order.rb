@@ -17,6 +17,7 @@ class Order < ActiveRecord::Base
     
   has_many :items, :class_name => 'OrderItem', :foreign_key => 'order_id' #, :order => "products.supplier_id, order_items.product_id, order_items.id"
   has_many :entries, :class_name => 'OrderEntry', :foreign_key => 'order_id'
+
   has_many :payment_transactions
   
   has_many :permissions
@@ -70,28 +71,35 @@ class Order < ActiveRecord::Base
   end
   
   has_many :invoices_ref, :class_name => 'Invoice', :foreign_key => 'order_id', :order => 'invoices.id'
+
+  
+
   def invoices
     return @invoices if @invoices
-    @invoice_entries = {}
+    invoice_entries = {}
     @invoices = invoices_ref.find(:all, :include => :entries)
     @invoices.each do |invoice|
       invoice.entries.each do |entry|
         id = [entry.class.to_s, entry.entry_id]
         entry.predicesor = invoice_entries[id]
-        @invoice_entries[id] = entry
+        invoice_entries[id] = entry
       end
     end
-    new_invoice = generate_invoice
+    new_invoice = generate_invoice(invoice_entries)
     @invoices << new_invoice if new_invoice and !new_invoice.total_price.zero?
     @invoices
   end
-  def invoice_entries
-    return @invoice_entries if @invoice_entries
-    invoices
-    @invoice_entries
+
+  def save_invoice!(comment = nil)
+    if (invoice = invoices.last).new_record?
+      invoice.comment = comment
+      invoice.save!
+      save_price!
+    end
   end
 
-  def generate_invoice
+  private
+  def generate_invoice(invoice_entries)
     included = []
     
     InvoiceEntry
@@ -129,6 +137,7 @@ class Order < ActiveRecord::Base
         
     invoice.entries.empty? ? nil : invoice
   end
+  public
   
   belongs_to :user
   
@@ -142,14 +151,26 @@ class Order < ActiveRecord::Base
     invoices.inject(Money.new(0)) { |m, i| m += i.total_price }
   end
   
-  def total_charge
-    total = Money.new(0)
-    payment_transactions.each { |t| total += t.amount }
-    total
+  def payment_charges
+    payment_transactions.where("(type = 'PaymentCharge' OR type = 'PaymentCredit') AND amount != 0")
   end
-  
-  def total_billable
-    total_invoice_price - total_charge
+
+  def payment_authorizes
+    payment_transactions.where("type = 'PaymentAuthorize' AND amount != 0")
+  end
+
+  %w(charge authorize).each do |aspect|
+    define_method "total_#{aspect}" do
+      send("payment_#{aspect}s").inject(Money.new(0)) { |m, i| m += i.amount }
+    end
+
+    define_method "total_#{aspect}able" do
+      total_invoice_price - send("total_#{aspect}")
+    end
+  end
+
+  def level3?
+    total_charge == invoices[0..-2].inject(Money.new(0)) { |m, i| m += i.total_price }
   end
 
   %w(price cost).each do |type|

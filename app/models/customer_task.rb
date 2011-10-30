@@ -73,6 +73,11 @@ module ObjectTaskMixin
     return nil unless task_object = tasks_context.find { |t| t.is_a?(task_class) }
     task_object.ready?(inject)
   end
+
+  def task_blocked?(task_class, inject = [])
+    return nil unless task_object = tasks_context.find { |t| t.is_a?(task_class) }
+    task_object.blocked(self)
+  end
   
   def task_ready_completed?(task_class, inject = [])
     task_ready?(task_class, inject) or task_completed?(task_class)

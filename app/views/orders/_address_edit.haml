@@ -1,18 +1,21 @@
 - address = instance_variable_get("@#{field_name}")
-%tr
-  %th{ :rowspan => "2" } Address:
-  %td= @static ? address.address_1 : text_field(field_name, :address_1, :disabled => disabled)
-%tr
-  %td= @static ? address.address_2 : text_field(field_name, :address_2, :disabled => disabled)
-%tr.required
-  %th Zipcode:
-  %td= @static ? address.postalcode : text_field(field_name, :postalcode, :disabled => disabled, :class => 'postalcode')
-  /- unless @static
-  /  = observe_field("#{field_name}_postalcode", :condition => "value.length >= 5", :frequency => 0.25, :url => { :controller => '/order', :action=>'location_from_postalcode_ajax' }, :with => "'postalcode='+value+'&type=#{field_name}'", :complete => evaluate_remote_response)
-  %td{ :style => "color: red;" } Required for shipping charges
-%tr
-  %th City:
-  %td= @static ? address.city : text_field(field_name, :city, :disabled => disabled)
-%tr
-  %th State:
-  %td= @static ? address.state : text_field(field_name, :state, :disabled => disabled)
+= fields_for field_name do |add|
+  %tr
+    %th{ :rowspan => "2" } Address:
+    %td= @static ? address.address1 : add.text_field(:address1, :disabled => disabled)
+  %tr
+    %td= @static ? address.address2 : add.text_field(:address2, :disabled => disabled)
+  %tr.required
+    %th Zipcode:
+    %td= @static ? address.postalcode : add.text_field(:postalcode, :disabled => disabled, :class => 'postalcode')
+    - unless defined?(nonotes)
+      %td{ :style => "color: red;" } Required for shipping charges
+  %tr
+    %th City:
+    %td= @static ? address.city : add.text_field(:city, :disabled => disabled)
+  %tr
+    %th State:
+    %td= @static ? address.state : add.text_field(:state, :disabled => disabled)
+  %tr
+    %th Country:
+    %td= @static ? Address::COUNTRY_LIST.find { |n, c| c == address.country }.first : add.select(:country, Address::COUNTRY_LIST, {  }, { :disabled => disabled })

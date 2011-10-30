@@ -87,24 +87,24 @@ div.notice {
 }
 
 /* from scaffold */
-.fieldWithErrors {
+.field_with_errors {
   padding: 2px;
   background-color: red;
   display: table;
 }
 
 #errorExplanation {
-  width: 400px;
-  border: 2px solid red;
+  //width: 400px;
+  border: medium solid red;
   padding: 7px 7px 12px 7px;
-  margin-bottom: 20px;
+  margin-bottom: 2em;
   background-color: #f0f0f0;
   
   h2 {
     text-align: left;
     font-weight: bold;
     padding: 5px 5px 5px 15px;
-    font-size: 12px;
+    font-size: 1em;
     margin: -7px;
     background-color: #c00;
     color: #fff;
@@ -113,12 +113,15 @@ div.notice {
   p {
     color: #333;
     margin-bottom: 0;
-    padding: 5px;
+    padding: 0.5em;
   }
   
-  ul li {
-    font-size: 12px;
-    list-style: square;
+  ul {
+    margin-left: 1em;
+    li {
+      font-size: 12px;
+      list-style: square;
+    }
   }
 }
 
@@ -146,9 +149,9 @@ table.form {
   }
 }
 
-/*div.block {
+div.left {
     float: left;
-}*/
+}
 
 /* Status Page */
 div#key span {
@@ -284,13 +287,13 @@ input#nextbtn {
 
 input#addbtn {
   color: #006000;
-  background-image: url('addbtn.png');
+  background-image: image-url('addbtn.png');
 }
 
 input#rejectbtn {
   color: #600000;
   padding-left: 50px;
-  background-image: url('reject.png');
+  background-image: image-url('reject.png');
 }
 
 
