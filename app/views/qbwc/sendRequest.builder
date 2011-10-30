@@ -31,14 +31,15 @@ xml.QBXML do
         xml.FullName 'Non'
       end if new_item
       xml.tag!("SalesAndPurchase#{new_item ? '' : 'Mod'}") do
-        xml.SalesDesc "#{product.name} (#{product.id})"
+        product_name = product.name.encode('ASCII', :invalid => :replace, :undef => :replace, :replace => '')
+        xml.SalesDesc "#{product_name} (#{product.id})"
         xml.SalesPrice '0.00'
         xml.IncomeAccountRef do
           xml.ListID @qb_list_id['Account-Sales']
         end
         xml.ApplyIncomeAccountRefToExistingTxns 1 unless new_item
         
-        xml.PurchaseDesc "#{product.supplier_num} - #{product.name}"
+        xml.PurchaseDesc "#{product.supplier_num} - #{product_name}"
         xml.PurchaseCost '0.00'
         xml.ExpenseAccountRef do
           xml.ListID @qb_list_id['Account-COG']

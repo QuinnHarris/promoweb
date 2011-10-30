@@ -150,6 +150,6 @@
     - else
       %h3
         - if invoice.amount.to_i >= 0
-          Payment Tendered: #{invoice.amount.to_perty}
+          #{invoice.amount.to_perty} Charged by #{invoice.method.type_name} to #{invoice.method.name}
         - else
           Credit: #{(-invoice.amount).to_perty}

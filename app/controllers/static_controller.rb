@@ -1,6 +1,8 @@
 class StaticController < ApplicationController
   layout 'static'
 
+  before_filter :setup_context
+
   @@pages = [
    ['About Us', 'about', 'About Us'],
    ['Ordering', 'order', 'Order Information'],

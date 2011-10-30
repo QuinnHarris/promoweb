@@ -304,15 +304,19 @@ public
     
     if request.post?
       params[:order]['delivery_date(1i)'] = Date.today.year.to_s if params[:order] and params[:order]['delivery_date(1i)'] and params[:order]['delivery_date(1i)'].empty?
-      @order.update_attributes(params[:order])
+      orig_delivery_date = @order.delivery_date
+      @order.attributes = params[:order]
+      @order.delivery_date_not_important = false if orig_delivery_date and @order.delivery_date_changed?
       unless @order.valid?
         @order.save(:validate => false)
         next
       end
       Order.transaction do
-        if (@order.changed? or !@order.task_completed?(InformationOrderTask))
+        if @order.changed?
           @order.save!
-          task_complete({}, InformationOrderTask, [InformationOrderTask, RequestOrderTask, RevisedOrderTask], false)
+          unless @order.task_completed?(InformationOrderTask)
+            task_complete({}, InformationOrderTask, [InformationOrderTask, RequestOrderTask, RevisedOrderTask], false)
+          end
         end
        end
       render_edit
