@@ -98,6 +98,12 @@ class Admin::OrdersController < Admin::BaseController
           transaction = payment_method.charge(@order, amount, params[:transaction][:comment])
           if !transaction.is_a?(PaymentError)
             @order.save_invoice!
+
+            if @order.task_completed?(PaymentOverrideOrderTask) and
+                @order.task_ready?(FirstPaymentOrderTask)
+              task_complete({}, FirstPaymentOrderTask)
+            end
+
             if @order.task_ready?(FinalPaymentOrderTask) and
                 !@order.task_blocked?(FinalPaymentOrderTask)
               task_complete({}, FinalPaymentOrderTask)

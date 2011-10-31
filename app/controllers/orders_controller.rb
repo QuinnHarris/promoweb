@@ -747,8 +747,8 @@ public
         :address => @address,
       })
       
-#      task_complete({ :data => { :id => payment.id } },
-#                    PaymentInfoOrderTask, nil, false)
+      task_complete({ :data => { :id => payment.id } },
+                    PaymentInfoOrderTask, nil, false)
     end
     
     redirect_to :action => :payment, :order_id => @order
