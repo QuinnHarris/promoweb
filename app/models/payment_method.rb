@@ -71,7 +71,7 @@ class PaymentMethod < ActiveRecord::Base
   def fee; 0.0; end
   
   PaymentTransaction
-  def create_authorize(order, amount, comment = nil)
+  def authorize(order, amount, comment = nil)
     PaymentAuthorize.create({
       :method => self,
       :order => order,
@@ -80,7 +80,7 @@ class PaymentMethod < ActiveRecord::Base
     })
   end
   
-  def create_charge(order, amount, comment, data = nil)
+  def charge(order, amount, comment, data = nil)
     PaymentCharge.create({
       :method => self,
       :order => order,
@@ -90,7 +90,7 @@ class PaymentMethod < ActiveRecord::Base
     })
   end
   
-  def create_credit(order, amount, comment, data = nil)
+  def credit(order, amount, comment, data = nil)
     PaymentCredit.create({
       :method => self,
       :order => order,
@@ -190,20 +190,21 @@ public
 
     type = %w(visa master).include?(creditcard.type) ? 'level3' : 'normal'
     if payment
+      payment.address = address
       payment.billing_id = type
       payment.save!
     else
       payment = PaymentCreditCard.create({
         :customer => order.customer,
-        :address => address,
         :name => creditcard.name,
         :display_number => creditcard.last_digits,
         :sub_type => creditcard.type,
+        :address => address,
         :billing_id => type
                                          })
     end
 
-    transaction = payment.create_authorize(order, amount)
+    transaction = payment.authorize_record(order, amount)
 
     response = gateway(type).authorize(amount, creditcard,
                                        payment.gateway_options(order)
@@ -213,7 +214,7 @@ public
       transaction.auth_code = response.params['AUTHCODE']
       comment = []
       comment << response.cvv_result['message'] unless response.cvv_result['code'] == 'M'
-      comment <<  response.avs_result['message'] unless response.avs_result['code'] == 'Y'
+      comment << response.avs_result['message'] unless response.avs_result['code'] == 'Y'
       transaction.comment = comment.join(', ')
       transaction.save!
     else
@@ -237,10 +238,11 @@ public
     transactions.where(:type => 'PaymentAuthorize').where("created_at > ?", Time.now-30.days).order('amount DESC').first
   end
 
+  alias :authorize_record :authorize
   def authorize(order, amount, comment)
     txn = find_authorize
     logger.info("CreditCard Authorize: #{order.id} = #{amount} for #{id} from #{txn.inspect}")
-    transaction = create_authorize(order, amount, comment)
+    transaction = super(order, amount, comment)
     response = gateway.authorize_additional(amount, txn.number,
                                             gateway_options(order)
                                               .merge(:order_id => transaction.id))
@@ -250,7 +252,7 @@ public
   def charge(order, amount, comment)
     txn = find_authorize
     logger.info("CreditCard Charge: #{order.id} = #{amount} for #{id} from #{txn.inspect}")
-    transaction = create_charge(order, amount, comment)
+    transaction = super(order, amount, comment)
     response = gateway.capture(amount, txn.number,
                                gateway_options(order)
                                  .merge(:order_id => transaction.id))
@@ -259,7 +261,7 @@ public
 
   def credit(order, amount, comment, charge_transaction)
     logger.info("CreditCard Credit: #{order.id} = #{amount} for #{id} : #{charge_transaction.id}")
-    transaction = create_credit(order, amount, comment)
+    transaction = super(order, amount, comment)
     response = gateway.credit(amount, charge_transaction.number,
                               gateway_options(order)
                                  .merge(:order_id => transaction.id))

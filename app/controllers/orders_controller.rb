@@ -682,7 +682,7 @@ public
   def payment_creditcard
     customer = @order.customer
     @options = Struct.new(:different).new(params[:options] ? (params[:options][:different] == '1') : nil)
-    @address = @options.different ? Address.create(params[:address]) : customer.default_address
+    @address = customer.default_address
 
     return unless params[:credit_card]
 
@@ -693,6 +693,7 @@ public
     logger.info("Card Valid")
       
     PaymentMethod.transaction do
+      @address = Address.create(params[:address]) if @options.different
       transaction, response = PaymentCreditCard.store(@order, @credit_card, @address)
       logger.info("Response: #{response.inspect}")
 
