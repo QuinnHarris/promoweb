@@ -250,6 +250,7 @@ public
     response = gateway.authorize_additional(amount, txn.number,
                                             gateway_options(order)
                                               .merge(:order_id => transaction.id))
+    logger.info("Gateway Response: #{response.inspect}")
     apply_error!(transaction, response)
   end
 
@@ -260,6 +261,7 @@ public
     response = gateway.capture(amount, txn.number,
                                gateway_options(order)
                                  .merge(:order_id => transaction.id))
+    logger.info("Gateway Response: #{response.inspect}")
     apply_error!(transaction, response)
   end
 
@@ -269,6 +271,7 @@ public
     response = gateway.credit(amount, charge_transaction.number,
                               gateway_options(order)
                                  .merge(:order_id => transaction.id))
+    logger.info("Gateway Response: #{response.inspect}")
     apply_error!(transaction, response)
   end
 
