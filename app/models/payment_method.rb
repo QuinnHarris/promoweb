@@ -34,6 +34,10 @@ module ActiveMerchant #:nodoc:
       end
 
       private
+      def add_status_action(post, action)
+        post[:szDesiredStatus] = action + 'EX'
+      end
+
       def add_invoice(post, options)
         post[:OrderNumber] = sanitize_order_id(options[:order_id]) unless options[:order_id].blank?
         post[:CustomerCode] = options[:customer].to_s.slice(0, 17) unless options[:customer].blank?
