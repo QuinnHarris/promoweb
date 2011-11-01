@@ -170,7 +170,7 @@ public
       :customer => order.customer.id,
       :email => order.customer.email_addresses.first.address,
       :billing_address => gateway_address(order, address),
-      :force_settlment => true
+#      :force_settlment => true
     }
     if level3? and order.level3?
       order.invoices.last

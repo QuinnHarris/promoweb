@@ -116,7 +116,7 @@ class QbwcController < ActionController::Base
     [Invoice, qb_condition(Invoice), 1, :order],
     [PurchaseOrder, qb_condition(PurchaseOrder), 1, { :purchase => { :items => :order } }],
     [Bill, qb_condition(Bill), 1, { :purchase => { :items => :order } }],
-    [PaymentTransaction, "payment_transactions.quickbooks_id IS NULL AND payment_transactions.type != 'PaymentError'", 10, :method]
+    [PaymentTransaction, "payment_transactions.quickbooks_id IS NULL AND payment_transactions.type IN ('PaymentCharge', 'PaymentCredit')", 10, :method]
   ]
   
   def self.objects
