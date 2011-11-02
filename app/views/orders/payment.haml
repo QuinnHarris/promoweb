@@ -19,7 +19,7 @@
   = link_to("Send a check for payment.", { :action => :payment_sendcheck }, { :confirm => "Aknowledge that you will mail a check as payment for this order." })
 
 - else
-  - if chargeable = (@user and @order.task_ready_completed?(FirstPaymentOrderTask, [PaymentInfoOrderTask]) and !@amount.zero?)
+  - if @chargeable
     :javascript
       function charge(form)
       {
@@ -82,11 +82,13 @@
                   %td Amount
                   %td Comment
               %tbody
-                - if chargeable and method.useable? and (params[:txn_id] ? method.creditable? : @amount.to_i > 0)
+                - if @chargeable and method.useable? and (params[:txn_id] ? method.creditable? : @amount.to_i > 0)
                   %tr{ :id => "method-#{method.id}" }
                     %td TODAY
                     %td= link_to @order.id, status_order_path(@order)
                     %td
+                      - if method.level3? and @order.level3?
+                        LEVEL3
                     %td
                       = method.creditable? ? '-' : ''
                       = text_field :transaction, :amount, :value => @amount, :size => 8, :class => 'money negative', :onkeypress => 'input_press(event)'

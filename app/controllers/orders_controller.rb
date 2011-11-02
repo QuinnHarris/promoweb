@@ -596,14 +596,12 @@ public
   end
   
   def_tasked_action :payment, PaymentInfoOrderTask, PaymentOverrideOrderTask, FirstPaymentOrderTask, FinalPaymentOrderTask do    
-    @customer = @order.customer
-
     @javascripts = ['autosubmit.js', 'rails.js']
     
-    if params[:commit]
-      render_edit({}, [PaymentInfoOrderTask])
-      next
-    end
+#    if params[:commit]
+#      render_edit({}, [PaymentInfoOrderTask])
+#      next
+#    end
     
     @javascripts << 'admin_orders' if @user
     
@@ -611,27 +609,35 @@ public
     
     determine_pending_tasks
 
-    authorize = !@order.items.find { |i| i.task_completed?(ShipItemTask) }
-    @amount = authorize ? [Money.new(0), @order.total_authorizeable].max : @order.total_chargeable
-    @operation = authorize ? 'Authorize' : 'Charge'
-
-    @payment_methods = @customer.payment_methods.find(:all, :include => :transactions)
+    customer = @order.customer
+    @payment_methods = customer.payment_methods.find(:all, :include => :transactions)
     if @payment_methods.empty?
-      @address = @customer.default_address
+      @address = customer.default_address
       @options = Struct.new(:different).new nil
       @credit_card = ActiveMerchant::Billing::CreditCard.new
       next
-    elsif @user and params[:txn_id]
-      # If this is a refund setup the refund method
-      txn_id = Integer(params[:txn_id])
-      @amount *= -1
-      @operation = 'Credit'
-      @payment_methods.each do |method|
-        method.transactions.each do |transaction|
-          method.credit_to(transaction) if transaction.id == txn_id
+    end
+
+    if @user and @order.task_ready_completed?(FirstPaymentOrderTask)
+      authorize = !@order.items.find { |i| i.task_completed?(ShipItemTask) }
+      @amount = authorize ? [Money.new(0), @order.total_authorizeable].max : @order.total_chargeable
+      @chargeable = !@amount.zero?
+      @operation = authorize ? 'Authorize' : 'Charge'
+
+      if params[:txn_id]
+        # If this is a refund setup the refund method
+        txn_id = Integer(params[:txn_id])
+        @amount *= -1
+        @operation = 'Credit'
+        @payment_methods.each do |method|
+          method.transactions.each do |transaction|
+            method.credit_to(transaction) if transaction.id == txn_id
+          end
         end
       end
+
     end
+
   end
 
   def payment_submit

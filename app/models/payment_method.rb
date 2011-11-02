@@ -1,45 +1,73 @@
 module ActiveMerchant #:nodoc:
   module Billing #:nodoc:
     class SkipJackGateway
-      MONETARY_CHANGE_STATUSES = ['AUTHORIZE', 'AUTHORIZEADDITIONAL', 'CREDIT', 'SPLITSETTLE', 'SETTLE']
+      def authorize(money, creditcard, options = {})
+        requires!(options, :order_id, :email)
+        post = {}
+        add_order_number(post, options)
+        add_creditcard(post, creditcard)
+        add_invoice(post, options)
+        add_address(post, options)
+        add_customer_data(post, options)
+        commit(:authorization, money, post)
+      end
 
       def authorize_additional(money, authorization, options = {})
         post = { }
-        add_status_action(post, 'AUTHORIZEADDITIONAL')
+        add_status_change(post, 'AUTHORIZEADDITIONALEX', authorization)
+        post[:szNewOrderNumber] = options[:order_id]
         add_invoice(post, options)
         add_address(post, options)
         add_forced_settlement(post, options)
-        add_transaction_id(post, authorization)
         commit(:change_status, money, post)
       end
       
       def capture(money, authorization, options = {})
         post = { }
-        add_status_action(post, 'SETTLE')
+        add_status_change(post, 'SETTLEEX', authorization)
         add_invoice(post, options)
         add_address(post, options)
         add_forced_settlement(post, options)
-        add_transaction_id(post, authorization)
         commit(:change_status, money, post)
+      end
+
+      def void(authorization, options = {})
+        post = {}
+        add_status_change(post, 'DELETE', authorization)
+        add_forced_settlement(post, options)
+        commit(:change_status, nil, post)
       end
 
       def credit(money, identification, options = {})
         post = {}
-        add_status_action(post, 'CREDIT')
+        add_status_change(post, 'CREDITEX', authorization)
         add_invoice(post, options)
         add_address(post, options)
         add_forced_settlement(post, options)
-        add_transaction_id(post, identification)
         commit(:change_status, money, post)
       end
 
       private
-      def add_status_action(post, action)
-        post[:szDesiredStatus] = action + 'EX'
+      def add_amount(params, action, money)
+        if action == :authorization
+          params[:TransactionAmount] = amount(money)
+        else
+          params[:szAmount] = amount(money)
+        end
+      end
+
+      # Should remove  add_status_action and add_transaction_id
+      def add_status_change(post, action, transaction)
+        post[:szDesiredStatus] = action
+        post[:szTransactionId] = transaction
+      end
+
+      def add_order_number(post, options)
+        post[:OrderNumber] = sanitize_order_id(options[:order_id]) unless options[:order_id].blank?
       end
 
       def add_invoice(post, options)
-        post[:OrderNumber] = sanitize_order_id(options[:order_id]) unless options[:order_id].blank?
+#        post[:OrderNumber] = sanitize_order_id(options[:order_id]) unless options[:order_id].blank?
         post[:CustomerCode] = options[:customer].to_s.slice(0, 17) unless options[:customer].blank?
         post[:CustomerTax] = options[:tax] unless options[:tax].blank?
         post[:PurchaseOrderNumber] = options[:purchase_order] unless options[:purchase_order].blank?
@@ -49,13 +77,36 @@ module ActiveMerchant #:nodoc:
         
         if order_items = options[:items]
           post[:OrderString] = order_items.collect do |item|
-            %w(sku description declared_value quantity taxable ignore_avs measure discount extended commodity vat_amount vat_rate tax_rate tax_type tax_amount).collect do |name|
+            %w(sku description cost quantity taxable ignore_avs measure discount extended commodity vat_amount vat_rate alt_amount tax_rate tax_type tax_amount).collect do |name|
               item[name.to_sym].to_s.tr('~','-') + '~'
             end.join + '||'
           end.join
         else
           post[:OrderString] = '1~None~0.00~0~N~||'
         end
+      end
+
+      def post_data(action, money, params = {})
+        add_credentials(params, action)
+        add_amount(params, action, money)
+        sorted_params = params.to_a.sort{|a,b| a.to_s <=> b.to_s}.reverse
+        list = sorted_params.collect { |key, value| "#{key.to_s}=#{CGI.escape(value.to_s)}" }
+        Rails.logger.info("SkipJack POST:\n#{list.join("\n")}")
+        list.join("&")
+      end
+
+      def commit(action, money, parameters)
+        response = parse( ssl_post( url_for(action), post_data(action, money, parameters) ), action )
+
+        Rails.logger.info("RESPONSE: #{response.inspect}")
+        
+        # Pass along the original transaction id in the case an update transaction
+        Response.new(response[:success], message_from(response, action), response,
+          :test => test?,
+          :authorization => response[:szTransactionFileName] || parameters[:szTransactionId] || parameters[:AuditID],
+          :avs_result => { :code => response[:szAVSResponseCode] },
+          :cvv_result => response[:szCVV2ResponseCode]
+        )
       end
     end
   end
@@ -145,7 +196,7 @@ private
   end
 
   def apply_error!(transaction, response)
-    if response.success?
+    if response.success? and response.params['StatusResponse'] != 'UNSUCCESSFUL'
       transaction.number = response.authorization
       transaction.auth_code = response.params['AUTHCODE']
       transaction.save!
@@ -167,23 +218,64 @@ private
                :phone => (phone_numbers - fax_numbers).first.number,
                :fax => fax_numbers.first && fax_numbers.first.number)
   end
+
+  def gateway_invoice_item(item)
+    return nil unless item.quantity > 0
+    sku = case item.class
+          when OrderItem
+            "M#{item.product_id}"
+          else
+            item.class.to_s.gsub(/[a-z]/, '') + item.id
+          end
+    common = { :sku => sku,
+      :description => item.description.encode('ASCII', :invalid => :replace, :undef => :replace, :replace => ''),
+      :taxable => tax ? 'Y' : 'N',
+      :vat_amount => '0.00',
+      :vat_rate => '0.0',
+      :alt_amount => '0.00',
+      :tax_rate => '0.0',
+      :tax_amount => '0.00'
+    }
+    price = item.list_price
+    { :cost => nil,
+      :quantity => item.quantity,
+      :measure => nil,
+      :discount => nil,
+      :extended => nil,
+      :commodity => nil,
+    }
+  end
  
 public
-  def gateway_options(order)
+  def gateway_options(order, transaction = nil)
     options = {
       :customer => order.customer.id,
       :email => order.customer.email_addresses.first.address,
       :billing_address => gateway_address(order, address),
-#      :force_settlment => true
-    }
-    if level3? and order.level3?
-      order.invoices.last
+      :force_settlment => false, 
 
-      options.merge!({
-        :shipping_address => gateway_address(order, order.customer.ship_address || order.customer.default_address),
-        :purchase_order => order.purchase_order.blank? ? order.id : order.purchase_order.gsub(/[^0-9]/,''),
-        :tax => '%0.02f' % (order.tax_rate * 100.0),                     
-                     })
+      :shipping_address => gateway_address(order, order.customer.ship_address || order.customer.default_address),
+      :purchase_order => order.purchase_order.blank? ? order.id : order.purchase_order.gsub(/[^0-9]/,''),
+      :tax => '%0.02f' % [(order.tax_rate * 100.0), 0.1].max,
+    }
+    if false #level3? and order.level3?
+      invoice = order.invoices.last
+      if transaction and transaction.amount == invoice.total_price
+        transaction.invoice = invoice
+      end
+
+      tax = invoice.tax_type ? 'Tax' : 'Non'
+
+      options.merge!(:items => invoice.entries.collect do |entry|
+        if entry.is_a?(InvoiceOrderItem)
+          [gateway_invoice_item(entry.order_item)] +
+          entry.sub_items.collect do |sub|
+            gateway_invoice_item(sub)
+          end
+        else
+          gateway_invoice_item(entry)
+        end
+      end.flatten.compact)
     end
     options
   end
@@ -211,7 +303,7 @@ public
     transaction = payment.authorize_record(order, amount)
 
     response = gateway(type).authorize(amount, creditcard,
-                                       payment.gateway_options(order)
+                                       payment.gateway_options(order, transaction)
                                          .merge(:order_id => transaction.id))
     if response.success?
       transaction.number = response.authorization
@@ -248,7 +340,7 @@ public
     logger.info("CreditCard Authorize: #{order.id} = #{amount} for #{id} from #{txn.inspect}")
     transaction = super(order, amount, comment)
     response = gateway.authorize_additional(amount, txn.number,
-                                            gateway_options(order)
+                                            gateway_options(order, transaction)
                                               .merge(:order_id => transaction.id))
     logger.info("Gateway Response: #{response.inspect}")
     apply_error!(transaction, response)
@@ -259,7 +351,7 @@ public
     logger.info("CreditCard Charge: #{order.id} = #{amount} for #{id} from #{txn.inspect}")
     transaction = super(order, amount, comment)
     response = gateway.capture(amount, txn.number,
-                               gateway_options(order)
+                               gateway_options(order, transaction)
                                  .merge(:order_id => transaction.id))
     logger.info("Gateway Response: #{response.inspect}")
     apply_error!(transaction, response)
@@ -269,7 +361,7 @@ public
     logger.info("CreditCard Credit: #{order.id} = #{amount} for #{id} : #{charge_transaction.id}")
     transaction = super(order, amount, comment)
     response = gateway.credit(amount, charge_transaction.number,
-                              gateway_options(order)
+                              gateway_options(order, transaction)
                                  .merge(:order_id => transaction.id))
     logger.info("Gateway Response: #{response.inspect}")
     apply_error!(transaction, response)

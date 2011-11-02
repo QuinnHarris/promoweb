@@ -156,17 +156,21 @@ class Order < ActiveRecord::Base
   end
 
   def payment_authorizes
-    payment_transactions.where("type = 'PaymentAuthorize' AND amount != 0")
+    payment_transactions.where("type = 'PaymentAuthorize' AND amount > 1000")
   end
 
   %w(charge authorize).each do |aspect|
     define_method "total_#{aspect}" do
       send("payment_#{aspect}s").inject(Money.new(0)) { |m, i| m += i.amount }
     end
+  end
 
-    define_method "total_#{aspect}able" do
-      total_invoice_price - send("total_#{aspect}")
-    end
+  def total_chargeable
+    total_invoice_price - total_charge
+  end
+
+  def total_authorizeable
+    total_chargeable - total_authorize
   end
 
   def level3?
