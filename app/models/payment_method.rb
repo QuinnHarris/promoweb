@@ -236,6 +236,8 @@ private
 
   def gateway_invoice_item(item)
     return nil unless item.quantity > 0
+    tax_type = invoice.tax_type
+    tax_rate = invoice.tax_rate
     sku = case item.class
           when OrderItem
             "M#{item.product_id}"
@@ -243,22 +245,40 @@ private
             item.class.to_s.gsub(/[a-z]/, '') + item.id
           end
     common = { :sku => sku,
-      :description => item.description.encode('ASCII', :invalid => :replace, :undef => :replace, :replace => ''),
-      :taxable => tax ? 'Y' : 'N',
+      :taxable => tax_type ? 'Y' : 'N',
       :vat_amount => '0.00',
       :vat_rate => '0.0',
       :alt_amount => '0.00',
-      :tax_rate => '0.0',
-      :tax_amount => '0.00'
+      :tax_rate => '%0.02f' % (tax_rate * 100.0),
+      :tax_type => 'TAX1',
+      :tax_amount => '0.00',
+      :measure => 'Yard',
+      :commodity => '7311',
+      :discount => '0.00'
     }
+
+    description = item.description.encode('ASCII', :invalid => :replace, :undef => :replace, :replace => ''),
+
+    result = []
     price = item.list_price
-    { :cost => nil,
-      :quantity => item.quantity,
-      :measure => nil,
-      :discount => nil,
-      :extended => nil,
-      :commodity => nil,
-    }
+
+    unless price.marginal.nil? or price.marginal.zero?
+      result << common.merge( :description => description + ' Unit', 
+                              :cost => price.marginal,
+                              :quantity => item.quantity )
+    end
+
+    unless price.fixed.nil? or price.fixed.zero?
+      result << common.merge( :description => description + ' Setup', 
+                              :cost => price.fixed,
+                              :quantity => 1 )
+    end
+
+    result.each do |hash|
+      hash.merge!( :extended => (amount = hash[:cost] * hash[:quantity]),
+                   :tax_amount => amount * tax_rate )
+    end
+    result
   end
  
 public
@@ -267,30 +287,30 @@ public
       :customer => order.customer.id,
       :email => order.customer.email_addresses.first.address,
       :billing_address => gateway_address(order, address),
-      :force_settlment => false, 
+      :force_settlment => true,
 
       :shipping_address => gateway_address(order, order.customer.ship_address || order.customer.default_address),
       :purchase_order => order.purchase_order.blank? ? order.id : order.purchase_order.gsub(/[^0-9]/,''),
-      :tax => '%0.02f' % [(order.tax_rate * 100.0), 0.1].max,
+      :tax => '%0.02f' % (order.tax_rate * 100.0),
     }
-    if false #level3? and order.level3?
+    if level3? and transaction.amount.to_i > 1000 and order.level3?
       invoice = order.invoices.last
       if transaction and transaction.amount == invoice.total_price
         transaction.invoice = invoice
-      end
-
-      tax = invoice.tax_type ? 'Tax' : 'Non'
-
-      options.merge!(:items => invoice.entries.collect do |entry|
-        if entry.is_a?(InvoiceOrderItem)
-          [gateway_invoice_item(entry.order_item)] +
-          entry.sub_items.collect do |sub|
-            gateway_invoice_item(sub)
+        
+        options.merge!(:items => invoice.entries.collect do |entry|
+          if entry.is_a?(InvoiceOrderItem)
+            [gateway_invoice_item(invoice, entry.order_item)] +
+              entry.sub_items.collect do |sub|
+              gateway_invoice_item(invoice, sub)
+            end
+          else
+            gateway_invoice_item(invoice, entry)
           end
-        else
-          gateway_invoice_item(entry)
-        end
-      end.flatten.compact)
+        end.flatten.compact)
+
+        logger.info("Items: #{options[:items].inspect}")
+      end
     end
     options
   end

@@ -95,7 +95,9 @@
                     %td
                       = text_field :transaction, :comment
                     %td
-                      - if @authorize
+                      - if params[:txn_id]
+                        = submit_tag 'Credit'
+                      - elsif @authorize
                         = submit_tag 'Authorize'
                         - if allowed?
                           .admin= submit_tag 'Charge'
