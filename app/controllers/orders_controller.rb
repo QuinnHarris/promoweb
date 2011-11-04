@@ -619,10 +619,9 @@ public
     end
 
     if @user and @order.task_ready_completed?(FirstPaymentOrderTask)
-      authorize = !@order.items.find { |i| i.task_completed?(ShipItemTask) }
-      @amount = authorize ? [Money.new(0), @order.total_authorizeable].max : @order.total_chargeable
+      @authorize = !@order.items.find { |i| i.task_completed?(ShipItemTask) }
+      @amount = @authorize ? [Money.new(0), @order.total_authorizeable].max : @order.total_chargeable
       @chargeable = !@amount.zero?
-      @operation = authorize ? 'Authorize' : 'Charge'
 
       if params[:txn_id]
         # If this is a refund setup the refund method

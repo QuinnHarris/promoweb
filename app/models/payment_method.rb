@@ -5,69 +5,85 @@ module ActiveMerchant #:nodoc:
         requires!(options, :order_id, :email)
         post = {}
         add_order_number(post, options)
+        post[:TransactionAmount] = amount(money)
         add_creditcard(post, creditcard)
         add_invoice(post, options)
         add_address(post, options)
         add_customer_data(post, options)
-        commit(:authorization, money, post)
+        commit(:authorization, post)
+      end
+
+      def authorize_change(money, authorization, options = {})
+        post = { }
+        add_status_change(post, 'AUTHORIZE', authorization, options)
+        add_forced_settlement(post, options)
+        add_amount(post, money)
+        commit(:change_status, post)
       end
 
       def authorize_additional(money, authorization, options = {})
         post = { }
-        add_status_change(post, 'AUTHORIZEADDITIONALEX', authorization)
-        post[:szNewOrderNumber] = options[:order_id]
-        add_invoice(post, options)
-        add_address(post, options)
+        add_status_change(post, 'AUTHORIZEADDITIONAL', authorization, options)
         add_forced_settlement(post, options)
-        commit(:change_status, money, post)
+        add_amount(post, money)
+        commit(:change_status, post)
       end
       
       def capture(money, authorization, options = {})
         post = { }
-        add_status_change(post, 'SETTLEEX', authorization)
-        add_invoice(post, options)
-        add_address(post, options)
+        add_status_change(post, 'SETTLE', authorization, options)
         add_forced_settlement(post, options)
-        commit(:change_status, money, post)
+        add_amount(post, money)
+        commit(:change_status, post)
       end
 
       def void(authorization, options = {})
         post = {}
-        add_status_change(post, 'DELETE', authorization)
+        add_status_change(post, 'DELETE', authorization, options, false)
         add_forced_settlement(post, options)
-        commit(:change_status, nil, post)
+        commit(:change_status, post)
       end
 
       def credit(money, identification, options = {})
         post = {}
-        add_status_change(post, 'CREDITEX', authorization)
-        add_invoice(post, options)
-        add_address(post, options)
+        add_status_change(post, 'CREDIT', identification, options)
         add_forced_settlement(post, options)
-        commit(:change_status, money, post)
+        add_amount(post, money)
+        commit(:change_status, post)
+      end
+
+      def status(order_id)
+        commit(:get_status, :szOrderNumber => order_id)
       end
 
       private
-      def add_amount(params, action, money)
-        if action == :authorization
-          params[:TransactionAmount] = amount(money)
-        else
-          params[:szAmount] = amount(money)
-        end
+      def add_amount(params, money)
+        params[:szAmount] = amount(money)
+      end
+
+      def status_extended_valid?(options)
+        not %w(State ShipToState ShipToPhone).find { |n| !options[n.to_sym] }
       end
 
       # Should remove  add_status_action and add_transaction_id
-      def add_status_change(post, action, transaction)
+      def add_status_change(post, action, transaction, options, extended = true)
         post[:szDesiredStatus] = action
         post[:szTransactionId] = transaction
+        post[:szNewOrderNumber] = sanitize_order_id(options[:order_id]) unless options[:order_id].blank?
+        
+        if extended and status_extended_valid?(options)
+          action += 'EX'
+          add_invoice(post, options)
+          add_address(post, options)
+        end
       end
 
       def add_order_number(post, options)
         post[:OrderNumber] = sanitize_order_id(options[:order_id]) unless options[:order_id].blank?
       end
 
+
       def add_invoice(post, options)
-#        post[:OrderNumber] = sanitize_order_id(options[:order_id]) unless options[:order_id].blank?
         post[:CustomerCode] = options[:customer].to_s.slice(0, 17) unless options[:customer].blank?
         post[:CustomerTax] = options[:tax] unless options[:tax].blank?
         post[:PurchaseOrderNumber] = options[:purchase_order] unless options[:purchase_order].blank?
@@ -86,27 +102,26 @@ module ActiveMerchant #:nodoc:
         end
       end
 
-      def post_data(action, money, params = {})
+      def post_data(action, params = {})
         add_credentials(params, action)
-        add_amount(params, action, money)
         sorted_params = params.to_a.sort{|a,b| a.to_s <=> b.to_s}.reverse
         list = sorted_params.collect { |key, value| "#{key.to_s}=#{CGI.escape(value.to_s)}" }
         Rails.logger.info("SkipJack POST:\n#{list.join("\n")}")
         list.join("&")
       end
 
-      def commit(action, money, parameters)
-        response = parse( ssl_post( url_for(action), post_data(action, money, parameters) ), action )
+      def commit(action, parameters)
+        response = parse( ssl_post( url_for(action), post_data(action, parameters) ), action )
 
         Rails.logger.info("RESPONSE: #{response.inspect}")
         
         # Pass along the original transaction id in the case an update transaction
         Response.new(response[:success], message_from(response, action), response,
           :test => test?,
-          :authorization => response[:szTransactionFileName] || parameters[:szTransactionId] || parameters[:AuditID],
+          :authorization => parameters[:AuditID] || response[:szTransactionFileName] || parameters[:szTransactionId],
           :avs_result => { :code => response[:szAVSResponseCode] },
           :cvv_result => response[:szCVV2ResponseCode]
-        )
+                     )
       end
     end
   end
@@ -330,13 +345,9 @@ public
     billing_id == 'level3'
   end
 
-  def find_authorize
-    transactions.where(:type => 'PaymentAuthorize').where("created_at > ?", Time.now-30.days).order('amount DESC').first
-  end
-
   alias :authorize_record :authorize
   def authorize(order, amount, comment)
-    txn = find_authorize
+    txn = transactions.where("type in ('PaymentAuthorize', 'PaymentCharge')").order('created_at DESC').first
     logger.info("CreditCard Authorize: #{order.id} = #{amount} for #{id} from #{txn.inspect}")
     transaction = super(order, amount, comment)
     response = gateway.authorize_additional(amount, txn.number,
@@ -347,7 +358,7 @@ public
   end
 
   def charge(order, amount, comment)
-    txn = find_authorize
+    txn = transactions.where(:type => 'PaymentAuthorize').where("amount >= ?", amount.to_i).where("created_at > ?", Time.now-30.days).order('amount DESC').first
     logger.info("CreditCard Charge: #{order.id} = #{amount} for #{id} from #{txn.inspect}")
     transaction = super(order, amount, comment)
     response = gateway.capture(amount, txn.number,
@@ -375,7 +386,7 @@ public
     @transaction
   end
   
-
+  
 end
 
 class PaymentACHCheck < OnlineMethod
@@ -420,6 +431,6 @@ end
 
 class PaymentRefundCheck < PaymentCheck
   def type_name; "Refund Check"; end
-
+  
   def creditable?; true; end
 end

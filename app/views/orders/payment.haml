@@ -95,7 +95,12 @@
                     %td
                       = text_field :transaction, :comment
                     %td
-                      = submit_tag @operation
+                      - if @authorize
+                        = submit_tag 'Authorize'
+                        - if allowed?
+                          .admin= submit_tag 'Charge'
+                      - else
+                        = submit_tag 'Charge'
                 - for transaction in method.transactions
                   %tr
                     %td= transaction.created_at.strftime("%Y-%m-%d")

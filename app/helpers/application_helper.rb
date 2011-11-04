@@ -152,7 +152,7 @@ module ApplicationHelper
     link_to(name, url_h) + '</li>'
   end
   
-  def allowed?(roles)
+  def allowed?(roles = [])
     return true if @permissions and @permissions.include?('Super')
     not ((@permissions || []) & [roles].flatten).empty?
   end
