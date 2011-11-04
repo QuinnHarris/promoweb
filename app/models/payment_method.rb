@@ -139,6 +139,7 @@ class PaymentMethod < ActiveRecord::Base
 
   def revoke!; end;
   def fee; 0.0; end
+  def level3?; nil; end
   
   PaymentTransaction
   def authorize(order, amount, comment = nil)
