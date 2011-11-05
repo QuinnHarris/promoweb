@@ -1,12 +1,13 @@
 %table#email
   %tbody
     - for size, mail in @list
-      /-   body = mail.multipart? ? mail.parts.first.body : mail.body
-      - body = mail.body
+      - m = mail
+      - m = m.parts.first while m.multipart?
+      - body = m.body
       %tr{ :class => (mail.from.find { |m| m.index('mountainofpromos.com') } && 'our') }
         %td
           .subject= mail.subject
-          .preview!= body.to_s.split("\n")[0..31].collect { |s| s.strip }.join('<br/>')
+          .preview!= body.to_s.encode('UTF-8', :invalid => :replace, :undef => :replace, :replace => '').split("\n")[0..31].collect { |s| s.strip }.join('<br/>')
         %td
           .date= format_time(mail.date)
           %div
@@ -22,3 +23,12 @@
           %div
             Size:
             = size
+          - if mail.multipart?
+            %div
+              Parts:
+              - for part in mail.parts
+                %div
+                  = part.mime_type
+                  - if part.filename
+                    \:
+                    = part.filename
