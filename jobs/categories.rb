@@ -2154,7 +2154,7 @@ private
            supplier('Bullet Line',
                     category('Writing Instruments', 'Light-Up Pens') ) ] ],
          ['Pen Gift Boxes',
-          [match('name', 'gift box', 1),
+          [match('name', ['gift box', 'pen box'], 1),
            supplier('Bullet Line',
                     category('Writing Instruments', 'Gift Boxes for Pens') ) ] ],
          ['Branded Pens',

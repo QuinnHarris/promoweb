@@ -142,13 +142,6 @@
                     = content_tag('li', link_to(name, { :controller => '/static', :action => action }, :rel => 'nofollow'), :class => (params[:controller] == 'static' and params[:action] == action) ? 'sel' : nil)
           #badges
             - if !@user and Rails.env.production?
-              %div
-                %a{ :href => "http://secure.trust-guard.com/certificates/www.mountainofpromos.com",
-                    :name => 'trustlink', :target => '_blank',
-                    :onclick => "var nonwin=navigator.appName!='Microsoft Internet Explorer'?'yes':'no'; window.open(this.href.replace('http', 'https'),'welcome','location='+nonwin+',scrollbars=yes,width=517,height='+screen.availHeight+',menubar=no,toolbar=no'); return false;",
-                    :oncontextmenu => "var d = new Date(); alert('Copying Prohibited by Law - This image and all included logos are copyrighted by trust-guard '+d.getFullYear()+'.'); return false;"}
-                  %img{ :name => 'trustseal', :alt => 'Security Seal', :src => "https://secure.trust-guard.com/seals/5356/scanned/mini/gray" }
-      
               - unless @no_truste
                 %div
                   %a{ :href => "//privacy-policy.truste.com/click-to-verify/www.mountainofpromos.com",
