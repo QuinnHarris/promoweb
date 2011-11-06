@@ -320,6 +320,7 @@ public
   def self.store(order, creditcard, address, amount = Money.new(1.0))
     payment = PaymentCreditCard.where(:customer_id => order.customer.id, :name => creditcard.name, :display_number => creditcard.last_digits, :sub_type => creditcard.type).order('id DESC').first
 
+    payment_new = nil
     type = %w(visa master).include?(creditcard.type) ? 'level3' : 'normal'
     if payment
       payment.address = address
@@ -334,6 +335,7 @@ public
         :address => address,
         :billing_id => type
                                          })
+      payment_new = true
     end
 
     transaction = payment.authorize_record(order, amount)
@@ -352,7 +354,7 @@ public
     else
       # Failed, clean up
       transaction.destroy
-      payment.destroy
+      payment.destroy if payment_new
     end
 
     [transaction, response]
