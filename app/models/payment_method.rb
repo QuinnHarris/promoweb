@@ -235,7 +235,7 @@ private
                :fax => fax_numbers.first && fax_numbers.first.number)
   end
 
-  def gateway_invoice_item(item)
+  def gateway_invoice_item(invoice, item)
     return nil unless item.quantity > 0
     tax_type = invoice.tax_type
     tax_rate = invoice.tax_rate

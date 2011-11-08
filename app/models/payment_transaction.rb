@@ -1,6 +1,7 @@
 class PaymentTransaction < ActiveRecord::Base
   belongs_to :method, :class_name => 'PaymentMethod', :foreign_key => 'method_id'
   belongs_to :order
+  belongs_to :invoice
   
   composed_of :amount, :class_name => 'Money', :mapping => %w(amount units)
   serialize :data
