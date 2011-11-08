@@ -252,7 +252,7 @@ private
     sku = if item.is_a?(OrderItem)
             "M#{item.product_id}"
           else
-            item.class.to_s.gsub(/[a-z]/, '') + (item.id || '')
+            item.class.to_s.gsub(/[a-z]/i, '') + (item.id || '').to_s
           end
     common = { :sku => sku,
       :taxable => tax_type ? 'Y' : 'N',
