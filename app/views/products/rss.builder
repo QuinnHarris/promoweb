@@ -85,7 +85,7 @@ xml.rss :version => '2.0', 'xmlns:g' => 'http://base.google.com/ns/1.0' do
           end
           xml.tag!('g:image_link', "http://www.mountainofpromos.com#{images.first}")
           images[1..10].each do |i|
-            xml.tag!('g:additional_image_link', "http://www.mountainofpromos.com#{i}")
+            xml.tag!('g:additional_image_link', "http://www.mountainofpromos.com/#{i}")
           end
           
           xml.tag!('g:brand', product.supplier.name)
