@@ -10,7 +10,13 @@ xml.rss :version => '2.0', 'xmlns:g' => 'http://base.google.com/ns/1.0' do
       properties = Property.find_by_sql([
         "SELECT DISTINCT properties.name, properties.value, variants.product_id FROM properties JOIN properties_variants ON properties.id = properties_variants.property_id " +
         "JOIN variants ON properties_variants.variant_id = variants.id WHERE variants.product_id IN (?)" +
-        "ORDER BY variants.product_id", products.collect { |p| p.id }])
+        "ORDER BY variants.product_id", product_ids = products.collect { |p| p.id }])
+
+      prod_cat_map = {}
+      Category.find_by_sql(["SELECT product_id, category_id FROM categories_products WHERE product_id IN (?)", product_ids]).each do |cp|
+        product_id, category_id = cp.product_id.to_i, cp.category_id.to_i
+        prod_cat_map[product_id] = (prod_cat_map[product_id] || []) + [category_id]
+      end
     
       products.each do |product|
         begin # Apply properties to product
@@ -94,12 +100,15 @@ xml.rss :version => '2.0', 'xmlns:g' => 'http://base.google.com/ns/1.0' do
           xml.tag!('g:availability', 'available for order')
           xml.tag!('g:price', product.price_comp_cache)
           
-          for c in product.categories.to(9)
-            cat = Category.find_by_id(c.id)
+
+	  categories = (prod_cat_map[product.id] || []).collect do |id|
+	    Category.find_by_id(id)
+	  end
+
+          for cat in categories.to(9)
             xml.tag!('g:product_type', cat.path_name_list.join(' > ').encode('ASCII', :invalid => :replace, :undef => :replace, :replace => '')) if cat
           end
 
-          categories = product.categories
           google_categories = categories.collect { |c| c.google_category.blank? ? nil : c.google_category }.compact	
           while !categories.empty? and google_categories.empty?
             categories = categories.collect { |c| c.parent == Category.root ? nil : c.parent }.compact.uniq
