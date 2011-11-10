@@ -30,8 +30,9 @@ class ProductsController < ApplicationController
   end
   
   # RSS feed with Googleness
+  cache_page :rss
   def rss
-    @products_scope = Product.where('NOT(products.deleted) AND products.price_comp_cache IS NOT NULL').order('products.id').includes([:supplier, :categories, { :product_images => :variants }, { :decorations => :technique } ]).scoped
+    @products_scope = Product.where("NOT(products.deleted) AND products.price_comp_cache IS NOT NULL AND supplier_num != ''").order('products.id').includes([:supplier, :categories, { :product_images => :variants }, { :decorations => :technique } ]).scoped
 
 
 
