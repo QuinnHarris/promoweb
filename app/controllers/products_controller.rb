@@ -6,20 +6,21 @@ class ProductSweeper < ActionController::Caching::Sweeper
   def after_destroy(product); expire_product(product); expire_category(product); end
 
 private
-  def expire_cateogry(product)
-    categories = product.categories.collect { |c| Product.find_by_id(c.id).path_obj_list }.compact.uniq
+  def expire_category(product)
+    categories = product.categories.collect { |c| Category.find_by_id(c.id).path_obj_list }.flatten.compact.uniq
     Rails.logger.info "Expire Categories: #{categories.collect { |c| c.path_web }.join(', ')}"
     categories.each do |cat|
-      ApplicationController.cache_store.delete_matched(Regexp.new("categories/#{cat.path_web}"))
+      ApplicationController.cache_store.delete("views/www.mountainofpromos.com/categories/#{cat.path_web.join('/')}")
     end
   end
 
   def expire_product(product)
     Rails.logger.info "Expire Product: #{product.id}"
-    ApplicationController.cache_store.delete_matched(Regexp.new("products/#{product.id}"))
+#    ApplicationController.cache_store.delete_matched(Regexp.new("products/#{product.id}"))
+    ApplicationController.cache_store.delete("views/www.mountainofpromos.com/products/#{product.id}")
   end
 end
-#ActiveRecord::Base.observers << :product_sweeper
+ActiveRecord::Base.observers << :product_sweeper
 
 class ProductsController < ApplicationController
 #  cache_sweeper :product_sweeper
