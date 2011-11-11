@@ -1,5 +1,5 @@
 DATA_ROOT = "/var/www/mountainofpromos.com/"
-CACHE_ROOT = File.join(DATA_ROOT, 'cache')
+CACHE_ROOT = File.join(DATA_ROOT, 'shared/cache')
 
 Promoweb::Application.configure do
   # Settings specified here will take precedence over those in config/application.rb
