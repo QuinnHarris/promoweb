@@ -303,7 +303,7 @@ public
       :purchase_order => order.purchase_order.blank? ? order.id : order.purchase_order.gsub(/[^0-9]/,''),
       :tax => '%0.02f' % (order.tax_rate * 100.0),
 
-      :shipping_amount => order.items.inject(Money.new(0)) { |s, i| s + i.shipping_price }.to_s
+      :shipping_amount => order.items.inject(Money.new(0)) { |s, i| i.shipping_price ? (s + i.shipping_price) : s }.to_s
     }
     if level3? and transaction.amount.to_i > 1000 and order.level3?
       invoice = order.invoices.last
