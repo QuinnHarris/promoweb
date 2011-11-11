@@ -50,7 +50,7 @@ end
 
 
 class ImageNode
-  @@cache_dir = File.join(DATA_ROOT, "cache")
+  @@cache_dir = CACHE_ROOT
 
   def initialize(id)
     @id = id
@@ -146,7 +146,7 @@ class LocalFetch
 end
 
 class WebFetch
-  @@cache_dir = File.join(DATA_ROOT, "cache")
+  @@cache_dir = CACHE_ROOT
   
   def initialize(uri)
     @uri = URI.parse(uri.gsub(' ', '%20'))
@@ -269,7 +269,7 @@ end
 class GenericImport
   @@properties = %w(material color dimension thickness base fill container pieces shape size memory)
 
-  @@cache_dir = File.join(DATA_ROOT, "cache/jobs")
+  @@cache_dir = File.join(CACHE_ROOT, "jobs")
   
   def initialize(supplier)
     @supplier_name = supplier
