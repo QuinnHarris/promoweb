@@ -612,7 +612,7 @@ public
     customer = @order.customer
     @payment_methods = customer.payment_methods.find(:all, :include => :transactions)
     if @payment_methods.empty?
-      @address = customer.default_address
+      @address = customer.default_address || Address.new
       @options = Struct.new(:different).new nil
       @credit_card = ActiveMerchant::Billing::CreditCard.new
       next
