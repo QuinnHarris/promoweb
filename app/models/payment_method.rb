@@ -394,8 +394,10 @@ public
   def charge(order, amount, comment)
     txn = transactions.where(:type => 'PaymentAuthorize').where("amount >= ?", amount.to_i).where("created_at > ?", Time.now-30.days).order('amount DESC').first
     logger.info("CreditCard Charge: #{order.id} = #{amount} for #{id} from #{txn.inspect}")
+    res = gateway.status(txn.id)
+    logger.info("Status #{txn.id} : #{res.inspect}")
     transaction = super(order, amount, comment)
-    response = gateway.capture(amount, txn.number,
+    response = gateway.capture(amount, res.params["TransactionID"],
                                gateway_options(order, transaction)
                                  .merge(:order_id => transaction.id))
     logger.info("Gateway Response: #{response.inspect}")
