@@ -20,7 +20,7 @@ private
     ApplicationController.cache_store.delete("views/www.mountainofpromos.com/products/#{product.id}")
   end
 end
-ActiveRecord::Base.observers << :product_sweeper
+ActiveRecord::Base.observers << :product_sweeper unless Rails.env.development?
 
 class ProductsController < ApplicationController
 #  cache_sweeper :product_sweeper

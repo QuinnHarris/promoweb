@@ -70,11 +70,11 @@ class Admin::OrdersController < Admin::BaseController
     
     payment_method = PaymentMethod.find(params[:method_id], :include => :customer)
     raise "Payment Method doesn't match order" unless @order.customer_id == payment_method.customer_id
-    raise "Unexpected Charge" if payment_method.creditable?
 
     # Must wrap required payment read in transaction
     PaymentTransaction.transaction do
       if %w(Authorize Charge).include?(params[:commit])
+        raise "Unexpected Charge" if payment_method.creditable?
         max = @order.send("total_#{params[:commit].downcase}able")
         raise "Expected positive billable for Charge" unless max.to_i > 0
         if amount > max
@@ -118,9 +118,11 @@ class Admin::OrdersController < Admin::BaseController
           render :inline => "Charge must be less than $#{max}"
           return
         end
-        raise "Need txn_id" unless params[:txn_id]
-        charge_transaction = PaymentTransaction.find(params[:txn_id])
-        payment_method.credit_to(charge_transaction)
+        if payment_method.respond_to?(:credit_to)
+          raise "Need txn_id" unless params[:txn_id]
+          charge_transaction = PaymentTransaction.find(params[:txn_id])
+          payment_method.credit_to(charge_transaction)
+        end
         transaction = payment_method.credit(@order, amount, params[:transaction][:comment], charge_transaction)
         @order.save_invoice! unless transaction.is_a?(PaymentError)
       end
