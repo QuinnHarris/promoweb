@@ -17,9 +17,10 @@
       = stylesheet_link_tag "admin"
     = stylesheet_link_tag 'print', :media => 'print'
     
-    = javascript_include_tag 'prototype'
-    - for script in @javascripts || []
-      = javascript_include_tag script
+    = javascript_include_tag "application"
+    /= javascript_include_tag 'prototype'
+    /- for script in @javascripts || []
+    /  = javascript_include_tag script
     /[if lte IE 6]
       = stylesheet_link_tag 'iehacks.css'
     /[if IE 7]

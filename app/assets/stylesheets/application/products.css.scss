@@ -101,22 +101,30 @@ div#prod {
         position: absolute;
       }
     }
+
+    div#navv {
+      a { margin: 0 5px; padding: 3px 5px; border: 1px solid #ccc; text-decoration: none }
+
+      a.activeSlide { border: thin solid yellow; }
+    }
     
-    ul.thumbs {
-      list-style: none;
-      
-      li {
-        display: inline-block;
-        border: thin solid white;
-	margin-bottom: 0.3em;
-        
-        &.active {
-          border: thin solid #DDD;
-        }
-        
-        &.sel {
-          border: thin solid yellow;
-        }
+    div#thumbs {
+      ul {
+	list-style: none;
+	
+	li {
+          display: inline-block;
+          border: thin solid white;
+	  margin-bottom: 0.3em;
+
+          &.active {
+            border: thin solid #DDD;
+          }
+          
+          &.activeSlide {
+            border: thin solid yellow;
+          }
+	}
       }
     }
   }

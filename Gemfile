@@ -20,8 +20,8 @@ group :assets do
 end
 
 # Remove soon
-gem 'prototype-rails', :git => 'git://github.com/rails/prototype-rails.git'
-#gem 'jquery-rails'
+#gem 'prototype-rails', :git => 'git://github.com/rails/prototype-rails.git'
+gem 'jquery-rails'
 
 # Deploy with Capistrano
 # gem 'capistrano'

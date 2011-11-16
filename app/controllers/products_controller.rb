@@ -183,8 +183,8 @@ public
   
       @title = "#{@product.name}, Custom Imprinted (#{@product.supplier.name}: #{@product.supplier_num})"
       
-      @javascripts = ['effects', 'products']
-      @javascripts += ['controls', 'rails'] if @user
+#      @javascripts = ['effects', 'products']
+#      @javascripts += ['controls', 'rails'] if @user
       
       @email_subject = "#{@product.name} (M#{@product.id})"
     
