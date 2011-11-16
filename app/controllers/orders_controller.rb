@@ -622,16 +622,20 @@ public
       @authorize = !@order.items.find { |i| i.task_completed?(ShipItemTask) }
       @amount = @authorize ? [Money.new(0), @order.total_authorizeable].max : @order.total_chargeable
       @chargeable = !@amount.zero?
-
-      if params[:txn_id]
-        # If this is a refund setup the refund method
-        txn_id = Integer(params[:txn_id])
+      if (@credit = @amount.to_i < 0)
         @amount *= -1
         @operation = 'Credit'
-        @payment_methods.each do |method|
-          method.transactions.each do |transaction|
-            method.credit_to(transaction) if transaction.id == txn_id
+
+        if params[:txn_id]
+          # If this is a refund setup the refund method
+          txn_id = Integer(params[:txn_id])
+          @payment_methods.each do |method|
+            method.transactions.each do |transaction|
+              method.credit_to(transaction) if transaction.id == txn_id
+            end
           end
+        else
+          
         end
       end
 

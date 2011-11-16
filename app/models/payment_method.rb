@@ -139,7 +139,7 @@ class PaymentMethod < ActiveRecord::Base
   
 #  validates_uniqueness_of :display_number, :scope => :customer_id
   
-  def creditable?; false; end
+  def creditable?; nil; end
   def type_notes; nil; end
 
   def revoke!; end;
