@@ -82,6 +82,7 @@
                   %td Amount
                   %td Comment
               %tbody
+                - logger.info("Cred: #{@credit.inspect} == #{method.creditable?}")
                 - if @chargeable and method.useable? and (@credit == method.creditable?)
                   %tr{ :id => "method-#{method.id}" }
                     %td TODAY
