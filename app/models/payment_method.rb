@@ -62,7 +62,12 @@ module ActiveMerchant #:nodoc:
       end
 
       def status_extended_valid?(options)
-        not %w(State ShipToState ShipToPhone).find { |n| !options[n.to_sym] }
+        return false if options[:billing_address].blank?
+        return false if options[:billing_address][:state].blank?
+        return false if options[:shipping_address].blank?
+        return false if options[:shipping_address][:state].blank?
+        return false if options[:shipping_address][:phone].blank?
+        true
       end
 
       # Should remove  add_status_action and add_transaction_id
@@ -134,7 +139,7 @@ class PaymentMethod < ActiveRecord::Base
   
 #  validates_uniqueness_of :display_number, :scope => :customer_id
   
-  def creditable?; false; end
+  def creditable?; nil; end
   def type_notes; nil; end
 
   def revoke!; end;
@@ -235,15 +240,19 @@ private
                :fax => fax_numbers.first && fax_numbers.first.number)
   end
 
-  def gateway_invoice_item(item)
-    return nil unless item.quantity > 0
+  def gateway_invoice_item(invoice, item)
+    if item.respond_to?(:quantity)
+      return nil unless item.quantity > 0
+      quantity = item.quantity
+    else
+      quantity = 1
+    end
     tax_type = invoice.tax_type
     tax_rate = invoice.tax_rate
-    sku = case item.class
-          when OrderItem
+    sku = if item.is_a?(OrderItem)
             "M#{item.product_id}"
           else
-            item.class.to_s.gsub(/[a-z]/, '') + item.id
+            item.class.to_s.gsub(/[a-z]/i, '') + (item.id || '').to_s
           end
     common = { :sku => sku,
       :taxable => tax_type ? 'Y' : 'N',
@@ -258,7 +267,7 @@ private
       :discount => '0.00'
     }
 
-    description = item.description.encode('ASCII', :invalid => :replace, :undef => :replace, :replace => ''),
+    description = item.description.encode('ASCII', :invalid => :replace, :undef => :replace, :replace => '')
 
     result = []
     price = item.list_price
@@ -266,7 +275,7 @@ private
     unless price.marginal.nil? or price.marginal.zero?
       result << common.merge( :description => description + ' Unit', 
                               :cost => price.marginal,
-                              :quantity => item.quantity )
+                              :quantity => quantity )
     end
 
     unless price.fixed.nil? or price.fixed.zero?
@@ -293,6 +302,8 @@ public
       :shipping_address => gateway_address(order, order.customer.ship_address || order.customer.default_address),
       :purchase_order => order.purchase_order.blank? ? order.id : order.purchase_order.gsub(/[^0-9]/,''),
       :tax => '%0.02f' % (order.tax_rate * 100.0),
+
+      :shipping_amount => order.items.inject(Money.new(0)) { |s, i| i.shipping_price ? (s + i.shipping_price) : s }.to_s
     }
     if level3? and transaction.amount.to_i > 1000 and order.level3?
       invoice = order.invoices.last
@@ -383,8 +394,10 @@ public
   def charge(order, amount, comment)
     txn = transactions.where(:type => 'PaymentAuthorize').where("amount >= ?", amount.to_i).where("created_at > ?", Time.now-30.days).order('amount DESC').first
     logger.info("CreditCard Charge: #{order.id} = #{amount} for #{id} from #{txn.inspect}")
+    res = gateway.status(txn.id)
+    logger.info("Status #{txn.id} : #{res.inspect}")
     transaction = super(order, amount, comment)
-    response = gateway.capture(amount, txn.number,
+    response = gateway.capture(amount, res.params["TransactionID"],
                                gateway_options(order, transaction)
                                  .merge(:order_id => transaction.id))
     logger.info("Gateway Response: #{response.inspect}")

@@ -82,7 +82,7 @@
                   %td Amount
                   %td Comment
               %tbody
-                - if @chargeable and method.useable? and (params[:txn_id] ? method.creditable? : @amount.to_i > 0)
+                - if @chargeable and method.useable? and (@credit == method.creditable?)
                   %tr{ :id => "method-#{method.id}" }
                     %td TODAY
                     %td= link_to @order.id, status_order_path(@order)
@@ -95,7 +95,7 @@
                     %td
                       = text_field :transaction, :comment
                     %td
-                      - if params[:txn_id]
+                      - if @credit
                         = submit_tag 'Credit'
                       - elsif @authorize
                         = submit_tag 'Authorize'

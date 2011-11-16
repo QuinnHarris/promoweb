@@ -68,7 +68,7 @@ class LeedsXLSProducts < XLSFile
     raise "Bad Item: #{supplier_num}" unless /(\d+-\d+)(\w*)/ =~ supplier_num
     product_data['supplier_num'] = $1
     
-    product_data['name'] = get(row, 'ItemName').to_s.strip
+    product_data['name'] = get(row, 'ProductName').to_s.strip
 
     product_data['lead_time_normal_min'] = 3
     product_data['lead_time_normal_max'] = 5
@@ -81,9 +81,9 @@ class LeedsXLSProducts < XLSFile
     tags << 'Eco' if get(row, 'Category') == 'EcoSmart'
     product_data['tags'] = tags
     
-    { 'CartonLength' => 'package_length',
-      'CartonWidth' => 'package_width',
-      'CartonHeight' => 'package_height',
+    { 'GIFTBOXED_LENGTH' => 'package_length',
+      'GIFTBOXED_WIDTH' => 'package_width',
+      'GIFTBOXED_Height' => 'package_height',
       'CartonWeight' => 'package_weight' }.each do |src, dst|
       node = get(row, src)
       product_data[dst] = node && node.to_f
@@ -266,8 +266,8 @@ class LeedsXLSDecorations < XLSFile
       decoration_entry = {
         'technique' => technique,
         'location' => location,
-        'width' => get(row, 'DefaultLength').to_f,
-        'height' => get(row, 'DefaultHeight').to_f
+        'width' => get(row, 'Length').to_f,
+        'height' => get(row, 'Height').to_f
       }
 
       decoration_data[supplier_num] += [decoration_entry]

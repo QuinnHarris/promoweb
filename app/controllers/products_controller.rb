@@ -1,17 +1,26 @@
 class ProductSweeper < ActionController::Caching::Sweeper
   observe Product
 
-  def after_create(product); expire_cache_for(product); end
-  def after_update(product); expire_cache_for(product); end
-  def after_destroy(product); expire_cache_for(product); end
+  def after_create(product); expire_product(product); expire_category(product); end
+  def after_update(product); expire_product(product); end
+  def after_destroy(product); expire_product(product); expire_category(product); end
 
 private
-  def expire_cache_for(product)
+  def expire_category(product)
+    categories = product.categories.collect { |c| Category.find_by_id(c.id).path_obj_list }.flatten.compact.uniq
+    Rails.logger.info "Expire Categories: #{categories.collect { |c| c.path_web }.join(', ')}"
+    categories.each do |cat|
+      ApplicationController.cache_store.delete("views/www.mountainofpromos.com/categories/#{cat.path_web.join('/')}")
+    end
+  end
+
+  def expire_product(product)
     Rails.logger.info "Expire Product: #{product.id}"
-    ApplicationController.cache_store.delete_matched(Regexp.new("products/#{product.id}"))
+#    ApplicationController.cache_store.delete_matched(Regexp.new("products/#{product.id}"))
+    ApplicationController.cache_store.delete("views/www.mountainofpromos.com/products/#{product.id}")
   end
 end
-#ActiveRecord::Base.observers << :product_sweeper
+ActiveRecord::Base.observers << :product_sweeper unless Rails.env.development?
 
 class ProductsController < ApplicationController
 #  cache_sweeper :product_sweeper
@@ -30,9 +39,9 @@ class ProductsController < ApplicationController
   end
   
   # RSS feed with Googleness
+  caches_page :rss
   def rss
-    @products_scope = Product.where('NOT(products.deleted) AND products.price_comp_cache IS NOT NULL').order('products.id').includes([:supplier, :categories, { :product_images => :variants }, { :decorations => :technique } ]).scoped
-
+    @products_scope = Product.where("NOT(products.deleted) AND products.price_comp_cache IS NOT NULL AND supplier_num != ''").order('products.id').includes([:supplier, { :product_images => :variants }, { :decorations => :technique } ]).scoped
 
 
 #    @expiration_date = Time.now.months_ago(-1).iso8601

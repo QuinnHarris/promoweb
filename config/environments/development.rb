@@ -44,3 +44,4 @@ ActionMailer::Base.smtp_settings = {
 SEND_EMAIL = "quinn@qutek.net"
 
 DATA_ROOT = File.join(Rails.root, "data")
+CACHE_ROOT = File.join(DATA_ROOT, 'cache')

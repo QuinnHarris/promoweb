@@ -77,7 +77,7 @@ class Admin::UsersController < Admin::BaseController
       @user = User.find(params[:id])
       params[:user].delete(:password_confirmation)
     else
-      @user = UserPass.find(params[:id])
+      @user = User.find(params[:id])
     end
     
     if params[:user]
@@ -92,7 +92,7 @@ class Admin::UsersController < Admin::BaseController
   end
 
   def update
-    @user = User.find(params[:id])
+    @user = UserPass.find(params[:id])
     params[:user][:email] = nil if params[:user][:email].blank?
 
     if @user.update_attributes(params[:user])

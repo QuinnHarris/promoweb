@@ -414,3 +414,8 @@ update payment_transactions set quickbooks_id = 'BLOCKED', quickbooks_at = null,
 update products set quickbooks_id = 'BLOCKED', quickbooks_at = null, quickbooks_sequence = null;
 
 update customers set quickbooks_id = 'BLOCKED', quickbooks_at = null, quickbooks_sequence = null;
+
+
+
+create index product_images_product_id on product_images (product_id);
+create index decorations_product_id on decorations (product_id);

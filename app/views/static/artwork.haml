@@ -1,14 +1,14 @@
 %h1 Artwork Requirements
 
-%p High quality art must be produced before a product can go into production.  If you are not able to provide good art we can produce the art typically requiring an extra day.  Complex artwork requiring much more than the typical time to create will be billed to you after you have agreed to the additional charge.
+%p High quality art must be produced before a product can go into production.  If you are not able to provide good art we can produce the art typically requiring an extra day.
 
 %p We will provide you with a to scale artwork proof in a PDF format that you must approve before we produce your order.
 
 %h2 Artwork Submission
-%p This website provides a facility to upload artwork when an order is placed.  Additional methods to send artwork are available if needed including email or ftp.  You should upload the best artwork available.  We will determine if it will need to be redone.
+%p This website provides a facility to upload artwork for your order.  You can also send us artwork by email.  You should upload the best artwork available.  If you are unsure what is best, please provide all of the files you have.  Converting artwork from one file format to another usually will not help.
 
 %h2 High Quality Art
-%p High quality art is typically in a vector format unless the artwork is for a 4 color photographic process.
+%p High quality art is typically in a vector format unless the artwork is for a photographic process.
 
 %h3{ :style => "clear: both;" } Vector Artwork
 = image_tag "static/Vector.png", :style => "float: right; "
@@ -20,12 +20,12 @@
   or
   = link_to "Inkscape", "http://www.inkscape.org/"
   \.
-  Vector images can be printed at any size and still look good although vector graphics can not represent photographs.
+  Vector graphics can be printed at any size and still look good although vector graphics can not represent photographs.
   This type of image is typically necessary for all product decoration techniques except photographic processes.
 
-%p Saving a raster file such as a PNG or JPEG in a vector capable format such as EPS will be of no use over the original file.
+%p Saving a raster file such as a PNG or JPEG in a vector capable format such as EPS will be of no use over the original file.  Vector files can also store raster images so the artwork in a vector file format isn't necessarily acceptable.
 
-%p Vector artwork files include: EPS, AI, CDR, PS, PDF, SVG, WMF
+%p Vector artwork files include: PDF, EPS, PS, SVG, AI, CDR, WMF
 
 
 %h3{ :style => "clear: both;" } Raster Artwork
@@ -40,6 +40,8 @@
   Raster images can represent photographs but when the image is enlarged it will become pixilated as the pixels become large enough to easily see.
   This format is only acceptable for photographic processes in which case the image should be high resolution (300 dots per inch).
 
+%p Raster artwork can be traced to produce Vector artwork.  Depending on the resolution of the raster image and the amount of detail, tracing can produce acceptable results.
+
 %p Raster artwork files include: JPEG, PNG, GIF, BMP, TIFF
 
 %h2{ :style => "clear: both;" } Color Matching
@@ -48,8 +50,12 @@
   For limited color process such as screen printing, a
   = link_to "pantone color number", :action => :color_chart
   can be specified ensuring the final imprinted products color closely matches the colors on an
-  = link_to "official pantone color chart.", "http://www.pantone.com/pages/products/product.aspx?pid=293&ca=1"
+  = link_to "official pantone color book.", "http://www.pantone.com/pages/pantone/category.aspx?ca=1"
   If you demand very accurate color matching on photographic processes you will need to consult a computer graphics professional.
 
 %h2 Unacceptable Formats
-%p Generally anything produced from Microsoft Office or other office productivity suite will not work as is.  Such files might be worth uploading to help our graphic artist know what you are looking for.  We strongly prefer a pdf file over anything produced by office suites as the documents don't always appear the same from system to system, commonly the result of missing fonts.  
+%p
+  Generally anything produced from Microsoft Office or other office productivity suite will not work as is.  Such files might be worth uploading to help our graphic artist know what you are looking for.  We strongly prefer a PDF file over anything produced by office suites as the documents don't always appear the same from system to system, commonly the result of missing fonts.
+  You can use free
+  = link_to "CutePDF", "http://www.cutepdf.com/Products/CutePDF/writer.asp"
+  to create a PDF for anything you can print on Windows.

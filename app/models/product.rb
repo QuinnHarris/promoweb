@@ -228,7 +228,7 @@ class PriceCollectionCompetition < PriceCollectionAll
     cost_last = cost_entries.reverse.find { |e| e.marginal }
 
     n1 = params[:n1] || supplier_minimums.first
-    if params[:n2]
+    if params[:n2] and params[:n2] != n1
       n2 = params[:n2]
     else
       n2 = supplier_minimums.last
