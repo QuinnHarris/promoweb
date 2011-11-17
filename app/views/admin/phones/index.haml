@@ -6,7 +6,7 @@
     %table
       %tr
         %th Direct:
-        %td= user.text_field(:direct_phone_number)
+        %td= user.telephone_field(:direct_phone_number)
       %tr
         %th Extension:
         %td
@@ -26,7 +26,7 @@
       %td= user.check_box(:external_phone_all)
     %tr
       %th Number:
-      %td= user.text_field(:external_phone_number)
+      %td= user.telephone_field(:external_phone_number)
     %tr
       %th Timeout:
       %td
@@ -61,19 +61,19 @@
 
 %h2 Provisioned Phones
 = error_messages_for :phone
-= form_for [@user, @phone] do |ph|
-  %table
-    %thead
+%table
+  %thead
+    %tr
+      %td Name
+      %td Address
+  %tbody
+    - for phone in @user.phones
       %tr
-        %td Name
-        %td Address
-    %tbody
-      - for phone in @user.phones
-        %tr
-          %td= phone.name
-          %td= phone.identifier
-          %td= button_to 'Remove', admin_user_phone_path(@user, phone), :method => :delete
-    %tfoot
+        %td= phone.name
+        %td= phone.identifier
+        %td= button_to 'Remove', admin_user_phone_path(@user, phone), :method => :delete
+  %tfoot
+    = form_for [@user, @phone] do |ph|
       %tr
         %td= ph.text_field(:name)
         %td= ph.text_field(:identifier)
