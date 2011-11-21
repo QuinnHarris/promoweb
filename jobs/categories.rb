@@ -1170,7 +1170,7 @@ private
       [match(%w(name description material), 'aluminum', 1),
        supplier('Leeds',
                 category('Drinkware', 'Aluminum Bottles'),
-                category('Drinkware', 'Aluminum Sports Bottles')),
+                category('Drinkware', 'Aluminum Sport Bottles')),
        supplier('Lanco',
                 category('Drinkware', 'Metal Bottles') ) ]],
      ['Stainless Bottles',
