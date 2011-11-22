@@ -83,7 +83,7 @@
                   %td Comment
               %tbody
                 - logger.info("Cred: #{@credit.inspect} == #{method.creditable?}")
-                - if @chargeable and method.useable? and (@credit == method.creditable?)
+                - if @chargeable and method.useable? and (!@credit == !method.creditable?)
                   %tr{ :id => "method-#{method.id}" }
                     %td TODAY
                     %td= link_to @order.id, status_order_path(@order)

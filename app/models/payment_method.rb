@@ -383,8 +383,10 @@ public
   def authorize(order, amount, comment)
     txn = transactions.where("type in ('PaymentAuthorize', 'PaymentCharge')").order('created_at DESC').first
     logger.info("CreditCard Authorize: #{order.id} = #{amount} for #{id} from #{txn.inspect}")
+    res = gateway.status(txn.id)
+    logger.info("Status #{txn.id} : #{res.inspect}")
     transaction = super(order, amount, comment)
-    response = gateway.authorize_additional(amount, txn.number,
+    response = gateway.authorize_additional(amount, res.params["TransactionID"], #txn.number,
                                             gateway_options(order, transaction)
                                               .merge(:order_id => transaction.id))
     logger.info("Gateway Response: #{response.inspect}")
