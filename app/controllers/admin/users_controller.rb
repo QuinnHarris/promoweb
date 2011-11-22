@@ -92,11 +92,15 @@ class Admin::UsersController < Admin::BaseController
   end
 
   def update
-    @user = UserPass.find(params[:id])
-    params[:user][:email] = nil if params[:user][:email].blank?
+    if params[:user][:email].blank?
+      @user = User.find(params[:id])
+      params[:user][:email] = nil 
+    else
+      @user = UserPass.find(params[:id])
+    end
 
     if @user.update_attributes(params[:user])
-      redirect_to :action => :index
+      redirect_to :back
     else
       render :action => 'edit'
     end

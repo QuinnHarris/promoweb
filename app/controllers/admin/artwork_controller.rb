@@ -455,7 +455,7 @@ class Admin::ArtworkController < Admin::OrdersController
       artwork = Artwork.find(params[:artwork_id])
       artworks = [artwork]
       group = artwork.group
-      decoration = group.order_item_decorations.first
+      decoration = group.order_item_decorations.where("order_item_id IN (SELECT id FROM order_items WHERE order_id = #{@order.id})").first
     else
       raise "Unknown Source"
     end

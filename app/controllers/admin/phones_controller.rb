@@ -18,7 +18,7 @@ class Admin::PhonesController < Admin::BaseController
       @user.save!
     end
 
-    @registrations = Registration.where(:reg_user => @user.login).all
+    @registrations = Registration.where(:reg_user => @user.login).all || []
   end
 
   def create
@@ -32,6 +32,8 @@ class Admin::PhonesController < Admin::BaseController
     if @phone.save
       redirect_to :action => 'index'
     else
+      @registrations = Registration.where(:reg_user => @user.login).all || []
+
       render :action => :index
     end
   end
