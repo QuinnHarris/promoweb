@@ -409,7 +409,9 @@ public
   def credit(order, amount, comment, charge_transaction)
     logger.info("CreditCard Credit: #{order.id} = #{amount} for #{id} : #{charge_transaction.id}")
     transaction = super(order, amount, comment)
-    response = gateway.credit(amount, charge_transaction.number,
+    res = gateway.status(charge_transaction.id)
+    logger.info("Status #{charge_transaction.id} : #{res.inspect}")
+    response = gateway.credit(amount, res.params["TransactionID"], #charge_transaction.number,
                               gateway_options(order, transaction)
                                  .merge(:order_id => transaction.id))
     logger.info("Gateway Response: #{response.inspect}")
