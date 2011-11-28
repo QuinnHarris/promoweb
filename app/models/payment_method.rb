@@ -429,11 +429,11 @@ end
 
 class PaymentACHCheck < OnlineMethod
   def type_name
-    "ACH Check"
+    "Electronic Check"
   end
   
   def has_name?
-    true
+    nil
   end
 
   def has_number?
