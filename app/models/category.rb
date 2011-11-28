@@ -33,13 +33,13 @@ class Category < ActiveRecord::Base
   attr_accessible :lft, :rgt, :name, :parent, :parent_id
   acts_as_nested_set
   
-#  has_and_belongs_to_many :products
   has_many :category_products
   has_many :products, :through => :category_products
 
-
   has_and_belongs_to_many :keywords
   has_many :featured, :class_name => 'Product', :foreign_key => 'featured_id'
+
+  attr_accessible :description, :google_category
   
   after_create :invalidate_cache
   after_destroy :invalidate_cache
