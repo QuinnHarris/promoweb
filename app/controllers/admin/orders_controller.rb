@@ -29,6 +29,9 @@ class Admin::OrdersController < Admin::BaseController
     urgent = @orders.find_all { |o| o.urgent_note && !o.urgent_note.strip.empty? }
     @groups = urgent.empty? ? [] : [ ['Urgent', urgent] ]
 
+    unassigned = @orders.find_all { |o| !o.user_id }
+    @groups << ['Unassigned', unassigned] unless unassigned.empty?
+
     today = Time.now.end_of_day
     ready_orders = @orders.collect do |order|
       time = order.tasks_allowed(@permissions).collect do |task|
@@ -53,7 +56,7 @@ class Admin::OrdersController < Admin::BaseController
         [klass.waiting_name, groups[klass]]
       end.compact
     else
-      @groups << [@groups.empty? ? nil : 'Normal', @orders - ready_orders - urgent]
+      @groups << [@groups.empty? ? nil : 'Normal', @orders - ready_orders - unassigned - urgent]
     end
 
     @title = "Orders #{ready_orders.length} of #{@count}"
