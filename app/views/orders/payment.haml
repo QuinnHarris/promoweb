@@ -82,7 +82,6 @@
                   %td Amount
                   %td Comment
               %tbody
-                - logger.info("Cred: #{@credit.inspect} == #{method.creditable?}")
                 - if @chargeable and method.useable? and (!@credit == !method.creditable?)
                   %tr{ :id => "method-#{method.id}" }
                     %td TODAY
@@ -115,7 +114,7 @@
                       %td= transaction.amount.to_perty
                     %td
                       = transaction.comment
-                    - if @user and transaction.method.refundable?
+                    - if @chargeable and transaction.method.refundable?
                       - if method.creditable? == transaction
                         %td Refunding
                       - elsif transaction.is_a?(PaymentCharge) and @order.total_chargeable.to_i < 0
