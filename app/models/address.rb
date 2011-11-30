@@ -1,6 +1,14 @@
 class Address < ActiveRecord::Base
 #  validates_presence_of :postalcode
 
+  before_save :update_address
+  def update_address
+    if address1.blank? and !address2.blank?
+      self.address1 = address2
+      self.address2 = nil
+    end
+  end
+
   def incomplete?
     %w(address1 city state postalcode).find_all do |name|
       send(name).blank?
