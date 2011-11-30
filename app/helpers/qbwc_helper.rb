@@ -1,4 +1,8 @@
 module QbwcHelper
+  def encode(str)
+    str.encode('ASCII', :invalid => :replace, :undef => :replace, :replace => '')
+  end
+
   def item(xml, item, name, id_name = 'ListID', include = [])
     new_item = item.quickbooks_id.nil?
     query = !new_item && item.quickbooks_sequence.nil?
@@ -74,7 +78,7 @@ module QbwcHelper
       oiv.association(:order_item).target = item if oiv.respond_to?(:order_item)
 
       sub_item_aspect(xml, oiv, new_item, qb_type, bill_po, nil, price.marginal.nil?) do
-        xml.Desc oiv.description.encode('ASCII', :invalid => :replace, :undef => :replace, :replace => '')
+        xml.Desc encode(oiv.description)
         xml.Quantity oiv.quantity
         #xml.UnitOfMeasure
         xml.tag!(bill_po ? 'Cost' : 'Rate', negate ? -price.marginal : price.marginal)
@@ -196,7 +200,7 @@ module QbwcHelper
 
     purchase.entries.each do |entry|
       sub_item_aspect(xml, entry, new_item, qb_type, bill && purchase.purchase_order) do
-        xml.Desc entry.description.encode('ASCII', :invalid => :replace, :undef => :replace, :replace => '')
+        xml.Desc encode(entry.description)
         xml.Quantity entry.quantity 
         xml.tag!(bill ? 'Cost' : 'Rate',  entry.cost)
       end
@@ -204,24 +208,24 @@ module QbwcHelper
   end
 
   def common_address(xml, address)
-    xml.City((address.city || '')[0...31])
-    xml.State((address.state || '')[0...21])
-    xml.PostalCode((address.postalcode || '')[0...13])
+    xml.City((encode(address.city) || '')[0...31])
+    xml.State((encode(address.state) || '')[0...21])
+    xml.PostalCode((encode(address.postalcode) || '')[0...13])
     #xml.Country
     #xml.Notes
   end
   
   def generic_address(xml, address)
-    xml.Addr1((address.address1 || '')[0...41])
-    xml.Addr2((address.address2 || '')[0...41])
+    xml.Addr1((encode(address.address1) || '')[0...41])
+    xml.Addr2((encode(address.address2) || '')[0...41])
     common_address(xml, address)
   end
   
   def customer_address(xml, customer, address)
-    xml.Addr1 customer.company_name[0...41]
-    xml.Addr2 "ATTN: #{(address.name and !address.name.strip.empty?) ? address.name : customer.person_name}"[0...41]
-    xml.Addr3((address.address1 || '')[0...41])
-    xml.Addr4((address.address2 || '')[0...41])
+    xml.Addr1 encode(customer.company_name[0...41])
+    xml.Addr2 "ATTN: #{encode((address.name and !address.name.strip.empty?) ? address.name : customer.person_name)}"[0...41]
+    xml.Addr3((encode(address.address1) || '')[0...41])
+    xml.Addr4((encode(address.address2) || '')[0...41])
     common_address(xml, address)
   end
   
@@ -240,9 +244,9 @@ module QbwcHelper
   end
   
   def customer_info(xml, customer)
-    xml.CompanyName customer.company_name[0...41]
+    xml.CompanyName encode(customer.company_name[0...41])
     
-    name_list = customer.person_name.strip.split(' ')
+    name_list = encode(customer.person_name).strip.split(' ')
     #xml.Salutation
     xml.FirstName name_list.shift[0...25] if name_list.length > 1
     xml.MiddleName name_list.shift[0...5] if name_list.length > 1
@@ -250,7 +254,7 @@ module QbwcHelper
     
     bill_ship_address(xml, customer)
     
-    xml.Phone customer.phone_numbers.first.number_string[0..21] if customer.phone_numbers.first
+    xml.Phone customer.phone_numbers.first.number_string[0...21] if customer.phone_numbers.first
     #xml.AltPhone
     #xml.Fax
     xml.Email customer.email_addresses.first.address if customer.email_addresses.first
