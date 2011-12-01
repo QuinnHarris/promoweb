@@ -358,8 +358,8 @@ public
       transaction.number = response.authorization
       transaction.auth_code = response.params['AUTHCODE']
       comment = []
-      comment << response.cvv_result['message'] unless response.cvv_result['code'] == 'M'
-      comment << response.avs_result['message'] unless response.avs_result['code'] == 'Y'
+      comment << "CCV: #{response.cvv_result['message']}" unless response.cvv_result['code'] == 'M'
+      comment << "AVS: #{response.avs_result['message']}" unless response.avs_result['code'] == 'Y'
       transaction.comment = comment.join(', ')
       transaction.save!
     else

@@ -30,6 +30,7 @@
         - if supplier.fax
           FAX: #{format_phone(supplier.fax)}
           = mail_to(supplier.send_email(@order.sample))
+        \: Acct #{supplier.account_number}
       - for purchase in purchase_list.sort_by { |pl| (pl.id || 0) }
         .purchase
           - purchase_lock = !(params[:override] && allowed?('Super')) && purchase.locked(allowed?('Super'))
