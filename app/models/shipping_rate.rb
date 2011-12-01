@@ -85,9 +85,9 @@ class UPSShippingRate < ShippingRate
     return "No Package Units" unless (package_units = product.package_units) and (package_units > 0)
     
     package_count = (quantity.to_f / package_units).ceil
-    if package_count > 50
-      return "More than 50 packages: #{package_count}"
-    end
+#    if package_count > 50
+#      return "More than 50 packages: #{package_count}"
+#    end
 
     unless product.package_weight || product.package_unit_weight
       return "No Package Weight"
