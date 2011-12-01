@@ -35,7 +35,7 @@ class HighCaliberLine < GenericImport
         product_data[our] = xls.get(row, their).strip
       end
       
-      next if %w(S-606 T-818 K-175).include?(product_data['supplier_num'])
+      next if %w(S-606 T-818 K-175 A7250).include?(product_data['supplier_num'])
       
       next if product_data['name'].empty?
 

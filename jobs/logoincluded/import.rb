@@ -140,7 +140,7 @@ class LogoIncludedXML < GenericImport
         end
       end
  
-      colors = product.xpath('ColorOptions/Color/Description').collect { |n| n.text }
+      colors = product.xpath('ColorOptions/Color/Description').collect { |n| n.text }.uniq
 
       nums = []
       min_units = 10000000
@@ -150,6 +150,10 @@ class LogoIncludedXML < GenericImport
         last_maximum = nil
         prices = li.xpath('UnitPriceBreaks/Quantity').collect do |qty|
           min, max = %w(minimum maximum).collect { |n| qty[n].blank? ? nil : Integer(qty[n]) }
+          if min and max and max < min
+            puts "EXCLUDING: #{max} < #{min}"
+            next
+          end
           min_units = [min_units, max].min
           max_units = [max_units, max].max
 #          puts "Min: #{min} #{max}"
@@ -199,6 +203,8 @@ class LogoIncludedXML < GenericImport
             next
           end
         end
+
+        puts "SupplierNum: #{data['supplier_num']}"
 
         if nums.include?(data['supplier_num'])
           warning "Duplicate supplier_num: #{data['supplier_num']}"
