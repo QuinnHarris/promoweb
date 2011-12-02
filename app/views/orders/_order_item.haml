@@ -176,11 +176,11 @@
           = entry.description
         - unit_sum += list.marginal
         %td.num= blank || list.marginal.to_perty
+        - total_sum += list.fixed if list.fixed
         - if fixed
           %td.num
             - unless list.fixed.nil?
               = blank || list.fixed.to_perty
-              - total_sum += list.fixed
         %td.num= blank || (list.marginal * order_item.quantity + list.fixed).to_perty
     %tr.num.total
       %th
