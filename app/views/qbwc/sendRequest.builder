@@ -79,7 +79,7 @@ xml.QBXML do
       idx = Customer.find(:all,
         :conditions => ["substr(coalesce(nullif(company_name,''), person_name), 0, 39) = ?", name],
         :order => 'id').index(customer)
-      xml.Name name + ((idx && (idx > 0)) ? " #{idx}" : '')
+      xml.Name encode(name + ((idx && (idx > 0)) ? " #{idx}" : ''))
       xml.IsActive 1
 #      xml.ParentRef do
 #        xml.FullName '100-WEB Customers'

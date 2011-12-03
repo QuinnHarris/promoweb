@@ -75,7 +75,7 @@ public
 
   # The ruby way, show as mooolasis
   def home
-    @title = "Mountain of Promotions - Custom imprinted products"
+    @title = "Mountain of Promotions - Custom imprinted Promotional Products, Advertising Specialties, Promotional Items"
     @description = "Mountain of Promotions"
 
     @per_page = @@columns * @@rows
