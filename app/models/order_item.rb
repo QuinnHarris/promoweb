@@ -70,7 +70,7 @@ class OrderItem < ActiveRecord::Base
   def cascade_update
     order.touch
     if purchase
-      if purchase.items.empty?
+      if purchase.items.empty? and purchase.entries.empty?
         purchase.destroy
       else
         purchase.touch

@@ -20,7 +20,11 @@ class PurchaseEntry < ActiveRecord::Base
   after_save :cascade_update
   after_destroy :cascade_update
   def cascade_update
-    purchase.touch
     purchase.order.touch
+    if purchase.items.empty? and purchase.entries.empty?
+      purchase.destroy
+    else
+      purchase.touch
+    end
   end
 end

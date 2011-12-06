@@ -102,5 +102,4 @@ class Purchase < ActiveRecord::Base
     purchase_order.destroy if purchase_order
     bill.destroy if bill
   end
-    
 end
