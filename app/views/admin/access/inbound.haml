@@ -29,9 +29,7 @@
       %table
         - data.in_groups_of(5) do |row|
           %tr
-            - for access in row.compact
-              - next unless access.action_id
+            - for product in row.compact
               %td
-                - product = Product.find(access.action_id)
                 = render :partial => '/categories/thumb', :locals => { :product => product, :category => nil, :context => nil }
-                M#{access.action_id}
+                M#{product.id}
