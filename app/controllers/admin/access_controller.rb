@@ -49,23 +49,20 @@ class Admin::AccessController < Admin::BaseController
   end
 
   def inbound
-    calls = CallLog.find(:all, :order => 'id DESC', :conditions => { :inbound => true }, :order => 'id DESC', :limit => 4)
+    calls = CallLog.where(:inbound => true).order('id DESC').limit(4).all
     
     @calls = calls.collect do |call_log|
-      customer = Customer.find(:first,
-                               :include => :phone_numbers,
-                               :order => 'customers.id DESC',
-                               :conditions => { 'phone_numbers.number' => call_log.caller_number.gsub(/^1/,'').to_i } )
+      customer = Customer.where('phone_numbers.number' => call_log.caller_number.gsub(/^1/,'').to_i)
+                         .includes(:phone_numbers).order('customers.id DESC').first
 
       next [call_log, customer] if customer
 
       /^1?(\d{3})/ === call_log.caller_number
       prefix = $1.to_i
-      access = PageAccess.find(:all,
-                              :include => :session,
-                              :limit => 10,
-                              :order => 'page_accesses.id DESC',
-                               :conditions => ["page_accesses.created_at > ? AND session_accesses.area_code = #{prefix} AND page_accesses.controller = 'products' AND action = 'show'", Time.now - 30.days])
+      access = PageAccess.where("page_accesses.created_at > ?", Time.now - 15.days)
+                         .where("page_accesses.controller = 'products' AND action = 'show'")
+                         .where("session_accesses.updated_at > ? AND session_accesses.area_code = #{prefix}", Time.now - 30.days)
+                         .includes(:session).order('page_accesses.id DESC').limit(10).all
 
       [call_log, access]
     end
