@@ -2038,6 +2038,7 @@ private
         ] ],
      ['Knives',
       [match(%w(name description), %w(knive knife cutter)),
+       exclude(match(%w(name description), /Cutter.+Buck/i)),
        supplier('Lanco',
                 category('Tools / Knives', 'Knives') ),
        supplier('Norwood',
