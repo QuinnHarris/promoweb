@@ -60,11 +60,11 @@ class Admin::AccessController < Admin::BaseController
       /^1?(\d{3})/ === call_log.caller_number
       prefix = $1.to_i
       access = PageAccess.where("page_accesses.created_at > ?", Time.now - 15.days)
-                         .where("page_accesses.controller = 'products' AND action = 'show'")
-                         .where("session_accesses.updated_at > ? AND session_accesses.area_code = #{prefix}", Time.now - 30.days)
-                         .includes(:session).order('page_accesses.id DESC').limit(10).all
+        .where("page_accesses.controller = 'products' AND action = 'show'")
+        .where("session_accesses.updated_at > ? AND session_accesses.area_code = #{prefix}", Time.now - 30.days)
+        .includes(:session, { :product => :product_images }).order('page_accesses.id DESC').limit(10).all
 
-      [call_log, access]
+      [call_log, access.collect { |a| a.product }.uniq]
     end
     
   end
