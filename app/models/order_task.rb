@@ -614,7 +614,7 @@ end
 
 # Never Created in DB
 class ClosedOrderTask < OrderTask
-  set_depends_on [CompleteOrderTask, CancelOrderTask], AcceptedItemTask, ReviewOrderTask
+  set_depends_on [CompleteOrderTask, CancelOrderTask], AcceptedItemTask
 end
 
 class OwnershipOrderTask < OrderTask
