@@ -30,15 +30,17 @@
         %td= @static ? @order.purchase_order : order.text_field(:purchase_order)
     %tr.required
       %th Delivery Date:
-      %td= @static ? @order.delivery_date : order.date_select(:delivery_date, { :order => [:month, :day, :year], :start_year => Time.now.year, :end_year => Time.now.year+1, :include_blank => false } )
-    %tr
-      %th
-      - if @static
-        %td= @order.delivery_date_not_important ? 'Not Important' : 'Required'
-      - else
-        %td
-          = order.check_box(:delivery_date_not_important)
+      %td
+        - if @static
+          - if @order.delivery_date_not_important
+            Not Important
+          - else
+            = @order.delivery_date
+        - else
+          = order.check_box(:delivery_date_not_important, :class => 'deactivate')
           Delivery Date Not Essential
+          %br
+          = @static ? @order.delivery_date : order.text_field(:delivery_date, :class => 'futuredate')
           
     %tr
       %th Event Nature:

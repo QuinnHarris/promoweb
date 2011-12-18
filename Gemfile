@@ -1,6 +1,6 @@
 source 'http://rubygems.org'
 
-gem 'rails', '3.1.1'
+gem 'rails', '3.1.3'
 
 # Bundle edge Rails instead:
 # gem 'rails', :git => 'git://github.com/rails/rails.git'
@@ -62,6 +62,7 @@ gem 'geoip-c'
 gem 'wicked_pdf'
 gem 'fast_xs'
 gem 'rails_autolink'
+gem 'rails3-jquery-autocomplete'
 
 # Not needed for webserver
 gem 'mechanize' # DL for Gemline

@@ -71,7 +71,7 @@
   - if dragable = allowed?('Orders') && !@order.task_completed?(ArtPrepairedOrderTask)
     %div{ :id => "artwork-group=" }
       = render :partial => 'artwork_decoration', :locals => { :group => nil, :item_decorations => @order_item_decorations, :dragable => true }
-    = drop_receiving_element("artwork-group=", { :onDrop => 'moveItem', :accept => 'decoration' } )
+    /= drop_receiving_element("artwork-group=", { :onDrop => 'moveItem', :accept => 'decoration' } )
 
   - if allowed?(%w(Art Orders)) && !@static
     = link_to image_tag('add.png') + "New Artwork Group", group_new_order_artwork_path(@order), { :method => :post, :class => 'button', :confirm => "Create a new artwork group for #{@order.customer.person_name}" }

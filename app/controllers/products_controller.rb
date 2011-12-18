@@ -192,9 +192,6 @@ public
   
       @title = "#{@product.name}, Custom Imprinted (#{@product.supplier.name}: #{@product.supplier_num})"
       
-#      @javascripts = ['effects', 'products']
-#      @javascripts += ['controls', 'rails'] if @user
-      
       @email_subject = "#{@product.name} (M#{@product.id})"
     
       @description = "#{@product.name} from #{@product.price_min_cache} to #{@product.price_max_cache}."
@@ -221,7 +218,8 @@ public
                              :conditions => "order_items.product_id = #{@product.id}")
       end
       
-      render :layout => 'simple' if params[:layout] == 'false'
+      #render :layout => 'simple' if params[:layout] == 'false'
+      #only place simple layout is used?
     end
   end
 

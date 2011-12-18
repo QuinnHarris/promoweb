@@ -15,12 +15,11 @@
       = stylesheet_link_tag sheet, :media => 'all'
     - if @user
       = stylesheet_link_tag "admin"
-    = stylesheet_link_tag 'print', :media => 'print'
-    
-    = javascript_include_tag "application"
-    /= javascript_include_tag 'prototype'
-    /- for script in @javascripts || []
-    /  = javascript_include_tag script
+    = stylesheet_link_tag 'print', :media => 'print'    
+    - for sheet in controller.class.stylesheets.uniq
+      = javascript_include_tag sheet
+    - if @user
+      = javascript_include_tag 'admin'
     /[if lte IE 6]
       = stylesheet_link_tag 'iehacks.css'
     /[if IE 7]

@@ -27,7 +27,7 @@
     .items
       - for artwork in group.artworks
         - next if filter_tag and !artwork.has_tag?(filter_tag)
-        .item{ :id => "artwork=#{artwork.id}" }
+        .item{ :id => "artwork=#{artwork.id}", :draggable => 'true' }
           .thumb
             - if File.exists?(artwork.art.path(:thumb))
               %a{ :href => artwork.art.url }
@@ -94,7 +94,7 @@
               /    %h3 Our Notes
               /    = static ? artwork.our_notes : art.text_area(:our_notes, 'rows' => 3)
         - if @user and artwork_groups.length > 1
-          = draggable_element("artwork=#{artwork.id}", :revert => "'failure'", :scroll => 'window')
+          /= draggable_element("artwork=#{artwork.id}", :revert => "'failure'", :scroll => 'window')
 
   - if @user
-    = drop_receiving_element("artwork-group=#{group.id}", { :onDrop => 'moveItem' } )
+    /= drop_receiving_element("artwork-group=#{group.id}", { :onDrop => 'moveItem' } )

@@ -118,7 +118,7 @@
         %td
         %td.admin ???
         %td.admin ???
-    %script!= "merge_listing(#{item.normal_all_h.to_json})"
+    %script!= "window.merge_listing(#{item.normal_all_h.to_json})"
     - unless item.customer_notes.nil? or item.customer_notes.strip.empty?
       .notes.block
         %h3 Customer Notes

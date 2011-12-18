@@ -1,7 +1,6 @@
-= customer.fields_for :email_addresses, email_address do |email|
-  .email_address
-    - unless @static
-      = email.text_field :address
-      != remove_link(email)
-    - else
-      = mail_to email.object.address
+.email_address
+  - unless @static
+    = f.email_field :address
+    != remove_child_link(f)
+  - else
+    = mail_to f.object.address

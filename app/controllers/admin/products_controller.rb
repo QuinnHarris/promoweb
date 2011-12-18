@@ -82,7 +82,6 @@ end
 class Admin::ProductsController < Admin::BaseController
   auto_complete_for :supplier, :name
   def new
-    @javascripts = ['effects.js', 'controls.js']
     @product = Product.new
   end
   

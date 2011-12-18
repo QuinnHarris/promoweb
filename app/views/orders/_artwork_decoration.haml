@@ -1,6 +1,6 @@
 %div.decorations
   - for item_decoration in item_decorations
-    .decoration{ :id => "decoration=#{item_decoration.id}" }
+    .decoration{ :id => "decoration=#{item_decoration.id}", :draggable => 'true' }
       - product = item_decoration.order_item.product
       %table
         %tr
@@ -60,4 +60,4 @@
                   %strong Artwork sent to supplier
 
     - if dragable
-      = draggable_element("decoration=#{item_decoration.id}", :revert => "'failure'", :scroll => 'window')
+      /= draggable_element("decoration=#{item_decoration.id}", :revert => "'failure'", :scroll => 'window')

@@ -1,13 +1,15 @@
 :javascript
-  function on_select(field, value) {
-    params = {#{@search ? '' : "'order_id': #{@order.id}"}}
-    params[field.name] = field.value
-    window.location = '/admin/orders/contact_search?' + Object.toQueryString(params)
-  }
+  $(document).ready(function() {
+    $('.find input[data-autocomplete]').bind('railsAutocomplete.select', function(ui) {
+      var params = {};
+      params[this.name] = this.value;
+      location.href = '/admin/orders/contact_search?' + jQuery.param(params);
+    });
+  });
 
 = form_for @customer, :url => find_apply_admin_orders_path, :html => { :method => :post } do |cust|
   = hidden_field_tag 'customer_id', @customer.id
-  %table.form
+  %table.find
     %caption Search
     %tbody
       %tr
@@ -26,8 +28,8 @@
       %tr.required
         %th Email:
         %td#email_addresses
-          = text_field_predicated(:customer, :email_addresses)
+          = text_field_predicated(:customer, :email_addresses, :value => '')
       %tr.required
         %th Phone Number:
         %td#phone_numbers
-          = text_field_predicated(:customer, :phone_numbers)
+          = text_field_predicated(:customer, :phone_numbers, :value => '')

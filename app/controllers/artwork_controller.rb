@@ -1,37 +1,38 @@
 class ArtworkController < OrdersController
   def create
-    if params[:artwork] and params[:artwork][:art] != ''
-      Artwork.transaction do
-        group_name = "Order #{@order.id}"
+    Artwork.transaction do
+      group_name = "Order #{@order.id}"
 
-        unless @user
-          group_name = "Customer Order #{@order.id}"
-        else
-          group = @order.customer.artwork_groups.to_a.find do |group|
-            if group.order_item_decorations.empty?
-              true
+      unless @user
+        group_name = "Customer Order #{@order.id}"
+      else
+        group = @order.customer.artwork_groups.to_a.find do |group|
+          if group.order_item_decorations.empty?
+            true
+          else
+            if group.order_item_decorations.to_a.find { |d| d.order_item.order_id != @order.id }
+              false
             else
-              if group.order_item_decorations.to_a.find { |d| d.order_item.order_id != @order.id }
-                false
-              else
-                @order.items.collect { |oi| oi.decorations }.flatten.length == 1
-              end
+              @order.items.collect { |oi| oi.decorations }.flatten.length == 1
             end
           end
         end
-        group = @order.customer.artwork_groups.find_by_name(group_name) unless group
-        group = @order.customer.artwork_groups.create(:name => group_name) unless group
+      end
+      group = @order.customer.artwork_groups.find_by_name(group_name) unless group
+      group = @order.customer.artwork_groups.create(:name => group_name) unless group
 
-        artwork = group.artworks.create(params[:artwork].merge(:user => @user, :host => request.remote_ip))
-        if artwork.id
-          artwork.tags.create(:name => 'customer') unless @user
-          task_complete({ :data => { :id => artwork.id } }, ArtReceivedOrderTask, nil, false)
-        end
+      artwork = group.artworks.create(params[:artwork].merge(:user => @user, :host => request.remote_ip))
+      if artwork.id
+        artwork.tags.create(:name => 'customer') unless @user
+        task_complete({ :data => { :id => artwork.id } }, ArtReceivedOrderTask, nil, false)
       end
     end
-        
-#    redirect_to :action => :artwork, :task => 'ArtReceivedOrder'
-    redirect_to :back
+  
+    if params[:ajax]
+      render :json => {}
+    else
+      redirect_to :back
+    end
   end
   
   def edit

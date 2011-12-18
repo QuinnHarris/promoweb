@@ -63,20 +63,22 @@
         %th Email:
         %td#email_addresses
           - @customer.email_addresses << EmailAddress.new if @customer.email_addresses.empty?
-          = render :partial => 'email_address', :locals => { :customer => cust }
+          = cust.fields_for :email_addresses, @customer.email_addresses do |email|
+            = render :partial => 'email_address', :locals => { :f => email }
         - unless @static
           %td
             &nbsp;
-            != add_link(cust, 'email_address', EmailAddress)
+            != add_child_link(cust, :email_addresses)
       %tr.required
         %th Phone:
         %td#phone_numbers
           - @customer.phone_numbers << PhoneNumber.new if @customer.phone_numbers.empty?
-          = render :partial => 'phone_number', :locals => { :customer => cust }
+          = cust.fields_for :phone_numbers, @customer.phone_numbers do |phone|
+            = render :partial => 'phone_number', :locals => { :f => phone }
         - unless @static
           %td
             &nbsp;
-            != add_link(cust, 'phone_number', PhoneNumber)
+            != add_child_link(cust, :phone_numbers)
 
       = render :partial => 'address_edit', :locals => { :field_name => :default_address, :disabled => false }
 
@@ -88,7 +90,7 @@
           %tr
             %td
             %td
-              = check_box :options, :different, { :onclick => "enable_disable_forum('shipping', this)" }
+              = check_box :options, :different, { :class => 'activate' }
               Specify different shipping address
         %tr
           %th Name:
@@ -97,8 +99,3 @@
       
   - unless @reassoc
     != submit_options !@static
-
-:javascript
-  $$('.postalcode').each(function (obj) {
-    new Form.Element.Observer(obj, 0.25, function(element, value) {if (value.length >= 5) { new Ajax.Request('/orders/location_from_postalcode_ajax', {asynchronous:true, evalScripts:true, onComplete:function(request){eval(request.responseText)}, parameters:'postalcode='+value+'&type=default_address'}); }})
-  });

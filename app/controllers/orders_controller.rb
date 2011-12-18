@@ -208,15 +208,6 @@ private
       hash.merge(:delegate => delegate.first)
     end
   end
-
-  # KLUDGE REPLACE THIS CALENDAR
-private
-  def apply_calendar_header
-    #raise "Fix Me"
-    @javascripts = (@javascripts || []) + ["calendar", "lang/calendar-en", "calendar-setup"].collect { |n| "/jscalendar-1.0/#{n}" }
-    @stylesheets = (@stylesheets || []) + ["calendar-blue"].collect { |n| "/jscalendar-1.0/#{n}"}    
-  end
-public
 end
 
 class OrdersController < AuthenticatedController 
@@ -269,8 +260,6 @@ public
     
     @static = @order.task_completed?(AcknowledgeOrderTask)
     
-    @javascripts = ['autosubmit.js', 'rails.js']   
-    
     if params[:order_items]
       OrderItem.transaction do      
         modified = {}
@@ -297,9 +286,6 @@ public
     
   # Order Information
   def_tasked_action :info, InformationOrderTask do    
-    @javascripts = ['autosubmit.js']
-#    apply_calendar_header
-
     @static = @order.task_completed?(AcknowledgeOrderTask) && (!@user || !params[:unlock])
     
     if request.post?
@@ -355,8 +341,10 @@ public
     
     # Edit Customer
     if params[:customer_id] and params[:customer] and params[:default_address]
-      Customer.transaction do 
-        @customer.attributes = params[:customer]
+      Customer.transaction do
+        x = params[:customer]
+        x.delete('new_email_addresses')
+        @customer.attributes = x
         changed = @customer.changed? ||
           @customer.phone_numbers.to_a.find { |p| p.changed? || p.marked_for_destruction? } ||
           @customer.email_addresses.to_a.find { |p| p.changed? || p.marked_for_destruction? }
@@ -423,8 +411,6 @@ public
       end
     end
     
-    @javascripts = ['autosubmit.js', 'effects.js', 'controls.js', 'rails.js']
-    
     # Apply City/State from Zip code
 #    if @default_address.postalcode and @default_address.postalcode.length == 5
 #       (!@default_address.city or @default_address.city.empty?) and
@@ -453,8 +439,7 @@ private
 public  
   def location_from_postalcode_ajax
     if loc = location_from_postalcode(params[:postalcode])
-      render :inline => "$('#{params[:type]}_city').value = '#{loc.city}';" + 
-                        "$('#{params[:type]}_state').value = '#{loc.state}';"
+      render :json => { 'city' => loc.city, 'state' => loc.state }
     else
      render :inline => ""
     end
@@ -479,11 +464,6 @@ public
     @order_item_decorations = @order.items.collect { |oi| oi.decorations.find(:all, :conditions => { 'artwork_group_id' => nil }) }.flatten
     @upload_id = Time.now.to_i.to_s
     
-    @stylesheets = ['orders']
-    @javascripts = ['autosubmit.js', 'rails.js'] #, 'upload_progress.js']
-    @javascripts += ['effects.js', 'dragdrop.js'] if @user
-    apply_calendar_header if @user
-
     task_complete({}, VisitArtworkOrderTask) unless @order.closed or @order.task_completed?(VisitArtworkOrderTask)
     
     next unless session[:user_id]
@@ -511,12 +491,7 @@ private
 public
   
   def status_page
-    Admin::OrdersController
-    if session[:user_id]
-      apply_calendar_header
-      @javascripts << 'rails.js'
-    end
-    
+    Admin::OrdersController   
     unless @order
       @order = Order.new
       @order.customer = Customer.new
@@ -595,18 +570,7 @@ public
     render 'status'
   end
   
-  def_tasked_action :payment, PaymentInfoOrderTask, PaymentOverrideOrderTask, FirstPaymentOrderTask, FinalPaymentOrderTask do    
-    @javascripts = ['autosubmit.js', 'rails.js']
-    
-#    if params[:commit]
-#      render_edit({}, [PaymentInfoOrderTask])
-#      next
-#    end
-    
-    @javascripts << 'admin_orders' if @user
-    
-    apply_calendar_header
-    
+  def_tasked_action :payment, PaymentInfoOrderTask, PaymentOverrideOrderTask, FirstPaymentOrderTask, FinalPaymentOrderTask do        
     determine_pending_tasks
 
     customer = @order.customer
@@ -765,8 +729,6 @@ public
    
   def_tasked_action :acknowledge_order, AcknowledgeOrderTask do
     @order_task = OrderTask.new(params[:order_task])
-
-    @javascripts = ['rails.js'] if @user
 
     next unless params[:commit]
     

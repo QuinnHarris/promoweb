@@ -1,8 +1,7 @@
-= customer.fields_for :phone_numbers, phone_number do |phone|
-  .phone_number
-    - unless @static
-      = phone.select(:name, PhoneNumber.types)
-      = phone.text_field :number_string, :size => 19
-      != remove_link(phone)
-    - else
-      #{phone.object.name}: #{phone.object.number_string}
+.phone_number
+  - unless @static
+    = f.select(:name, PhoneNumber.types)
+    = f.telephone_field :number_string, :size => 19
+    != remove_child_link(f)
+  - else
+    #{f.object.name}: #{f.object.number_string}

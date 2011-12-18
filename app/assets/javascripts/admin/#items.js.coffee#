@@ -1,0 +1,11 @@
+class DynamicUpdate
+  constructor: (elements) ->
+    
+
+
+class AdminItems extends DynamicUpdate
+  constructor: ->
+  
+
+$(document).ready ->
+  $('.invoice')

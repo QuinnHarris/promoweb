@@ -60,7 +60,6 @@ class Admin::OrdersController < Admin::BaseController
     end
 
     @title = "Orders #{ready_orders.length} of #{@count}"
-    @javascripts = ['rails.js']
   end
     
   def payment_apply
@@ -135,12 +134,13 @@ class Admin::OrdersController < Admin::BaseController
   end
 
   %w(company_name person_name).each do |field|
-    auto_complete_for :customer, field
+    autocomplete :customer, field, :full => true, :limit => 20
   end
-  auto_complete_for :order, :id
+  autocomplete :order, :id
 
+  autocomplete :customer, :address, :scopes => :email_addresses
   %w(phone_number email_address).each do |method|
-    define_method("auto_complete_for_customer_#{method.pluralize}") do
+    define_method("autocompletee_customer_#{method}") do
       klass = method.camelize.constantize
       column = klass.main_column
       scope = method.camelize.constantize.scoped.where(["LOWER(#{column}) LIKE ?", '%' + params[:customer][method.pluralize].downcase + '%'])
@@ -157,19 +157,16 @@ class Admin::OrdersController < Admin::BaseController
     field = params[:customer].keys.first
     value = params[:customer].values.first
 
+    scope = Customer.scoped
+
     if %w(phone_numbers email_addresses).include?(field)
       column = field.singularize.camelize.constantize.main_column
-      find_options = {
-        :include => field,
-        :conditions => ["#{field}.#{column} = ?", value]
-      }
+      scope = scope.where("#{field}.#{column} = ?", value).includes(field)
     else
-      find_options = {
-        :conditions => ["#{field} = ?", value] 
-      }
+      scope = scope.where("#{field} = ?", value)
     end
     
-    customer = Customer.find(:first, find_options)
+    customer = scope.first
       
     if params[:order_id]
       redirect_to contact_order_path(@order, :customer_id => customer.id)
@@ -235,7 +232,6 @@ class Admin::OrdersController < Admin::BaseController
   def find
     @customer = Customer.new
     @search = true
-    @javascripts = ['effects.js', 'controls.js']
   end
 
   def find_apply
@@ -623,7 +619,6 @@ class Admin::OrdersController < Admin::BaseController
   end
 
   def po
-    @stylesheets = ['orders', 'admin_orders']
     @purchase = Purchase.find(params[:id])
     
     respond_to do |format|
@@ -719,10 +714,6 @@ public
       @order.user = @user
       @order.save!
     end
-
-    @stylesheets = ['orders', 'admin_orders']
-    @javascripts = ['autosubmit.js', 'admin_orders', 'effects', 'controls', 'rails']
-    apply_calendar_header
     
     # Populate supplier - po - item list
     @suppliers = {}
@@ -955,14 +946,10 @@ public
       [msg.attr['RFC822.SIZE'], Mail.new(msg.attr['BODY[]'])]      
     end unless ids.empty?
 
-    @stylesheets = ['orders', 'admin_orders']
-
     render :layout => 'order'
   end
 
   def access
-    @stylesheets = ['orders', 'access']
-
     @sessions = SessionAccess.find(:all, :include => [:pages, :orders],
                                    :conditions =>
                                    "user_id IS NULL AND session_accesses.id IN (SELECT session_access_id FROM access.order_session_accesses WHERE order_id = #{@order.id})")

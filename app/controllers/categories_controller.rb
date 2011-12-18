@@ -111,9 +111,7 @@ public
   end
 
   # redirect to appropriate method
-  def main
-    @javascripts = ['rails.js', 'effects', 'controls'] if @user
-    
+  def main   
     @path = params[:path] ? params[:path].split('/') : []
     
     # Split @path and tail at meta point

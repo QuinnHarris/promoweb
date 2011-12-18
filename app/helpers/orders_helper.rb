@@ -72,102 +72,40 @@ module OrdersHelper
     end
   end
   
-  def text_field_predicated(object_name, method, complete_options = {})
+  def text_field_predicated(object_name, method, options = {})
     if @static
       instance_variable_get("@#{object_name}").send(method).to_s
     else
       if @search or @naked
-        text_field_with_auto_complete object_name, method, @search ? { :value => '' } : {}, complete_options.merge({ :after_update_element => 'on_select', :url => { :controller => '/admin/orders', :action => "auto_complete_for_#{object_name}_#{method}", :customer_id => @search ? nil : @order.customer } } )
+        autocomplete_field object_name, method, send("autocomplete_#{object_name}_#{method}_admin_orders_path"), options
       else
-        text_field object_name, method
+        text_field object_name, method, options
       end
     end
   end
   
-  def customer_field(name, complete_options = {})
-    str = '<td>' + text_field_predicated(:customer, name, complete_options) + '</td>'
+  def customer_field(name)
+    str = '<td>' + text_field_predicated(:customer, name) + '</td>'
     str += '<td>' + @similar.send(name) + '</td>' if @similar
     str
   end
   
-  # Lifted and modified from calendariffic plugin
-  def calendar_input(text_name, text_value, text_attributes={}, image_attributes={}, id_suffix = '')
-    image_name = 'start_cal'+id_suffix
-    image_attributes[:name] = image_name if image_name
-    image_attributes[:id] = image_name if image_name
-    date_format = '%Y-%m-%d' #'%m/%d/%y'
 
-    text_value = Date.today.strftime(date_format) if text_value.to_s.upcase.eql? 'TODAY'
-    imt = image_tag('date.png', image_attributes)
-    id_name = sanitize_to_id(text_name) + id_suffix
-    tft = text_field_tag(text_name, text_value, text_attributes.merge(:id => id_name))
-    script = %(<script language='javascript'>
-Calendar.setup({
-  inputField : '#{id_name}',
-  ifFormat : '#{date_format}',
-  button : '#{image_name}',
-  weekNumbers : false,
-  range : [#{yr = Time.now.year}, #{yr+1}],
-/*  disableFunc : function (date) { var ref = new Date(); return date.getTime() < ref.getTime(); }*/
-});
-</script>)
+  # Lifted from https://github.com/alloy/complex-form-examples/blob/master/app/helpers/projects_helper.br
+  def remove_child_link(f)
+    f.hidden_field(:_destroy) + link_to(image_tag('remove.png'), "javascript:void(0)", :class => "remove_child")
+  end
+ 
+  def add_child_link(form_builder, association, options = {})
+    name = image_tag('add.png') + " Add #{association.to_s.split('_').collect { |s| s.singularize.capitalize}.join(' ') }"
     
-    "#{tft}#{imt}#{script}"
-  end
+    template = form_builder.fields_for(association,
+                                       options[:object] || form_builder.object.class.reflect_on_association(association).klass.new,
+                                       :child_index => "in_dex") do |f|
+      render(:partial => options[:partial] || association.to_s.singularize,
+             :locals => {(options[:form_builder_local] || :f) => f})
+    end.gsub(/\s+/, ' ')
 
-  def calendar_input_time(text_name, text_value, text_attributes={}, image_attributes={}, id_suffix = '')
-    image_name = 'start_cal'+id_suffix
-    image_attributes[:name] = image_name if image_name
-    image_attributes[:id] = image_name if image_name
-    date_format = '%Y-%m-%d %H:%M' #'%m/%d/%y'
-
-    text_value = Date.today.strftime(date_format) if text_value.to_s.upcase.eql? 'TODAY'
-    imt = image_tag('date.png', image_attributes)
-    id_name = sanitize_to_id(text_name) + id_suffix
-    tft = text_field_tag(text_name, text_value, text_attributes.merge(:id => id_name))
-    script = %(<script language='javascript'>
-Calendar.setup({
-  inputField : '#{id_name}',
-  ifFormat : '#{date_format}',
-  showsTime : true,
-  button : '#{image_name}',
-  weekNumbers : false,
-  range : [#{yr = Time.now.year}, #{yr+1}],
-/*  disableFunc : function (date) { var ref = new Date(); return date.getTime() < ref.getTime(); }*/
-});
-</script>)
-    
-    "#{tft}#{imt}#{script}"
-  end
-
-
-  # Lifted from https://github.com/alloy/complex-form-examples/blob/master/app/helpers/projects_helper.rb
-  # CHANGE FOR RAILS 3
-  def remove_link(fields)
-    out = ''
-    out << fields.hidden_field(:_destroy)
-#    out << link_to(image_tag('remove.png'), "##{fields.object.class.name.underscore}", :class => 'remove')
-    out << link_to_function(image_tag('remove.png'), "if (confirm('Remove Item')) { $(this).up('.#{fields.object.class.name.underscore}').hide(); $(this).previous().value = '1'; }")
-    out
-  end
-  
-  # These use the current date, but they could be lots easier.
-  # Maybe just keep a global counter which starts at 10 or so.
-  # That would be good enough if we only build 1 new record in the controller.
-  #
-  # And this of course is only needed because Ryan's example uses JS to add new
-  # records. If you just build a new one in the controller this is all unnecessary.
-  
-  def add_link(cust, name, klass)
-    plural = name.pluralize
-    string = render(:partial => "/orders/#{name}", :locals => { :customer => cust, name.to_sym => klass.new })
-    string = string.gsub(/_attributes_\d+_/, '_attributes__index__')
-    string.gsub!(/attributes\]\[(\d+)\]\[/,'attributes][_index_][')
-    index = $1
-    javascript_tag("var #{name}_index = #{index};") + 
-    (link_to_function(image_tag('add.png') + " Add #{name.split('_').collect { |s| s.capitalize}.join(' ') }") do |page|
-       page << %{$('#{plural}').insert({ bottom: "#{escape_javascript string}".replace(/_index_/g, #{name}_index++) });
-}
-    end)
+    link_to(name, "javascript:void(0)", :class => "add_child", :"data-template" => template, :"data-association" => association)
   end
 end

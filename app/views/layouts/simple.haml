@@ -12,12 +12,7 @@
     - if @user
       = stylesheet_link_tag "global_admin"
     = stylesheet_link_tag controller.controller_name, :media => 'all'
-    - for sheet in @stylesheets || []
-      = stylesheet_link_tag sheet, :media => 'all'
     = stylesheet_link_tag 'print', :media => 'print'
-    = javascript_include_tag 'prototype'
-    - for script in @javascripts || []
-      = javascript_include_tag script
     /
       [if lte IE 6]>
       <link href="/stylesheets/iehacks.css" rel="Stylesheet" type="text/css"  />

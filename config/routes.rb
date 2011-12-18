@@ -69,7 +69,7 @@ Promoweb::Application.routes.draw do
   namespace 'admin' do
     resource :orders do
       %w(person_name company_name email_addresses phone_numbers).each do |name|
-        post "auto_complete_for_customer_#{name}"
+        get "autocomplete_customer_#{name}", :on => :collection
       end
       get 'create_email' # needed by Thunderbird plugin on NEW CUSTOMER
       get 'find'
@@ -150,7 +150,7 @@ Promoweb::Application.routes.draw do
   resources :orders, :only => [:index, :show] do
     collection do
       post 'add' => 'order_items#add'
-      post 'location_from_postalcode_ajax'
+      get 'location_from_postalcode_ajax'
     end
 
     member do
