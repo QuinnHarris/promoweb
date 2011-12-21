@@ -9,6 +9,17 @@ class Address < ActiveRecord::Base
     end
   end
 
+  @@postal_regex = { 'US' => /^\d{5}(-\d{4})?$/, 'CA' => /^\w\d\w\s*\d\w\d$/ }
+  def invalid_postal?
+    reg = @@postal_regex[country]
+    return "unknown country: #{country}" unless reg
+
+    return "blank postalcode" if postalcode.blank?
+
+    return nil if reg === postalcode
+    return "invalid postal format: #{postalcode} != #{reg}"
+  end
+
   def incomplete?
     %w(address1 city state postalcode).find_all do |name|
       send(name).blank?
@@ -23,7 +34,7 @@ class Address < ActiveRecord::Base
       address.province = region.abrev if region
     end
     address.postalcode = postalcode
-    #address.country = "USA"
+    address.country = country
     address.lines = [address1, address2].compact
     address
   end
