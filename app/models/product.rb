@@ -986,6 +986,8 @@ class Product < ActiveRecord::Base
         "http://www.gemline.com/gemline/products/style-detail.aspx?productid=#{data && data[:id]}"
       when "Leeds"
         "http://www.leedsworld.com/products/item/?item=#{supplier_num}"
+      when "Bullet Line"
+        "http://www.bulletline.com/products/item/?item=#{supplier_num}"
       when "Lanco"
         "http://www.lancopromo.com/product/#{supplier_num}"
       when "Prime Line"
@@ -994,8 +996,6 @@ class Product < ActiveRecord::Base
         "http://www.highcaliberline.com/productdesp_new.php?cid=6&scid=1&fcid=0&pid=#{supplier_num}"
       when /^Norwood /
         "http://norwood.com/product/#{supplier_num}/"
-      when "Bullet Line"
-        "http://www.bulletline.com/ViewItem.aspx?pn=#{supplier_num}"
       when "LogoIncluded"
         "http://www.logoincluded.com/products/#{data && data[:path]}"
       when "DigiSpec"
