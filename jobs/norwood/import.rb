@@ -2,7 +2,7 @@ require 'rexml/document'
 
 class NorwoodAll
   def initialize
-    @year = Date.today.year
+    @year = (Date.today + 7).year
     @colors = %w(Black White 186 202 208 205 211 1345 172 Process\ Yellow 116 327 316 355 341 Process\ Blue 293 Reflex\ Blue 281 2587 1545 424 872 876 877)
     @list =
 [['AUTO', 'Barlow'],
@@ -119,7 +119,7 @@ class NorwoodCSV < GenericImport
 
       # PAckage
       product_data['package_units'] = Integer(row['Pack Size'])
-      unless row['Pack Weight'].blank?
+      unless row['Pack Weight'].blank? or (row['Pack Weight'] == 'NA')
         raise "Unkown weight: #{row['Pack Weight']}" unless /^(\d+(?:\.\d)?) ?(?:((?:lbs?)|(?:oz))\.?)?$/ === row['Pack Weight']
         product_data['package_weight'] = Float($1) * (($2 == 'oz') ? (1.0/16.0) : 1.0)
       end
