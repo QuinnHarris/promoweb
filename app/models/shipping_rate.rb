@@ -77,10 +77,14 @@ end
 class UPSShippingRate < ShippingRate
   def invalid?
     return "No supplier address" unless supplier.address
-    return "Supplier #{msg}" if msg = supplier.address.invalid_postal?
+    if msg = supplier.address.invalid_postal?
+      return "Supplier #{msg}"
+    end
 
     return "No customer address" unless ship_address = customer.ship_address || customer.default_address
-    return "Customer #{msg}" if msg = ship_address.invalid_postal?
+    if msg = ship_address.invalid_postal?
+      return "Customer #{msg}"
+    end
 
     return "No Package Units" unless (package_units = product.package_units) and (package_units > 0)
     

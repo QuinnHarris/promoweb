@@ -72,11 +72,12 @@
 
         - unless absolute
           %strong
-            = link_to order_item.product.name.gsub('&amp;', '&'), url_for_product(order_item.product)
+            = link_to url_for_product(order_item.product) do
+              != order_item.product.name
         - else
           %strong
             %a{ :href => "http://www.mountainofpromos.com/products/#{order_item.product.id}" }
-              = order_item.product.name
+              != order_item.product.name
         %em
           (for
           = order_item.quantity

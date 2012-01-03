@@ -102,8 +102,7 @@ class Admin::OrdersController < Admin::BaseController
           if !transaction.is_a?(PaymentError)
             @order.save_invoice!
 
-            if @order.task_completed?(PaymentOverrideOrderTask) and
-                @order.task_ready?(FirstPaymentOrderTask)
+            if @order.task_ready?(FirstPaymentOrderTask)
               task_complete({}, FirstPaymentOrderTask)
             end
 

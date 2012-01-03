@@ -98,7 +98,8 @@
                       - if @credit
                         = submit_tag 'Credit'
                       - elsif @authorize
-                        = submit_tag 'Authorize'
+                        - if true #method.authorizeable?
+                          = submit_tag 'Authorize'
                         - if allowed?
                           .admin= submit_tag 'Charge'
                       - else
