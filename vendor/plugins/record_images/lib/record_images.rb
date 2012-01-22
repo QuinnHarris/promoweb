@@ -41,8 +41,8 @@ module RecordImages
 
   module ClassMethods
     def record_images(options)
-      write_inheritable_attribute(:image_options, options)
-      class_inheritable_reader :image_options
+      class_attribute :image_options
+      self.image_options = options
       
       class_eval <<-EOV
         include RecordImages::InstanceMethods

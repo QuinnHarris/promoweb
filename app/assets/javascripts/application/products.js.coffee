@@ -55,6 +55,7 @@ set_layout = ->
   image = $("#prod_img")[0]
   content = $("#content")[0]
   prices = $("#prices")[0]
+  return unless prices?
   offset = 0
   for elem in $("#price_calc, #price_list")
     o = elem.offsetWidth + elem.offsetLeft
@@ -277,8 +278,8 @@ class window.ProductPricing extends PricingBase
 
   _onKeyPress: (event) =>
     kC = $.ui.keyCode
-    return true if event.which in [kC.BACKSPACE, kC.TAB, kC.ENTER, kC.ESCAPE, kC.LEFT, kC.UP, kC.RIGHT, kC.DOWN, kC.DELETE, kC.HOME, kC.END, kC.PAGE_UP, kC.PAGE_DOWN, kC.INSERT]
-    return true if (event.which >= 48 and event.which <= 57) or (event.which >= 96 and event.which <= 105)
+    return true if event.keyCode in [kC.BACKSPACE, kC.TAB, kC.ENTER, kC.ESCAPE, kC.LEFT, kC.UP, kC.RIGHT, kC.DOWN, kC.DELETE, kC.HOME, kC.END, kC.PAGE_UP, kC.PAGE_DOWN, kC.INSERT]
+    return true if (event.which >= 48 and event.which <= 57)
     event.preventDefault()
     false
 

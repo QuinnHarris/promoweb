@@ -866,7 +866,8 @@ public
       return unless obj
 
       (obj.respond_to?(:to_destroy?) and obj.to_destroy?) ? obj.destroy : obj.save!
-            
+     
+      response.content_type = Mime::JSON
       if obj.respond_to?(:normal_h) and %w(quantity count).include?(@attr)
 #      if (klass == OrderItemVariant and attr == "quantity") or
 #         (klass == OrderItemDecoration and attr == "count")

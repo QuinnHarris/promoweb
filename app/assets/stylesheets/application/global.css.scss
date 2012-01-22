@@ -69,7 +69,7 @@ div#header {
     height: 35px;
     margin: 0;
     background-color: $nav-background;
-    @include linear-gradient(color-stops($nav-background, darken($nav-background, 15%) 75%, $nav-background));
+    @include background-image(linear-gradient(color-stops($nav-background, darken($nav-background, 15%) 75%, $nav-background)));
     margin-left: 40px;
     
     ul#static {

@@ -11,5 +11,10 @@
   = text_field_tag "#{entry.class}-#{entry.id}-quantity", entry.quantity, :class => 'num', :readonly => @price_lock
 %td.num ???
 %td.num.admin ???
-%td.num.admin ???
-%td.num.admin ???
+%td.num.admin.profit
+  = text_field_tag "profit-#{entry.id}", "???", :class => 'money null', :readonly => @price_lock
+%td.num.admin.margin
+  = text_field_tag "margin-#{entry.id}", "???", :class => 'money null', :readonly => @price_lock
+%td.admin
+  \%
+

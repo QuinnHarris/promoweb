@@ -78,9 +78,9 @@
         %td.admin
         %td.num.admin= text_field_tag "OrderItem-#{item.id}-shipping_cost", item.shipping_cost.to_s, :class => 'money null', :readonly => purchase_lock
         %td.num.admin
-        %td.num.admin
+        %td.num.admin.profit
           = text_field_tag "profit-#{item.id}", "???", :class => 'money null profit', :readonly => @price_lock
-        %td.num.admin
+        %td.num.admin.margin
           = text_field_tag "margin-#{item.id}", "???", :class => 'money null margin', :readonly => @price_lock
         %td.admin
           \%
@@ -96,19 +96,19 @@
         %td
           - unless @price_lock || purchase_lock
             %div
-              = link_to(image_tag("add.png")+" Add General Entry", { :action => :order_item_entry_insert, :id => item.id, :unlock => @unlock }, :remote => true, :class => 'add')
+              = link_to(image_tag("add.png")+" Add General Entry", { :action => :order_item_entry_insert, :id => item.id, :unlock => @unlock }, :remote => true, 'data-type' => 'html', :class => 'add')
             %div.add_dec
               %h4= image_tag("add.png") + " Add Decorations"
               - decors = [DecorationTechnique.find_by_name('General')] + item.product.decorations.collect { |d| d.technique.id != 1 ? d.technique : nil }.uniq.compact
-              != decors.collect { |tech| link_to(tech.name, { :action => :order_item_decoration_insert, :id => item.id, :technique => tech.id, :unlock => @unlock }, :remote => true, :class => 'add dec') }.join(', ')
+              != decors.collect { |tech| link_to(tech.name, { :action => :order_item_decoration_insert, :id => item.id, :technique => tech.id, :unlock => @unlock }, :remote => true, 'data-type' => 'html', :class => 'add dec') }.join(', ')
         %td.num ???
         %td.num ???
         %td.num ???
         %td.num.admin ???
         %td.num.admin ???
         %td.num.admin ???
-        %td.num.admin ???
-        %td.num.admin ???
+        %td.num.admin.profit ???
+        %td.num.admin.margin ???
         %td.admin %
       %tr.num
         %th Unit:
