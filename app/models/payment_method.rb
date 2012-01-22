@@ -140,6 +140,7 @@ class PaymentMethod < ActiveRecord::Base
 #  validates_uniqueness_of :display_number, :scope => :customer_id
   
   def creditable?; false; end
+  def authorizeable; false; end
   def type_notes; nil; end
 
   def revoke!; end;
@@ -188,6 +189,7 @@ class PaymentCreditCard < OnlineMethod
   def type_name; "Credit Card"; end
   def has_name?; true; end
   def has_number?; true; end
+  def authorizeable?; true; end
 
   def revokable?
     billing_id
@@ -462,6 +464,7 @@ class PaymentCheck < PaymentMethod
 end
 
 class PaymentSendCheck < PaymentCheck
+  def authorizeable; false; end
   def type_name; "Mailed Check"; end
   
   def type_notes

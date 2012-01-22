@@ -593,9 +593,10 @@ class CancelOrderTask < OrderTask
     
     unless order.task_completed?(FinalPaymentOrderTask)
       return nil if order.total_chargeable.zero?
-      if order.task_completed?(FirstPaymentOrderTask)
-        return "first Payment made but not final payment"
-      end
+      return "order charged" unless order.total_charge.zero?
+#      if order.task_completed?(FirstPaymentOrderTask)
+#        return "first Payment made but not final payment"
+#      end
       return "order placed but no final payment" if order.items.to_a.find { |i| i.task_completed?(OrderSentItemTask) }
     end
     

@@ -333,6 +333,6 @@ class AcceptedItemTask < OrderItemTask
   end
 
   def execute_duration
-    2.days
+    5.days
   end
 end
