@@ -383,7 +383,8 @@ public
 
   alias :authorize_record :authorize
   def authorize(order, amount, comment)
-    txn = transactions.where("type in ('PaymentAuthorize', 'PaymentCharge')").order('created_at DESC').first
+#    txn = transactions.where("type in ('PaymentAuthorize', 'PaymentCharge')").order('type, created_at DESC').first
+    txn = transactions.where(:type => 'PaymentAuthorize').first
     logger.info("CreditCard Authorize: #{order.id} = #{amount} for #{id} from #{txn.inspect}")
     res = gateway.status(txn.id)
     logger.info("Status #{txn.id} : #{res.inspect}")
@@ -416,7 +417,7 @@ public
     transaction = super(order, amount, comment)
     res = gateway.status(charge_transaction.id)
     logger.info("Status #{charge_transaction.id} : #{res.inspect}")
-    response = gateway.credit(amount, res.params["TransactionID"], #charge_transaction.number,
+    response = gateway.credit(amount, res.params['success'] ? res.params["TransactionID"] : charge_transaction.number,
                               gateway_options(order, transaction)
                                  .merge(:order_id => transaction.id))
     logger.info("Gateway Response: #{response.inspect}")
@@ -446,6 +447,8 @@ class PaymentACHCheck < OnlineMethod
   def has_number?
     true
   end
+
+  def useable?; transactions.empty?; end
 end
 
 class PaymentCheck < PaymentMethod
