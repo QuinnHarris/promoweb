@@ -7,8 +7,10 @@ module ActiveMerchant #:nodoc:
         add_order_number(post, options)
         post[:TransactionAmount] = amount(money)
         add_creditcard(post, creditcard)
-        add_invoice(post, options)
-        add_address(post, options)
+        if status_extended_valid?(options)
+          add_invoice(post, options)
+          add_address(post, options)
+        end
         add_customer_data(post, options)
         commit(:authorization, post)
       end
@@ -97,7 +99,7 @@ module ActiveMerchant #:nodoc:
         post[:ShippingAmount] = options[:shipping_amount] unless options[:shipping_amount].blank?
         
         if order_items = options[:items]
-          post[:OrderString] = order_items.collect do |item|
+          post[:orderstring_lvl3] = post[:OrderString] = order_items.collect do |item|
             %w(sku description cost quantity taxable ignore_avs measure discount extended commodity vat_amount vat_rate alt_amount tax_rate tax_type tax_amount).collect do |name|
               item[name.to_sym].to_s.tr('~','-') + '~'
             end.join + '||'
