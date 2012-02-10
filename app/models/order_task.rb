@@ -512,7 +512,7 @@ class CompleteOrderTask < OrderTask
     subject = "Order Complete, Review Request"
     header = 
       %q(Thank you for ordering from Mountain Xpress Promotions, LLC.
-<a href="http://ratepoint.com/tellus/77047">I would greatly appreciate if you would review our service by clicking on this link.</a>
+<a href="http://www.shopperapproved.com/surveys/full.php?id=3559">I would greatly appreciate if you would review our service by clicking on this link.</a>
 I hope we have served you well and look forward to working with you again!)
 
     CustomerSend.dual_send(self, subject, header)
