@@ -712,6 +712,11 @@ public
         success = false
       end
 
+      unless response.params['szAuthorizationDeclinedMessage'].blank?
+        @credit_card.errors.add(:number, response.params['szAuthorizationDeclinedMessage'])
+        success = false
+      end
+
       unless %w(X Y).include?(response.avs_result['code'])
 #        @address.errors.add_to_base("Address Verfification Failed")
         unless response.avs_result['street_match'] == 'Y'
