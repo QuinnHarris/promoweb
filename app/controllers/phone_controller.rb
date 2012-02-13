@@ -102,14 +102,19 @@ class PhoneController < ActionController::Base
 
   # Used by Thunderbird Addon
   def email_status
-    author = Mail::Address.new(params[:author].gsub("\n",''))
-    recipients = Mail::AddressList.new(params[:recipients].gsub("\n",'')).addresses
-    subject = params[:subject]
-
-    emails = [author, recipients].flatten.find_all { |addr| addr.domain != 'mountainofpromos.com' }
-
-    uri = nil
     texts = []
+
+    begin
+      author = Mail::Address.new(params[:author].gsub("\n",''))
+      recipients = Mail::AddressList.new(params[:recipients].gsub("\n",'')).addresses
+      emails = [author, recipients].flatten.find_all { |addr| addr.domain && (addr.domain != 'mountainofpromos.com') }
+    rescue Mail::Field::ParseError
+      emails = []
+      texts << "Address Parse Error"
+    end
+
+    subject = params[:subject]
+    uri = nil
 
     emails.find do |addr|
       @supplier = Supplier.find(:first, :conditions => ["lower(po_email) ~ ?", addr.domain.downcase], :order => 'parent_id DESC')
