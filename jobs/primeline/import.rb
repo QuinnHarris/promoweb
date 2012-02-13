@@ -43,6 +43,8 @@ class PrimeLineWeb < GenericImport
     %w(Yellow 116 1235 021 1787 199 202 208 225 267 2925 287 281 Process\ Blue Reflex\ Blue 327 Green 347 343 4635 423 877 873 Black White)
   end
 
+  @@display = 256
+
   def process_root
     fetch = WebFetch.new('http://www.primeline.com/')
     doc = Nokogiri::HTML(open(fetch.get_path))
@@ -56,13 +58,13 @@ class PrimeLineWeb < GenericImport
 
     categories.each do |path, category_list|
 #      puts "Category: #{category_list.inspect}"
-      url = "http://www.primeline.com/#{path}&TotalDisplay=1024"
+      url = "http://www.primeline.com/#{path}&TotalDisplay=#{@@display}"
       process_category(category_list.uniq.join(' '), url)
     end
   end
   
   def products_list(name)
-    fetch = WebFetch.new("http://www.primeline.com/Products/ProductList.aspx?SearchType=#{name}&TotalDisplay=1024")
+    fetch = WebFetch.new("http://www.primeline.com/Products/ProductList.aspx?SearchType=#{name}&TotalDisplay=#{@@display}")
     doc = Nokogiri::HTML(open(fetch.get_path))
     
     doc.xpath("//table[@id='Table4']/tr/td/div/a").to_a.collect do |a|
@@ -110,6 +112,7 @@ class PrimeLineWeb < GenericImport
       count += 1
       #      process_product(category, "http://www.primeline.com/Products/#{a['href'].strip}", @tags[a['href']])
     end
+    raise "Overflow" if count >= @@display
     puts "  Products: #{count}"
   end
   
