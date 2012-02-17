@@ -57,49 +57,49 @@ class Admin::UsersController < Admin::BaseController
   end
 
   def new
-    @user = UserPass.new
+    @this_user = User.new
   end
 
   def create
-    @user = UserPass.new(params[:user])
+    @this_user = UserPass.new(params[:user])
     
-    if @user.save
-      User.authenticate(@user.login, params[:user][:password])
+    if @this_user.save
+      User.authenticate(@this_user.login, params[:user][:password])
       flash['notice']  = "Signup successful"
       redirect_back_or_default :controller => :orders, :action => :index
     else
-      render :action => 'new'
+      redirect_to :action => :index
     end
   end
   
   def edit
     if params[:user] and params[:user][:password].empty?
-      @user = User.find(params[:id])
+      @this_user = User.find(params[:id])
       params[:user].delete(:password_confirmation)
     else
-      @user = User.find(params[:id])
+      @this_user = User.find(params[:id])
     end
     
     if params[:user]
       params[:user][:email] = nil if params[:user][:email].blank?
-      if @user.update_attributes(params[:user])
+      if @this_user.update_attributes(params[:user])
         redirect_to :action => :index
         return
       end
     end
     
-    @user.password = nil
+    @this_user.password = nil
   end
 
   def update
     if params[:user][:email].blank?
-      @user = User.find(params[:id])
+      @this_user = User.find(params[:id])
       params[:user][:email] = nil 
     else
-      @user = UserPass.find(params[:id])
+      @this_user = UserPass.find(params[:id])
     end
 
-    if @user.update_attributes(params[:user])
+    if @this_user.update_attributes(params[:user])
       redirect_to :back
     else
       render :action => 'edit'
@@ -111,21 +111,21 @@ class Admin::UsersController < Admin::BaseController
   end
 
   def password
-    @user = UserPass.find(session[:user_id])
+    @this_user = UserPass.find(session[:user_id])
     
     if request.post?
-      if User.authenticate(@user.login, params[:user].delete(:old_password))
-        if @user.update_attributes(params[:user])
+      if User.authenticate(@this_user.login, params[:user].delete(:old_password))
+        if @this_user.update_attributes(params[:user])
           redirect_to :controller => :orders, :action => :index
           return
         end
       else
-        @user.errors.add(:old_password, "incorrect")
+        @this_user.errors.add(:old_password, "incorrect")
       end
     end
     
-    @user.password = nil
-    @user.password_confirmation = nil
-    class << @user; def old_password; end; end
+    @this_user.password = nil
+    @this_user.password_confirmation = nil
+    class << @this_user; def old_password; end; end
   end
 end

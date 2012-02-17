@@ -1,6 +1,6 @@
 = error_messages_for 'user'
 
-= form_for @user, { :url => @user.new_record? ? admin_user_path : admin_user_path(@user) } do |u|
+= form_for [:admin, @this_user] do |u|
   %table.form
     %caption Add User
     %tr
@@ -35,4 +35,4 @@
         = radio_button :user, :role, :artwork
         Process Artwork
 
-  = submit_tag @user.new_record? ? 'Add User' : 'Update User'
+  = submit_tag @this_user.new_record? ? 'Add User' : 'Update User'
