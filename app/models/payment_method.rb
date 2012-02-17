@@ -403,10 +403,11 @@ public
     return authorize(order, amount, comment) unless txn
 
     logger.info("CreditCard Charge: #{order.id} = #{amount} for #{id} from #{txn.inspect}")
-    res = gateway.status(txn.id)
+    res = gateway.status(order_number = (txn.order_number || txn.id))
     logger.info("Status #{txn.id} : #{res.inspect}")
 
     transaction = super(order, amount, comment)
+    transaction.order_number = order_number
     response = gateway.capture(amount, res.params["TransactionID"],
                                gateway_options(order, transaction)
                                  .merge(:order_id => transaction.id))
@@ -417,7 +418,7 @@ public
   def credit(order, amount, comment, charge_transaction)
     logger.info("CreditCard Credit: #{order.id} = #{amount} for #{id} : #{charge_transaction.id}")
     transaction = super(order, amount, comment)
-    res = gateway.status(charge_transaction.id)
+    res = gateway.status(charge_transaction.order_number || charge_transaction.id)
     logger.info("Status #{charge_transaction.id} : #{res.inspect}")
     response = gateway.credit(amount, res.params['success'] ? res.params["TransactionID"] : charge_transaction.number,
                               gateway_options(order, transaction)
