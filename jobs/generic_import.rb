@@ -30,6 +30,8 @@ def apply_decorations(supplier_name)
   end
 end
 
+class XLSHeaderError < StandardError
+end
 
 class XLSFile
   def initialize(file)
@@ -41,10 +43,17 @@ class XLSFile
   end
   
   attr_reader :worksheet
+
+  def header?(name)
+    @header.index(name.downcase)
+  end
   
-  def get(row, name)
-    raise "Unknown Header: #{name}" unless i = @header.index(name.downcase)
-    row.at(i)
+  def get(row, names)
+    [names].flatten.each do |name|
+      next unless i = header?(name)
+      return row.at(i) 
+    end
+    raise XLSHeaderError, "Unknown Header: #{names.inspect}"
   end
 end
 

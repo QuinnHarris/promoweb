@@ -813,7 +813,7 @@ public
     Order.transaction do
       if params[:commit].include?('Reject')
         task = @order.task_revoke([ArtAcknowledgeOrderTask, ArtPrepairedOrderTask], { :customer_comment => @order_task.comment })
-        redirect_to :action => :status
+        redirect_to status_order_path(@order)
       elsif params[:commit].include?('Accept')
         task_complete({ :data => { :email_sent => !params[:commit].include?('Without Email'), :customer_comment => @order_task.comment } }, ArtAcknowledgeOrderTask)
         redirect_to :task => 'ArtAcknowledgeOrder'
