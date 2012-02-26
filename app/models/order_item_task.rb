@@ -274,11 +274,11 @@ class ReconciledItemTask < OrderItemTask
 #  def status; false; end
 #  def admin; true; end
   def execute_duration
-    5.days
+    10.days
   end
 
   def complete_estimate
-    (depends_on && depends_on.first.ship_date) ? depends_on.first.ship_date.add_workday(2.days) : super
+    (depends_on && depends_on.first.ship_date) ? depends_on.first.ship_date.add_workday(execute_duration) : super
   end
 end
 

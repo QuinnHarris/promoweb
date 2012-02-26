@@ -2,8 +2,8 @@
 require 'rexml/document'
 
 class HighCaliberLine < GenericImport
-  def initialize
-    @src_file = File.join(JOBS_DATA_ROOT,"High Caliber Line.xls")
+  def initialize(date)
+    @date = date
     @domain = "www.highcaliberline.com"
     super "High Caliber Line"
   end
@@ -11,11 +11,15 @@ class HighCaliberLine < GenericImport
   def imprint_colors
     %w(186 021 Process\ Yellow 123 161 347 342 281 Process\ Blue Reflex\ Blue 320 266 225 195 428 430 White Black 877 872)
   end
-  
-  def parse_products
-    puts "Reading XML"
-    xls = XLSFile.new(@src_file)
 
+
+  def parse_products
+    parse_file("HCL-US Master Excel on #{@date}.xls")
+    parse_file("HCL-US Closeout Master Excel on #{@date}.xls", 'Closeout')
+    parse_file("HCL-US Closeout Master Excel on #{@date}.xls", 'Closeout', 2)
+  end
+
+  def parse_file(file, tags = [], num = 1)
     lanyard_color_list = %w(black brown burgundy forest\ green gray green light\ blue navy\ blue orange purple red reflex\ blue teal white yellow).collect do |name|
       [name.capitalize, name.capitalize, LocalFetch.new(File.join(JOBS_DATA_ROOT, 'HighCaliber-Lanyard-Swatches'), "#{name}.jpg")]
     end
@@ -23,9 +27,10 @@ class HighCaliberLine < GenericImport
     name_list = %w(Maroon Red Grey Orange Gold Yellow Teal Bright\ Pink Bright\ Green Pink Bright\ Orange Purple Green Deep\ Royal Royal Navy White Charcoal Black)
     pms_list = %w(209 200 429 165 123 YELLOW 3165 812 802 RHODAMINE RED 804 VIOLET 3308 286 293 289 WHITE 432 PROCESS\ BLACK)
     neoprene_color_list = name_list.zip(pms_list).collect { |n, p| [n, "#{n} (PMS #{p})"] }
-    
-    puts "Parsing"
-    xls.worksheet.each(1) do |row|
+
+    puts "Parsing: #{file} #{num}"
+    xls = XLSFile.new(File.join(JOBS_DATA_ROOT, file))
+    xls.worksheet.each(num) do |row|
       product_data = {}
       
       {
@@ -48,7 +53,7 @@ class HighCaliberLine < GenericImport
       end
 
       no_less_than_min = no_blank = nil
-      product_data['tags'] = []
+      product_data['tags'] = [tags].flatten
       case product_data['description']
       when /BioGreen/
         product_data['tags'] << 'Eco'
@@ -60,10 +65,14 @@ class HighCaliberLine < GenericImport
         
       
       # Categories
-      categories = %w(Category Sub-Categories).collect do |catname|
-        str = xls.get(row, catname)
-        str && str.strip.gsub('&amp;','&').gsub(/\s+/, ' ')
-      end.compact
+      begin
+        categories = %w(Category Sub-Categories).collect do |catname|
+          str = xls.get(row, catname)
+          str && str.strip.gsub('&amp;','&').gsub(/\s+/, ' ')
+        end.compact
+      rescue XLSHeaderError
+        categories = []
+      end
       
       categories.delete_if do |category|
         case category
@@ -133,14 +142,22 @@ class HighCaliberLine < GenericImport
         })
       end
       
-      # Price Info (common to all variants)     
-      price_list = (1..5).collect do |num|
-        qty = xls.get(row, "Qty #{num}")
-        next if qty.blank?
-        { :minimum => Integer(qty.is_a?(String) ? qty.gsub(/[^0-9]/,'') : qty),
-          :marginal => Money.new(Float(xls.get(row, "Price #{num}"))),
-          :fixed => Money.new(0) }
-      end.compact
+      # Price Info (common to all variants)
+      if xls.header?('Minimum Qty')
+        qty = xls.get(row, "Minimum Qty")
+        price_list =
+          [{ :minimum => Integer(qty.is_a?(String) ? qty.gsub(/[^0-9]/,'') : qty),
+             :marginal => Money.new(Float(xls.get(row, %w(Price\ 1 Crazy\ Closeout\ Price)))),
+             :fixed => Money.new(0) }]
+      else
+        price_list = (1..5).collect do |num|
+          qty = xls.get(row, "Qty #{num}")
+          next if qty.blank?
+          { :minimum => Integer(qty.is_a?(String) ? qty.gsub(/[^0-9]/,'') : qty),
+            :marginal => Money.new(Float(xls.get(row, "Price #{num}"))),
+            :fixed => Money.new(0) }
+        end.compact
+      end
 
       if price_list.empty?
         puts "Empty Price List"
@@ -172,7 +189,7 @@ class HighCaliberLine < GenericImport
 
       # Leed Time
       begin
-        case xls.get(row, 'Production Time')
+        case production_time = xls.get(row, 'Production Time')
         when /^(\d{1,2})-(\d{1,2}) Day/
           min, max = Integer($1), Integer($2)
         when /^(\d+) Day/i
@@ -187,10 +204,11 @@ class HighCaliberLine < GenericImport
           min = max = Integer($1)*5
         else
           min = max = nil
-          puts "Unknown: #{type}"
+          puts "Unknown: #{production_time}"
         end
         product_data['lead_time_normal_min'] = min
         product_data['lead_time_normal_max'] = max
+      rescue XLSHeaderError
       end
       
       if dimension = xls.get(row, 'Size')
@@ -227,8 +245,5 @@ class HighCaliberLine < GenericImport
       
       add_product(product_data)
     end
-
-    # Remove California Line
-    @product_list.delete_if { |p| p['supplier_categories'].include?('California Line') }
   end
 end

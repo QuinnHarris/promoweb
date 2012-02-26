@@ -501,9 +501,9 @@ class Admin::ArtworkController < Admin::OrdersController
     end
 
     props.each do |key, list|
-      info_list << "#{key.capitalize}: #{list.join(', ')}"
+      info_list << "#{key.capitalize}: #{list.uniq.join(', ')}"
     end
-    info_list << "Imprint: #{imprint.join(', ')}" unless imprint.empty?
+    info_list << "Imprint: #{imprint.uniq.join(', ')}" unless imprint.empty?
 
     if decoration.order_item.product.product_images.empty?
       product_image = decoration.order_item.product.image_path_absolute('main', 'jpg')
