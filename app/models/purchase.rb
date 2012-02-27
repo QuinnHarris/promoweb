@@ -79,7 +79,7 @@ class Purchase < ActiveRecord::Base
       when "High Caliber Line"
       "http://icheck.highcaliberline.com/partqtypopup/PartQtyPopup.aspx?Action=OrderStatus&CustNbr=#{supplier.account_number}&ASI=&SO=&PO=#{purchase_order.quickbooks_ref}"
       when "Bullet Line"
-      "http://www.bulletline.com/distributorservices/MyBulletLine.aspx?view=quickorder&pono=#{purchase_order.quickbooks_ref}&cusno=81301"
+      "http://www.mybulletline.com/distributorservices/MyBulletLine.aspx?view=quickorder&pono=#{purchase_order.quickbooks_ref}&cusno=81301"
     end
   end
   

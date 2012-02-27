@@ -219,7 +219,7 @@ module UPS
 
       @@code_desc = {
         '01' => 'UPS Next Day Air',
-        '02' => 'UPS 2nd',
+        '02' => 'UPS 2nd Day',
         '03' => 'UPS Ground',
         '07' => 'UPS Worldwide Express',
         '08' => 'UPS Worldwide Expedited',
