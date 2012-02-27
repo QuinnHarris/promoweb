@@ -93,9 +93,9 @@ class Order < ActiveRecord::Base
   def save_invoice!(comment = nil)
     invoice = invoices.last
     if invoice and invoice.new_record?
+      save_price!
       invoice.comment = comment
       invoice.save!
-      save_price!
     end
   end
 
