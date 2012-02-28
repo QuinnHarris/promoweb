@@ -85,13 +85,13 @@ xml.rss :version => '2.0', 'xmlns:g' => 'http://base.google.com/ns/1.0' do
           xml.tag!('g:condition', 'new')
           
           if product.product_images.empty?
-            images = ["data/product/#{product.id}/#{product.id}_large_1.jpg"]
+            images = ["/data/product/#{product.id}/#{product.id}_large_1.jpg"]
           else
             images = product.product_images.to_a.sort_by { |i| i.variants.empty? ? 0 : 1 }.collect { |i| i.image.url(:medium) }
           end
           xml.tag!('g:image_link', "http://www.mountainofpromos.com#{images.first}")
           images[1..10].each do |i|
-            xml.tag!('g:additional_image_link', "http://www.mountainofpromos.com/#{i}")
+            xml.tag!('g:additional_image_link', "http://www.mountainofpromos.com#{i}")
           end
           
           xml.tag!('g:brand', product.supplier.name)
