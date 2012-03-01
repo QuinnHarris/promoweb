@@ -181,7 +181,7 @@ class GemlineXML < GenericImport
         end
 
         val
-      end
+      end.compact
 
       prod_categories ||= []
 

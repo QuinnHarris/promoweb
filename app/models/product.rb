@@ -997,7 +997,7 @@ class Product < ActiveRecord::Base
       when /^Norwood /
         "http://norwood.com/product/#{supplier_num}/"
       when "LogoIncluded"
-        "http://www.logoincluded.com/products/#{data && data[:path]}"
+        "http://www.logoincluded.com/products/detail.asp?partnum=#{supplier_num}"
       when "DigiSpec"
         data && data[:url]
       when "Ash City"
