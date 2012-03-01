@@ -387,7 +387,7 @@ module UPS
         '1DA' => 'UPS Next Day Air',
         '1DP' => 'UPS Next Day Air Saver',
         '2DM' => 'UPS 2nd Day Air A.M.',
-        '2DA' => 'UPS 2nd',
+        '2DA' => 'UPS 2nd Day',
         '3DS' => 'UPS 3 Day Select',
         'GND' => 'UPS Ground',
 #        '07' => 'UPS Worldwide Express',

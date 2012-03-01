@@ -119,7 +119,7 @@ class LeedsXLSProducts < XLSFile
     end
     
     costs = [
-        { :fixed => Money.new(36.00),
+        { :fixed => Money.new(40.00),
           :minimum => ((prices.first[:minimum] + 0.5) / 2).to_i,
           :marginal => (prices[-1][:marginal] * 0.6).round_cents
         },
