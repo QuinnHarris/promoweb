@@ -24,7 +24,7 @@ class Artwork < ActiveRecord::Base
   belongs_to :group, :class_name => 'ArtworkGroup'
   def customer; group.customer; end
 
-  has_attached_file :art, :url => proc { |r| "/customer/:prefix:uuid/:fullfilename" }, :path => "#{DATA_ROOT}:url", :whiny_thumbnails => false, :styles => { :thumb => { :geometry => "160x100", :format => :png } }, :processors => [:flexThumbnail]
+  has_attached_file :art, :url => "/customer/:prefix:uuid/:fullfilename", :path => "#{DATA_ROOT}:url", :whiny_thumbnails => false, :styles => { :thumb => { :geometry => "160x100", :format => :png } }, :processors => [:flexThumbnail]
 
   after_post_process :clean_nil
   def clean_nil

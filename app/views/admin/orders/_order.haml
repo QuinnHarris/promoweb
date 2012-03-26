@@ -21,8 +21,7 @@
           %td{ :rowspan => "2" }
             - unless locked
               %div
-                = link_to(image_tag("add.png")+" Add General Entry to #{order.class}", { :action => :order_entry_insert, :id => order.id, :klass => order.class.to_s, :unlock => @unlock }, :remote => true, :class => 'add')
-                /:complete => "entry_insert(request, '#{order.class}-#{order.id}', false)"
+                = link_to(image_tag("add.png")+" Add General Entry to #{order.class}", { :action => :order_entry_insert, :id => order.id, :klass => order.class.to_s, :unlock => @unlock }, :remote => true, 'data-type' => 'html', :class => 'add')
           %td.num{ :colspan => "3" } Total:
           %td.money.num ???
           %td.money.num.admin ???

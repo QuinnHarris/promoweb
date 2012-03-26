@@ -760,7 +760,7 @@ public
     Kernel.const_get(klass_name)
   end
 
- def auto_complete_generic
+  def auto_complete_generic
     id_str, value = params.find { |k, v| /^\w+-\d+-description$/ === k }
     klass_name, id, attr, prop = id_str.split('-')
 
@@ -773,6 +773,9 @@ public
     
     render :inline => "<%= auto_complete_result @items, 'description' %>"
   end
+
+  autocomplete :order_item_entry, :description
+  autocomplete :order_item_decoration, :description
   
   def order_entry_insert
     order_locks
@@ -816,21 +819,17 @@ public
   end
 
   def shipping_set
-    klass_name, id, attr = params[:item_id].split('_')
-    item = @order.items.find(id)
+    klass_name, id, attr = params[:id].split('_')
+    item = OrderItem.find(id)
     type, code = params[:value].split('-')
    
     item.shipping_type = type
     item.shipping_code = code
     item.save!
 
-
-    rate = item.shipping
-    if rate
-      render :inline => item.normal_h.to_json
-    else
-      logger.error("Unknwon Rate")
-      render :inline => item.normal_h.to_json
+    logger.error("Unknwon Rate") unless item.shipping
+    respond_to do |format|
+      format.json { render :json => item.normal_h }
     end
   end
 
@@ -855,7 +854,7 @@ public
       end
     end
 
-    render :inline => "{}"
+    render :json => {}
   end
 
   def set
@@ -866,15 +865,16 @@ public
 
       (obj.respond_to?(:to_destroy?) and obj.to_destroy?) ? obj.destroy : obj.save!
      
-      response.content_type = Mime::JSON
       if obj.respond_to?(:normal_h) and %w(quantity count).include?(@attr)
-#      if (klass == OrderItemVariant and attr == "quantity") or
-#         (klass == OrderItemDecoration and attr == "count")
-        ret = obj.normal_h.to_json
-        logger.info("Ret: #{ret.inspect}")
-        render :inline => ret
+        ret = obj.normal_h
       else
-        render :inline => "{}"
+        ret = {}
+      end
+
+      logger.info("Ret: #{ret.inspect}")
+
+      respond_to do |format|
+        format.json { render :json => ret }
       end
     end    
   end

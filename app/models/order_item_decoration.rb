@@ -41,7 +41,7 @@ class OrderItemDecoration < ActiveRecord::Base
 
   # Make Act like order_item_entry
   def description
-    name = (technique.name == 'General') ? '' : technique.friendly_name
+    name = technique && ((technique.name == 'General') ? '' : technique.friendly_name)
     "#{name} #{attributes['description']}".strip
   end
   

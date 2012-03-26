@@ -29,7 +29,7 @@
         %td.admin Total
         %td.admin Profit
         %td.admin{ :colspan => '2' } Margin
-    %tbody
+    %tbody.unit
       %tr.defined
         %td<
           %strong
@@ -62,7 +62,7 @@
                     - reset_cycle
                     - for name in names
                       %span{ :class => cycle('odd', 'even') }<
-                      %a{ :href => '#', :onclick => "variant_change(this);" }!= (oiv.variant && (p = oiv.variant.properties.to_a.find { |p| p.name == name })) ? p.value : 'Not Specified'
+                      %a{ :href => '#' }!= (oiv.variant && (p = oiv.variant.properties.to_a.find { |p| p.name == name })) ? p.value : 'Not Specified'
                     %span{ :class => cycle('odd', 'even') }<
                       = text_field_tag "OrderItemVariant-#{oiv.meta_id}-quantity", oiv.quantity, :class => 'num shipset', :readonly => @price_lock, :tabindex => item.id*2
                     %span{ :class => cycle('odd', 'even') }<
@@ -85,7 +85,7 @@
         %td.admin
           \%
 
-      - for decoration in item.decorations.find(:all, :include => [:technique, :decoration])
+      - for decoration in item.decorations.includes(:technique, :decoration)
         %tr.defined.dec
           = render :partial => 'order_item_decoration', :locals => { :entry => decoration, :purchase_lock => purchase_lock }
       - for entry in item.entries.find(:all, :order => 'id')

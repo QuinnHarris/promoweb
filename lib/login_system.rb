@@ -45,7 +45,7 @@ module LoginSystem
       redirect_to :protocol => "https://" 
       return
     end
-    
+
     if not protect?(action_name)
       return true  
     end
@@ -60,7 +60,7 @@ module LoginSystem
   
     # call overwriteable reaction to unauthorized access
     access_denied
-    return false 
+    return false
   end
 
   # overwrite if you want to have special behavior in case the user is not authorized
@@ -69,7 +69,7 @@ module LoginSystem
   # example use :
   # a popup window might just close itself for instance
   def access_denied
-    redirect_to :controller=>"/admin", :action =>"index"
+    redirect_to admin_login_path
   end  
   
   # store current uri in  the session.

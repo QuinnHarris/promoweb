@@ -249,10 +249,33 @@ public
     sql << " ORDER BY #{order_sql} " if options[:sort]
     sql
   end
+
+  # Temporary Kludge
+  private
+  def sanitize_limit(limit)
+    if limit.is_a?(Integer) || limit.is_a?(Arel::Nodes::SqlLiteral)
+      limit
+    elsif limit.to_s =~ /,/
+      Arel.sql limit.to_s.split(',').map{ |i| Integer(i) }.join(',')
+    else
+      Integer(limit)
+    end
+  end
+
+  def add_limit_offset!(sql, options)
+    if limit = options[:limit]
+      sql << " LIMIT #{sanitize_limit(limit)}"
+    end
+    if offset = options[:offset]
+      sql << " OFFSET #{offset.to_i}"
+    end
+    sql
+  end
+  public
       
   def find_products(options)
     sql = find_products_sql(options)
-    connection.add_limit_offset!(sql, options)
+    add_limit_offset!(sql, options)
     
     Product.find_by_sql(sql)
   end
@@ -272,7 +295,7 @@ public
       "products.#{compare_column} <= #{connection.quote(product[compare_column])}",
       :sort => options[:sort],
       :desc => true}))
-    connection.add_limit_offset!(left_sql, {:limit => limit+15, :offset => 0})
+    add_limit_offset!(left_sql, {:limit => limit+15, :offset => 0})
     left_list = Product.find_by_sql(left_sql)
     return nil unless idx = left_list.index(product)
     left_list = left_list[(idx+1)..-1] unless left_list.empty?
@@ -280,7 +303,7 @@ public
     right_sql = find_products_sql(options.merge({:conditions =>
       "products.#{compare_column} >= #{connection.quote(product[compare_column])}",
       :sort => options[:sort]}))
-    connection.add_limit_offset!(right_sql, {:limit => limit+15, :offset => 0})
+    add_limit_offset!(right_sql, {:limit => limit+15, :offset => 0})
     right_list = Product.find_by_sql(right_sql)
     return nil unless idx = right_list.index(product)
     right_list = right_list[(idx+1)..-1] unless right_list.empty?

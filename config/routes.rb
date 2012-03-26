@@ -64,8 +64,8 @@ Promoweb::Application.routes.draw do
   match 'products/:id(.:format)' => 'products#show'
   match 'products/main/:iid' => redirect('/products/%{iid}')
 
-  match '/admin/orders/shipping_get' => 'admin::Orders#shipping_get'
-
+  match 'admin' => 'admin::Users#login', :via => :get, :as => 'admin_login'
+  match 'admin' => 'admin::Users#auth', :via => :post
   namespace 'admin' do
     resource :orders do
       %w(person_name company_name email_addresses phone_numbers).each do |name|
@@ -192,6 +192,9 @@ Promoweb::Application.routes.draw do
         get 'access'
         delete 'destroy'
 
+        get 'autocomplete_order_item_entry_description'
+        get 'autocomplete_order_item_decoration_description'
+
         post 'duplicate'
         post 'restore'
         
@@ -236,10 +239,6 @@ Promoweb::Application.routes.draw do
       end
     end
   end
-  
-  match 'admin' => 'admin::Users#auth'
-
-
 
   match '/qbwc/api' => 'qbwc#api'
 

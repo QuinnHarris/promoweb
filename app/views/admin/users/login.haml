@@ -1,0 +1,16 @@
+#message= flash['notice']
+
+%h2 Mountain Xpress Promotions Login
+
+= form_for [:admin, User.new], :url => :admin_login do |f|
+  %table.form
+    %tr
+      %th User:
+      %td= f.text_field :login
+    %tr
+      %th Password:
+      %td= f.password_field :password
+    %tr
+      %th
+      %td= submit_tag 'Login'
+

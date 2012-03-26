@@ -41,16 +41,20 @@ $(document).ready ->
     new_id = new Date().getTime();
 
     container.append(content.replace(regexp, new_id))
+    $(this).trigger('change')
 
   $('form a.remove_child').live 'click', () ->
     if $('.' + $(this).parent().className).length == 1
       false
     $(this).prev('input[type=hidden]')[0].value = '1'
     $(this).parent().hide()
+    $(this).trigger('change')
     false
 
   $('form input.postalcode').keyup () ->
     return false unless this.value.length == 5
+
+    $(this).trigger('change')
 
     $.ajax
       url: '/orders/location_from_postalcode_ajax'

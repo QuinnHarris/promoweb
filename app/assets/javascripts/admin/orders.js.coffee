@@ -1,3 +1,5 @@
+multiplier = 1000.0
+
 displayMoney = (val) ->
   digits = (if (val % (multiplier / 100)) then 3 else 2)
   number = (val / multiplier).toFixed(digits)
@@ -13,8 +15,8 @@ parseMoney = (val) ->
   return null  if val == ""
   parseInt Math.round(parseFloat(val) * multiplier)
 
-#roundToCent = (val) ->
-#  Math.round(val * 100.0 / multiplier) * (multiplier / 100.0)
+roundToCent = (val) ->
+  Math.round(val * 100.0 / multiplier) * (multiplier / 100.0)
 
 window.merge_listing = (list) ->
   window.price_listing = $.extend(window.price_listing, list)
@@ -56,16 +58,15 @@ order_item_row_vals = (tr, update) ->
     unit_cost: 0
     fixed_cost: 0 }
 
-  for input in $('input.money', tr)
+  for input in $('input.money', tr).slice(0,-2)
     val = parseMoney(input.value)
-#    val = 0.0 unless val?
 
     if update and $(tr).hasClass('defined')
       list = get_listing(input.id)
       if input.defaultValue == ""
         setField input, val = list
         $(input).addClass('predicate')
-      $(input).toggleClass('changed', val == list)
+      $(input).toggleClass('changed', !(val == list))
 
     result[table_mapping[input.parentNode.cellIndex]] = val
 
@@ -83,8 +84,6 @@ order_item_calculate = (table) ->
     fixed_price: 0
     unit_cost: 0
     fixed_cost: 0 }
-
-  j = 0
 
   for tr in $('tbody tr', table)
     continue if tr.cells.length < 4
@@ -160,7 +159,6 @@ order_entry_calculate = (table, other) ->
 
   sum
 
-
 calculate_all = ->
   total = { cost: 0, price: 0 }
 
@@ -172,55 +170,19 @@ calculate_all = ->
       sum[k] += v for k, v of ret
 
     for table in $('.general table', purchase)
-      ret = order_entry_calculate(table, sum)
-      sum[k] += v for k, v of ret
+      sum = order_entry_calculate(table, sum)
 
     total[k] += v for k, v of sum
 
-  ret = order_entry_calculate($('.invoice > .general table')[0], total)
-  total[k] += v for k, v of ret
+  total = order_entry_calculate($('.invoice > .general table')[0], total)
 
+  if tax_row = $('tr#tax')[0]
+    rate = parseFloat(tax_row.cells[1].innerHTML) / 100.0
+    tax_price = roundToCent(total.price * rate)
+    tax_row.cells[2].innerHTML = displayMoney(tax_price)
+    total_row = tax_row.nextSibling.nextSibling
+    total_row.cells[1].innerHTML = displayMoney(total.price + tax_price)
 
-#  generals = invoice.getElementsByClassName("general")
-#  div = generals[generals.length - 1]
-#  table = div.getElementsByTagName("table")[0]
-#  ret = order_entry_calculate(table, total_price, total_cost)
-#  total_price += ret[0]
-#  tax_row = $("tax")
-#  if tax_row
-#    rate = parseFloat(tax_row.cells[1].innerHTML) / 100.0
-#    tax_price = roundToCent(total_price * rate)
-#    tax_row.cells[2].innerHTML = displayMoney(tax_price)
-#    total_row = tax_row.nextSibling.nextSibling
-#    total_row.cells[1].innerHTML = displayMoney(total_price + tax_price)
-
-input_press = (event) ->
-  kC = $.ui.keyCode
-  return true if event.keyCode in [kC.BACKSPACE, kC.TAB, kC.ENTER, kC.ESCAPE, kC.LEFT, kC.UP, kC.RIGHT, kC.DOWN, kC.DELETE, kC.HOME, kC.END, kC.PAGE_UP, kC.PAGE_DOWN, kC.INSERT]
-  return true if (event.which >= 48 and event.which <= 57)
-  target = $(event.target)
-  return true if target.hasClass('negative') and event.which == 45
-  return true if target.hasClass('money') and event.which == 46
-
-  event.preventDefault()
-  false
-
-
-#input_press = (event) ->
-#  key = event.keyCode
-#  keychar = String.fromCharCode(event.charCode)
-#  if (key == 0) and (event.target.hasClassName("money") or event.target.hasClassName("num")) and ((("0123456789").indexOf(keychar) < 0) and not (event.target.hasClassName("money") and keychar == ".") and not (event.target.hasClassName("negative") and keychar == "-") and not event.ctrlKey)
-#    event.preventDefault()
-#    return false
-#  if key == Event.KEY_RETURN
-#    event.target.blur()
-#    event.preventDefault()
-#  if key == Event.KEY_ESC
-#    nxtSib = event.target.nextSibling
-#    return true  if nxtSib and ("hasClassName" of nxtSib) and nxtSib.hasClassName("auto_complete")
-#    event.target.setValue event.target.defaultValue
-#    event.target.blur()
-#  true
 
 parseField = (target, value) ->
   t = $(target)
@@ -236,42 +198,21 @@ setField = (target, value) ->
     digits = (if (value % (multiplier / 100)) then 3 else 2)
     value = (value / multiplier).toFixed(digits)
   target.val(value)
+  return value
 
 
 request_success = (data, textStatus, t) ->
   if typeof(data) == 'string'
     alert "Updating cell value failed with error: " + data
   else
+    merge_listing data
     for key, value of data
       cell = $('#'+key)
-      cur = parseField(cell, cell.value)
-      setField cell, value  if isNaN(cur)
-#    merge_listing data
-    calculate_all()
+      if cell.hasClass('predicate')
+        setField cell, value
     this.removeClass 'sending'
+    calculate_all()
 
-#request_complete = (request) ->
-#  if request.responseText[0] == "{"
-#    unless request.responseText == "{}"
-#      hash = request.responseText.evalJSON()
-#      for key of hash
-#        cell = $(key)
-#        cur = parseField(cell, cell.value)
-#        setField cell, hash[key]  if isNaN(cur)
-#      merge_listing hash
-#      calculate_all()
-#    $(request.request.options.parameters["id"]).removeClassName "sending"
-#  else
-#    alert "Updating cell value failed with error: " + request.responseText
-
-find_shipping = (target) ->
-  if target.hasClassName("shipset")
-    elem = target
-    while elem and not elem.hasClassName("item")
-      elem = elem.parentNode
-    shipping = elem.getElementsByClassName("shipping")[0]
-    return shipping
-  false
 
 input_update = (target) ->
   t = $(target)
@@ -279,10 +220,17 @@ input_update = (target) ->
 
   if (ismargin = t.parent().hasClass('margin')) or t.parent().hasClass('profit')
     tr = t.parent().parent()
-    quantity = order_item_quantity(tr.parent())
-    values = order_item_row_vals(tr, false)
+    if unit = tr.parent().hasClass('unit')
+      quantity = order_item_quantity(tr.parent())
+      values = order_item_row_vals(tr, false)
+      cost = values.unit_cost * quantity + values.fixed_cost
+      fixed_price = values.fixed_price
+    else
+      inputs = $('input', tr)
+      quantity = parseInt(inputs[3].value)
+      cost = parseMoney(inputs[2].value) * quantity
+      fixed_price = 0.0
 
-    cost = values.unit_cost * quantity + values.fixed_cost
     if ismargin
       margin = parseFloat(target.value)
       price = cost / (1 - (margin / 100.0))
@@ -290,13 +238,12 @@ input_update = (target) ->
       profit = Math.round(parseFloat(target.value) * multiplier)
       price = cost + profit
 
-    mult = multiplier / 100
-    if values.unit_price? and values.unit_cost?
+    if !unit or values.unit_price > 0
       price_input = tr[0].cells[1].getElementsByTagName("input")[0]
-      setField price_input, Math.round((price - values.fixed_price) / (quantity * mult)) * mult
+      setField price_input, roundToCent((price - fixed_price) / quantity)
     else
       price_input = tr[0].cells[2].getElementsByTagName("input")[0]
-      setField price_input, Math.round(price / mult) * mult
+      setField price_input, roundToCent(price)
 
     input_update price_input
     return
@@ -307,23 +254,21 @@ input_update = (target) ->
     unless typeof (value) == "undefined"
       setField target, value
       t.addClass 'predicate'
-      target.defaultValue = ""
       newValue = NaN
     else
       if not t.hasClass('null') and (t.hasClass('money') or t.hasClass('num'))
         target.value = target.defaultValue
         return
+
       newValue = (if t.hasClass('null') then NaN else "")
-      target.defaultValue = ""
+    target.defaultValue = ''
   else
     newValue = parseField(target, target.value)
     target.defaultValue = setField(target, newValue)
     t.removeClass 'predicate'
+
   return calculate_all()  if String(newValue) == String(oldValue)
   t.addClass 'sending'
-
-#  shipping = find_shipping(target)
-#  shipping.innerHTML = shipping_pending  if shipping
 
   $.ajax("/admin/orders/set",
     type: 'POST'
@@ -334,112 +279,20 @@ input_update = (target) ->
     context: t
     success: request_success)
 
-input_change = (event) ->
-  nxtSib = event.target.nextSibling
-  return  if nxtSib and ("hasClassName" of nxtSib) and nxtSib.hasClassName("auto_complete") and Element.getStyle(nxtSib, "display") != "none"
-  input_update event.target
+  # Fetch shipping if shipset class (variant quantities)
+  if t.hasClass('shipset')
+    get_shipping($('td.shipping', t.parents('tbody:first')))
 
 autocomplete_change = (target, selectedElement) ->
   input_update target
 
-input_blur = (event) ->
-  input_update event.target
-
-entry_insert = (request, id, pos) ->
-  table = $(id)
-  tbody = table.getElementsByTagName("tbody")[0]
-  tr = tbody.insertRow((if pos then 3 else tbody.rows.length))
-  tr.innerHTML = request.responseText
-#  setup_events tr
-  calculate_all()
-
-entry_remove = (request, id) ->
-  if request.status == 200 and request.responseText == ""
-    tr = $(id).parentNode.parentNode
-    tbody = tr.parentNode
-    tbody.removeChild tr
-    calculate_all()
-
-# REMOVE
-#setup_events = (obj) ->
-#  inputs = obj.getElementsByTagName("input")
-#  j = 0
-#
-#  while j < inputs.length
-#    input = inputs[j]
-#    continue  if input.type != "text" or input.hasClassName("ignore")
-#    Event.observe input, "keypress", input_press
-#    Event.observe input, "change", input_change
-#    Event.observe input, "blur", input_blur
-#    nxtSib = input.nextSibling
-#    new Ajax.Autocompleter(input, nxtSib, "/admin/orders/auto_complete_generic", afterUpdateElement: autocomplete_change)  if nxtSib and ("hasClassName" of nxtSib) and nxtSib.hasClassName("auto_complete")
-#    j++
-#  inputs = obj.getElementsByTagName("textarea")
-#  j = 0
-#
-#  while j < inputs.length
-#    input = inputs[j]
-#    Event.observe input, "change", input_change
-#    Event.observe input, "blur", input_blur
-#    j++
-
-
-variant_change = (target) ->
-  ul = $("variants")
-  quantity = order_item_quantity(ul)
-  return  unless confirm("Set " + quantity + " units for " + target.text + " only")
-  $A(ul.getElementsByClassName("shipset")).each (inp) ->
-    inp.value = "0"
-
-  imprint = $A(ul.getElementsByClassName("imprint")).inject([], (acc, inp) ->
-    value = inp.value
-    inp.value = ""
-    (if value.empty() then acc else acc.compact().concat([ value ]))
-  ).join(", ")
-  quant_node = target.parentNode.getElementsByClassName("shipset")[0]
-  oldValue = parseInt(quant_node.value)
-  quant_node.value = quantity
-  target.parentNode.getElementsByClassName("imprint")[0].value = imprint
-  quant_node.addClassName "sending"
-  new Ajax.Request("/admin/orders/variant_change",
-    parameters:
-      id: quant_node.id
-      oldValue: oldValue
-      newValue: quantity
-      imprint: imprint
-
-    onComplete: request_complete
-  )
-
-shipping_change = (target) ->
-  target.addClassName "sending"
-  new Ajax.Request("/admin/orders/shipping_set",
-    parameters:
-      item_id: target.id
-      value: target.value
-
-    onComplete: request_complete
-  )
 
 get_shipping = (s) ->
-  table = s.parentNode.parentNode.parentNode
-  new Ajax.Updater(s, "/admin/orders/shipping_get?item_id=" + table.id.split("-")[1],
-    asynchronous: true
-    evalScripts: true
-  )
-get_all_shipping = ->
-  shippings = document.getElementsByClassName("shipping")
-  i = 0
-
-  while i < shippings.length
-    s = shippings[i]
-    if s.hasClassName("pending")
-      s.innerHTML = shipping_pending
-      get_shipping s
-    else
-      inputs = s.getElementsByTagName("input")
-      Event.observe inputs[0], "change", shipping_change  if inputs.length == 1
-    i++
+  shipping_pending = 'Retrieving Shipping Prices <img src="/images/spin30.gif">'
+  s.html(shipping_pending)
+  table = s.parents('table:first')[0]
+  s.load('/admin/orders/shipping_get',
+         'item_id='+ table.id.split('-')[1])
 
 show = (name) ->
   elem = $(name)
@@ -448,37 +301,113 @@ show = (name) ->
   else
     elem.addClassName "hide"
 
+apply_code = (code, target) ->
+  cellIndex = target.parent()[0].cellIndex
+  return unless cellIndex <= 2 # in price column
+
+  code &= 0xDF # UPCASE
+  discount = 0.0
+  if code >= 65 and code <= 74
+    discount = (75 - code) * 0.05
+  else if code >= 76 and code <= 89
+    discount = (90 - code) * 0.05
+  return unless discount > 0.0
+
+  input = $('input', target.parent().parent()[0].cells[cellIndex+3])
+  setField input, parseMoney(target.val()) * (1.0-discount)
+  input_update input[0]
+
+  calculate_all()
+  return
+
+
 $(document).ready ->
-  $('.invoice').delegate('input[type="text"]',
-    keypress: input_press,
-    change: input_change,
-    blur: input_blur)
+  $('.invoice')
+    .delegate('input[type="text"].money',
+      keypress: (event) ->
+        kC = $.ui.keyCode
+        return true if event.keyCode in [kC.BACKSPACE, kC.TAB, kC.ENTER, kC.ESCAPE, kC.LEFT, kC.UP, kC.RIGHT, kC.DOWN, kC.DELETE, kC.HOME, kC.END, kC.PAGE_UP, kC.PAGE_DOWN, kC.INSERT]
+        return true if (event.which >= 48 and event.which <= 57)
+        target = $(event.target)
+        return true if target.hasClass('negative') and event.which == 45
+        return true if target.hasClass('money') and event.which == 46
+        apply_code(event.which, target)
+        event.preventDefault()
+        false
+    )
+
+    .delegate('input[type="text"]',
+      change: (event) ->
+        nxtSib = event.target.nextSibling
+        return  if nxtSib and ("hasClassName" of nxtSib) and nxtSib.hasClassName("auto_complete") and Element.getStyle(nxtSib, "display") != "none"
+        input_update event.target
+      blur: (event) ->
+        input_update event.target
+    )
+
+    .delegate('td.shipping select',
+      change: (event) ->
+        $.ajax("/admin/orders/shipping_set",
+          type: 'POST'
+          data:
+            id: event.target.id
+            value: event.target.value
+          context: $(event.target)
+          success: request_success)
+    )
+
+    .delegate('dl.variants dd ul li a',
+      click: (event) ->
+        target = $(event.target)
+        root = target.parents('dl.variants')
+        quantity = order_item_quantity(root)
+        return unless confirm("Set " + quantity + " units for " + target.text() + " only")
+
+        quantity_inp = $('.shipset', target.parent())
+        imprint_inp = $('.imprint', target.parent())
+        imprint = []
+        for i in $('.imprint', root)
+          imprint.push(i.value) if i.value? and i.value != ''
+        imprint = imprint.join(', ')
+        $('.shipset', root).val(0)
+        $('.imprint', root).val('')
+        old_quantity = parseInt(quantity_inp.val())
+        quantity_inp.val(quantity)
+        imprint_inp.val(imprint)
+
+        quantity_inp.addClass('sending')
+
+        $.ajax('/admin/orders/variant_change',
+          type: 'POST'
+          data:
+            id: quantity_inp[0].id
+            oldValue: old_quantity
+            newValue: quantity
+            imprint: imprint
+          context: quantity_inp
+          success: request_success
+        )
+    )
 
   calculate_all()
 
- # invoice = $('.invoice')
- # if invoice.length > 0
- #   setup_events invoice
- #   calculate_all()
- #   get_all_shipping()
+  # Get shipping Info
+  for ship in $('td.shipping')
+    s = $(ship)
+    if s.hasClass('pending')
+      get_shipping(s)
 
   $(document).delegate '.add', 'ajax:success', (xhr, data, status) ->
     target = $(xhr.target)
-    rows = $('tbody tr.defined', target.parents('table:first'))
-    node = $('<tr/>')
+    node = $('<tr/>').html(data)
     if target.hasClass('dec')
-      rows = rows.filter('.dec')
+      rows = $('tbody tr.dec, tbody tr.defined', target.parents('table:first'))
       node.addClass('dec')
-    rows.last().after(node.html(data))
+      rows.last().after(node)
+    else
+      $('tbody', target.parents('table:first')).append(node)
     calculate_all()
 
   $(document).delegate '.remove', 'ajax:success', (xhr, data, status) ->
     $(xhr.target).parents('tr:first').remove()
     calculate_all()
-
-multiplier = 1000.0
-
-shipping_pending = "Retrieving Shipping Prices <img src=\"/images/spin30.gif\"/>\""
-
-listing = {}
-

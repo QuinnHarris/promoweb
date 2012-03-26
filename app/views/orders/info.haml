@@ -40,7 +40,7 @@
           = order.check_box(:delivery_date_not_important, :class => 'deactivate')
           Delivery Date Not Essential
           %br
-          = @static ? @order.delivery_date : order.text_field(:delivery_date, :class => 'futuredate')
+          = @static ? @order.delivery_date : order.text_field(:delivery_date, :class => 'futuredate', :disabled => @order.delivery_date_not_important)
           
     %tr
       %th Event Nature:

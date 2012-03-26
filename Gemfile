@@ -1,6 +1,6 @@
 source 'http://rubygems.org'
 
-gem 'rails', '3.2.0'
+gem 'rails', '3.2.2'
 
 # Bundle edge Rails instead:
 # gem 'rails', :git => 'git://github.com/rails/rails.git'
@@ -50,7 +50,7 @@ gem 'activemerchant'
 gem 'foreigner'
 gem 'acts_as_tree'
 gem 'will_paginate'
-gem 'paperclip', "= 2.3.16"
+gem 'paperclip' #, "= 2.3.16"
 gem 'rghost'
 gem 'exception_notification'
 #gem 'exifr'

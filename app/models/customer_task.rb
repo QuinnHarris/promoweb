@@ -143,7 +143,7 @@ module ObjectTaskMixin
       end
       task.active = true
 
-      task.attributes = { tasks_active.proxy_reflection.primary_key_name => id }.merge(params)
+      task.attributes = { reflections[:tasks_active].foreign_key => id }.merge(params)
       task.apply(params) if task.respond_to?(:apply)
       task.save!
 

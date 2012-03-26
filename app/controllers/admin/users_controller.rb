@@ -1,8 +1,8 @@
 class Admin::UsersController < Admin::BaseController
 #  before_filter :login_required
+
   def protect?(action)
-    return false if action == 'auth'
-    true
+    not %(login auth).include?(action)
   end
 
   def filter_parameters(unfiltered_parameters)
@@ -13,34 +13,34 @@ class Admin::UsersController < Admin::BaseController
     parameters
   end
 
-  def auth
+  def login
 #    if request.host_with_port == "www.mountainofpromos.com"
 #      redirect_to :host => "app.mountainofpromos.com" 
 #      return
 #    end
-  
+
     if session[:user_id]
-      redirect_to :controller => :orders, :action => :index
+      redirect_to admin_orders_path
       return
     end
-  
-    if request.post?
-      if user = User.authenticate(params[:user_login], params[:user_password])
-        session[:user_id] = user.id
+  end
 
-        # Update Session
-        if Rails.env.production?
-          session_record = SessionAccess.find(session[:ses_id])
-          logger.info("Replacing session user ID: #{session_record.user_id} => #{user.id}") if session_record.user_id
-          session_record.user_id = user.id
-          session_record.save!
-        end
+  def auth
+    if user = User.authenticate(params[:user][:login], params[:user][:password])
+      session[:user_id] = user.id
 
-        flash['notice']  = "Login successful"
-        redirect_back_or_default :controller => '/admin/orders', :action => :show
-      else
-        flash.now['notice']  = "Login unsuccessful"
+      # Update Session
+      if Rails.env.production?
+        session_record = SessionAccess.find(session[:ses_id])
+        logger.info("Replacing session user ID: #{session_record.user_id} => #{user.id}") if session_record.user_id
+        session_record.user_id = user.id
+        session_record.save!
       end
+      
+      flash['notice']  = "Login successful"
+      redirect_back_or_default admin_orders_path
+    else
+      flash.now['notice']  = "Login unsuccessful"
     end
   end
   
