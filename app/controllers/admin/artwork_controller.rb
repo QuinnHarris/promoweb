@@ -288,9 +288,14 @@ end
   
 
 class ProofGenerate
+  def page_dimensions(paper_size)
+    [[paper_size[1] - 2*margin_x, paper_size[0] - 2*margin_y - footer_size - header_size(true), :landscape, 0],
+     [paper_size[0] - 2*margin_x, paper_size[1] - 2*margin_y - footer_size - header_size(false), :portrait, 100.0]]
+  end
+
   def initialize(elements, list)
     @header_list = list
-    @margin_x = 12
+    @margin_x = 9
     @margin_y = 72*3/4
 
     @paper_type = :letter
@@ -299,11 +304,14 @@ class ProofGenerate
     @header_size = 72*3/2
     @footer_size = 34
     header_footer_size = @header_size + @footer_size
-    
-    dims = [[paper_size[1] - 2*margin_x, paper_size[0] - 2*margin_y - footer_size - header_size(true), :landscape, 0],
-            [paper_size[0] - 2*margin_x, paper_size[1] - 2*margin_y - footer_size - header_size(false), :portrait, 100.0] ]
-    
-    @layout = ElementLayout.best(dims, elements)
+        
+    begin
+      @layout = ElementLayout.best(page_dimensions(paper_size), elements)
+    rescue EPSError
+      @margin_y = 12
+      @layout = ElementLayout.best(page_dimensions(paper_size), elements)
+    end
+      
     Rails.logger.info(@layout.inspect)
 
     if @layout.note == :landscape
