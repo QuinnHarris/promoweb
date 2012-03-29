@@ -30,12 +30,12 @@ class OrderItemDecoration < ActiveRecord::Base
   end
 
   def width
-    return Float($1) if @@dim_reg === our_notes
+    return Float($1 || $3) if @@dim_reg === our_notes
     decoration.width if decoration_id
   end
 
   def height
-    return Float($2) if @@dim_reg === our_notes  
+    return Float($2 || $3) if @@dim_reg === our_notes  
     decoration.height if decoration_id
   end
 

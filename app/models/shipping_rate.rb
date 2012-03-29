@@ -67,7 +67,7 @@ class UPSService < ShipService
   def type; 'UPS'; end
 
   def description(exclude_transit = false)
-    str = UPS::Shipping::Shipment.code_desc(@code)
+    str = UPS::Shipping::Shipment.code_desc(@code) || ''
     str += " (#{@time})" if @time
     str += " [#{@days} days transit]" if !exclude_transit and @days and (UPS::Shipping::Shipment.code_days(@code) != @days)
     str

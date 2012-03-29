@@ -34,7 +34,7 @@ xml.svg('xmlns:dc' => 'http://purl.org/dc/elements/1.1/',
       box_height = total_height / @colors.length
       text_shrink = 0.8
 
-      y = ((@oid.height*72) - total_height) / 2.0
+      y = (((@oid.height || @oid.diameter)*72) - total_height) / 2.0
       for color in @colors
         xml.text({'x' => "-#{box_height*2.1}pt", 'y' => "#{y+box_height*text_shrink}pt",
                   'style' => "font-size:#{box_height*text_shrink}pt;text-anchor:end;fill:#000000;font-family:Arial"}, color.full_name)
