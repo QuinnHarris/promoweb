@@ -295,4 +295,4 @@ ZW,"Zimbabwe")
 Address::COUNTRY_LIST = country_src.split("\n").collect do |l|
   raise "Unknown: #{l}" unless /^(\w{2}),\"(.+)\"$/ === l
   [$2, $1]
-end
+end.sort_by { |name, code| name }

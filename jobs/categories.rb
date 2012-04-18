@@ -1343,7 +1343,7 @@ private
      ['Outdoor Games',
       [match('name', ['ball'], 1),
        match('name', ['flying disc', 'flyer', 'kite', 'football', 'rocket', 'boomerang', 'basketball', 'soccer']),
-       exclude(match('name', 'stress')),
+       exclude(match('name', %w(stress pen scripto))),
        exclude(supplier('LogoIncluded', always)),
        supplier('High Caliber Line',
                 match('name', ['super ball', 'flying star', 'paddle ball']) ),
@@ -1385,7 +1385,8 @@ private
        supplier('Norwood',
                 category('HEALTH', 'STRESS') ),
        supplier('Bullet Line',
-                category('Desktop', 'Stress Relievers') )
+                category('Desktop', 'Stress Relievers') ),
+       exclude(match('name', %w(pen scripto))),
       ] ],
      ['Dartboards',
       [match('name', 'dartboard') ]],
