@@ -25,7 +25,7 @@ class HighCaliberLine < GenericImport
     end
 
     name_list = %w(Maroon Red Grey Orange Gold Yellow Teal Bright\ Pink Bright\ Green Pink Bright\ Orange Purple Green Deep\ Royal Royal Navy White Charcoal Black)
-    pms_list = %w(209 200 429 165 123 YELLOW 3165 812 802 RHODAMINE RED 804 VIOLET 3308 286 293 289 WHITE 432 PROCESS\ BLACK)
+    pms_list = %w(209 200 429 165 123 YELLOW 3165 812 802 RHODAMINE\ RED 804 VIOLET 3308 286 293 289 WHITE 432 PROCESS\ BLACK)
     neoprene_color_list = name_list.zip(pms_list).collect { |n, p| [n, "#{n} (PMS #{p})"] }
 
     puts "Parsing: #{file} #{num}"
@@ -52,17 +52,6 @@ class HighCaliberLine < GenericImport
         product_data['description'] = description.gsub(/\s+/,' ').gsub(/\s?\.\s/,"\n").gsub(/\s?•\s/,"\n").strip
       end
 
-      no_less_than_min = no_blank = nil
-      product_data['tags'] = [tags].flatten
-      case product_data['description']
-      when /BioGreen/
-        product_data['tags'] << 'Eco'
-      when /USA/
-        product_data['tags'] << 'MadeInUSA'
-      when /neoprene/i
-        no_less_than_min = no_blank = true
-      end
-        
       
       # Categories
       begin
@@ -96,6 +85,19 @@ class HighCaliberLine < GenericImport
       
       #      puts "Categories: #{categories.inspect}"
       product_data['supplier_categories'] = [categories]
+
+
+      no_less_than_min = no_blank = nil
+      product_data['tags'] = [tags].flatten
+      case product_data['description']
+      when /BioGreen/
+        product_data['tags'] << 'Eco'
+      when /USA/
+        product_data['tags'] << 'MadeInUSA'
+      when /neoprene/i
+        no_less_than_min = no_blank = true unless categories.last.downcase.include?('house')
+      end
+        
       
       # Image
       file_name = "#{product_data['supplier_num']}.jpg"

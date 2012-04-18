@@ -7,10 +7,10 @@ module ActiveMerchant #:nodoc:
         add_order_number(post, options)
         post[:TransactionAmount] = amount(money)
         add_creditcard(post, creditcard)
-        if status_extended_valid?(options)
+        #if status_extended_valid?(options)
           add_invoice(post, options)
           add_address(post, options)
-        end
+        #end
         add_customer_data(post, options)
         commit(:authorization, post)
       end
