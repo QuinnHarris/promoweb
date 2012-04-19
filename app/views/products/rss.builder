@@ -120,21 +120,24 @@ xml.rss :version => '2.0', 'xmlns:g' => 'http://base.google.com/ns/1.0' do
 
             if google_categories.first.include?('Apparel')
               case title+description
-                when /(female)|(ladie)|(woman)/i
-                xml.gender 'Female'
-                when /(male)|(men)/i
-                xml.gender 'Male'
+                when /(^| )((female)|(ladie)|(woman)|(girl))s?($| )/i
+                xml.tag!('g:gender', 'Female')
+                when /(^| )((male)|(men)|(boy))s?($| )/i
+                xml.tag!('g:gender', 'Male')
               else
-                xml.gender 'Unisex'
+                xml.tag!('g:gender', 'Unisex')
               end
 
-              xml.age_group 'Adult'
+	      if /(girl)|(boy)|(youth)|(kid)/i === title
+	      	xml.tag!('g:age_group', 'Kids')
+	      else
+	        xml.tag!('g:age_group', 'Adult')
+              end
             end
           end
           
           xml.tag!('online_only', 'y')
         
-          # color
           # apparel_type
           # brand
           # expiration_date
