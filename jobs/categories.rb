@@ -1751,6 +1751,7 @@ private
                         match('name', 'key') ) ) ]],
          ['Key Chains with Light',
           [match('name', 'light', 1),
+           exclude(match('name', 'limelight')),
            supplier('Leeds',
                     category('Keychains, Keylights & Carabiners', 'Keylights') ),
            supplier('Bullet Line',
