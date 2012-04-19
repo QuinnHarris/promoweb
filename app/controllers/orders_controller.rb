@@ -721,12 +721,13 @@ public
 #        @address.errors.add_to_base("Address Verfification Failed")
         unless response.avs_result['street_match'] == 'Y'
           @address.errors.add(:address1, response.avs_result['message'])
+          # Don't fail on street mismatch, very common
         end
 
         unless %w(X Y).include?(response.avs_result['postal_match'])
           @address.errors.add(:postalcode, response.avs_result['message'])
+          success = false
         end
-        success = false
       end
 
       unless success
