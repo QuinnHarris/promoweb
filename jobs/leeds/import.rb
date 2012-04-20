@@ -65,7 +65,7 @@ class LeedsXLSProducts < XLSFile
     supplier_num = get(row, 'ItemNumber').to_s.strip
     return nil if supplier_num.empty?
     return nil if supplier_num == '1225-69' # Patent BS
-    raise "Bad Item: #{supplier_num}" unless /(\d+-\d+)(\w*)/ =~ supplier_num
+    raise "Bad Item: #{supplier_num}" unless /^((?:\d+|[A-Z]{2})-\d+)(\w*)/ =~ supplier_num
     product_data['supplier_num'] = $1
     
     product_data['name'] = get(row, 'ProductName').to_s.strip
@@ -222,6 +222,11 @@ class LeedsXLSDecorations < XLSFile
     'Metal' => ['x', 1],
 
     '3d' => ['x', 1],
+
+    
+    # Bullet
+    'Silkscreened' => ['Screen Print',3],
+    'Laser Engraved' => ['Laser Engrave',1],
   }
   
   @@repstats = {}
@@ -276,7 +281,7 @@ class LeedsXLSDecorations < XLSFile
 
     decoration_final = {}
     decoration_data.each do |supplier_num, decoration_entries|
-      raise "Bad Item: #{supplier_num}" unless /(\d+-\d+)(\w*)/ =~ supplier_num
+      raise "Bad Item: #{supplier_num}" unless /^((?:\d+|[A-Z]{2})-\d+)(\w*)/ =~ supplier_num
       prefix, postfix = $1, $2
 
       entries = []
@@ -315,26 +320,17 @@ class LeedsXLSDecorations < XLSFile
   end
 end
 
-class LeedsXLS < GenericImport
-  def initialize
-    @prod_files = %w(USDcatalog USDMemorycatalog).collect do |name|
-      WebFetch.new("http://media.leedsworld.com/ms/?/excel/#{name}/EN").get_path(Time.now-24*60*60)
-    end
-    @dec_file = WebFetch.new('http://media.leedsworld.com/ms/?/excel/WebDocrationMethodByItem/EN').get_path(Time.now-24*60*60)
-    @src_files = @prod_files + [@dec_file]
-    super "Leeds"
-  end
-  
+class PolyXLS < GenericImport  
   def image_list
     cache_marshal("#{@supplier_record.name}_imagelist") do
       puts "Fetching Image List"
-      ftp = Net::FTP.new('images.leedsworld.com')
+      ftp = Net::FTP.new(@image_url)
       ftp.login
       files = ftp.nlst
       products = {}
       products.default = []
       files.each do |file|
-        next unless file =~ /^(\d+-\d+)(\w*)\.tif$/
+        next unless file =~ /^((?:\d+|[A-Z]{2})-\d+)(\w*)\.(?:tif)|(?:jpg)$/
         products[$1] += [file]
       end
       products.default = nil
@@ -396,12 +392,36 @@ class LeedsXLS < GenericImport
         product_data['image-large'] = CopyImageFetch.new(path)
         #next
       else
-        product_data['image-thumb'] = product_data['image-main'] = product_data['image-large'] = HiResImageFetch.new("ftp://images.leedsworld.com/#{images.first}")
+        product_data['image-thumb'] = product_data['image-main'] = product_data['image-large'] = HiResImageFetch.new("ftp://#{@image_url}/#{images.first}")
       end
       add_product(product_data)
       
     end
 
     puts "Missing Decorations: #{no_decorations.join(', ')}"
+  end
+end
+
+
+class LeedsXLS < PolyXLS
+  def initialize
+    puts "Stating Fetch for Leeds"
+    @prod_files = %w(USDcatalog USDMemorycatalog).collect do |name|
+      WebFetch.new("http://media.leedsworld.com/ms/?/excel/#{name}/EN").get_path(Time.now-24*60*60)
+    end
+    @dec_file = WebFetch.new('http://media.leedsworld.com/ms/?/excel/WebDocrationMethodByItem/EN').get_path(Time.now-24*60*60)
+    @src_files = @prod_files + [@dec_file]
+    @image_url = 'images.leedsworld.com'
+    super "Leeds"
+  end
+end
+
+class BulletXLS < PolyXLS
+  def initialize
+    @prod_files = [File.join(JOBS_DATA_ROOT, 'Bullet/catalog.xls')]
+    @dec_file = File.join(JOBS_DATA_ROOT, 'Bullet/WebDecorationMethodByItem.xls')
+    @src_files = @prod_files + [@dec_file]
+    @image_url = 'images.bulletline.com'
+    super "Bullet Line"
   end
 end

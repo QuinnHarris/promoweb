@@ -229,10 +229,17 @@ class HighCaliberLine < GenericImport
           else
             color_list = color_str.split(/\s*(?:(?:\s+or\s+)|(?:\s+and\s+)|,|\.|(?:Trims?\.?))\s*/)
           end
-          color_list << nil if color_list.empty? # Always need one variant
         end
       else
-        color_list = [nil]
+        color_list = []
+      end
+
+      if color_list.empty? # Always need one variant      
+        if /Lanyard/i === product_data['name']
+          color_list = lanyard_color_list
+        else
+          color_list = [nil]
+        end
       end
       
       product_data['variants'] = color_list.uniq.collect do |id, name, swatch|
