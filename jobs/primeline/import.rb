@@ -181,8 +181,9 @@ class PrimeLineWeb < GenericImport
     
     # Features
     features = doc.xpath("//img[@src='images/bulletArrow.gif']").collect do |img|
-      iconv(img.next_sibling.inner_html).gsub(/(<[^>]+>)|(<--.*)/,'').strip
-    end
+      str = iconv(img.next_sibling.inner_html).gsub(/(<[^>]+>)|(<--.*)/,'').strip
+      (/free shipping/i) === str ? nil : str
+    end.compact
 #    log << " * NO FEATURES" if features.empty?
     
 

@@ -67,7 +67,7 @@ xml.rss :version => '2.0', 'xmlns:g' => 'http://base.google.com/ns/1.0' do
           
           prop = product.properties_get
           %w(color material size).each do |name|
-            xml.tag!("g:#{name}", prop[name].join(',').encode('ASCII', :invalid => :replace, :undef => :replace, :replace => '')) if prop[name]
+            xml.tag!("g:#{name}", prop[name].join(',').encode('ASCII', :invalid => :replace, :undef => :replace, :replace => '')) unless prop[name].blank?
           end
           if prop['dimension']
             dim = prop['dimension'].split(',').inject({}) do |hash, str|
@@ -116,9 +116,10 @@ xml.rss :version => '2.0', 'xmlns:g' => 'http://base.google.com/ns/1.0' do
           end
           
           unless google_categories.empty?
-            xml.tag!('g:google_product_category', google_categories.sort_by { |c| [c.split('>').length, c.length] }.last)
+	    google_category = google_categories.sort_by { |c| [c.split('>').length, c.length] }.last
+            xml.tag!('g:google_product_category', google_category)
 
-            if google_categories.first.include?('Apparel')
+            if google_category.include?('Apparel')
               case title+description
                 when /(^| )((female)|(ladie)|(woman)|(girl))s?($| )/i
                 xml.tag!('g:gender', 'Female')
@@ -133,6 +134,8 @@ xml.rss :version => '2.0', 'xmlns:g' => 'http://base.google.com/ns/1.0' do
 	      else
 	        xml.tag!('g:age_group', 'Adult')
               end
+
+	      xml.tag!('g:color', 'NA') if prop['color'].blank?
             end
           end
           
