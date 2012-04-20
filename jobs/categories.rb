@@ -2257,7 +2257,7 @@ private
                 category('Dog Collars & Leashes'),
                 category('Lanyards', 'Dog Leashes Lanyards') ) ] ],
      ['Pet Accessories',
-      [match('name', 'pet'), ]],
+      [match('name', /Pets?($| )/), ]],
      ['Light Ups',
       [supplier('High Caliber Line',
                 category('Light Up') )

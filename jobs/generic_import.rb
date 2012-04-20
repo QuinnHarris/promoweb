@@ -500,7 +500,7 @@ public
     raise ValidateError, "No Variants" if product_data['variants'].empty?
     
     # check all variants have the same set of properties
-    prop_list = @@properties.find_all { |p| product_data['variants'].find { |v| v[p] } }
+    prop_list = @@properties.find_all { |p| product_data['variants'].find { |v| not v[p].blank? } }
     prop_list += product_data['variants'].collect { |v| v['properties'] && v['properties'].keys }.flatten.compact
     prop_list = prop_list.uniq.sort
     product_data['variants'].each do |variant|
@@ -650,7 +650,8 @@ public
           
           # Properties
           @@properties.each do |attr_name|
-            next unless value = variant_data[attr_name]
+            value = variant_data[attr_name]
+            value = nil if value.blank?
             value = value.collect { |k, v| "#{k}:#{v}" }.sort.join(',') if value.is_a?(Hash)
           
             variant_record.set_property(attr_name, value, variant_log)

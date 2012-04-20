@@ -67,7 +67,7 @@ xml.rss :version => '2.0', 'xmlns:g' => 'http://base.google.com/ns/1.0' do
           
           prop = product.properties_get
           %w(color material size).each do |name|
-            xml.tag!("g:#{name}", prop[name].join(',').encode('ASCII', :invalid => :replace, :undef => :replace, :replace => '')) if prop[name]
+            xml.tag!("g:#{name}", prop[name].join(',').encode('ASCII', :invalid => :replace, :undef => :replace, :replace => '')) unless prop[name].blank?
           end
           if prop['dimension']
             dim = prop['dimension'].split(',').inject({}) do |hash, str|
@@ -134,6 +134,8 @@ xml.rss :version => '2.0', 'xmlns:g' => 'http://base.google.com/ns/1.0' do
 	      else
 	        xml.tag!('g:age_group', 'Adult')
               end
+
+	      xml.tag!('g:color', 'NA') if prop['color'].blank?
             end
           end
           
