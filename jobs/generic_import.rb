@@ -30,6 +30,36 @@ def apply_decorations(supplier_name)
   end
 end
 
+# Spreadsheet Monkey Patch for access by header
+class Spreadsheet::Excel::Row
+  alias_method :old_access, :[]
+  def [](idx, len = nil)
+    if idx.is_a?(String)
+      i = worksheet.header_map[idx]
+      raise "Unknown Header: #{idx}" unless i
+      old_access(i)
+    else
+      old_access(idx, len)
+    end
+  end
+end
+
+class Spreadsheet::Excel::Worksheet
+  attr_reader :header_map
+  def use_header(idx = 0)
+    @header_map = {}
+    row(idx).each_with_index do |cell, idx|
+      next if cell.blank?
+      cell = cell.strip
+      raise "Duplicate Header: #{cell.to_s.inspect}" if header_map[cell.to_s]
+      header_map[cell.to_s] = idx
+    end
+    @header_map
+  end
+end
+
+
+# Use the above code instead, still in Leeds and Bullet
 class XLSHeaderError < StandardError
 end
 

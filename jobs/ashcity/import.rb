@@ -1,24 +1,23 @@
-class AshCityXML < GenericImport
-  def initialize
-    file_name = 'AshCity/US_ProductDataFile_Styles.xml'
-    @src_file = File.join(JOBS_DATA_ROOT,file_name)
+class AshCityXLS < GenericImport
+  def initialize(files)
+    @src_files = files.collect { |f| File.join(JOBS_DATA_ROOT, "AshCity/#{f}") }
     super "Ash City"
   end
 
-  def parse_products
-    puts "Reading XML"  
-    doc = File.open(@src_file) { |f| Nokogiri::XML(f) }
-    
-    products = {}
+  def process_excel(file)
+    puts "Reading Excel: #{file}"
+    ws = Spreadsheet.open(file).worksheet(0)
+    ws.use_header(3)
 
-#    common = %w(StyleName StyleDesC StyleFabric Category Brand Page)
-    common = %w(StyleName StyleDes StyleFabric Category Brand Page)
-    unique = %w(ProductCode ColorCode ColorName SizeCode SizeName ASI ASI_1 ASI_2 NET NET_1 NET_2 HImg Weight Volume)
+    common = %w(Style\ Name Style\ Desc Style\ Fabric Category Brand Page)
+    unique = %w(Product\ Code Color\ Code Color\ Name Size\ Code Size\ Name HImg Weight Volume) + %w(1st 2nd 3rd).collect { |str| ["US ASI #{str}", "US NET #{str}"] }.flatten
 
-    doc.root.children.first.children.first.children.each do |detail|
-      product_num = detail['StyleNo'].strip
-      unless prod = products[product_num]
-        prod = products[product_num] = common.each_with_object({}) { |c, h| h[c] = detail[c].strip if detail[c] }
+    ws.each(4) do |detail|
+      next unless detail['Style No'] # Why is this needed?
+
+      product_num = detail['Style No'].strip
+      unless prod = @products[product_num]
+        prod = @products[product_num] = common.each_with_object({}) { |c, h| h[c] = detail[c].strip if detail[c] }
       else
         common.each do |c|
           if prod[c] and detail[c]
@@ -29,46 +28,59 @@ class AshCityXML < GenericImport
         end
       end
 
-      variant = unique.each_with_object({}) { |c, h| h[c] = detail[c].strip if detail[c] }
 
-      color_codes = variant['ColorCode'].split(',')
-      variants = color_codes.zip(color_codes[1..-1]).collect do |color_code, cc2|
-        pre = variant['ColorName'].scan(Regexp.new("#{color_code} (.+?)" + (cc2 ? ",? ?\\*?#{cc2}" : "$")))
-        if pre[0].nil? or pre[0][0].nil?
-          names = variant['ColorName'].split(',')
-          raise "List size doesn't match" unless color_codes.length == names.length
-          puts "Color Kludge 1: #{product_num}"
-          color_name = names[color_codes.index(color_code)]
-          color_codes.index(color_code)
-        else
-          color_name = pre[0][0]
-        end
+      variant = unique.each_with_object({}) { |c, h| h[c] = detail[c].is_a?(String) ? detail[c].strip : detail[c] if detail[c] }
+#      puts "Variant: #{variant.inspect}"
 
-        raise "Unknown Color: #{color.inspect} of #{variant['ColorName']} / #{variant['ColorCode']}" unless color_name
-        
-        variant['SizeName'].split(',').collect do |size|
-          variant.merge('ProductCode' => detail['ProductCode'] ? detail['ProductCode'] : "#{product_num}-#{color_code}-#{size}",
-                        'ColorCode' => color_code,
-                        'ColorName' => color_name,
-                        'SizeCode' => size,
-                        'SizeName' => size,
-                        'HImg' => "http://www.ashcity.com/ProductImages/Hi_res/#{product_num}_#{color_code}_H.jpg")
-        end
-      end.flatten
+      if ws.header_map['Color Codes']
+        color_codes = detail['Color Codes'].split(',')
 
+        variants = color_codes.zip(color_codes[1..-1]).collect do |color_code, cc2|
+          pre = variant['Color Name'].scan(Regexp.new("#{color_code} (.+?)" + (cc2 ? ",? ?\\*?#{cc2}" : "$")))
+          if pre[0].nil? or pre[0][0].nil?
+            names = variant['Color Name'].split(',')
+            raise "List size doesn't match" unless color_codes.length == names.length
+            puts "Color Kludge 1: #{product_num}"
+            color_name = names[color_codes.index(color_code)]
+            color_codes.index(color_code)
+          else
+            color_name = pre[0][0]
+          end
+          
+          raise "Unknown Color: #{color.inspect} of #{variant['ColorName']} / #{variant['ColorCode']}" unless color_name
+          
+          variant['Size Name'].split(',').collect do |size|
+            variant.merge('Product Code' => detail['Product Code'] || "#{product_num}-#{color_code}-#{size}",
+                          'Color Code' => color_code,
+                          'Color Name' => color_name,
+                          'Size Code' => size,
+                          'Size Name' => size,
+                          'HImg' => "http://www.ashcity.com/ProductImages/Hi_res/#{product_num}_#{color_code}_H.jpg")
+          end
+        end.flatten
+      else # Just One Color Code
+        variants = [variant]
+      end
+      
       prod['variants'] = (prod['variants'] || []) + variants
     end
+  end
 
-    puts "Main"
+  def parse_products
+    @products = {}
 
-    products.each do |style, src_data|    
+    @src_files.each { |f| process_excel(f) }  
+
+    puts "Main: #{@products.length}"
+
+    @products.each do |style, src_data|
       prod_data = {
         'supplier_num' => style,
-        'material' => src_data['StyleFabric'],
+        'material' => src_data['Style Fabric'],
         'supplier_categories' => [[src_data['Category'], src_data['Brand']]]
       }
 
-      name = src_data['StyleName']
+      name = src_data['Style Name']
 
       if (wo_name = name.gsub(/<b>new<\/b>\s+/i, '')) != name
         name = wo_name
@@ -83,7 +95,7 @@ class AshCityXML < GenericImport
       prod_data['name'] = name
 
       # Description
-      doc = Nokogiri::HTML(src_data['StyleDes'])
+      doc = Nokogiri::HTML(src_data['Style Desc'])
       prod_data['description'] = doc.root.search('ul/li').collect { |n| n.text.gsub(/\s+/, ' ') }.join("\n")
 
       # Decorations
@@ -107,11 +119,11 @@ class AshCityXML < GenericImport
       prod_data['variants'] = src_data['variants'].collect do |src|
 #        puts "Src: #{src.inspect}"
         prices, costs = %w(ASI NET).collect do |pre|
-          [['', 12], ['_1', 150], ['_2', 300]].collect do |post, min|
-            return nil if (str = src[pre+post]).blank?
+          [["US #{pre} 1st", 12], ["US #{pre} 2nd", 150], ["US #{pre} 3rd", 300]].collect do |head, min|
+#           raise "no header #{head} in #{src.inspect}" if (str = src[head]).blank?
             { :fixed => Money.new(0),
               :minimum => min,
-              :marginal => Money.new(Float(str))
+              :marginal => Money.new(Float(src[head] || 0.0))
             }
           end.compact
         end
@@ -119,13 +131,13 @@ class AshCityXML < GenericImport
         costs << { :minimum => 600 }
 
         {
-          'supplier_num' => src['ProductCode'] || style,
+          'supplier_num' => src['Product Code'] || style,
           'material' => prod_data['material'],
           'images' => ImageNodeFetch.new(src['HImg'].split('/').last, src['HImg']),
           'prices' => prices,
           'costs' => costs,
-          'color' => src['ColorName'].gsub(/<.+?>/, '').strip,
-          'size' => src['SizeName']
+          'color' => src['Color Name'].gsub(/\*?<.+?>.+?<\/.+?>/, '').strip,
+          'size' => src['Size Name']
           }
       end
 

@@ -1,3 +1,163 @@
+class LancoXLS < XLSFile
+  def fetch
+    wf = WebFetch.new('http://www.lancopromo.com/downloads/LANCO-ProductData.zip')
+    path = wf.get_path(Time.now - 5.days)
+    dst_path = File.join(JOBS_DATA_ROOT,'lanco')
+    out = `unzip -n #{path} -d #{dst_path}`
+    list = out.scan(/inflating:\s+(.+?)\s*$/).flatten
+    raise "More than one file" if list.length > 1
+    list.first
+  end
+
+  def initialize
+    return unless xls_file = fethc
+    super xls_file
+  end
+
+  def parse_products
+    supplier_nums = {} # Web_Id => (our ID) mapping
+    
+    sub_products = {}
+    sub_products.default = []
+    products = products.find_all do |product|
+      if product[:parent_item].empty?
+        supplier_nums[product[:web_id]] = get_id(product[:web_id])
+        next true
+      end
+      supplier_nums[product[:web_id]] = get_id(product[:parent_item])
+      sub_products[product[:parent_item]] += [product]
+      false
+    end.sort_by { |p| p[:prod_name] }
+    
+    products.each do |product|
+      sub = sub_products[product[:web_id]]
+      common, parts = find_common_list(([product] + sub).collect { |p| p[:prod_name].gsub(/(?:w\/)|(?:with)/i,'') })
+      
+      description = product[:prod_description].strip + "\n" + product[:order_info].strip
+      description.gsub!('&nbsp;',' ')
+      description.gsub!(/\s*\n\s*/,"\n")
+      
+      # Replace Lanco Product ID references to our product ids
+      description.scan(/\w{2,3}\d{3,4}/).each do |num|
+        next unless our_id = supplier_nums[num]
+        description.gsub!(num, "<a href='#{our_id}'>#{our_id}</a>")
+      end
+      
+      if parts.find { |s| s.include?('A Fill')}
+        description += "\n<a href='/static/fills#a'><strong>A Fills:</strong></a> Animal Crackers, Carmel Popcorn, Red Hots, Goldfish, Jelly Beans, Mini Pretzels, Peanuts, Starlight Mints, Honey Roasted Peanuts, Tootsie Rolls"
+        description += "\n<a href='/static/fills#b'><strong>B Fills:</strong></a> Gummy Bears, Gummy Worms, Runts, Pistachios, Chocolate Covered Peanuts, Chocolate Covered Raisins, Conversation Hearts, Candy Corn, Trail Mix, Teenie Beanies, Gumballs, Supermints, Swedish Fish, Sour Patch Kids"
+        description += "\n<a href='/static/fills#c'><strong>C Fills:</strong></a> Pecan Turtles, Truffles, Chocolate Coins, Hershey Kisses, English Butter Toffee, Chocolate Covered Almonds, Chocolate Covered Pretzels, Red Foil Chocolate Hearts, Cashews, Cocolate Balls, Halloween Balls, Christmas Balls, Jelly Bellies, M&M'S, Earth Balls, Easter Eggs, Sports Balls, American Flag Balls, Foil Wrapped Chocolate Squares, Soy Nuts, Chocolate Covered Sunflower Seeds, Granola"
+      end
+      
+      product_data = {
+        'supplier_num' => product[:web_id],
+        'name' => convert_name(product[:alt_name].empty? ? product[:prod_name] : product[:alt_name]),
+        'description' => description,
+        'decorations' => [],
+        'tags' => {
+          :is_new => 'New',
+          :closeout => 'Closeout',
+          :special => 'Special',
+          :is_kosher => 'Kosher',
+          :made_in_usa => 'MadeInUSA'
+        }.collect { |method, name| name if product[method].to_i == 1 }.compact,
+        'supplier_categories' => [[product[:category], product[:sub_category]]],
+        'package_unit_weight' => product[:wt_100].is_a?(String) ? (product[:wt_100].to_f / 100.0) : nil
+      }
+
+      # Lead Times
+      raise "Unkown Lead: #{product[:lead_time]}" unless /(\d+)-(\d+) ((?:Business Days)|(?:weeks))/i === product[:lead_time]
+      multiplier = $3.include?('weeks') ? 7 : 1
+      product_data['lead_time_normal_min'] = $1.to_i * multiplier
+      product_data['lead_time_normal_max'] = $2.to_i * multiplier
+
+#      puts "Rush: #{product_data['supplier_num']} : #{product[:rushservice_id]}"
+      # 0 - none
+      # 1 - 3day, 1day, 2hr
+      # 2 - 3day, 1day
+      # 3 - 3day
+      product_data['lead_time_rush'], product_data['lead_time_rush_charge'] =
+        case Integer(product[:rushservice_id])
+        when 1,2
+          [1, 1.25]
+        when 3
+          [3, 1.15]
+        else
+          [nil, nil]
+        end
+
+      product_data['lead_time_rush_charge']
+      
+      product_data['image-thumb'] = product_data['image-main'] = product_data['image-large'] = HiResImageFetch.new("http://www.lancopromo.com/images/products/#{product_data['supplier_num'].downcase}/#{product_data['supplier_num'].downcase}.jpg")
+            
+      puts
+
+      image_list = get_images(product[:web_id])
+      puts "List #{product[:web_id]}: #{image_list.inspect}"
+      image_list = image_list.collect { |img| ImageNodeFetch.new(img, "#{image_path(product[:web_id])}#{img}") }
+
+      used_image_list = []
+
+      if img = image_list.find { |img| img.id == "#{product[:web_id].downcase}.jpg" }
+        used_image_list << img
+        product_data['images'] = [img]
+      else
+        puts "NO MAIN IMAGE"
+      end
+
+
+      # Decorations
+      product_data['decorations'] = decorations(product)
+
+#      colors = product[:ext_colors][:item].collect { |c| c.split(',') }.flatten.compact.collect { |c| c.strip }.sort
+      colors = [product[:ext_colors][:item]].flatten
+      puts "Colors: #{colors.inspect}"
+      color_image = {}
+      colors.each do |color|
+        images = image_list.find_all do |img|
+          img.id.include?(color.gsub("Translucent ", '').downcase)
+        end
+        if images.length > 0
+#          puts "MATCH: #{color} : #{images.join(', ')}"
+          used_image_list += images
+          color_image[color] = images
+        else
+          puts "NO MATCH: #{color}"
+          color_image[color] = nil
+        end
+      end
+
+      colors = [nil] if colors.empty?
+      color_image[nil] = nil if color_image.empty?
+      
+      product_data['variants'] = ([product] + sub).zip(parts).collect do |prod, fill_name|
+        price_data = process_prices(prod)
+        price_data.merge!('dimension' => parse_volume(prod[:size_description]))
+        price_data.merge!('fill' => fill_name ) unless sub.empty?
+        
+        color_image.collect do |color, images|
+#          puts "Color: #{color}  Img: #{images && images.join(', ')}"
+          # For Each Variant
+          { 'supplier_num' => (prod[:web_id] + (color && "-#{color}").to_s)[0...32],
+            'color' => color,
+            'images' => images
+          }.merge(price_data)
+        end
+      end.flatten
+
+      # All Unassociated images
+      unused_image_list = image_list - used_image_list
+      unless unused_image_list.empty?
+        puts "UNUSED IMG: #{unused_image_list.join(', ')}"
+        product_data['images'] += unused_image_list
+      end
+      
+      add_product(product_data)
+    end
+  end
+
+end
+
 class LancoSOAP < GenericImport
   def initialize
     @client = Savon::Client.new do |wsdl, http, wsse|

@@ -419,3 +419,22 @@ update customers set quickbooks_id = 'BLOCKED', quickbooks_at = null, quickbooks
 
 create index product_images_product_id on product_images (product_id);
 create index decorations_product_id on decorations (product_id);
+
+
+
+/* Find missing google category products */
+SELECT id, name FROM products WHERE NOT deleted AND id NOT IN (
+  WITH RECURSIVE my_categories(id) AS (
+      SELECT id FROM categories WHERE google_category IS NOT NULL
+    UNION
+      SELECT c.id FROM categories c, my_categories m WHERE c.parent_id = m.id
+    )
+  SELECT categories_products.product_id FROM my_categories JOIN categories_products ON my_categories.id = categories_products.category_id) ORDER BY id;
+
+/* Find missing google categories */
+  WITH RECURSIVE my_categories(id) AS (
+      SELECT id FROM categories WHERE google_category IS NOT NULL
+    UNION
+      SELECT c.id FROM categories c, my_categories m WHERE c.parent_id = m.id
+    )
+  SELECT id, name FROM categories WHERE id NOT IN (SELECT id FROM my_categories);
