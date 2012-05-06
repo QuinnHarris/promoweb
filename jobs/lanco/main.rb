@@ -1,7 +1,7 @@
 require '../generic_import'
 require './import'
 
-lanco = LancoSOAP.new
+lanco = LancoXLS.new
 lanco.set_standard_colors
 lanco.run_parse_cache
 lanco.run_transform

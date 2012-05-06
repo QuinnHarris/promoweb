@@ -508,7 +508,7 @@ public
         @invalid_prods[boom.aspect] = (@invalid_prods[boom.aspect] || []) + [product_data['supplier_num']]
       else
         puts boom.backtrace
-        @invalid_prods['Other'] = (@invalid_prods[boom.aspect] || []) + [product_data['supplier_num']]
+        @invalid_prods['Other'] = (@invalid_prods[boom.to_s] || []) + [product_data['supplier_num']]
       end
     end
   end
@@ -537,14 +537,14 @@ public
       next if variant['properties'] && (variant['properties'].keys.sort == prop_list)
       properties = variant['properties']
       prop_list.each do |prop_name|
-        unless variant[prop_name] or properties[prop_name]
-          raise ValidateError, "Variant property mismatch", "Variant \"#{variant['supplier_num']}\" doesn't have property \"#{prop_name}\" unlike [#{(product_data['variants'].collect { |v| v['supplier_num'] } - [variant['supplier_num']]).join(',')}]"
+        unless (variant && variant[prop_name]) or (properties && properties[prop_name])
+          raise ValidateError.new("Variant property mismatch", "Variant \"#{variant['supplier_num']}\" doesn't have property \"#{prop_name}\" unlike [#{(product_data['variants'].collect { |v| v['supplier_num'] } - [variant['supplier_num']]).join(', ')}]")
         end
       end
     end
 
     # check unique variant supplier_num
-    raise ValidateError, "Variant supplier_num not unique" unless product_data['variants'].collect { |v| v['supplier_num'] }.uniq.length == product_data['variants'].length
+    raise ValidateError.new("Variant supplier_num not unique", product_data['variants'].collect { |v| v['supplier_num'] }.inspect) unless product_data['variants'].collect { |v| v['supplier_num'] }.uniq.length == product_data['variants'].length
   
     # check technique
     product_data['decorations'] = product_data['decorations'].collect do |decoration|
@@ -563,7 +563,7 @@ public
       raise ValidateError, "Category not list" unless product_data['supplier_categories'].is_a?(Array)
       product_data['supplier_categories'].each do |category|
         raise ValidateError, "SubCategory not list" unless category.is_a?(Array)
-        category.each { |str| raise ValidateError, "Category not string", product_data['supplier_categories'].inspect unless str.is_a?(String)}
+        category.each { |str| raise ValidateError.new("Category not string", product_data['supplier_categories'].inspect) unless str.is_a?(String) }
       end
     end
     
@@ -582,12 +582,12 @@ public
         minimum = nil
         marginal = nil
         raise ValidateError, "#{type} is nil" unless variant[type] and !variant[type].empty?
-        raise ValidateError, "#{type} Duplicate Entry", variant[type].inspect unless variant[type].length == variant[type].uniq.length
+        raise ValidateError.new("#{type} Duplicate Entry", variant[type].inspect) unless variant[type].length == variant[type].uniq.length
         variant[type].each do |price|
-          raise ValidateError, "#{type} Minimum is null", variant[type].inspect unless price[:minimum]
-          raise ValidateError, "#{type} Minimum not sequential", variant[type].inspect if minimum and price[:minimum] <= minimum
-          raise ValidateError, "#{type} nil marginal not last item", variant[type].inspect if minimum and !marginal
-          raise ValidateError, "#{type} Marginal not sequential", variant[type].inspect if marginal and price[:marginal] and price[:marginal] > marginal
+          raise ValidateError.new("#{type} Minimum is null", variant[type].inspect) unless price[:minimum]
+          raise ValidateError.new("#{type} Minimum not sequential", variant[type].inspect) if minimum and price[:minimum] <= minimum
+          raise ValidateError.new("#{type} nil marginal not last item", variant[type].inspect) if minimum and !marginal
+          raise ValidateError.new("#{type} Marginal not sequential", variant[type].inspect) if marginal and price[:marginal] and price[:marginal] > marginal
           minimum = price[:minimum]
           marginal = price[:marginal]
         end
@@ -679,7 +679,9 @@ public
           variant_record.set_images(variant_data['images'])
           
           # Properties
-          @@properties.each do |attr_name|
+          properties = @@properties
+          properties -= variant_data['properties'].keys if variant_data['properties']
+          properties.each do |attr_name|
             value = variant_data[attr_name]
             value = nil if value.blank?
             value = value.collect { |k, v| "#{k}:#{v}" }.sort.join(',') if value.is_a?(Hash)
