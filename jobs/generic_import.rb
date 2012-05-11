@@ -32,11 +32,14 @@ end
 
 # Spreadsheet Monkey Patch for access by header
 class Spreadsheet::Excel::Row
+  class NoHeader < StandardError
+  end
+
   alias_method :old_access, :[]
   def [](idx, len = nil)
     if idx.is_a?(String)
       i = worksheet.header_map[idx]
-      raise "Unknown Header: #{idx}" unless i
+      raise NoHeader, idx unless i
       old_access(i)
     else
       old_access(idx, len)
@@ -50,9 +53,14 @@ class Spreadsheet::Excel::Worksheet
     @header_map = {}
     row(idx).each_with_index do |cell, idx|
       next if cell.blank?
-      cell = cell.strip
-      raise "Duplicate Header: #{cell.to_s.inspect}" if header_map[cell.to_s]
-      header_map[cell.to_s] = idx
+      cell = cell.strip.to_s
+      if header_map[cell]
+        puts "DUPLICATE HEADER: #{idx} #{cell}"
+        (1..9).find do |i|
+          cell = "#{cell} #{i}" if !header_map["#{cell} #{i}"]
+        end
+      end
+      header_map[cell] = idx
     end
     @header_map
   end

@@ -16,10 +16,10 @@ class HighCaliberLine < GenericImport
   def parse_products
     parse_file("HCL-US Master Excel on #{@date}.xls")
     parse_file("HCL-US Closeout Master Excel on #{@date}.xls", 'Closeout')
-    parse_file("HCL-US Closeout Master Excel on #{@date}.xls", 'Closeout', 2)
+    parse_file("HCL-US Closeout Master Excel on #{@date}.xls", 'Closeout', 1)
   end
 
-  def parse_file(file, tags = [], num = 1)
+  def parse_file(file, tags = [], ws_num = 0)
     lanyard_color_list = %w(black brown burgundy forest\ green gray green light\ blue navy\ blue orange purple red reflex\ blue teal white yellow).collect do |name|
       [name.capitalize, name.capitalize, LocalFetch.new(File.join(JOBS_DATA_ROOT, 'HighCaliber-Lanyard-Swatches'), "#{name}.jpg")]
     end
@@ -28,16 +28,17 @@ class HighCaliberLine < GenericImport
     pms_list = %w(209 200 429 165 123 YELLOW 3165 812 802 RHODAMINE\ RED 804 VIOLET 3308 286 293 289 WHITE 432 PROCESS\ BLACK)
     neoprene_color_list = name_list.zip(pms_list).collect { |n, p| [n, "#{n} (PMS #{p})"] }
 
-    puts "Parsing: #{file} #{num}"
-    xls = XLSFile.new(File.join(JOBS_DATA_ROOT, file))
-    xls.worksheet.each(num) do |row|
+    puts "Parsing: #{file} #{ws_num}"
+    ws = Spreadsheet.open(File.join(JOBS_DATA_ROOT, file)).worksheet(ws_num)
+    puts ws.use_header.inspect
+    ws.each(1) do |row|
       product_data = {}
       
       {
         'supplier_num' => 'Product ID',
         'name' => 'Product Name',
       }.each do |our, their|
-        product_data[our] = xls.get(row, their).strip
+        product_data[our] = row[their].strip
       end
       
       next if %w(S-606 T-818 K-175 A7250).include?(product_data['supplier_num'])
@@ -48,7 +49,7 @@ class HighCaliberLine < GenericImport
 
       product_data['name'].gsub!(/\s+/, ' ')
       
-      if description = xls.get(row, 'Description')
+      if description = row['Description']
         product_data['description'] = description.gsub(/\s+/,' ').gsub(/\s?\.\s/,"\n").gsub(/\s?•\s/,"\n").strip
       end
 
@@ -56,10 +57,10 @@ class HighCaliberLine < GenericImport
       # Categories
       begin
         categories = %w(Category Sub-Categories).collect do |catname|
-          str = xls.get(row, catname)
+          str = row[catname]
           str && str.strip.gsub('&amp;','&').gsub(/\s+/, ' ')
         end.compact
-      rescue XLSHeaderError
+      rescue Spreadsheet::Excel::Row::NoHeader
         categories = []
       end
       
@@ -110,7 +111,9 @@ class HighCaliberLine < GenericImport
       # Decorations
       decorations = []
 
-      if imprint_str = xls.get(row, 'Imprint Size')
+      if imprint_str = row['Imprint Size']
+        laser = ws.header_map['Features'] && row['Features'].to_s.include?('Laser Engrav')
+
         imprint_str.split(/,|(?:\s{2,3})/).each do |imprint_part|
           unless /^(?:(.+?):)?\s*(.+?)(?:(.+?)\))?$/ === imprint_part
             puts "Imprintt: #{imprint_str.inspect}"
@@ -125,6 +128,12 @@ class HighCaliberLine < GenericImport
               'limit' => 4,
               'location' => location || ''
             }.merge(imprint_area)
+
+            decorations << {
+              'technique' => 'Laser Engrave',
+              'limit' => 2,
+              'location' => location || ''
+            }.merge(imprint_area) if laser
           end
         end
       end
@@ -132,7 +141,7 @@ class HighCaliberLine < GenericImport
       product_data['decorations'] = decorations
       
       # Package Info
-      if weight_str = xls.get(row, 'Weight')
+      if weight_str = row['Weight']
         unless /^\s*(\d+)\s*lbs\s*\/\s*(\d+)\s*pcs?/ === weight_str
 #        unless /(\d+)\s*[lI]bs\s*\/\s*(\d+(,\d{3})?)\s*pcs\s*(?:-?\s*(.+?))?\s*(?:\(.+?\)?)?\s*(.+?)?/i =~ weight_str
           puts  " !!! Unknown Weight: #{weight_str.inspect}"
@@ -145,18 +154,18 @@ class HighCaliberLine < GenericImport
       end
       
       # Price Info (common to all variants)
-      if xls.header?('Minimum Qty')
-        qty = xls.get(row, "Minimum Qty")
+      if ws.header_map['Minimum Qty']
+        qty = row["Minimum Qty"]
         price_list =
           [{ :minimum => Integer(qty.is_a?(String) ? qty.gsub(/[^0-9]/,'') : qty),
-             :marginal => Money.new(Float(xls.get(row, %w(Price\ 1 Crazy\ Closeout\ Price)))),
+             :marginal => Money.new(Float(row['Price Reduced'])),
              :fixed => Money.new(0) }]
       else
         price_list = (1..5).collect do |num|
-          qty = xls.get(row, "Qty #{num}")
+          qty = row["Qty #{num}"]
           next if qty.blank?
           { :minimum => Integer(qty.is_a?(String) ? qty.gsub(/[^0-9]/,'') : qty),
-            :marginal => Money.new(Float(xls.get(row, "Price #{num}"))),
+            :marginal => Money.new(Float(row["Price #{num}"])),
             :fixed => Money.new(0) }
         end.compact
       end
@@ -191,7 +200,7 @@ class HighCaliberLine < GenericImport
 
       # Leed Time
       begin
-        case production_time = xls.get(row, 'Production Time')
+        case production_time = row['Production Time']
         when /^(\d{1,2})-(\d{1,2}) Day/
           min, max = Integer($1), Integer($2)
         when /^(\d+) Day/i
@@ -210,14 +219,14 @@ class HighCaliberLine < GenericImport
         end
         product_data['lead_time_normal_min'] = min
         product_data['lead_time_normal_max'] = max
-      rescue XLSHeaderError
+      rescue Spreadsheet::Excel::Row::NoHeader
       end
       
-      if dimension = xls.get(row, 'Size')
+      if dimension = row['Size']
         dimension = dimension.gsub(/\(.+?\)/,'').gsub('&quot;','"')
       end     
       
-      if color_str = xls.get(row, 'Colors')
+      if color_str = row['Colors']
         if /Standard Lanyard Material colors\.?(?:&lt;br&gt;)?(.*)/i === color_str
           product_data['description'] += "\n#{$1}" unless $1.blank?
           color_list = lanyard_color_list
