@@ -29,8 +29,9 @@ dec_grp.entries.create({ :minimum => 0,
                                                                :minimum => 0 }]) })
     
 # Screen Print (level 2)
+['Screen Print', 'Laser Engrave'].each do |name|
 dec_grp = supplier.decoration_price_groups.create(
-            { :technique => DecorationTechnique.find_by_name("Screen Print") })  
+            { :technique => DecorationTechnique.find_by_name(name) })  
 dec_grp.entries.create({ :minimum => 1,
                          :fixed_price_const => 0.0,
                          :fixed_price_exp => 0.0,
@@ -52,3 +53,4 @@ dec_grp.entries.create({ :minimum => 1,
                                                                    :minimum => min }
                                                                end + [{ :minimum => 5000 }]) })
 
+end

@@ -127,7 +127,7 @@
         %td.num= total_sum.to_perty
     - for decoration in decorations
       - decoration_list = decoration.send("list_#{aspect}")
-      - unit_sum += decoration_list.marginal unless unit_sum.nil?
+      - unit_sum += decoration_list.marginal unless unit_sum.nil? or decoration_list.marginal.nil?
       - unless dec_marginal = (decoration_list.marginal.nil? or decoration_list.marginal.zero?)
         %tr
           %td

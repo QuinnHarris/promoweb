@@ -137,7 +137,7 @@ end
 class PaymentMethod < ActiveRecord::Base
   belongs_to :customer
   belongs_to :address
-  has_many :transactions, :class_name => 'PaymentTransaction', :foreign_key => 'method_id', :order => "id DESC"
+  has_many :transactions, :class_name => 'PaymentTransaction', :foreign_key => 'method_id'
   
 #  validates_uniqueness_of :display_number, :scope => :customer_id
   
@@ -399,7 +399,7 @@ public
   end
 
   def charge(order, amount, comment)
-    txn = transactions.where(:type => 'PaymentAuthorize').where("amount >= ?", amount.to_i).where("created_at > ?", Time.now-30.days).order('amount DESC').first
+    txn = transactions.where(:type => 'PaymentAuthorize').where("amount >= ?", amount.to_i).where("created_at > ?", Time.now-90.days).order("order_id != #{order.id}, amount DESC").first
     return authorize(order, amount, comment) unless txn
 
     logger.info("CreditCard Charge: #{order.id} = #{amount} for #{id} from #{txn.inspect}")
