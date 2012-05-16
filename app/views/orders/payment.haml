@@ -104,7 +104,7 @@
                           .admin= submit_tag 'Charge'
                       - else
                         = submit_tag 'Charge'
-                - for transaction in method.transactions
+                - for transaction in method.transactions.order('id DESC')
                   %tr
                     %td= transaction.created_at.strftime("%Y-%m-%d")
                     %td= link_to transaction.order_id, :action => :status_page, :id => transaction.order_id

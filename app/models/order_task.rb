@@ -491,7 +491,7 @@ class FinalPaymentOrderTask < OrderTask
   end
 
   def execute_duration
-    1.day
+    0
   end
 end
 

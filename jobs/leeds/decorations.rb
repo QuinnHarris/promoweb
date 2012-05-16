@@ -206,9 +206,9 @@ apply_decorations('Leeds') do |leeds|
         :fixed_price_const => 0.0,
         :fixed_price_exp => 0.0,
         :fixed_price_marginal => Money.new(0),
-        :fixed_price_fixed => Money.new(30.00),
+        :fixed_price_fixed => Money.new(40.00),
         :fixed => PriceGroup.create_prices([
-        { :fixed => Money.new(30.00*0.8),
+        { :fixed => Money.new(40.00*0.8),
           :marginal => Money.new(0),
           :minimum => 1 }]),
 

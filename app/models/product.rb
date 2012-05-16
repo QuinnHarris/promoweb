@@ -679,6 +679,8 @@ class Product < ActiveRecord::Base
     ).inject({}) { |h, p| h[p.name] = (h[p.name] || []) + [p.translate]; h }
   end
 
+  @@variant_sort_order = { 'size' => %w(XS S M L XL XXL 3X 4X 5X) }
+
   def variant_properties   
     property_groups.collect do |names|
       [names, variants.collect do |variant|
@@ -689,15 +691,19 @@ class Product < ActiveRecord::Base
          [properties, list.collect { |e| e.last }]
        end.sort_by do |n, vars|
          next [] unless n.compact.first && v = n.compact.first.translate
-         res = v.split(/(\d+)/).collect do |s|
-           next if s.empty?
-           i = s.to_i
-           next i if i.to_s == s
-           s
-         end.compact
-         class << res # Kludge to handle non comparable arrays (int vs str)
-           def <=>(a)
-             super(a) || -1
+         if order = @@variant_sort_order[n.compact.first.name]
+           res = order.index(v) || 100
+         else
+           res = v.split(/(\d+)/).collect do |s|
+             next if s.empty?
+             i = s.to_i
+             next i if i.to_s == s
+             s
+           end.compact
+           class << res # Kludge to handle non comparable arrays (int vs str)
+             def <=>(a)
+               super(a) || -1
+             end
            end
          end
          res
@@ -1001,7 +1007,7 @@ class Product < ActiveRecord::Base
       when "DigiSpec"
         data && data[:url]
       when "Ash City"
-      "http://www.ashcity.com/Catalog/ProductDetail.aspx?ProductCode=#{supplier_num}&Currency=USD&Language=en-US"
+        "http://www.ashcity.com/search?q=#{supplier_num}"
       else
         "http://www.mountainofpromos.com/search/#{supplier.name}"
     end
