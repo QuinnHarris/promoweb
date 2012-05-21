@@ -392,6 +392,10 @@ class Admin::OrdersController < Admin::BaseController
     raise "Permission Denied" unless permission?('Super')
     Invoice.transaction do
       invoice = Invoice.find(params[:invoice_id])
+      invoice.payment_transactions.each do |t|
+        t.invoice_id = nil
+        t.save!
+      end
       invoice.destroy
     end
 

@@ -1,6 +1,7 @@
 class Invoice < ActiveRecord::Base
   has_many :entries, :class_name => 'InvoiceEntry', :foreign_key => 'invoice_id'
   belongs_to :order
+  has_many :payment_transactions
 
   def total_item_price
     entries.inject(Money.new(0)) { |m, e| m += e.total_price }
