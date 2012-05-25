@@ -1,3 +1,8 @@
+if RUBY_VERSION =~ /1.9/
+  Encoding.default_external = Encoding::UTF_8
+  Encoding.default_internal = Encoding::UTF_8
+end
+
 source 'http://rubygems.org'
 
 gem 'rails', '3.2.3'
@@ -6,7 +11,6 @@ gem 'rails', '3.2.3'
 # gem 'rails', :git => 'git://github.com/rails/rails.git'
 
 gem 'pg'
-
 
 # Gems used only for assets and not required
 # in production environments by default.
