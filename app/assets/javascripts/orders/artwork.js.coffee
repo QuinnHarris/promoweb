@@ -1,130 +1,64 @@
 $(document).ready ->
-  $('div.group div.items div.item').bind 'dragstart', (event) ->
-    event.dataTransfer.effectAllowed = 'copyLink'
-    uri = $(this).find('a').not('[rel="nofollow"')[0].href
-    event.dataTransfer.setData("text/uri-list", uri)
-    event.dataTransfer.setData('text/plain', uri)
+  # Decoration Move
+  $('div.decorations')
+    .on 'dragstart', 'div.decoration', (event) ->
+      event.originalEvent.dataTransfer.setData('text', event.target.id)
+      event.originalEvent.dataTransfer.setData('application/x-moz-node', event.target)
+      event.originalEvent.dataTransfer.effectAllowed = 'move'
 
-  $('div.decoration').bind 'dragstart', (event) ->
-    event.dataTransfer.setData('text/plain', 'test')
+    .on 'dragover', (event) ->
+      node = document.getElementById(event.originalEvent.dataTransfer.getData('text'))
+      return true unless node
+      return true unless $(node).is('.decoration')
+      return true if (event.target == node.parentNode or $(event.target).parents().is(node.parentNode))
+      return false
 
-  $('div#artwork-group= div.decorations').bind 'dragover', (event) ->
-    event.dataTransfer.effectAllowed = 'move'
-    return $(event.target).parents('div.decorations')[0] == this
+    .on 'drop', (event) ->
+      id = event.originalEvent.dataTransfer.getData('text')
+      node = document.getElementById(id)
+      $(event.target).parents().andSelf().filter('.decorations').first().append(node)
 
-  $('div.decorations').bind 'drop', (event) ->
+      $.ajax(document.URL+"/drop_decoration",
+        type: 'POST'
+        context: node
+        data:
+          id: id.split('=')[1]
+          group: $(node).parents('.group')[0].id.split('=')[1]).done (html) ->
+        $(this).replaceWith(html)
 
-  $('div.group').bind 'dragover', (event) ->
-    event.dataTransfer.effectAllowed = 'copy'
-#    return $(event.target).parents('div.decorations')[0] == this
-    return false;
+      return false
 
-  $('div.group').bind 'drop', (event) ->
-    files = e.dataTransfer.files
-    return false unless files?
+  $('div.items')
+    .on 'dragstart', 'div.item', (event) ->
+      event.originalEvent.dataTransfer.effectAllowed = 'all'
+      uri = $(this).find('a').not('[rel="nofollow"')[0].href
+      event.originalEvent.dataTransfer.setData("text/uri-list", uri)
+      event.originalEvent.dataTransfer.setData('text/plain', uri)
+      event.originalEvent.dataTransfer.setData('text', event.target.id)
 
-    #filesDone = fileRejected = 0
+    .on 'dragover', (event) ->
+      node = document.getElementById(event.originalEvent.dataTransfer.getData('text'))
+      return false unless node
+      return true unless $(node).is('.item')
+      return true if (event.target == node.parentNode or $(event.target).parents().is(node.parentNode))
+      event.originalEvent.dataTransfer.effectAllowed = 'move'
+      #    return $(event.target).parents('div.decorations')[0] == this
+      return false;
 
-    workQueue = i for i in [0...(files.length)] when files[i].size < 1048576 * 20
-    processingQueue = []
-    doneQueue = []
+    .on 'drop', (event) ->
+      if id = event.originalEvent.dataTransfer.getData('text')
+        node = document.getElementById(id)
+        $(event.target).parents().andSelf().filter('.items').first().append(node)
 
-#    pause = () ->
-#      setTimeout(process, 200)
+        $.ajax(document.URL+"/drop_artwork",
+          type: 'POST'
+          context: node
+          data:
+            id: id.split('=')[1]
+            group: $(node).parents('.group')[0].id.split('=')[1]).done (html) ->
+          $(this).replaceWith(html)
 
-    process = () ->
-      return if processingQueue.length > 2
+        return false
 
-      fileIndex = workQueue[0]
-      workQueue.splice(0, 1)
+      return false
 
-      try
-        reader = new FileReader()
-        reader.index = fileIndex
-        reader.onloadend = send
-        reader.readAsBinaryString(files[fileIndex])
-        processingQueue.push(fileIndex)
-      catch err
-        alert("Read Failed")
-
-      process() if workQueue.length > 0
-
-    send = (e) ->
-      fileIndex = (if e.srcElement? then e.srcElement else e.target).index
-      file = files[fileIndex]
-
-      xhr = new XMLHttpRequest()
-      upload = xhr.upload
-
-      start_time = new Date().getTime()
-      upload.index = fileIndex
-      upload.file = file
-      upload.downloadStartTime = start_time
-      upload.currentStart = start_time
-      upload.currentProgress = 0
-      upload.startData = 0
-      upload.addEventListener("progress", progress, false)
-
-#      xhr.onload = () ->
-#        if xhr.responseText
-          # Finish
-
-          #processingQueue
-
-      sendMultipartData(xhr, e.target.result,
-        paramname: 'artwork[art]',
-        filename: file.name,
-        data: ajax: true)
-
-    event.preventDefault()
-    return false
-
-#  $('div.group').filedrop(
-#    paramname: 'artwork[art]'
-#    maxfiles: 25,
-#    maxfilesize: 20,
-#    data: ajax: true
-#  )
-#
-
-sendMultipartData = (xhr, filedata, opts) ->
-  dashdash = '--'
-  crlf = '\r\n'
-
-  boundary = '------multipartformboundary' + (new Date).getTime()
-
-  builder = ''
-
-  if opts.data
-    for key, val of opts.data
-      builder += dashdash
-      builder += boundary
-      builder += crlf
-      builder += 'Content-Disposition: form-data; name="' + decodeURI(key) + '"';
-      builder += crlf
-      builder += crlf
-      builder += decodeURI(val)
-      builder += crlf
-
-  builder += dashdash
-  builder += boundary
-  builder += crlf
-  builder += 'Content-Disposition: form-data; name="' + opts.paramname + '"'
-  builder += '; filename="' + opts.filename + '"'
-  builder += crlf
-
-  builder += 'Content-Type: ' + opts.mime
-  builder += crlf
-  builder += crlf
-
-  builder += filedata
-  builder += crlf
-
-  builder += dashdash
-  builder += boundary
-  builder += dashdash
-  builder += crlf
-
-  xhr.open("POST", '', true)
-  xhr.sendRequestHeader('content-type', 'multipart/form-data; boundary=' + boundary)
-  xml.sendAsBinary(builder)

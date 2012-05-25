@@ -223,7 +223,7 @@ Customer Comments:
       end
     end
 
-    return "No in hands date" if order.delivery_date.nil?
+    return "No in hands date" if order.delivery_date.nil? and !order.delivery_date_not_important
     if !order.delivery_date_not_important && order.delivery_date <= Date.today+1
       problems << "In hands date too soon: #{order.delivery_date.inspect}"
     end
@@ -284,9 +284,10 @@ class PaymentOverrideOrderTask < OrderTask
   self.roles = %w(Super)
   self.option = true
 
-#  def self.blocked(object)
-#    super || (object.task_completed?(PaymentInfoOrderTask) && "payment information received")
-#  end
+  # Was commented out, WHY?
+  def self.blocked(object)
+    super || (object.task_completed?(PaymentInfoOrderTask) && "payment information received")
+  end
 end
 
 class PaymentNoneOrderTask < OrderTask
@@ -469,6 +470,10 @@ class ReOrderTask < OrderTask
   
   def status
     active
+  end
+
+  def self.blocked(order)
+    super || (order.task_completed?(AcknowledgeOrderTask) && 'Order Acknowledged')
   end
 end
 

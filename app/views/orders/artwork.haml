@@ -38,11 +38,6 @@
         %td.message Please specify the name of any fonts used or acceptable substitutes if you are uploading a PNG, JPEG or other raster image.
     = submit_tag 'Add', :id => 'add-button'
 
-#progress-bar{ :style => "display: none;" }
-  %span#status-text
-  #status-box
-    %span#status-bar
-
 - if @user
   %hr
   %div
@@ -54,32 +49,18 @@
     = render :partial => '/orders/pending_tasks'
     %hr
 
-:javascript
-  function moveItem(draggable, droparea) {
-    var parent = draggable.parentNode;
-    parent.removeChild(draggable);
-    droparea.getElementsByClassName(parent.className)[0].appendChild(draggable);
-    draggable.style.top = 0;
-    draggable.style.left = 0;
-    new Ajax.Request('#{drop_set_order_artwork_path(@order)}', {
-      asynchronous:true, evalScripts:true, parameters: droparea.id + '&' + draggable.id
-      #{@order.task_ready?(ArtPrepairedOrderTask) ? ', onComplete: function(transport) { window.location.reload() }' : '' }
-    })
-  }
-
 = form_for @artwork, :url => edit_order_artwork_path(@order)  do |artwork|
   - if dragable = allowed?('Orders') && !@order.task_completed?(ArtPrepairedOrderTask)
-    %div{ :id => "artwork-group=" }
-      = render :partial => 'artwork_decoration', :locals => { :group => nil, :item_decorations => @order_item_decorations, :dragable => true }
-    /= drop_receiving_element("artwork-group=", { :onDrop => 'moveItem', :accept => 'decoration' } )
+    %div.group{ :id => "artwork-group=" }
+      %div.decorations
+        = render :partial => 'artwork_decoration', :collection => @order_item_decorations, :locals => { :group => nil, :dragable => true }
 
   - if allowed?(%w(Art Orders)) && !@static
     = link_to image_tag('add.png') + "New Artwork Group", group_new_order_artwork_path(@order), { :method => :post, :class => 'button', :confirm => "Create a new artwork group for #{@order.customer.person_name}" }
 
   %hr
 
-    = render :partial => 'artwork_items', :locals => { :artwork_groups => @artwork_groups, :static => @static, :dragable => dragable, :absolute => false, :filter_tag => nil }
-    %hr
-    != submit_options
+  = render :partial => 'artwork_items', :locals => { :artwork_groups => @artwork_groups, :static => @static, :dragable => dragable, :absolute => false, :filter_tag => nil }
 
-%iframe#upload-target{ :name => "upload-target", :src => "about:blank", :style => "height: 0; border: none;" }
+  %hr
+  != submit_options

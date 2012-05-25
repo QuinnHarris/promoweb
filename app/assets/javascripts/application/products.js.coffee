@@ -379,7 +379,7 @@ class window.ProductPricing extends PricingBase
       i++
 
   orderSubmit: (event) =>
-    btn = $(event.target).parents('a')
+    btn = $(event.target).parents().andSelf().filter('a')
     pedantic = not btn.parent().hasClass("admin")
     msg = []
     unless (@params.quantity > 0)

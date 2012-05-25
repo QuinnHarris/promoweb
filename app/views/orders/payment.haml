@@ -98,7 +98,7 @@
                       - if @credit
                         = submit_tag 'Credit'
                       - elsif @authorize
-                        - if true #method.authorizeable?
+                        - if method.authorizeable?
                           = submit_tag 'Authorize'
                         - if allowed?
                           .admin= submit_tag 'Charge'
@@ -125,10 +125,12 @@
   %div
     = link_to "Add Credit Card", :action => :payment_creditcard
     %br
-    = link_to "Send a check for payment", payment_sendcheck_order_path(@order), { :method => :post, :confirm => "Aknowledge that you will mail a check as payment for this order." }
-    - if @user && @order.total_chargeable.to_i < 0
+    - if @user
       .admin
-        = link_to "Send refund check", { :action => :payment_sendcheck, :refund => true }, { :confirm => "A refund check will be sent to the customer." }
+        = link_to "Send a check for payment", payment_sendcheck_order_path(@order), { :method => :post, :confirm => "Aknowledge that you will mail a check as payment for this order." }
+        - if @order.total_chargeable.to_i < 0
+          %br
+          = link_to "Send refund check", { :action => :payment_sendcheck, :refund => true }, { :confirm => "A refund check will be sent to the customer." }
 
   %hr
   = form_for PaymentMethod.new, :url => payment_submit_order_path(@order) do

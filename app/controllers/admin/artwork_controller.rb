@@ -419,22 +419,26 @@ class Admin::ArtworkController < Admin::OrdersController
     redirect_to :back
   end
 
-  def drop_set
-    OrderItemDecoration.transaction do
-      group = params['artwork-group'].empty? ? nil : ArtworkGroup.find(params['artwork-group'])
-      if params[:decoration]
-        object = OrderItemDecoration.find(params[:decoration])
-        raise "Customer Mismatch" if group && group.customer_id != object.order_item.order.customer_id
-        object.artwork_group = group
-        object.save!
-      elsif params[:artwork]
-        object = Artwork.find(params[:artwork])
-        raise "Can't change customer" unless object.group.customer_id == group.customer_id
-        object.group = group
-        object.save!
-      end
-    end
-    render :inline => ''
+  def drop_decoration
+    group = params[:group].empty? ? nil : ArtworkGroup.find(params[:group])
+    dec = OrderItemDecoration.find(params[:id])
+    raise "Order Mismatch" if dec.order_item.order != @order
+    raise "Customer Mismatch" if group && group.customer_id != dec.order_item.order.customer_id
+    dec.artwork_group = group
+    dec.save!
+
+    render :partial => '/orders/artwork_decoration', :object => dec, :locals => { :group => group, :static => false, :dragable => true }
+  end
+
+  def drop_artwork
+    group = params[:group].empty? ? nil : ArtworkGroup.find(params[:group])
+    art = Artwork.find(params[:id])
+    raise "Customer Mismatch" if art.group.customer_id != @order.customer_id
+    raise "Customer Mismatch" if group && group.customer_id != @order.customer_id
+    art.group = group
+    art.save!
+
+    render :partial => '/orders/artwork_item', :object => art, :locals => { :group => group, :static => false, :dragable => true }
   end
  
   def group_new

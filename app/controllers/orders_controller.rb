@@ -289,10 +289,7 @@ public
     @static = @order.task_completed?(AcknowledgeOrderTask) && (!@user || !params[:unlock])
     
     if request.post?
-      params[:order]['delivery_date(1i)'] = Date.today.year.to_s if params[:order] and params[:order]['delivery_date(1i)'] and params[:order]['delivery_date(1i)'].empty?
-      orig_delivery_date = @order.delivery_date
       @order.attributes = params[:order]
-      @order.delivery_date_not_important = false if orig_delivery_date and @order.delivery_date_changed?
       unless @order.valid?
         @order.save(:validate => false)
         next

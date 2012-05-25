@@ -141,17 +141,15 @@ order_entry_calculate = (table, other) ->
     profit_margin_calculate tr, total.price, total.cost
     sum[k] += v for k, v of total
 
-  tfoot = table.getElementsByTagName("tfoot")[0]
-  grand_tr = tfoot.rows[0]
-  if tfoot.rows.length > 1
-    sum_tr = tfoot.rows[0]
-    grand_tr = tfoot.rows[1]
+
+  if sum_tr = $('tfoot tr.sub', table)[0]
     sum_tr.cells[2].innerHTML = displayMoney(sum.price)
     sum_tr.cells[3].innerHTML = displayMoney(sum.cost)
     profit_margin_calculate sum_tr, sum.price, sum.cost
 
   sum[k] += v for k, v of other
 
+  grand_tr = $('tfoot tr.grand', table)[0]
   grand_tr.cells[1].innerHTML = displayMoney(sum.price)
   grand_tr.cells[2].innerHTML = displayMoney(sum.cost)
 
@@ -322,7 +320,9 @@ apply_code = (code, target) ->
 
 
 $(document).ready ->
-  $('.invoice')
+  invoice = $('.invoice')
+  return if invoice.length == 0
+  invoice
     .delegate('input[type="text"].money',
       keypress: (event) ->
         kC = $.ui.keyCode

@@ -6,7 +6,7 @@
           = render :partial => '/orders/order_item', :locals => { :order_item => order_item, :static => static, :absolute => absolute, :invoice => false }
           %tr.spacer
 
-    - unless (entries = @order.po_entries + @order.entries).empty?
+    - unless (entries = (@order.po_entries + @order.entries).find_all { |e| e.price }).empty?
       - qty_col = entries.find { |e| e.quantity > 1 }
       %tr.thead
         %td{ :colspan => qty_col ? 1 : 3 } Description
@@ -15,7 +15,6 @@
           %td{ :style => 'max-width: 2em;' } Quantity
         %td Amount
       - for entry in entries
-        - next unless entry.price
         %tr
           %td{ :colspan => qty_col ? 1 : 3 }= entry.description
           - if qty_col

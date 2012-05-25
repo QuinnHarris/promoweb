@@ -122,8 +122,8 @@ Promoweb::Application.routes.draw do
       collection do
         post 'product_add'
         post 'product_remove'
-        post 'auto_complete_for_path'
-        post 'auto_complete_for_google_category'
+        get 'auto_complete_for_path'
+        get 'auto_complete_for_google_category'
       end
 
       member do
@@ -223,7 +223,8 @@ Promoweb::Application.routes.draw do
     resource :artwork, :controller => 'artwork', :only => [] do
       post 'edit'
       scope :module => :admin do
-        post 'drop_set'
+        post 'drop_decoration'
+        post 'drop_artwork'
         post 'group_new'
         post 'group_destroy'
         post 'make_proof'

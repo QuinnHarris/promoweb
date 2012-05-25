@@ -1,63 +1,58 @@
-%div.decorations
-  - for item_decoration in item_decorations
-    .decoration{ :id => "decoration=#{item_decoration.id}", :draggable => 'true' }
-      - product = item_decoration.order_item.product
-      %table
-        %tr
-          %td{ :rowspan => '2' }
-            .thumb
-              - if product.product_images.empty?
-                - thumb_path = product.image_path_relative('thumb')
+.decoration{ :id => "decoration=#{artwork_decoration.id}", :draggable => dragable && 'true' }
+  - product = artwork_decoration.order_item.product
+  %table
+    %tr
+      %td{ :rowspan => '2' }
+        .thumb
+          - if product.product_images.empty?
+            - thumb_path = product.image_path_relative('thumb')
+          - else
+            - thumb_path = artwork_decoration.order_item.active_images.first.image.url(:thumb) 
+          = image_tag(thumb_path, :alt => "#{product.name} Thumbnail")
+      %td
+        %h3= "#{artwork_decoration.order_item.product.name} (#{artwork_decoration.order_item.quantity})"
+        %div
+          = artwork_decoration.description
+          - if @user and !@static and artwork_decoration.has_dimension?
+            \-
+            = link_to "Inkscape Template", inkscape_order_artwork_path(@order, :id => artwork_decoration.id)
+            \-
+            - if !@static && artwork_decoration.artwork_group
+              - if artwork_decoration.artwork_group.pdf_artworks.empty?
+                Mark "Supplier" to Proof
+              - elsif false #artwork_decoration.artwork_group.pdf_exists?
+                Proof already created
               - else
-                - thumb_path = item_decoration.order_item.active_images.first.image.url(:thumb) 
-              = image_tag(thumb_path, :alt => "#{product.name} Thumbnail")
-          %td
-            %h3= "#{item_decoration.order_item.product.name} (#{item_decoration.order_item.quantity})"
-            %div
-              = item_decoration.description
-              - if @user and !@static and item_decoration.has_dimension?
-                \-
-                = link_to "Inkscape Template", inkscape_order_artwork_path(@order, :id => item_decoration.id)
-                \-
-                - if !@static && item_decoration.artwork_group
-                  - if item_decoration.artwork_group.pdf_artworks.empty?
-                    Mark "Supplier" to Proof
-                  - elsif false #item_decoration.artwork_group.pdf_exists?
-                    Proof already created
-                  - else
-                    = link_to "Proof", make_proof_order_artwork_path(@order, :decoration_id => item_decoration.id), :method => :post, :confirm => "Generate Proof from Supplier artworks"
-                    = link_to "(Scale)", make_proof_order_artwork_path(@order, :decoration_id => item_decoration.id, :scale => true), :method => :post, :confirm => "Generate Proof from Supplier artworks"
+                = link_to "Proof", make_proof_order_artwork_path(@order, :decoration_id => artwork_decoration.id), :method => :post, :confirm => "Generate Proof from Supplier artworks"
+                = link_to "(Scale)", make_proof_order_artwork_path(@order, :decoration_id => artwork_decoration.id, :scale => true), :method => :post, :confirm => "Generate Proof from Supplier artworks"
 
-            - decorations = product.decorations.find(:all, :conditions => { :technique_id => item_decoration.technique })
-            - if dragable
-              = fields_for "decoration[#{item_decoration.id}]", item_decoration do |dec|
-                - unless decorations.empty?
-                  = dec.collection_select(:decoration_id, decorations, :id, :display, { :include_blank => true }) #, {:onchange => 'window.location.reload()' })
-                - if allowed?('Orders')
-                  = dec.text_area(:our_notes, :rows => 2)
-            - else
-              - unless decorations.empty?
-                %div= item_decoration.decoration.display
-                %div= item_decoration.our_notes
-
+        - decorations = product.decorations.find(:all, :conditions => { :technique_id => artwork_decoration.technique })
+        - if dragable
+          = fields_for "decoration[#{artwork_decoration.id}]", artwork_decoration do |dec|
+            - unless decorations.empty?
+              = dec.collection_select(:decoration_id, decorations, :id, :display, { :include_blank => true }) #, {:onchange => 'window.location.reload()' })
             - if allowed?('Orders')
-              %div.admin
-                - if item_decoration.order_item.purchase
-                  %div= mail_to item_decoration.order_item.purchase.supplier.artwork_email
+              = dec.text_area(:our_notes, :rows => 2)
+        - else
+          - unless decorations.empty?
+            %div= artwork_decoration.decoration.display
+            %div= artwork_decoration.our_notes
 
-                - if item_decoration.order_item.task_ready?(ArtSentItemTask)
-                  - if purchase = item_decoration.order_item.purchase
-                    - if !purchase.artwork_has_tag?('supplier')
-                      %strong Must mark artwork as Supplier
-                    - elsif !purchase.purchase_order.quickbooks_ref
-                      %strong Update Quickbooks for PO number
-                    - else
-                      = submit_tag("Send Art for #{purchase.purchase_order.quickbooks_ref}")
-                      = submit_tag("Mark as Sent for #{purchase.purchase_order.quickbooks_ref}")
-                  - else
-                    = link_to "Create PO to send artwork", items_admin_order_path(@order)
-                - elsif item_decoration.order_item.task_completed?(ArtSentItemTask)
-                  %strong Artwork sent to supplier
+        - if allowed?('Orders')
+          %div.admin
+            - if artwork_decoration.order_item.purchase
+              %div= mail_to artwork_decoration.order_item.purchase.supplier.artwork_email
 
-    - if dragable
-      /= draggable_element("decoration=#{item_decoration.id}", :revert => "'failure'", :scroll => 'window')
+            - if artwork_decoration.order_item.task_ready?(ArtSentItemTask)
+              - if purchase = artwork_decoration.order_item.purchase
+                - if !purchase.artwork_has_tag?('supplier')
+                  %strong Must mark artwork as Supplier
+                - elsif !purchase.purchase_order.quickbooks_ref
+                  %strong Update Quickbooks for PO number
+                - else
+                  = submit_tag("Send Art for #{purchase.purchase_order.quickbooks_ref}")
+                  = submit_tag("Mark as Sent for #{purchase.purchase_order.quickbooks_ref}")
+              - else
+                = link_to "Create PO to send artwork", items_admin_order_path(@order)
+            - elsif artwork_decoration.order_item.task_completed?(ArtSentItemTask)
+              %strong Artwork sent to supplier

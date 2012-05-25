@@ -1,6 +1,6 @@
 source 'http://rubygems.org'
 
-gem 'rails', '3.2.2'
+gem 'rails', '3.2.3'
 
 # Bundle edge Rails instead:
 # gem 'rails', :git => 'git://github.com/rails/rails.git'
@@ -15,7 +15,7 @@ group :assets do
   gem 'coffee-rails', '~> 3.2.1'
   gem 'uglifier',     '>= 1.0.3'
 
-  gem 'compass', '>= 0.12.alpha.0'
+  gem 'compass-rails'
   gem 'fancy-buttons'
 
   gem 'therubyracer'
@@ -46,6 +46,7 @@ end
 # gem 'aws-s3', :require => 'aws/s3'
 gem 'nokogiri'
 gem 'haml'
+gem 'sass'
 gem 'activemerchant'
 gem 'foreigner'
 gem 'acts_as_tree'
@@ -63,6 +64,7 @@ gem 'wicked_pdf'
 gem 'fast_xs'
 gem 'rails_autolink'
 gem 'rails3-jquery-autocomplete'
+gem 'jquery-fileupload-rails'
 
 # Not needed for webserver
 gem 'mechanize' # DL for Gemline

@@ -50,6 +50,19 @@ private
   end
 public
 
+  @@google_categories = nil
+  def auto_complete_for_google_category
+    unless @@google_categories
+      @@google_categories = File.open(File.join(Rails.root,'lib/taxonomy.en-US.txt')).collect { |l| l.strip }
+      logger.info("Loaded Google Categories: #{@@google_categories.length}")
+    end
+
+    list = @@google_categories.find_all { |c| c.include?(params[:term]) }
+    logger.info("Found: #{list.inspect}")
+
+    render :json => list.collect { |s| { 'label' => s } }
+  end
+
   def auto_complete_for_path
     @categories = [Category.root]
     path = params[:path].split('/')
@@ -62,20 +75,7 @@ public
 
     logger.info("Cats: #{@categories}")
 
-    render :inline => "<%= content_tag('ul', @categories.collect { |e| content_tag('li', h(e.path)) }) %>"
-  end
-
-  @@google_categories = nil
-  def auto_complete_for_google_category
-    unless @@google_categories
-      @@google_categories = File.open(File.join(Rails.root,'lib/taxonomy.en-US.txt')).collect { |l| l.strip }
-      logger.info("Loaded Google Categories: #{@@google_categories.length}")
-    end
-
-    @list = @@google_categories.find_all { |c| c.include?(params[:category][:google_category]) }
-    logger.info("Found: #{@list.inspect}")
-
-    render :inline => "<%= content_tag('ul', @list.collect { |e| content_tag('li', h(e)) }) %>"
+    render :json => @categories.collect { |s| { 'label' => s } }
   end
 
   def product_add
