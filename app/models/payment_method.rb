@@ -400,7 +400,7 @@ public
   end
 
   def charge(order, amount, comment)
-    txn = transactions.where(:type => 'PaymentAuthorize').where("amount >= ?", amount.to_i).where("created_at > ?", Time.now-90.days).where('active').order("order_id != #{order.id}, amount DESC").first
+    txn = transactions.where(:type => 'PaymentAuthorize').where("amount >= ?", amount.to_i).where("created_at > ?", Time.now-30.days).where('active').order("order_id != #{order.id}, amount DESC").first
     return authorize(order, amount, comment) unless txn
 
     logger.info("CreditCard Charge: #{order.id} = #{amount} for #{id} from #{txn.inspect}")
