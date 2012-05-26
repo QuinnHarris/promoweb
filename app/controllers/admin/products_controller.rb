@@ -80,7 +80,7 @@ end
 
 
 class Admin::ProductsController < Admin::BaseController
-  auto_complete_for :supplier, :name
+  autocomplete :supplier, :name
   def new
     @product = Product.new
   end

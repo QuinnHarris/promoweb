@@ -73,6 +73,9 @@ GEOIP = GeoIP::City.new('/usr/share/GeoIP/GeoLiteCity.dat')
 require 'xsd/xmlparser'
 require 'xsd/xmlparser/nokogiri'
 
+# From rails 3.1 to make action_web_services work
+require "#{Rails.root}/lib/inheritable_attributes"
+
 SITE_NAME = "www.mountainofpromos.com"
 MAIN_EMAIL = 'sales@mountainofpromos.com'
 

@@ -70,6 +70,8 @@ gem 'rails_autolink'
 gem 'rails3-jquery-autocomplete'
 gem 'jquery-fileupload-rails'
 
+#gem 'actionwebservice', :git => 'https://github.com/jlecard/actionwebservice.git'
+
 # Not needed for webserver
 gem 'mechanize' # DL for Gemline
 gem 'spreadsheet' # Spreadsheet for Leeds, Bullet

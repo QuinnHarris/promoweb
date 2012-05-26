@@ -6,7 +6,7 @@
   %table.form
     %tr
       %th Supplier Name:
-      %td= @supplier ? @supplier.name : text_field_with_auto_complete(:supplier, :name)
+      %td= @supplier ? @supplier.name : autocomplete_field(:supplier, :name, '/products/admin/autocomplete_supplier_name')
     %tr
       %th Product Number:
       %td= p.text_field :supplier_num

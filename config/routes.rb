@@ -60,7 +60,8 @@ Promoweb::Application.routes.draw do
       get 'chart'
     end
   end
-  match 'products/admin/auto_complete_for_supplier_name' => 'admin::Products#auto_complete_for_supplier_name'
+  match 'products/admin/autocomplete_supplier_name' => 'admin::Products#autocomplete_supplier_name'
+
   match 'products/:id(.:format)' => 'products#show'
   match 'products/main/:iid' => redirect('/products/%{iid}')
 
