@@ -13,7 +13,7 @@
       #links
         - uri_param = { :only_path => false, :protocol => 'https', :controller => 'orders', :auth => @order.customer.uuid, :id => @order.id }
         -# = link_to "Login", uri_param.merge(:action => 'login')
-        = link_to 'Status', uri_param.merge(:action => 'status_page')
+        = link_to 'Status', uri_param.merge(:action => :status)
         - for task in @waiting_tasks
           - next unless task.uri
           - unless task == ReviewOrderTask

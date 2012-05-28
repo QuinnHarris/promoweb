@@ -107,7 +107,7 @@
                 - for transaction in method.transactions.order('id DESC')
                   %tr
                     %td= transaction.created_at.strftime("%Y-%m-%d")
-                    %td= link_to transaction.order_id, :action => :status_page, :id => transaction.order_id
+                    %td= link_to transaction.order_id, :action => :status, :id => transaction.order_id
                     %td= transaction.class.to_s.gsub(/^Payment/,'')
                     - if transaction.is_a?(PaymentError)
                       %td{ :colspan => "2" }= transaction.message

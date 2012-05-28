@@ -123,7 +123,7 @@ class ConfirmItemTask < OrderItemTask
   self.status_name = 'Order Confirmed by Supplier'
   self.waiting_name = 'Waiting for Order Confirmation from Supplier'
   self.completed_name = 'Order Confirmation Received from Supplier'
-  self.uri = { :controller => '/orders', :action => 'status_page' }
+  self.uri = { :controller => '/orders', :action => :status }
   self.roles = %w(Orders)
   
   def apply(params)
@@ -151,7 +151,7 @@ class EstimatedItemTask < OrderItemTask
   self.status_name = 'Estimated Ship Date'
   self.waiting_name = 'Waiting for Estimated Ship Date'
   self.completed_name = 'Estimated Ship Date Recieved'
-  self.uri = { :controller => '/orders', :action => 'status_page' }
+  self.uri = { :controller => '/orders', :action => :status }
   self.roles = %w(Orders)
   
   def apply(params)
@@ -203,7 +203,7 @@ class ShipItemTask < OrderItemTask
   self.status_name = 'Product Shipped'
   self.waiting_name = 'Waiting for Shipping Information'
   self.completed_name = 'Product Shipped'
-  self.uri = { :controller => '/orders', :action => 'status_page' }
+  self.uri = { :controller => '/orders', :action => :status }
   self.roles = %w(Orders)
   
   def apply(params)
@@ -287,7 +287,7 @@ class ReceivedItemTask < OrderItemTask
   self.status_name = 'Product Received by Customer'
   self.waiting_name = 'Waiting for Shipment to be Delivered'
   self.completed_name = 'Product Received'
-  self.uri = { :controller => '/orders', :action => 'status_page' }
+  self.uri = { :controller => '/orders', :action => :status }
   self.roles = %w(Orders)
   
   def apply(params)
@@ -322,7 +322,7 @@ class AcceptedItemTask < OrderItemTask
   self.waiting_name = 'Waiting for Customer to Confirm Delivery'
   self.completed_name = 'Customer Confirmed Delivery'
   self.action_name = 'Customer Confirmed Order Received'
-  self.uri = { :controller => '/orders', :action => 'status_page' }
+  self.uri = { :controller => '/orders', :action => :status }
   self.roles = %w(Orders)
   
   def apply(params)

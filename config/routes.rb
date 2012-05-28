@@ -155,7 +155,7 @@ Promoweb::Application.routes.draw do
     end
 
     member do
-      get 'status' => 'orders#status_page'
+      get 'status'
       get 'items'
       post 'items'
       get 'info'

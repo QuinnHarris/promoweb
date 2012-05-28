@@ -168,7 +168,7 @@ class PhoneController < ActionController::Base
     if @order
       texts << @order.customer.company_name unless @order.customer.company_name.blank?
       texts << @order.customer.person_name
-      uri = { :controller => '/orders', :action => :status_page, :id => @order } unless uri
+      uri = { :controller => '/orders', :action => :status, :id => @order } unless uri
     end
 
     render :json => { :text => texts.join(' - '), :uri => uri && url_for(uri.merge({ :protocol => (Rails.env.production? ? 'https://' : 'http://') })) }
