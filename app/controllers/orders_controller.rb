@@ -25,7 +25,7 @@ end
 module OrderModule 
   module ClassMethods
     def def_tasked_action(action, *tasks, &block)
-      uri = { :controller => "/#{self.controller_path}", :action => action}
+      uri = { :controller => "/#{self.controller_path}", :action => action}.freeze
       tasks.each do |task|
         next if task.is_a?(String)
         raise "uri already set #{action} #{task} as #{task.uri} != #{uri.inspect}" if task.uri and task.uri != uri
