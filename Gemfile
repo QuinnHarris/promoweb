@@ -50,7 +50,7 @@ end
 # gem 'aws-s3', :require => 'aws/s3'
 gem 'nokogiri'
 gem 'haml'
-gem 'sass'
+#gem 'sass'
 gem 'activemerchant'
 gem 'foreigner'
 gem 'acts_as_tree'
@@ -68,7 +68,7 @@ gem 'wicked_pdf'
 gem 'fast_xs'
 gem 'rails_autolink'
 gem 'rails3-jquery-autocomplete'
-gem 'jquery-fileupload-rails'
+#gem 'jquery-fileupload-rails'
 
 #gem 'actionwebservice', :git => 'https://github.com/jlecard/actionwebservice.git'
 
