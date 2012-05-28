@@ -31,7 +31,10 @@ module OrdersHelper
   
   def link_to_task(name, task, order = @order, options = {}, html_options = {})
     if task.uri
-      link_to(name, task.uri.merge(:id => order.id).merge(options), html_options.merge(:class => @user && task.late && 'late'))
+      # Nasty kludge as controller sometimes doesn't have a /.  Don't know why, should make uri mutable
+      linked = task.uri.merge(:id => order.id).merge(options)
+      linked.merge!(:controller => '/' + linked[:controller]) unless linked[:controller][0] == '/'
+      link_to(name, linked, html_options.merge(:class => @user && task.late && 'late'))
     else
       if @user && task.late
         "<span class='late'>#{name}</span>"
