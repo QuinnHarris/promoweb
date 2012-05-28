@@ -31,7 +31,8 @@ module OrdersHelper
   
   def link_to_task(name, task, order = @order, options = {}, html_options = {})
     if task.uri
-      link_to(name, task.uri.merge(:id => order.id).merge(options), html_options.merge(:class => @user && task.late && 'late'))
+      # :controller because controller doesn't always have slash for some reason
+      link_to(name, task.uri.merge(:controller => '/' + task.uri[:controller], :id => order.id).merge(options), html_options.merge(:class => @user && task.late && 'late'))
     else
       if @user && task.late
         "<span class='late'>#{name}</span>"
