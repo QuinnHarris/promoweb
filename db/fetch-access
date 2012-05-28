@@ -1,0 +1,10 @@
+file_name=access.dump
+
+scp mountainofpromos.com:~/db/$file_name .
+
+psql promoweb_development << EOF
+DROP SCHEMA access CASCADE;
+CREATE SCHEMA access;
+EOF
+
+pg_restore -d promoweb_development $file_name

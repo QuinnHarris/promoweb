@@ -1,0 +1,10 @@
+file_name=`date +%Y-%m-%d`.dump
+
+scp mountainofpromos.com:~/db/$file_name .
+
+psql promoweb_development << EOF
+DROP SCHEMA public CASCADE;
+CREATE SCHEMA public;
+EOF
+
+pg_restore -d promoweb_development $file_name
