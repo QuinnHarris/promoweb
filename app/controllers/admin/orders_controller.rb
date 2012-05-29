@@ -335,7 +335,7 @@ class Admin::OrdersController < Admin::BaseController
       params[:task][:expected_at] = time
 
       attributes = {
-        task_class.reflections[:object].primary_key_name => object.id,
+        task_class.reflections[:object].association_foreign_key => object.id,
         :active => false }
       task = task_class.find(:first, :conditions => attributes)
       task = task_class.new(attributes) unless task

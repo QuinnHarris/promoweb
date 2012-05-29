@@ -169,7 +169,7 @@ module ObjectTaskMixin
   def task_save(params, task_class)
     OrderTask.transaction do
       attributes = {
-        task_class.reflections[:object].primary_key_name => id,
+        task_class.reflections[:object].association_foreign_key => id,
         :active => false
       }
       if task = task_class.find(:first, :conditions => attributes)
