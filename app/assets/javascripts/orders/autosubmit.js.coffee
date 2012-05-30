@@ -15,8 +15,10 @@ $(document).ready ->
 
   $('input.futuredate').datepicker(
     dateFormat: 'yy-mm-dd'
-    minDate: 1
+    minDate: 0
     maxDate: 365
+    changeMonth: true
+    constrainInput: true
   )
 
   $('input.deactivate').change (event) ->
