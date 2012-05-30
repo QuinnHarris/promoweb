@@ -301,7 +301,7 @@ show = (name) ->
 
 apply_code = (code, target) ->
   cellIndex = target.parent()[0].cellIndex
-  return unless cellIndex <= 2 # in price column
+  return unless cellIndex <= 5 # in price or cost column
 
   code &= 0xDF # UPCASE
   discount = 0.0
@@ -311,8 +311,14 @@ apply_code = (code, target) ->
     discount = (90 - code) * 0.05
   return unless discount > 0.0
 
-  input = $('input', target.parent().parent()[0].cells[cellIndex+3])
-  setField input, parseMoney(target.val()) * (1.0-discount)
+  if cellIndex > 2
+    input = target
+    val = $('input', target.parent().parent()[0].cells[cellIndex-3]).val()
+  else
+    input = $('input', target.parent().parent()[0].cells[cellIndex+3])
+    val = target.val()
+
+  setField input, parseMoney(val) * (1.0-discount)
   input_update input[0]
 
   calculate_all()
@@ -326,17 +332,22 @@ $(document).ready ->
     .delegate('input[type="text"].money',
       keypress: (event) ->
         kC = $.ui.keyCode
-        return true if event.keyCode in [kC.BACKSPACE, kC.TAB, kC.ENTER, kC.ESCAPE, kC.LEFT, kC.UP, kC.RIGHT, kC.DOWN, kC.DELETE, kC.HOME, kC.END, kC.PAGE_UP, kC.PAGE_DOWN, kC.INSERT]
+        return true if event.keyCode in [kC.BACKSPACE, kC.TAB, kC.ESCAPE, kC.LEFT, kC.UP, kC.RIGHT, kC.DOWN, kC.DELETE, kC.HOME, kC.END, kC.PAGE_UP, kC.PAGE_DOWN, kC.INSERT]
         return true if (event.which >= 48 and event.which <= 57)
         target = $(event.target)
         return true if target.hasClass('negative') and event.which == 45
         return true if target.hasClass('money') and event.which == 46
         apply_code(event.which, target)
-        event.preventDefault()
-        false
+        return false
     )
 
     .delegate('input[type="text"]',
+      keypress: (event) ->
+        # Prevent from submitting form if for PO create
+        if event.keyCode == $.ui.keyCode.ENTER
+          $(event.target).trigger('change')
+          return false
+        return true
       change: (event) ->
         nxtSib = event.target.nextSibling
         return  if nxtSib and ("hasClassName" of nxtSib) and nxtSib.hasClassName("auto_complete") and Element.getStyle(nxtSib, "display") != "none"
