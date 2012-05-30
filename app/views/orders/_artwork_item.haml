@@ -1,0 +1,60 @@
+.item{ :id => "artwork=#{artwork_item.id}", :draggable => 'true' }
+  .thumb
+    - if File.exists?(artwork_item.art.path(:thumb))
+      %a{ :href => artwork_item.art.url }
+        = image_tag artwork_item.art.url(:thumb)
+    - else
+      = image_tag 'nopreview.png'
+
+  %table.form
+    %tbody
+      %tr
+        %th Name:
+        %td
+          %a{ :href => artwork_item.art.url }= artwork_item.art.original_filename
+        %td{ :rowspan => "4", :style => "vertical-align: top;" }
+          - unless static
+            = link_to(image_tag('remove.png') + "Remove", order_artwork_path(@order, artwork_item), :method => :delete, :confirm => "Remove #{artwork_item['file']}")
+            - if @user and artwork_item.can_pdf?
+              %br
+              - if group.artworks.to_a.find { |a| a.art.original_filename == artwork_item.filename_pdf }
+                PDF Generated
+              - else
+                - if artwork_item.can_proof?(@order)                           
+                  = link_to "Proof", make_proof_order_artwork_path(@order, :artwork_id => artwork_item), :method => :post, :confirm => "Generate Proof and mark this file as supplier and the proof as proof?"
+                  = link_to "(Scale)", make_proof_order_artwork_path(@order, :artwork_id => artwork_item, :scale => true), :method => :post, :confirm => "Generate Proof and mark this file as supplier and the proof as proof?"
+            %hr
+          - complete = @order.tasks_dep.find_all { |t| t.active }
+          - tags = artwork_item.tags.collect { |t| t.name }
+          - for name, req in ArtworkTag.tag_mapping(artwork_item)
+            - if !static and req and !complete.include?(req)
+              %div
+                = link_to(mark_order_artwork_path(@order, artwork_item, :tag => name, :state => !tags.include?(name)), :method => :post) do
+                  %span.checkbox
+                    - if tags.include?(name)
+                      = image_tag 'check.png'
+                  = name.capitalize
+            - elsif (req and !static) or tags.include?(name)
+              %div
+                %span.checkbox
+                  - if tags.include?(name)
+                    = image_tag 'check.png'
+                = name.capitalize
+      %tr
+        %th Uploaded:
+        %td= format_time(artwork_item.created_at)
+      %tr
+        %th Source:
+        %td= "#{artwork_item.user ? artwork_item.user.name : 'Customer'} (#{artwork_item.host})"
+      - if artwork_item.art.size
+        %tr
+          %th Size:
+          %td
+            = artwork_item.art.size
+            bytes
+
+  - fields_for "artwork_item[#{artwork_item.id}]", artwork_item do |art|
+    - unless static and (!artwork_item.customer_notes or artwork_item.customer_notes.empty?)
+      .block
+        %h3 Notes
+        = static ? artwork_item.customer_notes : art.text_area(:customer_notes, 'rows' => 3)
