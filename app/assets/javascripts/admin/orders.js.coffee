@@ -326,6 +326,15 @@ apply_code = (code, target) ->
 
 
 $(document).ready ->
+  # Date Picker for shipping
+  $('input.shipdate').datepicker(
+    dateFormat: 'yy-mm-dd'
+    minDate: -5
+    maxDate: 365
+    changeMonth: true
+    constrainInput: true
+  )
+
   invoice = $('.invoice')
   return if invoice.length == 0
   invoice
