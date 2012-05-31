@@ -350,7 +350,7 @@ $(document).ready ->
         return false
     )
 
-    .delegate('input[type="text"]',
+    .delegate('input[type="text"]:not(.ignore)',
       keypress: (event) ->
         # Prevent from submitting form if for PO create
         if event.keyCode == $.ui.keyCode.ENTER

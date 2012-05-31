@@ -35,7 +35,7 @@
         .purchase
           - purchase_lock = !(params[:override] && allowed?('Super')) && purchase.locked(allowed?('Super'))
           - if purchase.new_record?
-            = form_for @order, { :url => purchase_create_admin_order_path(@order, :supplier_id => supplier.id) } do |order|
+            = form_for @order, { :url => purchase_create_admin_order_path(@order, :supplier_id => supplier.id), :html => { :class => 'noauto' } } do |order|
               %h2
                 Purchase Order - Create as
                 - for sub in [supplier] + supplier.children
@@ -67,7 +67,7 @@
               - common_tasks = all_tasks = purchase.items.first.tasks_ready.collect { |t| t.class }
               - purchase.items.each { |i| t = i.tasks_ready.collect { |t| t.class }; common_tasks &= t; all_tasks |= t; }
               - common_tasks.each do |klass|
-                = form_for @order, { :url => purchase_mark_admin_order_path(@order, :purchase_id => purchase.id), :html => { :method => :post }} do |order|
+                = form_for @order, { :url => purchase_mark_admin_order_path(@order, :purchase_id => purchase.id), :html => { :method => :post, :class => 'noauto' }} do |order|
                   = hidden_field_tag(:class, klass.to_s)
                   - case klass.to_s
                   - when 'OrderSentItemTask'
