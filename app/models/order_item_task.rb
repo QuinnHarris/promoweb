@@ -310,7 +310,7 @@ class ReceivedItemTask < OrderItemTask
     header = %(Hi #{object.order.customer.person_name},
 It looks like your order has been delivered.
 Please let us know if the product has arrived as expected.
-<a href="http://ratepoint.com/tellus/77047">You can review our service by clicking on this link.</a>
+<a href="http://www.shopperapproved.com/surveys/full.php?id=3559">You can review our service by clicking on this link.</a>
 I hope we have served you well and look forward to working with you again!)
     CustomerSend.dual_send(self, subject, header)
   end
