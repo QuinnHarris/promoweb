@@ -326,6 +326,15 @@ apply_code = (code, target) ->
 
 
 $(document).ready ->
+  # Date Picker for shipping
+  $('input.shipdate').datepicker(
+    dateFormat: 'yy-mm-dd'
+    minDate: -5
+    maxDate: 365
+    changeMonth: true
+    constrainInput: true
+  )
+
   invoice = $('.invoice')
   return if invoice.length == 0
   invoice
@@ -341,7 +350,7 @@ $(document).ready ->
         return false
     )
 
-    .delegate('input[type="text"]',
+    .delegate('input[type="text"]:not(.ignore)',
       keypress: (event) ->
         # Prevent from submitting form if for PO create
         if event.keyCode == $.ui.keyCode.ENTER

@@ -17,6 +17,8 @@ $(document).ready ->
     dateFormat: 'yy-mm-dd'
     minDate: 1
     maxDate: 365
+    changeMonth: true
+    constrainInput: true
   )
 
   $('input.deactivate').change (event) ->
