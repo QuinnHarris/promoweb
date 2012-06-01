@@ -33,10 +33,10 @@ class Variant < ActiveRecord::Base
         next
       end
       if pi = ProductImage.find(:first, :conditions => { :product_id => product_id, :supplier_ref => img.id })
-        str << "   | Image: #{img.id} + Variant #{supplier_num} (#{id})\n"
+        str << "   | Image: #{img.id} +\n"
         pi.variants << self
       else
-        str << "   + Image: #{img.id} + Variant #{supplier_num} (#{id})\n"
+        str << "   + Image: #{img.id}\n"
         pi = product_images.create(:supplier_ref => img.id,
                                    :image => img.get,
                                    :product => product)
@@ -46,7 +46,7 @@ class Variant < ActiveRecord::Base
     end
 
     orig.each do |pi|
-      str << "   | Image #{pi.supplier_num} - Variant #{supplier_num} (#{id})\n"
+      str << "   | Image #{pi.supplier_num} -\n"
       pi.variants.delete(self)
     end
 
