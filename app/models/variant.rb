@@ -24,30 +24,33 @@ class Variant < ActiveRecord::Base
   end
 
   def set_images(images)
-    images = [images].flatten.compact
+    str = ''
     orig = product_images.to_a.dup
-    images.delete_if do |img|
-      pi = orig.find { |pi| pi.supplier_ref == img.id }
-      orig.delete(pi) if pi
-    end
 
-    images.each do |img|
-      unless pi = ProductImage.find(:first, :conditions => { :product_id => product.id, :supplier_ref => img.id })
+    [images].flatten.compact.each do |img|
+      if pi = orig.find { |pi| pi.supplier_ref == img.id }
+        orig.delete(pi)
+        next
+      end
+      if pi = ProductImage.find(:first, :conditions => { :product_id => product_id, :supplier_ref => img.id })
+        str << "   | Image: #{img.id} + Variant #{supplier_num} (#{id})\n"
+        pi.variants << self
+      else
+        str << "   + Image: #{img.id} + Variant #{supplier_num} (#{id})\n"
         pi = product_images.create(:supplier_ref => img.id,
                                    :image => img.get,
                                    :product => product)
         pi.image.reprocess!
         pi.image.save
-      else
-        unless pi.variants.find_by_id(id)
-          pi.variants << self
-        end
       end
     end
 
     orig.each do |pi|
-      pi.destroy
+      str << "   | Image #{pi.supplier_num} - Variant #{supplier_num} (#{id})\n"
+      pi.variants.delete(self)
     end
+
+    str
   end
     
   def set_property(name, value, str)

@@ -11,10 +11,11 @@ class ProductImage < ActiveRecord::Base
   belongs_to :product
 
   has_attached_file :image, :url => "/data/product/:product_id/:id_:style.:extension", :default_style => :large, :path => "#{DATA_ROOT}:url", :styles => {
-    :medium => ['400x320>', :jpg],
-    :thumb => ['120x120>', :jpg],
+    :medium => { :geometry => '400x320>', :format => :jpg },
+    :thumb => { :geometry => '120x120>', :format => :jpg },
+    :large => { :geometry => '', :format => :jpg },
   }, :convert_options => {
-    :all => "-quality 85",
+    :all => "-quality 85 -strip",
   }
   
   def image_file_name; 'x.jpg'; end

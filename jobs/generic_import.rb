@@ -67,35 +67,6 @@ class Spreadsheet::Excel::Worksheet
 end
 
 
-# Use the above code instead, still in Leeds and Bullet
-class XLSHeaderError < StandardError
-end
-
-class XLSFile
-  def initialize(file)
-    book = Spreadsheet.open(file)
-    @worksheet = book.worksheet(0)
-    @header = @worksheet.row(0).collect do |cell|
-      cell.to_s.downcase
-    end
-  end
-  
-  attr_reader :worksheet
-
-  def header?(name)
-    @header.index(name.downcase)
-  end
-  
-  def get(row, names)
-    [names].flatten.each do |name|
-      next unless i = header?(name)
-      return row.at(i) 
-    end
-    raise XLSHeaderError, "Unknown Header: #{names.inspect}"
-  end
-end
-
-
 class ImageNode
   @@cache_dir = CACHE_ROOT
 
@@ -160,10 +131,13 @@ class ImageNodeFetch < ImageNode
                     pbar.set s if pbar
                   })
         return nil if f.length == 0
-        FileUtils.mv(f.path, path)
-#          f.save_as path
-#          File.open(path, 'w') { |file| file.write(f.read) }
-#        end
+        if f.respond_to?(:path)
+          FileUtils.mv(f.path, path)
+        elsif f.respond_to?(:save_as)
+          f.save_as path
+        else
+          File.open(path, "w:#{f.external_encoding}") { |file| file.write(f.read) }
+        end
         puts
       rescue OpenURI::HTTPError, URI::InvalidURIError, Errno::ETIMEDOUT => e
         puts " * #{e.class} : #{@uri}"
@@ -576,7 +550,15 @@ public
     end
     
     # check images
-    if (product_data['variants'].collect { |v| v['images'] } + [product_data['images']]).flatten.compact.empty?
+    variant_images = product_data['variants'].collect { |v| v['images'] }.flatten.compact
+    product_images = product_data['images'].flatten.compact
+    product_images.each do |pi|
+      if variant_images.find { |vi| vi.id == pi.id }
+        raise ValidateError, "Duplicate image"
+      end
+    end
+
+    if (variant_images + product_images).empty?
       unless product_data["image-hires"] or product_data["images"]
         %w(thumb main large).each do |name|
           product_log << "  No #{name} image" unless product_data["image-#{name}"]
@@ -674,7 +656,9 @@ public
         new_price_groups, new_cost_groups = [], []
 
         # Fetch Images
-        product_record.set_images(product_data['images'])
+        product_log << product_record.delete_images(product_data['images'] + 
+                                                    product_data['variants'].collect { |v| v['images'] })
+        product_log << product_record.set_images(product_data['images'])
        
         # Process Variants
         variant_records = product_data['variants'].collect do |variant_data|
@@ -684,7 +668,7 @@ public
           variant_record.save! if variant_new
 
           # Fetch Images
-          variant_record.set_images(variant_data['images'])
+          variant_log << variant_record.set_images(variant_data['images'])
           
           # Properties
           properties = @@properties

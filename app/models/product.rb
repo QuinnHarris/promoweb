@@ -782,15 +782,17 @@ class Product < ActiveRecord::Base
   end
 
   def set_images(images)
-    images = [images].flatten.compact
-    orig = product_images.to_a.find_all { |pi| pi.variants.empty? }
-    images.delete_if do |img|
-      pi = orig.find { |pi| pi.supplier_ref == img.id }
-      orig.delete(pi) if pi
-    end
-
-    images.each do |img|
-      unless product_images.find_by_supplier_ref(img.id)
+    str = ''
+    all = product_images.to_a
+    orig = all.find_all { |pi| pi.variants.empty? }
+    
+    [images].flatten.compact.each do |img|
+      next if orig.find { |pi| pi.supplier_ref == img.id }
+      if pi = all.find { |pi| pi.supplier_ref == img.id }
+        str << "   | Image: #{img.id} - all variants\n"
+        pi.variants.delete_all
+      else
+        str << "   + Image: #{img.id}\n"
         pi = product_images.create(:supplier_ref => img.id,
                                    :image => img.get)
         pi.image.reprocess!
@@ -798,9 +800,21 @@ class Product < ActiveRecord::Base
       end
     end
 
-    orig.each do |pi|
-      pi.destroy
+    str
+  end
+
+  def delete_images(images)
+    str = ''
+    
+    images = [images].flatten.compact
+    product_images.to_a.each do |img|
+      unless images.find { |i| i.id == img.supplier_ref }
+        str << "   - Image: #{img.supplier_ref}\n"
+        img.destroy
+      end
     end
+
+    str
   end
   
   def set_categories(dst)
