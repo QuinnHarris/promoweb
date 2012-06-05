@@ -551,7 +551,7 @@ public
     
     # check images
     variant_images = product_data['variants'].collect { |v| v['images'] }.flatten.compact
-    product_images = product_data['images'].flatten.compact
+    product_images = [product_data['images']].flatten.compact
     product_images.each do |pi|
       if variant_images.find { |vi| vi.id == pi.id }
         raise ValidateError, "Duplicate image"
