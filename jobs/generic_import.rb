@@ -656,9 +656,12 @@ public
         new_price_groups, new_cost_groups = [], []
 
         # Fetch Images
-        product_log << product_record.delete_images(product_data['images'] + 
-                                                    product_data['variants'].collect { |v| v['images'] })
-        product_log << product_record.set_images(product_data['images'])
+        all_images = ([product_data['images']] + 
+                      product_data['variants'].collect { |v| v['images'] }).flatten.compact
+        unless all_images.empty?
+          product_log << product_record.delete_images(all_images)
+          product_log << product_record.set_images(product_data['images'])
+        end
        
         # Process Variants
         variant_records = product_data['variants'].collect do |variant_data|

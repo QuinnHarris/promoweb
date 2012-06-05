@@ -9,7 +9,7 @@
           - title += " (#{task.object.description})"
         - if task.respond_to?(:our_comment)
           - task = task.object.task_find_inactive(task.class) || task if task.new_record?
-          = form_for(task, :as => :data, :url => task_execute_admin_order_path(@order, :object_id => task.object, :tasks => tasks.collect { |t| t.class }), :html => { :method => :put }) do |t|
+          = form_for(task, :as => :data, :url => task_execute_admin_order_path(@order, :object_id => task.object, :tasks => tasks.collect { |t| t.class }), :html => { :method => :put, :class => 'noauto' }) do |t|
             %h2!= title
             = t.text_area :our_comment, 'cols' => 120, 'rows' => 10
             %br
@@ -49,7 +49,7 @@
           %li= link_to user.name, { :controller => '/admin/orders', :action => :task_execute, :order_id => @order, :delegate_perm => user.delegatables.first.name, :user_id => user.id }, :class => 'action'
 
     - if task.complete_estimate
-      = form_for task, { :as => :task, :url =>  task_comment_admin_order_path(@order, :object_id => task.object, :class => tasks.last.class), :html => { :method => :post } } do |t|
+      = form_for task, { :as => :task, :url =>  task_comment_admin_order_path(@order, :object_id => task.object, :class => tasks.last.class), :html => { :method => :post, :class => 'noauto' } } do |t|
         %hr
         = t.text_area :comment, 'cols' => 120, 'rows' => 2         
         %div
