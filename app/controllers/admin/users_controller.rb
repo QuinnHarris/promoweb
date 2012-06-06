@@ -37,10 +37,10 @@ class Admin::UsersController < Admin::BaseController
         session_record.save!
       end
       
-      flash['notice']  = "Login successful"
+      flash[:notice]  = "Login successful"
       redirect_back_or_default admin_orders_path
     else
-      flash.now['notice']  = "Login unsuccessful"
+      redirect_to admin_login_path, :notice => "Login unsuccessful"
     end
   end
   
@@ -73,37 +73,17 @@ class Admin::UsersController < Admin::BaseController
   end
   
   def edit
-    if params[:user] and params[:user][:password].empty?
-      @this_user = User.find(params[:id])
-      params[:user].delete(:password_confirmation)
-    else
-      @this_user = User.find(params[:id])
-    end
-    
-    if params[:user]
-      params[:user][:email] = nil if params[:user][:email].blank?
-      if @this_user.update_attributes(params[:user])
-        redirect_to :action => :index
-        return
-      end
-    end
-    
+    @this_user = User.find(params[:id])
     @this_user.password = nil
   end
 
   def update
-    if params[:user][:email].blank?
-      @this_user = User.find(params[:id])
-      params[:user][:email] = nil 
-    else
-      @this_user = UserPass.find(params[:id])
-    end
+    @this_user = UserPass.find(params[:id])
+    params[:user][:email] = nil if params[:user][:email].blank?
+    @this_user.attributes = params[:user]
+    @this_user.save!
 
-    if @this_user.update_attributes(params[:user])
-      redirect_to :back
-    else
-      render :action => 'edit'
-    end
+    redirect_to :action => :index
   end
   
   def show

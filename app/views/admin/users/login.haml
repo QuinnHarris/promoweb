@@ -1,4 +1,6 @@
-#message= flash['notice']
+- if flash[:notice]
+  %h1#message= flash[:notice]
+  %hr
 
 %h2 Mountain Xpress Promotions Login
 
