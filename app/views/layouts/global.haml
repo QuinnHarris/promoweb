@@ -62,7 +62,7 @@
           - else
             #adminheader.nav
               %ul#leftmenu
-                != li_to 'Orders', {:controller => '/admin/orders', :action => :show } do params[:controller].index('order') or !params[:controller].index('admin') end
+                != li_to 'Orders', { :controller => '/admin/orders', :action => :show } do params[:controller].index('order') or !params[:controller].index('admin') end
                 != li_to 'Admin', { :controller => '/admin/employees', :action => :index } do  !params[:controller].index('order') and params[:controller].index('admin') end
       
               #admincontent
