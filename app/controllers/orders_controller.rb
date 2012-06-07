@@ -579,12 +579,23 @@ public
     end
 
     if @user and @order.task_ready_completed?(FirstPaymentOrderTask)
-      @authorize = !@order.items.find { |i| i.task_completed?(ShipItemTask) }
-      @amount = @authorize ? [Money.new(0), @order.total_authorizeable].max : @order.total_chargeable
+      if @order.items.find { |i| i.task_completed?(ShipItemTask) }
+        @mode = :charge
+        @amount = @order.total_chargeable
+      else
+        @amount = [Money.new(0), @order.total_authorizeable].max
+        if !@amount.zero?
+          @mode = :authorize
+        elsif @permissions.include?('Super')
+          @mode = :charge_super
+          @amount = @order.total_chargeable
+        end
+      end
+
       @chargeable = !@amount.zero?
-      if (@credit = @amount.to_i < 0)
+      if @amount.to_i < 0
+        @mode = :credit
         @amount *= -1
-        @operation = 'Credit'
 
         if params[:txn_id]
           # If this is a refund setup the refund method
@@ -594,8 +605,6 @@ public
               method.credit_to(transaction) if transaction.id == txn_id
             end
           end
-        else
-          
         end
       end
 

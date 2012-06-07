@@ -82,7 +82,7 @@
                   %td Amount
                   %td Comment
               %tbody
-                - if @chargeable and method.useable? and (!@credit == !method.creditable?)
+                - if @chargeable and method.useable? and (!(@mode == :credit) == !method.creditable?)
                   %tr{ :id => "method-#{method.id}" }
                     %td TODAY
                     %td= link_to @order.id, status_order_path(@order)
@@ -95,15 +95,19 @@
                     %td
                       = text_field :transaction, :comment
                     %td
-                      - if @credit
+                      - case @mode
+                      - when :credit
                         = submit_tag 'Credit'
-                      - elsif @authorize
+                      - when :authorize
                         - if method.authorizeable?
                           = submit_tag 'Authorize'
                         - if allowed?
                           .admin= submit_tag 'Charge'
-                      - else
+                      - when :charge
                         = submit_tag 'Charge'
+                      - when :charge_super
+                        - if allowed?
+                          .admin= submit_tag 'Charge'
                 - for transaction in method.transactions.order('id DESC')
                   %tr
                     %td= transaction.created_at.strftime("%Y-%m-%d")
