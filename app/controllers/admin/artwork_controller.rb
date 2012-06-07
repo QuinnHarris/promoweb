@@ -11,14 +11,8 @@ class EPSInfo
   private
   def find_declares
     @declares = {}
-    started = nil
-    File.open(@file_name).each do |line|
-      if /^%%(\w+):\s(.+)$/ === line.encode('ASCII', :invalid => :replace, :replace => '')
-        @declares[$1] = $2
-        started = true
-      elsif started
-        return
-      end
+    File.open(@file_name).read(4096).scan(/%%(\w+):\s([^\n\r\t]+)/).each do |key, value|
+      @declares[key] = value
     end
   end
 

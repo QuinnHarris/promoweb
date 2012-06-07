@@ -104,7 +104,7 @@ Promoweb::Application.routes.draw do
       collection do
         get 'logout'
         get 'password'
-        post 'password'
+        post 'password' => 'users#password_set'
       end
       resources :phones, :only => [:index, :create, :destroy]
     end

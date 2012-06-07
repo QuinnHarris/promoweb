@@ -91,21 +91,30 @@ class Admin::UsersController < Admin::BaseController
   end
 
   def password
-    @this_user = UserPass.find(session[:user_id])
-    
-    if request.post?
-      if User.authenticate(@this_user.login, params[:user].delete(:old_password))
-        if @this_user.update_attributes(params[:user])
-          redirect_to :controller => :orders, :action => :index
-          return
-        end
-      else
-        @this_user.errors.add(:old_password, "incorrect")
-      end
+    @this_user = User.new
+    class << @this_user
+      def old_password; end
+      def password_confirmation; end
     end
-    
-    @this_user.password = nil
-    @this_user.password_confirmation = nil
-    class << @this_user; def old_password; end; end
+  end
+
+  def password_set
+    if User.authenticate(@user.login, params[:user].delete(:old_password))
+      @this_user = UserPass.find(@user.id)
+      if @this_user.update_attributes(params[:user])
+        redirect_to :controller => '/admin/orders', :action => :show
+        return
+      end
+      @notice = "Passwords do not match"
+    else
+      @notice = "Old Password incorrect"
+    end
+
+    @this_user = User.new
+    class << @this_user
+      def old_password; end
+      def password_confirmation; end
+    end
+    render :action => :password
   end
 end
