@@ -57,7 +57,7 @@
           - ['30m', '1h', '2h', '4h', 'EOD', '1d', '2d', '3d', '4d', '5d'].each do |name|
             = submit_tag name
           |
-          != t.text_field(:expected_at, :value => t.object.complete_at.strftime('%Y-%m-%d %H:%M'), :class => 'futuredate', :id => "task_expected_at_#{task.object.id}")
+          != t.text_field(:expected_at, :value => t.object.complete_at.strftime('%Y-%m-%d %H:%M'), :class => 'futuredate', :id => "task_expected_at_#{task.object.id}_#{task.class}")
           = submit_tag 'Apply'
           - unless task.new_record?
             X
