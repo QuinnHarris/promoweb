@@ -1,12 +1,13 @@
-%td
-  - unless @price_lock || purchase_lock
-    = link_to(image_tag("remove.png"), { :action => :order_item_remove, :id => entry.id, :klass => 'OrderItemDecoration' }, :remote => true, :class => 'remove')
-  - if entry.technique.name == 'General'
-    Dec: 
-    = text_field_tag "#{entry.class}-#{entry.id}-description", entry.description, :size => 28, :readonly => @price_lock || purchase_lock, 'data-autocomplete' => autocomplete_order_item_decoration_description_admin_order_path(@order)
-  - elsif true
-    = entry.technique.name
-    for
-    = text_field_tag "#{entry.class}-#{entry.id}-count", entry.count, :class => 'num'
-    #{entry.technique.unit_name}(s)
-= render :partial => 'order_item_entry_tail', :locals => { :object => entry, :purchase_lock => purchase_lock, :null => false }
+%tr.defined.dec
+  %td
+    - unless @price_lock || purchase_lock
+      = link_to(image_tag("remove.png"), { :action => :order_item_remove, :id => order_item_decoration.id, :klass => 'OrderItemDecoration' }, :remote => true, :class => 'remove')
+    - if order_item_decoration.technique.name == 'General'
+      Dec: 
+      = text_field_tag "#{order_item_decoration.class}-#{order_item_decoration.id}-description", order_item_decoration.description, :size => 28, :readonly => @price_lock || purchase_lock, 'data-autocomplete' => autocomplete_order_item_decoration_description_admin_order_path(@order)
+    - elsif true
+      = order_item_decoration.technique.name
+      for
+      = text_field_tag "#{order_item_decoration.class}-#{order_item_decoration.id}-count", order_item_decoration.count, :class => 'num'
+      #{order_item_decoration.technique.unit_name}(s)
+  = render :partial => 'order_item_entry_tail', :locals => { :object => order_item_decoration, :purchase_lock => purchase_lock, :null => false }

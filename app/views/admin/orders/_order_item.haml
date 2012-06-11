@@ -85,12 +85,8 @@
         %td.admin
           \%
 
-      - for decoration in item.decorations.includes(:technique, :decoration)
-        %tr.defined.dec
-          = render :partial => 'order_item_decoration', :locals => { :entry => decoration, :purchase_lock => purchase_lock }
-      - for entry in item.entries.find(:all, :order => 'id')
-        %tr
-          = render :partial => 'order_item_entry', :locals => { :entry => entry, :purchase_lock => purchase_lock }
+      = render :partial => 'order_item_decoration', :collection => item.decorations.includes(:technique, :decoration), :locals => { :purchase_lock => purchase_lock }
+      = render :partial => 'order_item_entry', :collection => item.entries.find(:all, :order => 'id'), :locals => { :purchase_lock => purchase_lock }
     %tfoot
       %tr.total
         %td

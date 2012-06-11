@@ -794,7 +794,7 @@ public
     order_locks
     order_item = OrderItem.find(params[:id])
     entry = order_item.entries.create
-    render :partial => 'order_item_entry', :locals => { :entry => entry, :purchase_lock => order_item.purchase && order_item.purchase.locked(@unlock) }
+    render :partial => 'order_item_entry', :object => entry, :locals => { :purchase_lock => order_item.purchase && order_item.purchase.locked(@unlock) }
   end
   
   def order_item_decoration_insert
@@ -806,7 +806,7 @@ public
       :count => technique.unit_default
     })
     @script = true
-    render :partial => 'order_item_decoration', :locals => { :entry => entry, :purchase_lock => order_item.purchase && order_item.purchase.locked(@unlock) }
+    render :partial => 'order_item_decoration', :object => entry, :locals => { :purchase_lock => order_item.purchase && order_item.purchase.locked(@unlock) }
   end
 
   def order_item_remove

@@ -419,14 +419,11 @@ $(document).ready ->
 
   $(document).delegate '.add', 'ajax:success', (xhr, data, status) ->
     target = $(xhr.target)
-    node = $('<tr/>').html(data)
     if target.hasClass('dec')
       rows = $('tbody tr.dec, tbody tr.defined', target.parents('table:first'))
-      node.addClass('dec')
-      node.addClass('defined')
-      rows.last().after(node)
+      rows.last().after(data)
     else
-      $('tbody', target.parents('table:first')).append(node)
+      $('tbody', target.parents('table:first')).append(data)
     calculate_all()
 
   $(document).delegate '.remove', 'ajax:success', (xhr, data, status) ->
