@@ -800,9 +800,12 @@ public
   def order_item_decoration_insert
     order_locks
     order_item = OrderItem.find(params[:id])
+    technique = DecorationTechnique.find(params[:technique])
     entry = order_item.decorations.create({
-      :technique_id => params[:technique]
+      :technique => technique,
+      :count => technique.unit_default
     })
+    @script = true
     render :partial => 'order_item_decoration', :locals => { :entry => entry, :purchase_lock => order_item.purchase && order_item.purchase.locked(@unlock) }
   end
 
@@ -814,12 +817,14 @@ public
   end
 
   def shipping_get
-    item = @order.items.find(params[:item_id])
-    @script = true
-    if item.shipping_rates(true)
-      render :partial => 'order_item_shipping', :locals => { :item => item }
-    else
-      render :inline => 'Unable to Determing Shipping'
+    Order.transaction do
+      item = @order.items.find(params[:item_id])
+      if item.shipping_rates(true)
+        @script = true
+        render :partial => 'order_item_shipping', :locals => { :item => item }
+      else
+        render :inline => 'Unable to Determing Shipping'
+      end
     end
   end
 

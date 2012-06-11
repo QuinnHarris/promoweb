@@ -10,3 +10,5 @@
   = text_field_tag "margin-#{object.id}", "???", :class => 'money null', :readonly => @price_lock
 %td.admin
   \%
+- if @script
+  %script!= "window.merge_listing(#{object.normal_h.to_json});"

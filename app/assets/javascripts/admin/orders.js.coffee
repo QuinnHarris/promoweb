@@ -423,6 +423,7 @@ $(document).ready ->
     if target.hasClass('dec')
       rows = $('tbody tr.dec, tbody tr.defined', target.parents('table:first'))
       node.addClass('dec')
+      node.addClass('defined')
       rows.last().after(node)
     else
       $('tbody', target.parents('table:first')).append(node)

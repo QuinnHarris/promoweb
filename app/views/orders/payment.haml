@@ -106,8 +106,7 @@
                       - when :charge
                         = submit_tag 'Charge'
                       - when :charge_super
-                        - if allowed?
-                          .admin= submit_tag 'Charge'
+                        .admin= submit_tag 'Charge'
                 - for transaction in method.transactions.order('id DESC')
                   %tr
                     %td= transaction.created_at.strftime("%Y-%m-%d")
