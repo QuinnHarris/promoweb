@@ -401,11 +401,8 @@ public
 
   def charge(order, amount, comment)
     txn = transactions.where(:type => 'PaymentAuthorize').where("amount >= ?", amount.to_i).where("created_at > ?", Time.now-7.days).where('active').order("order_id != #{order.id}, id, amount").first
-    
-    unless txn
-      txn, response = authorize(order, amount, comment)
-      return [txn, response] if transaction.is_a?(PaymentError)
-    end
+
+    return authorize(order, amount, comment) unless txn
 
     logger.info("CreditCard Charge: #{order.id} = #{amount} for #{id} from #{txn.inspect}")
     res = gateway.status(order_number = (txn.order_number || txn.id))
