@@ -483,7 +483,7 @@ OrderItemTask
 class CompleteOrderTask < OrderTask; end;
 
 class FinalPaymentOrderTask < OrderTask
-  set_depends_on FirstPaymentOrderTask, ShipItemTask, ReconciledItemTask
+  set_depends_on FirstPaymentOrderTask, ShipItemTask #, ReconciledItemTask
   self.status_name = 'Customer Payment'
   self.waiting_name = 'Charge Final Payment'
   self.completed_name = 'Final Payment Charged'

@@ -9,7 +9,13 @@ class Address < ActiveRecord::Base
     end
   end
 
-  @@postal_regex = { 'US' => /^\d{5}(-\d{4})?$/, 'CA' => /^\w\d\w\s*\d\w\d$/ }
+  @@postal_8dig = /^\d{5}(-\d{4})?$/
+  @@postal_regex = {
+    'US' => @@postal_8dig,
+    'PR' => @@postal_8dig,
+    'CA' => /^\w\d\w\s*\d\w\d$/
+  }
+
   def invalid_postal?
     reg = @@postal_regex[country]
     return "unknown country: #{country}" unless reg
