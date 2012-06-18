@@ -53,8 +53,9 @@ xml.rss :version => '2.0', 'xmlns:g' => 'http://base.google.com/ns/1.0' do
 
           xml.title title
           
-          xml.link "http://www.mountainofpromos.com/products/#{product.web_id}"
-          
+	  url = "http://www.mountainofpromos.com/products/#{product.web_id}"
+          xml.link url
+          xml.tag!("g:adwords_redirect", url + "?gsource={ifpe:1}{ifpla:2}")
           
           # Description
           description += "(#{product.price_fullstring_cache})\n"
