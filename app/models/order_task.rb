@@ -473,7 +473,8 @@ class ReOrderTask < OrderTask
   end
 
   def self.blocked(order)
-    super || (order.task_completed?(AcknowledgeOrderTask) && 'Order Acknowledged')
+#    super || (order.task_completed?(AcknowledgeOrderTask) && 'Order Acknowledged')
+    super || (order.task_completed?(OrderSentItemTask) && 'Order Sent to Supplier')
   end
 end
 
