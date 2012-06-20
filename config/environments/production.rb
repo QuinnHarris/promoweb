@@ -86,4 +86,4 @@ Promoweb::Application.config.middleware.use ExceptionNotifier,
 SEND_EMAIL = "Mountain Express Promotions <sales@mountainofpromos.com>"
 
 # RLIMIT THIS PROCESS
-Process.setrlimit(Process::RLIMIT_AS, 1024*1024*384)
+Process.setrlimit(Process::RLIMIT_AS, 1024*1024*1024)

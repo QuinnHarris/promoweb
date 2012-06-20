@@ -162,6 +162,9 @@ class UPSShippingRate < ShippingRate
       ups = UPS::Base.new('4BF2D1D4C2E28409', 'QuinnHarris', 'Hitachi')
       shipments, tits = ups.queries([ratereq, titreq])
     rescue
+      a = Socket.getaddrinfo('wwwcie.ups.com', "http", nil, :STREAM)
+      Rails.logger.info("RESOLVER FAIL: #{a.inspect}")
+
       return "Shipping fail"
     end
 
@@ -197,3 +200,6 @@ class ShippingRate
     rates + [ShipService.new]
   end
 end
+
+a = Socket.getaddrinfo('wwwcie.ups.com', "http", nil, :STREAM)
+Rails.logger.info("RESOLVER TEST: #{a.inspect}")

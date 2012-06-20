@@ -64,7 +64,7 @@ module ObjectTaskMixin
 
   # Only used by _pending_tasks.haml
   def task_find_inactive(task_class)
-    task_class.find(:first, :order => 'id',
+    task_class.find(:first, :order => 'id DESC',
                     :conditions => ["#{task_class.reflections[:object].association_foreign_key} = ? AND active IS NULL", id])
   end
 
