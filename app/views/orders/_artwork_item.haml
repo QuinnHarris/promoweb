@@ -13,7 +13,8 @@
         %td
           %a{ :href => artwork_item.art.url }= artwork_item.art.original_filename
         %td{ :rowspan => "4", :style => "vertical-align: top;" }
-          - unless static
+          - tags = artwork_item.tags.collect { |t| t.name }
+          - if !static and (@user or tags.include?('customer'))
             = link_to(image_tag('remove.png') + "Remove", order_artwork_path(@order, artwork_item), :method => :delete, :confirm => "Remove #{artwork_item['file']}")
             - if @user and artwork_item.can_pdf?
               %br
@@ -25,7 +26,6 @@
                   = link_to "(Scale)", make_proof_order_artwork_path(@order, :artwork_id => artwork_item, :scale => true), :method => :post, :confirm => "Generate Proof and mark this file as supplier and the proof as proof?"
             %hr
           - complete = @order.tasks_dep.find_all { |t| t.active }
-          - tags = artwork_item.tags.collect { |t| t.name }
           - for name, req in ArtworkTag.tag_mapping(artwork_item)
             - if !static and req and !complete.include?(req)
               %div
