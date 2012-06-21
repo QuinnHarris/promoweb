@@ -1,0 +1,6 @@
+#!/bin/sh
+
+cd /usr/share/GeoIP
+mv -f GeoLiteCity.dat GeoLiteCity.dat.old
+wget -N http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz
+gunzip GeoLiteCity.dat.gz
