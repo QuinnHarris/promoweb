@@ -7,7 +7,7 @@
     - for pn in @customer.phone_numbers
       - unless pn.name.blank?
         #{pn.name}:
-      %a{ :href => "Tel://#{pn.number}" }= pn.number_string
+      %a{ :href => "Tel://#{pn.dial_string}" }= pn.number_string
     - orders = @customer.orders.find(:all, :conditions => 'NOT closed').collect { |o| o.id }
     - unless orders.empty?
       %br
