@@ -40,7 +40,7 @@ class Supplier < ActiveRecord::Base
     [parent && parent.name, attributes['name']].compact.join(' ')
   end
 
-  %w(quickbooks_id quickbooks_sequence price_source_id address_id artwork_email po_email fax phone account_number).each do |name|
+  %w(quickbooks_id quickbooks_sequence price_source_id address_id artwork_email po_email fax phone account_number web).each do |name|
     define_method(name) do
       unless (val = attributes[name]).blank?
         next val

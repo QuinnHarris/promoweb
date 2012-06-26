@@ -1001,29 +1001,17 @@ class Product < ActiveRecord::Base
   end
   
   def supplier_url
-    case supplier.name
-      when "Gemline"
-        "http://www.gemline.com/gemline/products/style-detail.aspx?productid=#{data && data[:id]}"
-      when "Leeds"
-        "http://www.leedsworld.com/products/item/?item=#{supplier_num}"
-      when "Bullet Line"
-        "http://www.bulletline.com/products/item/?item=#{supplier_num}"
-      when "Lanco"
-        "http://www.lancopromo.com/product/#{supplier_num}"
-      when "Prime Line"
-        "http://www.primeline.com/Products/ProductDetail.aspx?fpartno=#{supplier_num}"
-      when "High Caliber Line"
-        "http://www.highcaliberline.com/productdesp_new.php?cid=6&scid=1&fcid=0&pid=#{supplier_num}"
-      when /^Norwood /
-        "http://norwood.com/product/#{supplier_num}/"
-      when "LogoIncluded"
-        "http://www.logoincluded.com/products/detail.asp?partnum=#{supplier_num}"
-      when "DigiSpec"
-        data && data[:url]
-      when "Ash City"
-        "http://www.ashcity.com/search?q=#{supplier_num}"
-      else
-        "http://www.mountainofpromos.com/search/#{supplier.name}"
+    replace = {
+      'supplier_num' => supplier_num,
+      'data_id' => data && data[:id],
+      'data_url' => data && data[:url]
+    }
+    unless supplier.web.blank?
+      'http://' + supplier.web.split(/#\{(\w+?)\}/).collect do |part|
+        replace[part] || part
+      end.join
+    else
+      "http://www.mountainofpromos.com/search/#{supplier.name}"
     end
   end
 end
