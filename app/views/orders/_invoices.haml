@@ -138,7 +138,7 @@
 
       .notes
         - if !static and @user and invoice.new_record?
-          %h3 Notes
+          %h4 Notes
           = form_for invoice, :url => invoice_create_admin_order_path(@order), :html => { :method => :put } do |inv|
             = inv.text_area :comment, 'cols' => 50, 'rows' => 5
             = submit_tag('Create Invoice')
