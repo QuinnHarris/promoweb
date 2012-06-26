@@ -5,7 +5,10 @@
         %th
           - unless @price_lock || purchase_lock
             = link_to(image_tag('remove.png') + "Remove", order_item_path(@order, item), :method => :delete, :confirm => "Remove #{item.product.name}")
-          - unless purchase_lock
+            &mdash;
+            = link_to "Duplicate", item_duplicate_admin_order_path(@order, :item_id => item), :method => :post, :confirm => "Duplicate this order item"
+            %br
+          - unless item.purchase_id
             = check_box :item_po, item.id, { :checked => true }
             Include in PO
           - if item.sample_requested

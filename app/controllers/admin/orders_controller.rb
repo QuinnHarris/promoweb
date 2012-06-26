@@ -462,9 +462,25 @@ class Admin::OrdersController < Admin::BaseController
   end
 
   def item_duplicate
-    orig_item = @order.item.find(params[:item_id])
+    OrderItem.transaction do
+      orig_item = @order.items.find(params[:item_id])
+      
+      item = @order.items.create( :product_id => orig_item.product_id,
+                                  :price_group_id => orig_item.price_group_id,
+                                  :price => orig_item.price,
+                                  :cost => orig_item.cost,
+                                  :purchase => nil,
+                                  :shipping_type => orig_item.shipping_type,
+                                  :shipping_code => orig_item.shipping_code,
+                                  :shipping_price => orig_item.shipping_price)
+      orig_item.order_item_variants.each do |oiv|
+        item.order_item_variants.create(:variant_id => oiv.variant_id,
+                                        :quantity => oiv.quantity,
+                                        :imprint_colors => oiv.imprint_colors)
+      end
+    end
 
-    
+    redirect_to items_admin_order_path(@order)
   end
 
   def duplicate

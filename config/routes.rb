@@ -197,6 +197,7 @@ Promoweb::Application.routes.draw do
         get 'autocomplete_order_item_decoration_description'
 
         post 'duplicate'
+        post 'item_duplicate'
         post 'restore'
         
         post 'payment_apply'
