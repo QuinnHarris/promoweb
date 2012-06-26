@@ -478,6 +478,10 @@ class Admin::OrdersController < Admin::BaseController
                                         :quantity => oiv.quantity,
                                         :imprint_colors => oiv.imprint_colors)
       end
+
+      item.task_complete({ :user_id => session[:user_id],
+                           :host => request.remote_ip },
+                         ArtExcludeItemTask) if orig_item.task_completed?(ArtExcludeItemTask)
     end
 
     redirect_to items_admin_order_path(@order)
