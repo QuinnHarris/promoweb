@@ -1,6 +1,6 @@
 module QbwcHelper
   def encode(str)
-    str.encode('ASCII', :invalid => :replace, :undef => :replace, :replace => '')
+    str ? str.encode('ASCII', :invalid => :replace, :undef => :replace, :replace => '') : ''
   end
 
   def item(xml, item, name, id_name = 'ListID', include = [])
@@ -208,24 +208,24 @@ module QbwcHelper
   end
 
   def common_address(xml, address)
-    xml.City((encode(address.city) || '')[0...31])
-    xml.State((encode(address.state) || '')[0...21])
-    xml.PostalCode((encode(address.postalcode) || '')[0...13])
+    xml.City encode(address.city)[0...31]
+    xml.State encode(address.state)[0...21]
+    xml.PostalCode encode(address.postalcode)[0...13]
     #xml.Country
     #xml.Notes
   end
   
   def generic_address(xml, address)
-    xml.Addr1((encode(address.address1) || '')[0...41])
-    xml.Addr2((encode(address.address2) || '')[0...41])
+    xml.Addr1 encode(address.address1)[0...41]
+    xml.Addr2 encode(address.address2)[0...41]
     common_address(xml, address)
   end
   
   def customer_address(xml, customer, address)
     xml.Addr1 encode(customer.company_name[0...41])
     xml.Addr2 "ATTN: #{encode((address.name and !address.name.strip.empty?) ? address.name : customer.person_name)}"[0...41]
-    xml.Addr3((encode(address.address1) || '')[0...41])
-    xml.Addr4((encode(address.address2) || '')[0...41])
+    xml.Addr3 encode(address.address1)[0...41]
+    xml.Addr4 encode(address.address2)[0...41]
     common_address(xml, address)
   end
   
