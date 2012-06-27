@@ -240,10 +240,12 @@ class Admin::OrdersController < Admin::BaseController
       return
     end
 
-    if params[:purchase_order] and !params[:purchase_order][:quickbooks_ref].blank?
-      if po = PurchaseOrder.find_by_quickbooks_ref(params[:purchase_order][:quickbooks_ref])
-        redirect_to items_admin_order_path(po.purchase.order)
-        return
+    [:invoice, :purchase_order, :bill].each do |name|
+      if params[name] and !params[name][:quickbooks_ref].blank?
+        if obj = name.to_s.classify.constantize.find_by_quickbooks_ref(params[name][:quickbooks_ref])
+          redirect_to items_admin_order_path(obj.purchase.order)
+          return
+        end
       end
     end
 

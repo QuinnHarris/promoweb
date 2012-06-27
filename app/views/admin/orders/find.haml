@@ -13,11 +13,17 @@
     %caption Search
     %tbody
       %tr
-        %th Order #
+        %th Order #:
         %td= text_field :order, :id, :value => ''
       %tr
-        %th Purchase #
+        %th Invoice #:
+        %td= text_field :invoice, :quickbooks_ref
+      %tr
+        %th Purchase #:
         %td= text_field :purchase_order, :quickbooks_ref
+      %tr
+        %th Bill #:
+        %td= text_field :bill, :quickbooks_ref
         %td= submit_tag('Find')
       %tr
         %th Company:
