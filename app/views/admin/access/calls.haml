@@ -4,9 +4,9 @@
   %thead
     %tr
       %td Inbound
-      %td Caller Name
-      %td Caller Number
+      %td Caller
       %td Called Number
+      %td Quality
       %td Create Time
       %td Ring Time
       %td Answer Time
@@ -17,9 +17,18 @@
     - for call in @calls
       %tr
         %td= call.inbound
-        %td= call.caller_name
-        %td= call.caller_number
+        %td
+          - if call.caller_name == call.caller_number
+            = call.caller_number
+          - else
+            #{call.caller_number} (#{call.caller_name})
         %td= call.called_number
+        %td
+          - if (stat = call.rtp_stat_problems).empty?
+            GOOD
+          - else
+            - for name, (count, perc) in stat
+              #{name}: #{val} (#{"%0.2f\%" % perc})
         %td= format_time(call.create_time)
         %td= format_time(call.ring_time)
         %td= format_time(call.answered_time)
