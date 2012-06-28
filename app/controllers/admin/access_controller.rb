@@ -52,19 +52,24 @@ class Admin::AccessController < Admin::BaseController
     calls = CallLog.where(:inbound => true).order('id DESC').limit(4).all
     
     @calls = calls.collect do |call_log|
-      customer = Customer.where('phone_numbers.number' => call_log.caller_number.gsub(/^1/,'').to_i)
+      number = call_log.caller_number.gsub(/^1/,'').to_i
+      customer = Customer.where('phone_numbers.number' => number)
                          .includes(:phone_numbers).order('customers.id DESC').first
 
-      next [call_log, customer] if customer
+      next [call_log, [customer]] if customer    
 
       /^1?(\d{3})/ === call_log.caller_number
       prefix = $1.to_i
       access = PageAccess.where("page_accesses.created_at > ?", Time.now - 15.days)
         .where("page_accesses.controller = 'products' AND action = 'show'")
         .where("session_accesses.updated_at > ? AND session_accesses.area_code = #{prefix}", Time.now - 30.days)
-        .includes(:session, { :product => :product_images }).order('page_accesses.id DESC').limit(10).all
+        .includes(:session, { :product => :product_images }).order('page_accesses.id DESC').limit(4).all
 
-      [call_log, access.collect { |a| a.product }.uniq]
+      start = (number / 10000000) * 10000000
+      customers = Customer.where("phone_numbers.number >= #{start} AND phone_numbers.number < #{start + 10000000}")
+        .includes(:phone_numbers).order("ABS(phone_numbers.number - #{number})").limit(3)
+
+      [call_log, [access.collect { |a| a.product }.uniq] + customers]
     end
     
   end

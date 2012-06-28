@@ -5,29 +5,30 @@ div.session {
   padding: 0;
   margin: 1em;
   border: thin solid black;
+
+  h2 {
+    padding: 0.25em;
+    color: white;
+    background-color: black;
+  }
   
   > div {
-    //background-color: white;
     padding: 0.2em;
 
-    &:nth-child(2n) {
+    &:nth-child(2n+1) {
       background-color: $stripe-color; 
     }
 
-    > div {
-      padding-left: 0.5em;
-      
-      &.date_addr {
-        padding: 0.25em;
-        color: white;
-        background-color: black;
-      }
+    table.products {
+      width: 100%;
+      td { text-align: center; }
     }
+  }
 
-    &.agent {
-      float:right;
-      background-color: white;
-    }
+  .agent {
+    font-size: 0.7em;
+    float: right;
+    background-color: #EEE;
   }
 }
 

@@ -1,35 +1,38 @@
 - for call_log, data in @calls
-  %div
-    - if data.is_a?(Customer)
-      %h2 Customer
-      #{format_phone(call_log.caller_number)} : #{call_log.caller_name} @ #{format_time(call_log.create_time)}
-      %table.form
-        %tr
-          %th Company:
-          %td= data.company_name
-        %tr
-          %th Name:
-          %td= data.person_name
-        %tr
-          %th Email:
-          %td
-            - for ea in data.email_addresses
-              %div= mail_to ea.address
-        %tr
-          %th Phone:
-          %td
-            - for p in data.phone_numbers
-              %div #{p.name}: #{p.number_string}
-        %tr
-          %th Orders
-          %td!= data.orders.collect { |o| link_to o.id, status_order_path(o) }.join(', ')
-    - else
-      %h2 Product Views
-      #{format_phone(call_log.caller_number)} : #{call_log.caller_name} @ #{format_time(call_log.create_time)}
-      %table
-        - data.in_groups_of(5) do |row|
-          %tr
-            - for product in row.compact
+  .session
+    %h2
+      #{format_time(call_log.create_time)} : #{format_phone(call_log.caller_number)}
+      - if call_log.caller_number != call_log.caller_name
+        (#{call_log.caller_name})
+      to #{call_log.called_number}
+    - for elem in data
+      %div
+        - if elem.is_a?(Customer)
+          %table.form
+            %tr
+              %th Company:
+              %td= elem.company_name
+            %tr
+              %th Name:
+              %td= elem.person_name
+            %tr
+              %th Email:
               %td
-                = render :partial => '/categories/thumb', :locals => { :product => product, :category => nil, :context => nil }
-                M#{product.id}
+                - for ea in elem.email_addresses
+                  %div= mail_to ea.address
+            %tr
+              %th Phone:
+              %td
+                - for p in elem.phone_numbers
+                  %div #{p.name}: #{p.number_string}
+            %tr
+              %th Orders
+              %td!= elem.orders.collect { |o| link_to o.id, status_order_path(o) }.join(', ')
+        - else
+          %table.products
+            - elem.in_groups_of(5) do |row|
+              %tr
+                - for product in row.compact
+                  %td
+                    = render :partial => '/categories/thumb', :locals => { :product => product, :category => nil, :context => nil }
+                    M#{product.id}

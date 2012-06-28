@@ -1,33 +1,51 @@
 - for session in sessions
   .session
-    .agent= session.user_agent
     - split_by_common(session.pages) { |page| [format_time(page.created_at, false), page.address] }.each do |(date, address), pages|
-      %div
-        .date_addr
-          = date
+      %h2
+        = date
+        \:
+        = address
+        - if gi = GEOIP.look_up(address)
           \:
-          = address
-          - if gi = GEOIP.look_up(address)
-            \:
-            - if gi[:city]
-              = gi[:city].force_encoding("UTF-8")
-            - if gi[:region]
-              = gi[:region].force_encoding("UTF-8")
-            - if gi[:country_name]
-              [#{gi[:country_name].force_encoding("UTF-8")}]
-            - if gi[:postal_code]
-              \,
-              = gi[:postal_code]
-            - if gi[:area_code]
-              = "(#{gi[:area_code]})"
-          - else
-            Unknown
+          - if gi[:city]
+            = gi[:city].force_encoding("UTF-8")
+          - if gi[:region]
+            = gi[:region].force_encoding("UTF-8")
+          - if gi[:country_name]
+            [#{gi[:country_name].force_encoding("UTF-8")}]
+          - if gi[:postal_code]
+            \,
+            = gi[:postal_code]
+          - if gi[:area_code]
+            = "(#{gi[:area_code]})"
+        - else
+          Unknown
+      .agent= session.user_agent
       - for page in pages
         %div
           = page.created_at.strftime(" %I:%M:%S %p")
           \:
-          %a{ :href => url_for(page.uri) }&= page.uri.inspect
-          \:
+          %a{ :href => url_for(page.uri) }
+            - case [page.controller, page.action]
+              - when ['products', 'show']
+                Product #{page.action_id}
+                - if page.params and page.params['id']
+                  &mdash; #{page.params['id'].split('-')[1..-1].join(' ')}
+              - when ['categories', 'main']
+                Category &mdash; #{page.params && page.params['path']}
+              - when ['categories', 'home']
+                Home Page
+              - when ['search', 'index']
+                Search &mdash; #{page.params && page.params['terms']}
+              - else
+                - case page.controller
+                  - when 'orders'
+                    Order #{page.action_id} &mdash; #{page.action.capitalize} #{page.params && page.params.inspect}
+                  - when 'static'
+                    Info &mdash; #{page.action}
+                  - else
+                    &= page.uri.inspect
           - if page.referer
+            \:
             %span.referer
               != referer_tag(page.referer)
