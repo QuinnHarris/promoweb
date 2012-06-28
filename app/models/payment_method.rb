@@ -400,7 +400,8 @@ public
   end
 
   def charge(order, amount, comment)
-    txn = transactions.where(:type => 'PaymentAuthorize').where("amount >= ?", amount.to_i).where("created_at > ?", Time.now-7.days).where('active').order("order_id != #{order.id}, id, amount").first
+    auth_time = Time.now - ((sub_type == 'american_express') ? 30 : 14).days
+    txn = transactions.where(:type => 'PaymentAuthorize').where("amount >= ?", amount.to_i).where("created_at > ?", auth_time).where('active').order("order_id != #{order.id}, id, amount").first
 
     return authorize(order, amount, comment) unless txn
 

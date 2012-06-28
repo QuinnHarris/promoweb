@@ -28,7 +28,7 @@
             GOOD
           - else
             - for name, (count, perc) in stat
-              #{name}: #{val} (#{"%0.2f\%" % perc})
+              #{name}: #{count} (#{"%0.2f\%" % perc})
         %td= format_time(call.create_time)
         %td= format_time(call.ring_time)
         %td= format_time(call.answered_time)
