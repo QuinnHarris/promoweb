@@ -279,6 +279,11 @@ class PhoneController < ActionController::Base
       attr['user_id'] = user.id
     end
 
+    CallLog.rtp_stat_names.each do |name|
+      next unless val = doc.at_xpath("/cdr/variables/#{name}/text()")
+      attr[name] = val.to_s.to_i
+    end
+
     logger.info("Attr: #{attr.inspect}")
 
     call_record.update_attributes(attr)
