@@ -1,7 +1,7 @@
 %p
   Your card will not be charged until you acknowledge the invoice for the amount that will be billed.
 
-= form_for(@credit_card, :as => :credit_card, :url => payment_creditcard_order_path(@order)) do |cc|
+= form_for(@credit_card, :as => :credit_card, :url => payment_creditcard_order_path(@order), :html => { :class => 'noauto' } ) do |cc|
   %table.form
     %caption Add Credit Card
     %tr
@@ -23,25 +23,15 @@
       %th CCV:
       %td= cc.text_field :verification_value, :size => 4
 
-  :javascript
-    function enable_disable_forum(object, input) {
-      var elements = $(object).getElementsByTagName('input')
-      for (i = 0; i < elements.length; ++i) {
-        if (elements[i] != input)
-            elements[i].disabled = !input.checked;
-      }
-      elements = $(object).getElementsByTagName('select');
-      for (i = 0; i < elements.length; ++i) {
-          if (elements[i] != input)
-              elements[i].disabled = !input.checked;
-      }
-    }
-
-  = check_box :options, :different, { :onclick => "enable_disable_forum('address', this)" }
-  Specify different billing address
   %br
   = fields_for @address do |add|
     %table#address.form
+      %tbody
+        %tr
+          %td
+          %td
+            = check_box :options, :different, { :class => 'activate' }
+            Specify different billing address
       = render :partial => 'address_edit', :locals => { :field_name => :address, :disabled => !@options.different, :nonotes => true}
 
   %hr
