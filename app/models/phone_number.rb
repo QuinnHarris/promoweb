@@ -9,7 +9,8 @@ class PhoneNumber < ActiveRecord::Base
   def self.main_column; 'number_string'; end
 
   def dial_string
-    number_string.gsub(/[^0-9]+/,'')
+    /([0-9\-. ]+)/ === number_string
+    $1.gsub(/[^0-9]+/,'')
   end
 
   before_save :set_number
