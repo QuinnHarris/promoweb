@@ -177,6 +177,7 @@ class UPSShippingRate < ShippingRate
       return "Unexpected # of shipments: #{shipment.packages.length} != #{pkg_num}" unless shipment.packages.length == pkg_num
       price = (package_full_count > 0) ? shipment.packages.first.total_price.to_f * package_full_count : 0.0
       price += shipment.packages.last.total_price.to_f if package_tail_units > 0
+      price = shipment.total_price.to_f if price == 0.0
       [shipment.service_code, price, days, shipment.time]
     end.sort_by { |c, p, d, t| p }
 

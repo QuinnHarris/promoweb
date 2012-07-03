@@ -228,7 +228,8 @@ module UPS
         '13' => 'UPS Next Day Air Saver',
         '14' => 'UPS Next Day Air Early A.M.',
         '54' => 'UPS Worldwide Express Plus',
-        '59' => 'UPS 2nd Day Air A.M.',      
+        '59' => 'UPS 2nd Day Air A.M.',
+        '65' => 'UPS Saver'
       }
       def self.code_desc_hash; @@code_desc; end
       def self.code_desc(code)
@@ -558,7 +559,7 @@ private
       response_plain = @connection.post(request.path, data).body
       response       = response_plain.include?('<?xml') ? REXML::Document.new(response_plain) : response_plain
 
-      File.open('/home/quinn/out.xml', 'w') { |f| f.write(response_plain) }
+#      File.open('/home/quinn/out.xml', 'w') { |f| f.write(response_plain) }
 
       request.parse(response)
     end
