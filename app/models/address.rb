@@ -14,7 +14,8 @@ class Address < ActiveRecord::Base
     'US' => @@postal_8dig,
     'PR' => @@postal_8dig,
     'CA' => /^\w\d\w\s*\d\w\d$/,
-    'NL' => /^\d{4}\s?[A-Z]{2}$/i
+    'NL' => /^\d{4}\s?[A-Z]{2}$/i,
+    'IN' => /^\d{6}$/
   }
 
   def invalid_postal?

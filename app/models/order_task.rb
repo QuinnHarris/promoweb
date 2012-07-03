@@ -286,7 +286,7 @@ class PaymentOverrideOrderTask < OrderTask
 
   # Was commented out, WHY?
   def self.blocked(object)
-    super || (object.task_completed?(PaymentInfoOrderTask) && "payment information received")
+    super || (object.task_completed?(FirstPaymentOrderTask) && "first payment received")
   end
 end
 
