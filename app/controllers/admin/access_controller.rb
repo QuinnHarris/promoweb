@@ -67,7 +67,7 @@ class Admin::AccessController < Admin::BaseController
 
       start = (number / 10000000) * 10000000
       customers = Customer.where("phone_numbers.number >= #{start} AND phone_numbers.number < #{start + 10000000}")
-        .includes(:phone_numbers).order("ABS(phone_numbers.number - #{number})").limit(3)
+        .includes(:phone_numbers, :orders).order("orders.closed, ABS(phone_numbers.number - #{number})").limit(3)
 
       [call_log, [access.collect { |a| a.product }.uniq] + customers]
     end

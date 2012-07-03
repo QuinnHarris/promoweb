@@ -14,9 +14,9 @@ set :git_enable_submodules, 1 # Fetch submodules
 
 # Or: `accurev`, `bzr`, `cvs`, `darcs`, `git`, `mercurial`, `perforce`, `subversion` or `none`
 
-role :web, "main.mountainofpromos.com"                          # Your HTTP server, Apache/etc
-role :app, "main.mountainofpromos.com"                          # This may be the same as your `Web` server
-role :db,  "main.mountainofpromos.com", :primary => true # This is where Rails migrations will run
+role :web, "phoenix.mountainofpromos.com"                          # Your HTTP server, Apache/etc
+role :app, "phoenix.mountainofpromos.com"                          # This may be the same as your `Web` server
+role :db,  "phoenix.mountainofpromos.com", :primary => true # This is where Rails migrations will run
 #role :db,  "your slave db-server here"
 
 # if you're still using the script/reaper helper you will need
