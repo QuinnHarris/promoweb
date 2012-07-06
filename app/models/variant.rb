@@ -30,23 +30,30 @@ class Variant < ActiveRecord::Base
     [images].flatten.compact.each do |img|
       if pi = orig.find { |pi| pi.supplier_ref == img.id }
         orig.delete(pi)
-        next
-      end
-      if pi = ProductImage.find(:first, :conditions => { :product_id => product_id, :supplier_ref => img.id })
+      elsif pi = ProductImage.find(:first, :conditions => { :product_id => product_id, :supplier_ref => img.id })
         str << "   | Image: #{img.id} +\n"
         pi.variants << self
+      end
+
+      if pi
+        if pi.tag != img.tag
+          str << "  | Tag: #{pi.tag} => #{img.tag}"
+          pi.tag = img.tag
+          pi.save!
+        end
       else
         str << "   + Image: #{img.id}\n"
         pi = product_images.create(:supplier_ref => img.id,
                                    :image => img.get,
-                                   :product => product)
+                                   :product => product,
+                                   :tag => img.tag)
         pi.image.reprocess!
         pi.image.save
       end
     end
 
     orig.each do |pi|
-      str << "   | Image #{pi.supplier_num} -\n"
+      str << "   | Image #{supplier_num} -\n"
       pi.variants.delete(self)
     end
 

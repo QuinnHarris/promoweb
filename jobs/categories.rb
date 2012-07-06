@@ -15,7 +15,7 @@ class NewCategoryTransform
       record['categories'].find { |s| (s.length > sub.length) && (s[0...(sub.size)] == sub) }
     end
 
-    if Rails.env.production?
+    if true #Rails.env.production?
       record['categories'] = [['Other']] if record['categories'].empty?
     else
       record['categories'] = record['categories'] + record['categories'].collect { |cat| ['YBySupplier', @supplier] + cat }

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 require 'net/ftp'
 
 class LeedsXLSDecorations
@@ -7,19 +8,30 @@ end
 class PolyXLS < GenericImport  
   @@color_map =
   { '' => '',
+    'limeágreen' => 'LGR', #Kludge for SM-3235
+    'processáblue' => 'NEBL',
+    'amthyst' => 'AM',
     'aquarium' => 'BK',
     'bk on bk' => 'RBB',
     'black' => 'BK',
     'black top with clear base' => 'BK',
+    'black with silver trim' => 'SIBK', # KK-640
     'black/red' => 'BKR',
+    'black pin stripe' => 'BKP', # 2050-14
     'blue' => 'BL',
     'blue/black' => 'BLBK',
+    'blue with silver trim' => 'SBL', # KK-640
     'brown' => 'BR',
+    'burgundy' => 'BU',
     'camouflage' => 'CA',
+    'component' => 'CM', # 1030-49
+    'copper' => 'CO',
     'charcoal' => 'CH',
     'chestnut' => 'CT',
     'clear' => 'CL',
+    'cream' => 'CR',
     'dark red' => 'RE',
+    'emerald' => 'EM',
     'espresso' => 'ES',
     'frosted orange' => 'FOR',
     'frosted red' => 'FRE',
@@ -28,14 +40,19 @@ class PolyXLS < GenericImport
     'gray' => 'GY',
     'gray granite' => 'GG',
     'green' => 'GR',
+    'dark green' => 'DGR',
+    'green with silver trim' => 'SIGR', # KK-640
+    'kelly green' => 'KGR', # SM-3122
     'grey' => 'GY',
+    'gunmetal' => 'GM',
     'hunter green' => 'HG',
     'iron' => 'IN',
-    'light blue' => 'LBL',
+    'light blue' => ['LBL', 'LB'],
     'lime' => 'LM',
     'lime green' => 'LGR',
     'mahogany' => 'CC',
     'mahogny' => 'CC',
+    'maroon' => 'MA',
     'matte silver' => 'SI',
     'midnight chrome' => 'SL',
     'multicol' => 'MT',
@@ -47,25 +64,39 @@ class PolyXLS < GenericImport
     'ni' => 'NI',
     'olive' => 'OL',
     'orange' => 'OR',
+    'pearlescent neon orange' => 'NOR', # KK-640
+    'pearlescent neon yellow' => 'NY', # KK-640
+    'pearlescent neon green' => 'NG', # KK-640
+    'pearlescent neon pink' => 'NP', # KK-640
     'pink' => 'PK',
     'plasma ball' => 'BB',
     'poncho' => 'WH',
     'purple' => 'PP',
-    'red' => 'RD',
+    'quartz' => 'QZ',
+    'red' => ['RE', 'RD'],
+    'red with silver trim' => 'SIRE', # KK-640
     'reflective triangle' => 'RE',
     'reflex blue' => 'REBL',
     'royal' => 'RY',
     'royal blue' => 'RBL',
-    'silver' => 'SL',
+    'ruby' => 'RU',
+    'rust' => 'RS',
+    'sapphire' => 'SA',
+    'silver' => ['SI', 'S'],
     'silver barrel' => 'SI',
     'silver with black trim' => 'SIBK',
+    'silver with black grip' => 'SIBK', # KK-930
     'silver with blue trim' => 'SIBL',
     'silver with green trim' => 'SIGR',
+    'silver with red trim' => 'SIRE',
     'silver with frosted black grip' => 'SBK',
     'silver with frosted blue grip' => 'SBL',
     'silver with frosted green grip' => 'SGR',
     'silver with frosted orange grip' => 'SOR',
     'silver with frosted red grip' => 'SRE',
+    'silver with green grip' => 'SGR',
+    'silver with black lower barrel' => 'SIBK', # KK-955
+    'silver with blue lower barrel' => 'SIBL', # KK-955
     'silver with red strap' => 'RE',
     'silver/black' => 'SIBK',
     'silver/blue' => 'SIBL',
@@ -74,7 +105,10 @@ class PolyXLS < GenericImport
     'smoke' => 'SM',
     'stainless steel' => 'SS',
     'strawberry granite' => 'SG',
+    'solid blue' => 'SBL',
+    'solid black' => 'SBK', # KK-640
     'taupe' => 'TP',
+    'teal' => 'TE',
     'titanium' => 'TI',
     'translucent black' => 'TBK',
     'translucent blue' => 'TBL',
@@ -84,7 +118,7 @@ class PolyXLS < GenericImport
     'translucent pink' => 'TPK',
     'translucent purple' => 'TPR',
     'translucent purple' => 'TPU',
-    'translucent red' => 'TRD',
+    'translucent red' => 'TRE',
     'translucent royal blue' => 'TRBL',
     'translucent yellow' => 'TYE',
     'transparent aqua blue' => 'TABL',
@@ -99,55 +133,124 @@ class PolyXLS < GenericImport
     'transparent purple' => 'TPU',
     'transparent red' => 'TRE',
     'transparent yellow' => 'TYE',
+    'turquoise' => 'TQ',
     'white' => 'WH',
     'white barrel' => 'W',
     'white top with clear base' => 'WH',
     'white with black' => 'WH-BK',
+    'white with black trim' => 'WBK', # KK-640
+    'white with green trim' => 'WGR', # KK-640
+    'white with red trim' => 'WRE', # KK-640
+    'white with blue trim' => 'WBL', # KK-640
+    'white with orange trim' => 'WOR', # KK-640
+    'white with yellow trim' => 'WYE', # KK-640
     'white with blue' => 'WH-BL',
     'white with green' => 'WH-GR',
     'white with translucent red trim' => 'WRE',
     'white/blue' => 'WBL',
     'white/red' => 'WRE',
     'wood' => 'WD',
-    'yellow' => 'YW',
+    'yellow' => ['YE', 'YW'],
      }
 
   def match_colors(supplier_num, colors)
-    result = {}
-    result.default = []
+    image_list = (@image_list[supplier_num] || []).collect do |image_name, suffix|
+      tag = nil
+      case suffix
+        when /^\w+_B/
+        tag = 'blank'
+        when /^\w+_D/
+        tag = 'decorated'
+      end
+      puts "TAG: #{tag.inspect}" if tag
+      [ImageNodeFetch.new(image_name, image_path(image_name), tag), suffix.split('_').first || '']
+    end
 
-    mapped = colors.collect { |c| @@color_map[c.downcase] }
+#    if colors.length == 1
+#      return { colors.first => image_list.collect { |image, suffix| image } }
+#    end
 
-    (@image_list[supplier_num] || []).each do |img, suf|
-      img = ImageNodeFetch.new(img, image_path(img))
-      if suf.empty?
-        result[nil] += [img]
-        next
+    image_map = {}
+    image_map.default = []
+
+    supplier_map = {}
+
+    # Exact Suffix Match then remove color from furthur match
+    remove_colors = []
+    image_list.delete_if do |image, suffix|
+      if suffix.empty?
+        image_map[nil] += [image]
+        next true
       end
 
-      if i = mapped.index(suf)
-        result[colors[i]] += [img]
-        next
+      if color = colors.find { |c| @@color_map[c.downcase] && [@@color_map[c.downcase]].flatten.include?(suffix) }
+        image_map[color] += [image]
+        if supplier_map[color]
+          puts "Supplier Num mismatch #{supplier_num}: #{colors.inspect} => #{supplier_map[color]} != #{suffix}" unless supplier_map[color] == suffix
+        else
+          supplier_map[color] = suffix
+        end
+        remove_colors << color unless remove_colors.include?(color)
+        true
       end
+    end
+    colors -= remove_colors
 
-      reg = Regexp.new(suf.split('').collect { |s| [s, '.*'] }.flatten[0..-2].join, Regexp::IGNORECASE)
+    # Component Suffix Match
+    mapped = colors.collect do |color|
+      names = @@color_map.keys.find_all { |c| [c].flatten.find { |d| color.downcase.include?(d) } }
+      names = names.find_all { |n| !names.find { |o| (o != n) and o.include?(n) } }
+      names.sort_by! { |n| color.downcase.index(n) }
+      results = ['']
+      names.each do |n| 
+        results = [@@color_map[n]].flatten.collect do |c|
+          results.collect { |r| r + c }
+        end
+        results.flatten!
+      end
+      results
+    end
+
+    remove_colors = []
+    image_list.delete_if do |image, suffix|
+      if list = mapped.find { |sufs| sufs.include?(suffix) }
+        color = colors[mapped.index(list)]
+        image_map[color] += [image]
+        if supplier_map[color]
+          raise "Supplier Num mismatch #{supplier_num}: #{colors.inspect} => #{supplier_map[color]} != #{suffix}" unless supplier_map[color] == suffix
+        else
+          supplier_map[color] = suffix
+        end
+        remove_colors << color unless remove_colors.include?(color)
+        true
+      end
+    end
+    colors -= remove_colors
+
+
+    image_list.each do |image, suffix|
+      reg = Regexp.new(suffix.split('').collect { |s| [s, '.*'] }.flatten[0..-2].join, Regexp::IGNORECASE)
       list = colors.find_all do |color|
         (reg === color)
       end
 
       if list.length == 1
-        result[list.first] += [img]
+        color = list.first
+        image_map[color] += [image]
+        unless supplier_map[color] or supplier_map.values.include?(suffix)
+          supplier_map[color] = suffix
+        end
         next
       end
 
       if list.length > 1
-        puts "Multiple Match: #{supplier_num} #{img} #{suf} #{list.inspect}"
+        puts "Multiple Match: #{supplier_num} #{image} #{suffix} #{list.inspect}"
       end
 
-      result[nil] += [img]
+      image_map[nil] += [image]
     end
 
-    result
+    [image_map, supplier_map]
   end
   
   def parse_catalog(file)
@@ -177,7 +280,7 @@ class PolyXLS < GenericImport
         'GIFTBOXED_WIDTH' => 'package_width',
         'GIFTBOXED_Height' => 'package_height',
         'CartonWeight' => 'package_weight' }.each do |src, dst|
-        product_data[dst] = row[src].to_f
+        product_data[dst] = row[src].to_f unless row[src].to_f == 0.0
       end
       product_data.merge!('package_units' => row['CartonPackQTY'].to_i,
                           'package_unit_weight' => 0.0)
@@ -223,22 +326,22 @@ class PolyXLS < GenericImport
       
       material = row['Material'].to_s
       
-      colors = row['Color'].to_s.split(/\s*(?:(?:\,|(?:or)|(?:and)|\&)\s*)+/).uniq
+      colors = row['Color'].to_s.split(/\s*(?:(?:\,|(?:\sor\s)|(?:\sand\s)|\&)\s*)+/).uniq
       colors = [''] if colors.empty?
 
-      color_image_map = match_colors(product_data['supplier_num'], colors)
-      puts "ColorMap: #{product_data['supplier_num']} #{color_image_map.inspect}"
+      color_image_map, color_num_map = match_colors(product_data['supplier_num'], colors)
+      puts "ColorMap: #{product_data['supplier_num']} #{color_image_map.inspect} #{color_num_map.inspect}"
       product_data['images'] = color_image_map[nil]
 
       product_data['variants'] = colors.collect do |color|
-        color = color.strip.capitalize
-        postfix = @@color_map[color.downcase]
+        postfix = color_num_map[color] #[@@color_map[color.downcase]].flatten.first
         unless postfix
-          puts "NoPost: #{product_data['supplier_num']}: #{color}" 
-          postfix = color[0...8]
+          postfix = color.split(/ |\//).collect { |c| [@@color_map[c.downcase]].flatten.first }.join
+          puts "NoPost: #{product_data['supplier_num']}: #{color} : #{postfix}"
+#          postfix = color[0...8]
         end
         { 'supplier_num' => "#{product_data['supplier_num']}#{postfix}",
-          'color' => color,
+          'color' => color.strip.capitalize,
           'material' => material,
           'dimension' => dimension,
           'prices' => prices,
@@ -487,7 +590,7 @@ class LeedsXLS < PolyXLS
     @prod_files = %w(USDcatalog USDMemorycatalog).collect do |name|
       WebFetch.new("http://media.leedsworld.com/ms/?/excel/#{name}/EN").get_path(Time.now-24*60*60)
     end
-    @dec_file = WebFetch.new('http://media.leedsworld.com/ms/?/excel/WebDocrationMethodByItem/EN').get_path(Time.now-24*60*60)
+    @dec_file = WebFetch.new('http://media.leedsworld.com/msfiles/downloads/WebDecorationMethodByItem.xls').get_path(Time.now-24*60*60)
     @src_files = @prod_files + [@dec_file]
     @image_url = 'images.leedsworld.com'
     super "Leeds"

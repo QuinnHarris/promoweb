@@ -784,17 +784,24 @@ class Product < ActiveRecord::Base
   def set_images(images)
     str = ''
     all = product_images.to_a
-    orig = all.find_all { |pi| pi.variants.empty? }
     
     [images].flatten.compact.each do |img|
-      next if orig.find { |pi| pi.supplier_ref == img.id }
       if pi = all.find { |pi| pi.supplier_ref == img.id }
-        str << "   | Image: #{img.id} - all variants\n"
-        pi.variants.delete_all
+        unless pi.variants.empty?
+          str << "   | Image: #{img.id} - all variants\n"
+          pi.variants.delete_all
+        end
+
+        if pi.tag != img.tag
+          str << "  | Tag: #{pi.tag} => #{img.tag}"
+          pi.tag = img.tag
+          pi.save!
+        end
       else
         str << "   + Image: #{img.id}\n"
         pi = product_images.create(:supplier_ref => img.id,
-                                   :image => img.get)
+                                   :image => img.get,
+                                   :tag => img.tag)
         pi.image.reprocess!
         pi.image.save
       end

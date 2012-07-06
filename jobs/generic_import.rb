@@ -70,11 +70,12 @@ end
 class ImageNode
   @@cache_dir = CACHE_ROOT
 
-  def initialize(id)
+  def initialize(id, tag = nil)
     @id = id
+    @tag = tag
   end 
 
-  attr_reader :id
+  attr_reader :id, :tag
 
   def ==(other)
     @id == other.id
@@ -84,8 +85,8 @@ class ImageNode
 end
 
 class ImageNodeFile < ImageNode
-  def initialize(id, file)
-    super id
+  def initialize(id, file, tag = nil)
+    super id, tag
     @file = file
   end
   attr_reader :file
@@ -96,8 +97,8 @@ class ImageNodeFile < ImageNode
 end
 
 class ImageNodeFetch < ImageNode
-  def initialize(id, uri)
-    super id
+  def initialize(id, uri, tag = nil)
+    super id, tag
     @uri = URI.parse(uri.gsub(' ', '%20'))
   end
 
@@ -627,7 +628,7 @@ public
            package_weight package_units package_unit_weight
            package_height package_width package_length data
            lead_time_normal_min lead_time_normal_max lead_time_rush lead_time_rush_charge).each do |attr_name|
-          if product_record[attr_name] != product_data[attr_name]
+          if !product_data[attr_name].nil? and (product_record[attr_name] != product_data[attr_name])
             product_log << "  #{attr_name}: #{product_record[attr_name].inspect} => #{product_data[attr_name].inspect}\n"
             product_record[attr_name] = product_data[attr_name]
           end
