@@ -563,10 +563,13 @@ public
     end
     
     # check images
+    ([product_data['images']] + product_data['variants'].collect { |v| v['images'] }).each do |list|
+      raise ValidateError.new("Duplicate Image", list.inspect) unless list.nil? or (list == list.uniq)
+    end
     variant_images = product_data['variants'].collect { |v| v['images'] }.flatten.compact
     product_images = [product_data['images']].flatten.compact
     product_images.each do |pi|
-      if variant_images.find { |vi| vi.id == pi.id }
+      if variant_images.find { |vi| vi == pi }
         raise ValidateError, "Duplicate image"
       end
     end
@@ -674,23 +677,25 @@ public
         remove_images = []
         unless all_images.empty?
           dup_hash = {}
-          all_images.each do |image|
+          all_images.uniq.each do |image|
             unless size = image.size
               remove_images << image
-              product_log << "Blank Image: #{image.uri}\n"
+              product_log << "  Blank Image: #{image.uri}\n"
               next
             end
 
             if ref = dup_hash[size]
               remove_images << image if FileUtils.compare_file(ref.path, image.path)
-              product_log << "Duplicate Image: #{ref.uri} #{image.uri}"
+              product_log << "  Duplicate Image: #{ref.uri} #{image.uri}\n"
             else
               dup_hash[size] = image
             end
           end
 
           if product_data['images']
+            puts "Before: #{product_data['images'].inspect}" unless remove_images.empty?
             unassoc_images = product_data['images'] - remove_images
+            puts "After: #{unassoc_images.inspect}" unless remove_images.empty?
             product_log << product_record.delete_images(all_images - unassoc_images)
             product_log << product_record.set_images(unassoc_images)
           end
