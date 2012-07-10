@@ -43,7 +43,7 @@ class PrimeLineWeb < GenericImport
     %w(Yellow 116 1235 021 1787 199 202 208 225 267 2925 287 281 Process\ Blue Reflex\ Blue 327 Green 347 343 4635 423 877 873 Black White)
   end
 
-  @@display = 256
+  @@display = 1024
 
   def process_root
     fetch = WebFetch.new('http://www.primeline.com/')
@@ -112,7 +112,7 @@ class PrimeLineWeb < GenericImport
       count += 1
       #      process_product(category, "http://www.primeline.com/Products/#{a['href'].strip}", @tags[a['href']])
     end
-    raise "Overflow" if count >= @@display
+    raise "Overflow: #{count} > #{@@display}" if count > @@display
     puts "  Products: #{count}"
   end
   
@@ -241,15 +241,6 @@ class PrimeLineWeb < GenericImport
     end
 
     # Lead Times
-#    variant_prices.keys.find do |name|
-#      if /(\d)-Day Rush/i === name
-#        data['lead_time_rush'] = $1.to_i
-#      end
-#      if /24 hour rush/i === name
-#        data['lead_time_rush'] = 1
-#      end
-#    end
-
     if /(\d)-Day Rush/i === price_rows.to_s
       data['lead_time_rush'] = $1.to_i
     end
@@ -375,22 +366,13 @@ class PrimeLineWeb < GenericImport
         puts "Unknown shipping: #{shipping.inspect}"
       end
     end
-    
-    short_num = begin
-        pre,num = data['supplier_num'].split('-')
-        "#{pre}#{num.to_i}"
-    end
-    data['image-thumb'] = TransformImageFetch.new("http://www.primeline.com/Products/Product_Images/#{short_num}.jpg")
-    
+
     hi_res = doc.xpath("//span[@id='ctl00_content_HiReslink']/a")
     unless hi_res.empty?
       path = "http://www.primeline.com/#{hi_res.first['href']}"
-      data['image-main'] = TransformImageFetch.new(path)
-      data['image-large'] = CopyImageFetch.new(path)
-    else
-      data['image-main'] = TransformImageFetch.new("http://www.primeline.com/Products/#{main_img}")
+      data['images'] = [ImageNodeFetch.new(path.split('/').last, path)]
     end
-    
+       
     unless log.empty?
       puts "URL: #{url}"     
       puts log.join("\n")
@@ -433,9 +415,31 @@ class PrimeLineWeb < GenericImport
     'up to four colors' => 4,
   }
 
+  cattr_reader :color_map
+  @@color_map = {  }
+
   def parse_products
+    image_paths = %w(BT LG LT PL).collect { |p| "product_imagesNoLogo/#{p}-BlankImages" }
+    image_paths += %w(BuiltImages LeemanImages LogoTec PL-0-3000 PL-3001-6000 PL-6001-9999).collect { |p| "product_images/#{p}/300dpi" }
+    @image_list = get_ftp_images('ftp.primeworld.com', image_paths) do |path, file|
+      (/^([A-Z]{2})(\d{4})(\w*)HIRES(\d?)\.jpg$/i === file) && 
+        [path, "#{$1}-#{$2}", $3, url.include?('BlankImages') ? 'blank' : nil]
+    end
+
     @products.each do |product|
       log = []
+
+      # Images
+      colors = product['variants'].collect { |v| v['color'] }
+      color_image_map, color_num_map = match_colors(product['supplier_num'], colors)
+      color_image_map.each do |color, images|
+        if color
+          variant = product['variants'].find { |v| v['color'] == color }
+          variant['images'] = images
+        else
+          product['images'] = images
+        end
+      end
 
       # Decorations
       size = nil

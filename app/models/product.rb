@@ -793,7 +793,7 @@ class Product < ActiveRecord::Base
         end
 
         if pi.tag != img.tag
-          str << "  | Tag: #{pi.tag} => #{img.tag}"
+          str << "  | Tag: #{pi.tag} => #{img.tag}\n"
           pi.tag = img.tag
           pi.save!
         end

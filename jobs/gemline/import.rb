@@ -144,11 +144,11 @@ class GemlineXML < GenericImport
         end
 
         if image_node = item.at_xpath('images/zoomed')
-          val['images'] = [ImageNodeFetch.new(val['num'], "#{image_node['path']}#{image_node['name']}")]
+          val['images'] = [ImageNodeFetch.new(image_node['name'], "#{image_node['path']}#{image_node['name']}")]
 
           item.at_xpath('images/alternate-images').elements.each do |alt|
             if /zoomed(\d)/ === alt.name
-              val['images'] << ImageNodeFetch.new("#{val['num']}-#{$1}", "#{alt['path']}#{alt['name']}".gsub('\\','/'))
+              val['images'] << ImageNodeFetch.new("alts/#{alt['name']}", "#{alt['path']}#{alt['name']}".gsub('\\','/'))
             end
           end
         end

@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-require 'net/ftp'
 
 class LeedsXLSDecorations
 
 end
 
 class PolyXLS < GenericImport  
+  cattr_reader :color_map
   @@color_map =
   { '' => '',
     'limeágreen' => 'LGR', #Kludge for SM-3235
@@ -152,106 +152,6 @@ class PolyXLS < GenericImport
     'wood' => 'WD',
     'yellow' => ['YE', 'YW'],
      }
-
-  def match_colors(supplier_num, colors)
-    image_list = (@image_list[supplier_num] || []).collect do |image_name, suffix|
-      tag = nil
-      case suffix
-        when /^\w+_B/
-        tag = 'blank'
-        when /^\w+_D/
-        tag = 'decorated'
-      end
-      puts "TAG: #{tag.inspect}" if tag
-      [ImageNodeFetch.new(image_name, image_path(image_name), tag), suffix.split('_').first || '']
-    end
-
-#    if colors.length == 1
-#      return { colors.first => image_list.collect { |image, suffix| image } }
-#    end
-
-    image_map = {}
-    image_map.default = []
-
-    supplier_map = {}
-
-    # Exact Suffix Match then remove color from furthur match
-    remove_colors = []
-    image_list.delete_if do |image, suffix|
-      if suffix.empty?
-        image_map[nil] += [image]
-        next true
-      end
-
-      if color = colors.find { |c| @@color_map[c.downcase] && [@@color_map[c.downcase]].flatten.include?(suffix) }
-        image_map[color] += [image]
-        if supplier_map[color]
-          puts "Supplier Num mismatch #{supplier_num}: #{colors.inspect} => #{supplier_map[color]} != #{suffix}" unless supplier_map[color] == suffix
-        else
-          supplier_map[color] = suffix
-        end
-        remove_colors << color unless remove_colors.include?(color)
-        true
-      end
-    end
-    colors -= remove_colors
-
-    # Component Suffix Match
-    mapped = colors.collect do |color|
-      names = @@color_map.keys.find_all { |c| [c].flatten.find { |d| color.downcase.include?(d) } }
-      names = names.find_all { |n| !names.find { |o| (o != n) and o.include?(n) } }
-      names.sort_by! { |n| color.downcase.index(n) }
-      results = ['']
-      names.each do |n| 
-        results = [@@color_map[n]].flatten.collect do |c|
-          results.collect { |r| r + c }
-        end
-        results.flatten!
-      end
-      results
-    end
-
-    remove_colors = []
-    image_list.delete_if do |image, suffix|
-      if list = mapped.find { |sufs| sufs.include?(suffix) }
-        color = colors[mapped.index(list)]
-        image_map[color] += [image]
-        if supplier_map[color]
-          raise "Supplier Num mismatch #{supplier_num}: #{colors.inspect} => #{supplier_map[color]} != #{suffix}" unless supplier_map[color] == suffix
-        else
-          supplier_map[color] = suffix
-        end
-        remove_colors << color unless remove_colors.include?(color)
-        true
-      end
-    end
-    colors -= remove_colors
-
-
-    image_list.each do |image, suffix|
-      reg = Regexp.new(suffix.split('').collect { |s| [s, '.*'] }.flatten[0..-2].join, Regexp::IGNORECASE)
-      list = colors.find_all do |color|
-        (reg === color)
-      end
-
-      if list.length == 1
-        color = list.first
-        image_map[color] += [image]
-        unless supplier_map[color] or supplier_map.values.include?(suffix)
-          supplier_map[color] = suffix
-        end
-        next
-      end
-
-      if list.length > 1
-        puts "Multiple Match: #{supplier_num} #{image} #{suffix} #{list.inspect}"
-      end
-
-      image_map[nil] += [image]
-    end
-
-    [image_map, supplier_map]
-  end
   
   def parse_catalog(file)
     list = []
@@ -489,46 +389,36 @@ class PolyXLS < GenericImport
   
     decoration_final
   end
-
-  def image_path(image); "ftp://#{@image_url}/#{image}"; end
-
-  def get_images
-    cache_marshal("#{@supplier_record.name}_imagelist") do
-      puts "Fetching Image List"
-      ftp = Net::FTP.new(@image_url)
-      ftp.login
-      files = ftp.nlst
-      products = {}
-      products.default = []
-      files.each do |file|
-        unless file =~ /^((?:\d+|[A-Z]{2})-\d+)([A-Z]*).*\.(?:(?:tif)|(?:jpg))$/i
-          puts "Unknown File: #{file}"
-          next
-        end
-        raise "nil one" unless $1
-        products[$1] += [[file, $2]]
-      end
-      products.default = nil
-      
-      # Remove jpg if tif equivelent
-      products.each do |num, list|
-        keeps = list.collect do |f, suf|
-          name, ext = f.split('.')
-          ext.downcase == 'tif' ? name.downcase : nil
-        end.compact
-        list.delete_if do |f, suf|
-          name, ext = f.split('.')
-          next false unless ext.downcase == 'jpg'
-          keeps.include?(name.downcase)
-        end
-      end
-
-      products
-    end
-  end
   
   def parse_products
-    @image_list = get_images
+    @image_list = get_ftp_images(@image_url) do |path, file|
+      if /^((?:\d+|[A-Z]{2})-\d+)([A-Z]*).*\.(?:(?:tif)|(?:jpg))$/i === file
+        product, variant = $1, $2
+        tag = nil
+        case suffix
+        when /^\w+_B/
+          tag = 'blank'
+        when /^\w+_D/
+          tag = 'decorated'
+        end
+        
+        [file, product, variant, tag]
+      end
+    end
+
+    # Remove jpg if tif equivelent
+    @image_list.each do |num, list|
+      keeps = list.collect do |path, file, var_id|
+        name, ext = file.split('.')
+        ext.downcase == 'tif' ? name.downcase : nil
+      end.compact
+      list.delete_if do |path, file, var_id|
+        name, ext = file.split('.')
+        next false unless ext.downcase == 'jpg'
+        keeps.include?(name.downcase)
+      end
+    end
+
     decoration_data = parse_decorations(@dec_file)
 
     products = {}
@@ -595,12 +485,6 @@ class LeedsXLS < PolyXLS
     @image_url = 'images.leedsworld.com'
     super "Leeds"
   end
-
-#  def image_path(image)
-#    str = "http://media.leedsworld.com/ms/?/large/#{image.split('.').first}/en"
-#    puts "Image: #{str}"
-#    str
-#  end
 end
 
 class BulletXLS < PolyXLS

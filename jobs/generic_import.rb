@@ -114,7 +114,7 @@ class ImageNodeFetch < ImageNode
     base
   end
 
-  def get
+  def get_local
     unless File.exists?(path)
       puts "GET: #{uri}"
       FileUtils.mkdir_p(File.split(path).first)
@@ -146,7 +146,19 @@ class ImageNodeFetch < ImageNode
       end
     end
 
-    return File.open(path)
+    path
+  end
+
+  def size
+    begin
+      File.size(get_local)
+    rescue
+      return nil
+    end
+  end
+
+  def get
+    File.open(get_local)
   end
 end
 
@@ -659,9 +671,29 @@ public
         # Fetch Images
         all_images = ([product_data['images']] + 
                       product_data['variants'].collect { |v| v['images'] }).flatten.compact
+        remove_images = []
         unless all_images.empty?
-          product_log << product_record.delete_images(all_images)
-          product_log << product_record.set_images(product_data['images'])
+          dup_hash = {}
+          all_images.each do |image|
+            unless size = image.size
+              remove_images << image
+              product_log << "Blank Image: #{image.uri}\n"
+              next
+            end
+
+            if ref = dup_hash[size]
+              remove_images << image if FileUtils.compare_file(ref.path, image.path)
+              product_log << "Duplicate Image: #{ref.uri} #{image.uri}"
+            else
+              dup_hash[size] = image
+            end
+          end
+
+          if product_data['images']
+            unassoc_images = product_data['images'] - remove_images
+            product_log << product_record.delete_images(all_images - unassoc_images)
+            product_log << product_record.set_images(unassoc_images)
+          end
         end
        
         # Process Variants
@@ -672,7 +704,7 @@ public
           variant_record.save! if variant_new
 
           # Fetch Images
-          variant_log << variant_record.set_images(variant_data['images'])
+          variant_log << variant_record.set_images(variant_data['images'] - remove_images) if variant_data['images']
           
           # Properties
           properties = @@properties
@@ -898,5 +930,129 @@ private
         c.capitalize
       end
     end.join(' ')
+  end
+
+  # Used by Leeds and PrimeLine
+  def get_ftp_images(server, paths = nil)
+    cache_marshal("#{@supplier_record.name}_imagelist") do
+      require 'net/ftp'
+      products = {}
+      products.default = []
+
+      ftp = Net::FTP.new(server)
+      ftp.login
+
+      [paths].flatten.each do |path|
+        puts "Fetching Image List: ftp://#{server}/#{path}"
+        ftp.chdir('/'+path) if path
+        files = ftp.nlst
+
+        files.each do |file|
+          img_id, prod_id, var_id, tag = yield path, file
+          url = "ftp://#{server}/#{path}/#{file}"
+          if prod_id
+            products[prod_id] += [[img_id, url, var_id, tag]]
+          else
+            puts "Unknown file: #{url}"
+          end
+        end
+      end
+
+      products.default = nil
+      
+      products
+    end
+  end
+
+  def match_colors(supplier_num, colors)
+    image_list = (@image_list[supplier_num] || []).collect do |image_id, url, suffix, tag|
+      [ImageNodeFetch.new(image_id, url, tag), suffix.split('_').first || '']
+    end
+
+#    if colors.length == 1
+#      return { colors.first => image_list.collect { |image, suffix| image } }
+#    end
+
+    image_map = {}
+    image_map.default = []
+
+    supplier_map = {}
+
+    # Exact Suffix Match then remove color from furthur match
+    remove_colors = []
+    image_list.delete_if do |image, suffix|
+      if suffix.empty?
+        image_map[nil] += [image]
+        next true
+      end
+
+      if color = colors.find { |c| color_map[c.downcase] && [color_map[c.downcase]].flatten.include?(suffix) }
+        image_map[color] += [image]
+        if supplier_map[color]
+          puts "Supplier Num mismatch #{supplier_num}: #{colors.inspect} => #{supplier_map[color]} != #{suffix}" unless supplier_map[color] == suffix
+        else
+          supplier_map[color] = suffix
+        end
+        remove_colors << color unless remove_colors.include?(color)
+        true
+      end
+    end
+    colors -= remove_colors
+
+    # Component Suffix Match
+    mapped = colors.collect do |color|
+      names = color_map.keys.find_all { |c| [c].flatten.find { |d| color.downcase.include?(d) } }
+      names = names.find_all { |n| !names.find { |o| (o != n) and o.include?(n) } }
+      names.sort_by! { |n| color.downcase.index(n) }
+      results = ['']
+      names.each do |n| 
+        results = [color_map[n]].flatten.collect do |c|
+          results.collect { |r| r + c }
+        end
+        results.flatten!
+      end
+      results
+    end
+
+    remove_colors = []
+    image_list.delete_if do |image, suffix|
+      if list = mapped.find { |sufs| sufs.include?(suffix) }
+        color = colors[mapped.index(list)]
+        image_map[color] += [image]
+        if supplier_map[color]
+          raise "Supplier Num mismatch #{supplier_num}: #{colors.inspect} => #{supplier_map[color]} != #{suffix}" unless supplier_map[color] == suffix
+        else
+          supplier_map[color] = suffix
+        end
+        remove_colors << color unless remove_colors.include?(color)
+        true
+      end
+    end
+    colors -= remove_colors
+
+
+    image_list.each do |image, suffix|
+      reg = Regexp.new(suffix.split('').collect { |s| [s, '.*'] }.flatten[0..-2].join, Regexp::IGNORECASE)
+      list = colors.find_all do |color|
+        (reg === color)
+      end
+
+      if list.length == 1
+        color = list.first
+        image_map[color] += [image]
+        unless supplier_map[color] or supplier_map.values.include?(suffix)
+          supplier_map[color] = suffix
+        end
+        next
+      end
+
+      if list.length > 1
+        puts "Multiple Match: #{supplier_num} #{image} #{suffix} #{list.inspect}"
+      end
+
+      image_map[nil] += [image]
+    end
+
+    [image_map, supplier_map]
   end
 end
