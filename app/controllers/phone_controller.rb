@@ -121,7 +121,7 @@ class PhoneController < ActionController::Base
     end
     if @supplier or emails.empty?
       texts << @supplier.name if @supplier
-      if /(Q\d{4})/ === subject and
+      if /(Q\d{4})/i === subject and
           po = PurchaseOrder.find_by_quickbooks_ref($1)
         @order = po.purchase.order
         @supplier = po.purchase.supplier
