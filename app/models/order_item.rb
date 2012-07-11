@@ -23,9 +23,9 @@ class OrderItem < ActiveRecord::Base
 
   def active_images
     variants = order_item_variants.find_all { |oiv| oiv.quantity != 0 }.collect { |oiv| oiv.variant }.flatten.compact
-    images = variants.collect { |v| v.product_images.to_a }.flatten.uniq
+    images = variants.collect { |v| v.product_images.order('id').first }.compact.uniq
     return images unless images.empty?
-    product.product_images.to_a
+    [product.product_images.order('id').first].compact
   end
   
 

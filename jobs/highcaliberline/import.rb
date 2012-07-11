@@ -13,7 +13,7 @@ class HighCaliberLine < GenericImport
   end
 
   def parse_products
-    file_name = cache_file("#{@name}_Images")
+    file_name = cache_file("#{@supplier_name}_Images")
     @image_list = cache_read(file_name) if cache_exists(file_name)
 
     begin
