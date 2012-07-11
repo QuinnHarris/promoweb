@@ -693,9 +693,7 @@ public
           end
 
           if product_data['images']
-            puts "Before: #{product_data['images'].inspect}" unless remove_images.empty?
             unassoc_images = product_data['images'] - remove_images
-            puts "After: #{unassoc_images.inspect}" unless remove_images.empty?
             product_log << product_record.delete_images(all_images - unassoc_images)
             product_log << product_record.set_images(unassoc_images)
           end

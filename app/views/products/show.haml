@@ -63,13 +63,15 @@
         - cache(:id => @product.id) do
           - setup_main unless @user
           #prod_img
-            - if @product.product_images.empty?
+            - images = @product.product_images.to_a
+            - if images.empty?
               = image_tag(@product.image_path_relative('main'), :alt => @product.name)
               %br
               = link_to "Large Image", @product.image_path_relative('large'), :rel => 'external'
             - else
+              - images.delete_if { |i| i.tag == 'blank' } if images.length > 6
               %ul#main_imgs
-                - @product.product_images.each_with_index do |image, idx|
+                - images.each_with_index do |image, idx|
                   %li{ :style => (idx == 0 ? nil : 'display: none;')}= image_tag(image.image.url(:medium), :alt => @product.name)
               %br
               = link_to "Large Image", @product.image_path_relative('large'), :rel => 'external'
@@ -77,8 +79,8 @@
               #navv
 
               #thumbs
-                - if @product.product_images.length > 1
-                  - for group in @product.product_images.to_a.in_groups_of(3)
+                - if images.length > 1
+                  - for group in images.in_groups_of(3)
                     %ul
                       - for images in group.compact                  
                         %li.active{ 'data-variants' => images.variants.collect { |v| v.id }.join(' ') }= image_tag images.image.url(:thumb)          

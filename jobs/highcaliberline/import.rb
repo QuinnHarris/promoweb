@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-require 'rexml/document'
 
 class HighCaliberLine < GenericImport
   def initialize(date)
     @date = date
     @domain = "www.highcaliberline.com"
+    @image_list = {}
     super "High Caliber Line"
   end
 
@@ -12,11 +12,31 @@ class HighCaliberLine < GenericImport
     %w(186 021 Process\ Yellow 123 161 347 342 281 Process\ Blue Reflex\ Blue 320 266 225 195 428 430 White Black 877 872)
   end
 
-
   def parse_products
-    parse_file("HCL-US Master Excel on #{@date}.xls")
-    parse_file("HCL-US Closeout Master Excel on #{@date}.xls", 'Closeout')
-    parse_file("HCL-US Closeout Master Excel on #{@date}.xls", 'Closeout', 1)
+    file_name = cache_file("#{@name}_Images")
+    @image_list = cache_read(file_name) if cache_exists(file_name)
+
+    begin
+      parse_file("HCL-US Master Excel on #{@date}.xls")
+      parse_file("HCL-US Closeout Master Excel on #{@date}.xls", 'Closeout')
+      parse_file("HCL-US Closeout Master Excel on #{@date}.xls", 'Closeout', 1)
+    ensure
+      cache_write(file_name, @image_list)
+    end
+  end
+
+  @@image_path = "http://www.highcaliberline.com/Product%20Image/Zoom/900x900"
+  def get_images(product_id)
+    return @image_list[product_id] if @image_list.has_key?(product_id)
+    puts "Getting Image List for #{product_id}"
+    uri = URI.parse("#{@@image_path}/Logo/#{product_id}/")
+    begin
+      txt = uri.open.read
+      @image_list[product_id] = txt.scan(/<a href="([\w-]+\.jpg)">/).flatten
+    rescue
+      puts "Failed to get image #{product_id}"
+      @image_list[product_id] = []
+    end
   end
 
   def parse_file(file, tags = [], ws_num = 0)
@@ -101,12 +121,9 @@ class HighCaliberLine < GenericImport
         
       
       # Image
-      file_name = "#{product_data['supplier_num']}.jpg"
-      product_data['image-large'] = product_data['image-main'] = CopyImageFetch.new(
-    "http://#{@domain}/admin/productimage/high_res/#{file_name}")
-      
-      product_data['image-thumb'] = CopyImageFetch.new(
-    "http://#{@domain}/admin/productimage/auto/#{file_name}")
+      image_list = ["Group/#{product_data['supplier_num']}.jpg"] +
+        get_images(product_data['supplier_num']).collect { |n| "Logo/#{product_data['supplier_num']}/#{n}" }
+      product_data['images'] = image_list.collect { |img| ImageNodeFetch.new(img, "#{@@image_path}/#{img}") }
       
       # Decorations
       decorations = []

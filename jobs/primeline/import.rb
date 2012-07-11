@@ -423,7 +423,7 @@ class PrimeLineWeb < GenericImport
     image_paths += %w(BuiltImages LeemanImages LogoTec PL-0-3000 PL-3001-6000 PL-6001-9999).collect { |p| "product_images/#{p}/300dpi" }
     @image_list = get_ftp_images('ftp.primeworld.com', image_paths) do |path, file|
       (/^([A-Z]{2})(\d{4})(\w*)HIRES(\d?)\.jpg$/i === file) && 
-        [path, "#{$1}-#{$2}", $3, url.include?('BlankImages') ? 'blank' : nil]
+        ["#{path}/#{file}", "#{$1}-#{$2}", $3, path.include?('BlankImages') ? 'blank' : nil]
     end
 
     @products.each do |product|
