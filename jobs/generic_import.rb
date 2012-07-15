@@ -420,7 +420,7 @@ private
     puts "#{database.size} - #{product_ids.size}"
     (database - product_ids).collect do |product_id|
       product_record = Product.find(product_id)
-      puts " Deleted Product: #{product_record['supplier_num']} (#{product_record.id})"
+      puts " Deleted Product: #{product_record['supplier_num']} (M#{product_record.id})"
       product_record.delete
       product_record
     end  
@@ -677,23 +677,26 @@ public
         remove_images = []
         unless all_images.empty?
           dup_hash = {}
+          dup_hash.default = []
           all_images.uniq.each do |image|
             unless size = image.size
               remove_images << image
-              product_log << "  Blank Image: #{image.uri}\n"
+              product_log << "  No Image: #{image.uri}\n"
               next
             end
 
-            if ref = dup_hash[size]
-              remove_images << image if FileUtils.compare_file(ref.path, image.path)
-              product_log << "  Duplicate Image: #{ref.uri} #{image.uri}\n"
+            if (ref = dup_hash[size]) and (ref.find { |r| FileUtils.compare_file(r.path, image.path) })
+              remove_images << image
+              product_log << "  Duplicate Image: #{ref.inspect} #{image.uri}\n"
             else
-              dup_hash[size] = image
+              dup_hash[size] += [image]
             end
           end
 
           if product_data['images']
+            puts "Before: #{remove_images.inspect}"
             unassoc_images = product_data['images'] - remove_images
+            puts "After: #{unassoc_images.inspect}"
             product_log << product_record.delete_images(all_images - unassoc_images)
             product_log << product_record.set_images(unassoc_images)
           end
@@ -814,9 +817,9 @@ public
     ensure
       # Log it
       if product_new
-        puts " Product: #{product_data['supplier_num']} (#{product_record.id}) (NEW)"
+        puts " Product: #{product_data['supplier_num']} (M#{product_record.id}) (NEW)"
       elsif !product_log.empty?
-        puts " Product: #{product_data['supplier_num']} (#{product_record.id})\n" + product_log
+        puts " Product: #{product_data['supplier_num']} (M#{product_record.id})\n" + product_log
       end
     end
     
@@ -935,41 +938,69 @@ private
     end.join(' ')
   end
 
-  # Used by Leeds and PrimeLine
-  def get_ftp_images(server, paths = nil)
-    cache_marshal("#{@supplier_record.name}_imagelist") do
+  # Used by Leeds, PrimeLine and Norwood
+  def get_ftp_images(server, paths = nil, recursive = nil)
+#    cache_marshal("#{@supplier_record.name}_imagelist") do
+    directory_file = cache_file("#{@supplier_record.name}_directorylist")
+    @directory = cache_exists(directory_file) ? cache_read(directory_file) : {}
+    begin
       require 'net/ftp'
       products = {}
       products.default = []
 
-      ftp = Net::FTP.new(server)
-      ftp.login
+      if server.is_a?(Hash)
+        ftp = Net::FTP.new(server[:server])
+        ftp.login(server[:login], server[:password])
+        host = "#{server[:login]}:#{server[:password]}@#{server[:server]}"
+      else
+        ftp = Net::FTP.new(host = server)
+        ftp.login
+      end
 
-      [paths].flatten.each do |path|
-        puts "Fetching Image List: ftp://#{server}/#{path}"
-        ftp.chdir('/'+path) if path
-        files = ftp.nlst
+      paths = [paths].flatten
+      paths.each do |path|
+        #puts "Fetching Image List: ftp://#{host}/#{path}"
+        if @directory[path]
+          list = @directory[path]
+        else
+          ftp.chdir('/'+path) if path
+          list = @directory[path] = ftp.list
+        end
 
-        files.each do |file|
-          img_id, prod_id, var_id, tag = yield path, file
-          url = "ftp://#{server}/#{path}/#{file}"
-          if prod_id
-            products[prod_id] += [[img_id, url, var_id, tag]]
-          else
-            puts "Unknown file: #{url}"
+        list.each do |entry|
+          unless /^([drwx-]+)\s+(\d+)\s+(\w+)\s+(\w+)\s+(\d+)\s+([A-Z]{3}\s+\d{1,2}\s+(?:(?:\d{2}:\d{2})|\d{4})) (.+)$/i === entry
+            raise "Unkown Entry: #{entry.inspect}"
+          end
+
+          file = $7
+          case $1[0]
+            when 'd'
+              paths << "#{path}/#{file}" if recursive and recursive === (path+'/'+file)
+            when '-'
+              img_id, prod_id, var_id, tag = yield path, file
+              url = "ftp://#{host}/#{path}/#{file}"
+              if prod_id
+                products[prod_id] += [[img_id, url, var_id, tag]]
+              else
+                puts "Unknown file: #{url}"
+              end
+            else
+              raise "Unkown type: #{$1.inspect}"
           end
         end
       end
 
       products.default = nil
       
-      products
+      return products
+    ensure
+      cache_write(directory_file, @directory)
     end
   end
 
   def match_colors(supplier_num, colors)
     image_list = (@image_list[supplier_num] || []).collect do |image_id, url, suffix, tag|
-      [ImageNodeFetch.new(image_id, url, tag), suffix.split('_').first || '']
+      [ImageNodeFetch.new(image_id, url, tag), (suffix || '').split('_').first || '']
     end
 
 #    if colors.length == 1
