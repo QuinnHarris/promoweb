@@ -188,6 +188,14 @@ class PolyXLS < GenericImport
       product_data['description'] = row['ItemDescription'].to_s.split(/[\r\n]+|(?:\. )\s*/).collect do |line|
         line.strip
         next nil if line.empty?
+        line.scan(/\(#(.+?)\)/).flatten.each do |num|
+          puts "MATCHING: #{num.inspect}"
+          next unless product = @supplier_record.products.find_by_supplier_num(num)
+          unless line.sub!("#{product.name} (##{num})", "<a href='#{product.web_id}'>#{product.name}</a>")
+            line.sub!("(##{num})", "<a href='#{product.web_id}'>(M#{product.id})</a>")
+          end
+        end
+#        line.sub!('www.leedsworldrefill.com', "<a href='http://www.leedsworldrefill.com/'>www.leedsworldrefill.com</a>")
         [??,?!,?.].include?(line[-1]) ? line : "#{line}." 
       end.compact.join("\n")
        
@@ -395,7 +403,7 @@ class PolyXLS < GenericImport
       if /^((?:\d+|[A-Z]{2})-\d+)([A-Z]*).*\.(?:(?:tif)|(?:jpg))$/i === file
         product, variant = $1, $2
         tag = nil
-        case suffix
+        case file
         when /^\w+_B/
           tag = 'blank'
         when /^\w+_D/

@@ -77,11 +77,14 @@ class ImageNode
 
   attr_reader :id, :tag
 
-  def ==(other)
-    @id == other.id
+  include Comparable
+  def <=>(r)
+    id <=> r.id
   end
 
   def to_s; id; end
+
+  def inspect; id.inspect; end
 end
 
 class ImageNodeFile < ImageNode
@@ -330,16 +333,15 @@ class GenericImport
     end
   end
   
-  def get_id(supplier_num)
+  def get_product(supplier_num)
     product_record = @supplier_record.get_product(supplier_num)
     if product_record.new_record?
-      product_record = @supplier_record.get_product(supplier_num)
       product_record.name = ''
       product_record.deleted = true
       product_record.save!
       puts "Allocating #{supplier_num} => #{product_record.id}"
     end
-    product_record.id
+    product_record
   end
   
   def run_parse
@@ -673,12 +675,12 @@ public
 
         # Fetch Images
         all_images = ([product_data['images']] + 
-                      product_data['variants'].collect { |v| v['images'] }).flatten.compact
+                      product_data['variants'].collect { |v| v['images'] }).flatten.compact.uniq
         remove_images = []
         unless all_images.empty?
           dup_hash = {}
           dup_hash.default = []
-          all_images.uniq.each do |image|
+          all_images.each do |image|
             unless size = image.size
               remove_images << image
               product_log << "  No Image: #{image.uri}\n"
@@ -693,13 +695,10 @@ public
             end
           end
 
-          if product_data['images']
-            puts "Before: #{remove_images.inspect}"
-            unassoc_images = product_data['images'] - remove_images
-            puts "After: #{unassoc_images.inspect}"
-            product_log << product_record.delete_images(all_images - unassoc_images)
-            product_log << product_record.set_images(unassoc_images)
-          end
+#          if product_data['images']
+            product_log << product_record.set_images(product_data['images'] - remove_images)
+            product_log << product_record.delete_images_except(all_images - remove_images)
+#          end
         end
        
         # Process Variants
@@ -767,7 +766,7 @@ public
           
           variant_record
         end
-        
+       
         # Remove variants
         (product_record.variants - variant_records).each do |variant_record|
           if variant_record.order_item_variants.empty? and
@@ -945,6 +944,7 @@ private
     @directory = cache_exists(directory_file) ? cache_read(directory_file) : {}
     begin
       require 'net/ftp'
+      require 'net/ftp/list'
       products = {}
       products.default = []
 
@@ -967,25 +967,18 @@ private
           list = @directory[path] = ftp.list
         end
 
-        list.each do |entry|
-          unless /^([drwx-]+)\s+(\d+)\s+(\w+)\s+(\w+)\s+(\d+)\s+([A-Z]{3}\s+\d{1,2}\s+(?:(?:\d{2}:\d{2})|\d{4})) (.+)$/i === entry
-            raise "Unkown Entry: #{entry.inspect}"
-          end
-
-          file = $7
-          case $1[0]
-            when 'd'
-              paths << "#{path}/#{file}" if recursive and recursive === (path+'/'+file)
-            when '-'
-              img_id, prod_id, var_id, tag = yield path, file
-              url = "ftp://#{host}/#{path}/#{file}"
-              if prod_id
-                products[prod_id] += [[img_id, url, var_id, tag]]
-              else
-                puts "Unknown file: #{url}"
-              end
+        list.each do |e|
+          entry = Net::FTP::List.parse(e)
+          if entry.file?
+            img_id, prod_id, var_id, tag = yield path, entry.basename
+            url = "ftp://#{host}/#{path}/#{entry.basename}"
+            if prod_id
+              products[prod_id] += [[img_id, url, var_id, tag]]
             else
-              raise "Unkown type: #{$1.inspect}"
+              puts "Unknown file: #{url}"
+            end          
+          else
+            paths << "#{path}/#{entry.basename}" if recursive and ((recursive == true) or (recursive === (path+'/'+entry.basename)))
           end
         end
       end

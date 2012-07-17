@@ -41,9 +41,12 @@ class NorwoodAll < GenericImport
     end
 
     # Get Image List
+    directory_list = %w(2012_Hardgoods_Hi_Res_Imprint_Images 2012_NPS3_Hi-Res_Images 2013_Calendars_Hi_Res_Imprint_Images 2012_Hardgoods_Hi_Res_Blank_Images 2013_Calendars_Hi_Res_Blank_Images 2012_Lifestyle_Images/2012_High_Res_Images).collect { |p| "Norwood 2012 Product Images/#{p}" }
+
     @image_list = get_ftp_images({ :server => 'library.norwood.com',
                                   :login => 'images', :password => 'norwood' },
-                                'Norwood 2012 Product Images', /Hi[-_]Res/i) do |path, file|
+                                directory_list, /Hi[-_]Res/i) do |path, file|
+      next nil if file.include?('\\') # kludge to deal with \ in file name causing bad URI
       if /\/([A-Z]{2}?\d{4,5})(?:_13)?(?:\/|$)/ === path
         product = $1
         if /^([A-Z]{2}?\d{4,5})(?:_(.+))?\.jpg$/i === file && $1 == product

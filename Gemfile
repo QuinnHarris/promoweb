@@ -86,3 +86,6 @@ group :development, :test do
   gem 'silent-postgres'
 #   gem 'webrat'
 end
+
+# Onlye needed for product updates
+gem 'net-ftp-list'

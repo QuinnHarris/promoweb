@@ -810,17 +810,17 @@ class Product < ActiveRecord::Base
     str
   end
 
-  def delete_images(images)
+  def delete_images_except(images)
     str = ''
     
     images = [images].flatten.compact
-    product_images.to_a.each do |img|
-      unless images.find { |i| i.id == img.supplier_ref }
-        str << "   - Image: #{img.supplier_ref}\n"
-        img.destroy
+    product_images.to_a.each do |pi|
+      unless images.find { |i| i.id == pi.supplier_ref }
+        str << "   - Image: #{pi.supplier_ref}\n"
+        pi.destroy
       end
     end
-
+    
     str
   end
   

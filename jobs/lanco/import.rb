@@ -202,7 +202,7 @@ class LancoXLS < GenericImport
       
       # Replace Lanco Product ID references to our product ids
       description.scan(/\w{2,3}\d{3,4}/).each do |num|
-        next unless our_id = get_id(num)
+        our_id = get_product(num).id
         description.gsub!(num, "<a href='#{our_id}'>#{our_id}</a>")
       end
       

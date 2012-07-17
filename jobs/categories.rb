@@ -15,7 +15,7 @@ class NewCategoryTransform
       record['categories'].find { |s| (s.length > sub.length) && (s[0...(sub.size)] == sub) }
     end
 
-    if true #Rails.env.production?
+    if Rails.env.production?
       record['categories'] = [['Other']] if record['categories'].empty?
     else
       record['categories'] = record['categories'] + record['categories'].collect { |cat| ['YBySupplier', @supplier] + cat }
@@ -147,7 +147,7 @@ private
   ],[
      ['Hats & Caps',
       [match('name', /(?:^| )hat(?:$| |\/)/),
-       exclude(match('name', 'stress')), # Remove Stree Reliever
+       exclude(match('name', ['stress', 'keychain', 'hat clip'])),
        supplier('High Caliber Line',
                 category('Headwear', 'Regular') ),
        supplier('Norwood',
@@ -297,6 +297,26 @@ private
  ['Calendars',
   [
   ],[
+     ['Calendars by Industry', [],
+      { 'Agricultures' => %w(4000 4400 1851 3204 1900 5323 7047),
+        'Real Estate' => %w(7001 7039 8335 2508 1503 7549 4251),
+        'Religious' => %w(1653 1654 1650 2503 2509 3304),
+        'Construction' => %w(1600 6100 6101 6102 6103 6104 6105 3206 2302 4425),
+        'Utilities' => %w(1722 4101 4152 6702 6100 6101 6102 6103 6104 6105 6201),
+        'Manufacturing' => %w(3108 6201 6602 8150 6100 6101 6102 6103 6104 6105 6251),
+        'Hospitality' => %w(7231 7025 7229 5323 5351 8228),
+        'Insurance' => %w(7039 7001 8125 4251 3110 8335),
+        'Health Care' => %w(1301 8371 4251 1400 1403 5323 8203),
+        'Retail' => %w(2201 3011 8228 1600 1717 2103),
+        'Financial' => %w(7039 7001 4101 4251 8335 4152),
+        'Automotive' => %w(1855 1850 5324 3200 1862 3011 7037),
+        'Food Industry' => %w(1301 4151 8371 8229 7031 1300 1303),
+        'Education' => %w(8153 8320 8330 8350 7569 7303 8960 6350),
+      }.collect do |name, nums|
+        ["#{name} Calendars",
+         [supplier('Norwood', match('supplier_num', Regexp.new('^'+nums.join('|')+'$') ) ) ] ]
+      end
+     ],
      ['Appointment Calendars',
       [supplier('Norwood',
                 category('CALENDAR', 'APPT'),
@@ -334,7 +354,7 @@ private
   [supplier('Norwood', category('AUTO', 'AUTO'))
   ],[
      ['Auto Accessories',
-      [match('name', ['roadside', 'visor']),
+      [match('name', ['roadside', 'auto visor']),
        supplier('Leeds',
                 category('Safety & Auto', 'Auto Accessories') ),
        supplier('Gemline',
@@ -686,7 +706,10 @@ private
                 category('Sport & Travel', 'Amenity Cases') ),
        supplier('Bullet Line',
                 all(category('Travel, Health & Beauty', 'Travel Accessories'),
-                    match('name', ['amenity', 'travel']) ) ) ]],
+                    match('name', ['amenity', 'travel']) ) ),
+       supplier('Norwood',
+                category('TRAVEL', 'UTILITY') )
+      ]],
     ] ],
 
  ['Candles, Bath & Body',
@@ -747,7 +770,8 @@ private
     ] ],
 
  ['Computer Accessories',
-  [supplier('Prime Line',
+  [match('name', 'Computer Accessory'),
+   supplier('Prime Line',
             category('Technology'),
             category('USBTechnology') ),
    supplier('Norwood',
@@ -779,16 +803,19 @@ private
                 category('Office / Computer Essentials', 'Modem Cord') ) ]],
      ['Computer Mice',
       [match('name', 'mouse ', 1),
-       match('name', /mouse$/),
+       match('name', /mouse($|\s)/),
        supplier('Leeds',
                 category('Technology', 'Mice') ),
        supplier('Norwood',
                 all(match('name', ' mouse'),
-                    category('OFFICE', 'TECHNOLOGY') ) ),
+                    category('TECHNOLOGY', 'OTHERTECH'), ) ),
        supplier('Bullet Line',
                 category('Desktop', 'Mice') ),
        supplier('LogoIncluded',
                 category('Mouse') ) ]],
+     ['Computer Keyboards / Keypads',
+      [match('name', ['keyboard', 'keypad']),
+       ]],
      ['Computer Mouse Pads',
       [match('name', ['mousepad', 'mouse pad']),
        supplier('Bullet Line',
@@ -818,7 +845,7 @@ private
                 category('WiFi Finder') )] ],
      ['USB Hubs',
       [match('name', 'hub', 1),
-       match('name', 'usb hub'),
+       match('name', /usb.+hub/i),
        supplier('Leeds',
                 category('Technology', 'USB Hubs') ),
        supplier('Norwood',
@@ -831,6 +858,7 @@ private
      ['USB Accessories',
       [all(match('name', 'usb'),
            match('name', ['charger']) ),
+       match('name', /sd card/i),
        supplier('LogoIncluded',
                 category('USB Accessories'),
                 all(category('Tech Accessories'),
@@ -887,7 +915,8 @@ private
             category('Office'),
             category('Desk Helpers')),
    supplier('Norwood',
-            category('GOLF', 'DESKFUN') ),
+            category('GOLF', 'DESKFUN'),
+            category('OFFICE', 'DESKACC')),
    supplier('Bullet Line',
             category('Desktop', 'Desk Accessories'),
             category('Desktop', 'Desktop Accessories') )
@@ -968,6 +997,7 @@ private
                 category('Office / Computer Essentials', 'Letter Opener') )]],
      ['Laser Pointers',
       [match('name', 'laser', 1),
+       match('name', 'laser pointer'),
        supplier('High Caliber Line',
                 category('Laser Pointers') ),
        supplier('Bullet Line',
@@ -1193,7 +1223,8 @@ private
        supplier('Lanco',
                 category('Drinkware', 'Coasters') ),
        supplier('Norwood',
-                category('HOUSEWARES', 'COASTERS'))]],
+                category('HOUSEWARES', 'COASTERS'),
+                category('AWARD', 'COASTERS') )]],
      ['Jigger',
       [match('name', 'jigger')]],
      ['Ceramic',
@@ -1339,7 +1370,8 @@ private
    supplier('Norwood',
             match('name', 'hockey'),
             category('GOLF', 'FUN'),
-            category('GOLF', 'GAMES')),
+            category('GOLF', 'GAMES'),
+            category('FUN', 'GAMES') ),
    supplier('Lanco',
             category('Toys & Games', 'Toys'),
             category('Tradeshow', 'Toys') ),
@@ -1636,7 +1668,7 @@ private
       [supplier('Lanco',
                 category('Travel / Personal Care', 'Brush & Combs') ) ]],
      ['Sewing Kits',
-      [match('name', ['sewing kit', 'mending kit']),
+      [match('name', ['sewing kit', 'mending']),
        supplier('Lanco',
                 category('Travel / Personal Care', 'Sewing Kits') ) ]],
      ['Dental Products',
@@ -2062,7 +2094,7 @@ private
                     category('Tools & Lighters', 'Wenger Knives') ) ]],
         ] ],
      ['Lighters',
-      [match('name', 'lighter'),
+      [match('name', /(^|\s)lighter/),
       ],[
          ['Zippo Lighters',
           [supplier('Leeds',
@@ -2112,7 +2144,9 @@ private
 
  ['Writing',
   [ supplier('High Caliber Line',
-             category('Writing Instruments') )
+             category('Writing Instruments') ),
+    supplier('Norwood',
+             category('WRITE', 'PENCIL') )
   ],[
      ['Highlighters',
       [match('name', 'highlighter', 1),
@@ -2131,13 +2165,11 @@ private
       match('name', 'marker', 1) ],
      ['Pencils',
       [match('name', 'pencil'),
-       supplier('Norwood',
-                all(match('name', 'pencil'),
-                    category('WRITE', 'PENCIL') ) ),
        supplier('Gemline',
                 category('Writing Instruments', 'Pencils') ) ]],
      ['Pens',
-      [supplier('Leeds',
+      [match('name', /pen($|\s)/, 1),
+       supplier('Leeds',
                 category('Pens-Plastic', 'Value Pens & Highlighters') ),
        supplier('Gemline',
                 ['Pens $3-$5', 'Pens $5-$10', 'Pens 10+', 'Pens under $3'].collect do |name|
@@ -2270,7 +2302,7 @@ private
                 category('Dog Collars & Leashes'),
                 category('Lanyards', 'Dog Leashes Lanyards') ) ] ],
      ['Pet Accessories',
-      [match('name', /Pets?($| )/), ]],
+      [match('name', /Pets?($|\s)/i), ]],
      ['Light Ups',
       [supplier('High Caliber Line',
                 category('Light Up') )
