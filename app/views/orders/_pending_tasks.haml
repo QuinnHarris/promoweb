@@ -51,7 +51,7 @@
     - if task.complete_estimate
       = form_for task, { :as => :task, :url =>  task_comment_admin_order_path(@order, :object_id => task.object, :class => tasks.last.class), :html => { :method => :post, :class => 'noauto' } } do |t|
         %hr
-        = t.text_area :comment, 'cols' => 120, 'rows' => 2         
+        = t.text_area :comment, 'cols' => 120, 'rows' => 1    
         %div
           Completion:
           - (0..5).each do |d|

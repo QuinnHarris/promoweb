@@ -206,6 +206,9 @@ private
     end.flatten.collect do |hash|
       delegate = (hash[:complete].last.dependants || []).find_all { |t| t.ready?(hash[:complete].collect { |t| t.class }) }
       hash.merge(:delegate => delegate.first)
+    end.sort_by do |hash|
+      (hash[:complete].last.complete_estimate ? 0 : 2) +
+        (hash[:blocked] ? 1 : 0)
     end
   end
 end
