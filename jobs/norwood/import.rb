@@ -143,13 +143,7 @@ class NorwoodCSV < GenericImport
         raise "Unkown weight: #{row['Pack Weight']}" unless /^(\d+(?:\.\d)?) ?(?:((?:lbs?)|(?:oz))\.?)?$/ === row['Pack Weight']
         product_data['package_weight'] = Float($1) * (($2 == 'oz') ? (1.0/16.0) : 1.0)
       end
-        
-      # Images
-      zoom_img_url = "http://norwood.com/images/products/zoom/#{supplier_num}_Z.jpg"
-      product_data['image-large'] = CopyImageFetch.new(zoom_img_url)
-      product_data['image-main'] = TransformImageFetch.new(zoom_img_url)
-      product_data['image-thumb'] = CopyImageFetch.new("http://norwood.com/images/products/medium/#{supplier_num}_M.jpg")
-           
+                  
       unless (leadtime = row['Lead Time']).blank?
         product_data['lead_time_normal_min'] = product_data['lead_time_normal_max'] = Integer(leadtime)
       end
@@ -256,7 +250,12 @@ class NorwoodCSV < GenericImport
 
       color_image_map, color_num_map = match_colors(product_data['supplier_num'], colors)
 
-      product_data['images'] = color_image_map[nil]
+      if color_image_map.empty?
+        product_data['images'] = ImageNodeFetch.new("#{supplier_num}_Z.jpg",
+                                                    "http://norwood.com/images/products/zoom/#{supplier_num}_Z.jpg")
+      else
+        product_data['images'] = color_image_map[nil]
+      end
 
       product_data['variants'] = variants.collect do |properties|
         num_w = (32 - supplier_num.length-properties.length) / [properties.length,1].max
