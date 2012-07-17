@@ -54,8 +54,9 @@
         = t.text_area :comment, 'cols' => 120, 'rows' => 2         
         %div
           Completion:
-          - ['30m', '1h', '2h', '4h', 'EOD', '1d', '2d', '3d', '4d', '5d'].each do |name|
-            = submit_tag name
+          - (0..5).each do |d|
+            - time = (Time.now.beginning_of_day + 17.hours).add_workday(d.days)
+            = submit_tag (d == 0) ? 'EOD' : "#{d} (#{time.strftime('%a %d')})"
           |
           != t.text_field(:expected_at, :value => t.object.complete_at.strftime('%Y-%m-%d %H:%M'), :class => 'futuredate', :id => "task_expected_at_#{task.object.id}_#{task.class}")
           = submit_tag 'Apply'
