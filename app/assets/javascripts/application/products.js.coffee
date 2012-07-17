@@ -412,9 +412,11 @@ $(document).ready ->
         pagerAnchorBuilder: (idx, slide) ->
                 $('#thumbs li')[idx]
         updateActivePagerLink: (pager, currSlide, clsName) ->
-                while this.deactive[this.nextSlide]
+                count = 0
+                while this.deactive[this.nextSlide] and count < this.elements.length
                         this.nextSlide = this.nextSlide + 1
                         this.nextSlide = 0 if this.nextSlide == this.elements.length
+                        count = count + 1
 
                 $(pager).each ()->
                         $('li', this).removeClass(clsName).eq(currSlide).addClass(clsName);
