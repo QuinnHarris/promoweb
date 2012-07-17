@@ -224,26 +224,36 @@ class NorwoodCSV < GenericImport
         common_properties['dimension'] = parse_volume(size1) || size1
       end
 
-      variants = [{}]
-      count = 1
-      (1..4).each do |num|
+      # Get all properties (usually color)
+      props = (1..4).each_with_object({}) do |num, hash|
         name = row["Item Type#{num}"]
         next if name.empty?
-        if name == 'Product Colors'
-          name = 'color'
-        else
-          name = name.singularize
-        end
         values = row["Item Colors#{num}"].split('|')
+        hash[name] = values
+      end
+
+      color_keys = props.keys.find_all { |k| k.downcase.include?('color') }
+      colors = props[color_key = color_keys.first] || []
+      if color_keys.length == 1
+        # Force to 'color' property if only one color key exists
+        color_key = 'color'
+        props = props.each_with_object({}) do |(k, v), hash|
+          hash[k.downcase.include?('color') ? 'color' : k] = v
+        end
+      end
+
+      variants = [{}]
+      count = 1
+      props.each do |name, values|
         count *= values.length
         break if count > 50
-        
+
         variants = variants.collect do |prop|
           values.collect { |v| prop.merge(name => v) }
         end.flatten
       end
 
-      colors = variants.collect { |v| v['color'] }.uniq.compact
+
       color_image_map, color_num_map = match_colors(product_data['supplier_num'], colors)
 
       product_data['images'] = color_image_map[nil]
@@ -255,7 +265,7 @@ class NorwoodCSV < GenericImport
           'prices' => prices,
           'costs' => costs,
           'properties' => properties.merge(common_properties),
-          'images' => properties['color'] && color_image_map[properties['color']]
+          'images' => properties[color_key] && color_image_map[properties[color_key]]
         }
       end
       
