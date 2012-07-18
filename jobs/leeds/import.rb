@@ -479,28 +479,15 @@ class PolyXLS < GenericImport
 
     puts "Missing Decorations: #{no_decorations.join(', ')}"
   end
-end
 
-
-class LeedsXLS < PolyXLS
-  def initialize
-    puts "Stating Fetch for Leeds"
-    @prod_files = %w(USDcatalog USDMemorycatalog).collect do |name|
-      WebFetch.new("http://media.leedsworld.com/ms/?/excel/#{name}/EN").get_path(Time.now-24*60*60)
+  def initialize(name)
+    puts "Starting Fetch for #{name}"
+    time = Time.now - 1.day
+    @prod_files = [@prod_files].flatten.collect do |url|
+      WebFetch.new(url).get_path(time)
     end
-    @dec_file = WebFetch.new('http://media.leedsworld.com/msfiles/downloads/WebDecorationMethodByItem.xls').get_path(Time.now-24*60*60)
+    @dec_file = WebFetch.new(@dec_file).get_path(time)
     @src_files = @prod_files + [@dec_file]
-    @image_url = 'images.leedsworld.com'
-    super "Leeds"
-  end
-end
-
-class BulletXLS < PolyXLS
-  def initialize
-    @prod_files = [File.join(JOBS_DATA_ROOT, 'Bullet/catalog.xls')]
-    @dec_file = File.join(JOBS_DATA_ROOT, 'Bullet/WebDecorationMethodByItem.xls')
-    @src_files = @prod_files + [@dec_file]
-    @image_url = 'images.bulletline.com'
-    super "Bullet Line"
+    super name
   end
 end
