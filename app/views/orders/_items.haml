@@ -1,6 +1,6 @@
 %table.items
   %tbody
-    - for order_item in @order.items.sort_by { |i| [i.quantity, i.product_id, i.order_item_variants.first.variant_id || 0] }
+    - for order_item in @order.items.sort_by { |i| [i.quantity, i.product_id, (i.order_item_variants.first && i.order_item_variants.first.variant_id) || 0] }
       %tr
         %td{ :colspan => 4 }
           = render :partial => '/orders/order_item', :locals => { :order_item => order_item, :static => static, :absolute => absolute, :invoice => false }

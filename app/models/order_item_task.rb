@@ -225,6 +225,8 @@ class ShipItemTask < OrderItemTask
        "http://wwwapps.ups.com/WebTracking/processInputRequest?loc=en_US&tracknum=#{tracking}"
       when 'FedEx'
        "http://www.fedex.com/Tracking?tracknumbers=#{tracking}"
+      when 'USPS'
+        "https://tools.usps.com/go/TrackConfirmAction_input?qtc_tLabels1=#{tracking}"
     end
   end
 

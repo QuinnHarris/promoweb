@@ -18,4 +18,4 @@
     %td= @static ? address.state : add.text_field(:state, :disabled => disabled)
   %tr
     %th Country:
-    %td= @static ? Address::COUNTRY_LIST.find { |n, c| c == address.country }.first : add.select(:country, Address::COUNTRY_LIST, {  }, { :disabled => disabled })
+    %td= @static ? address.country_name : add.select(:country, Address::COUNTRY_LIST, {  }, { :disabled => disabled })

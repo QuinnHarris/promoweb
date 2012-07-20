@@ -4,3 +4,6 @@
   = address.address2
   %br
 = "#{address.city}, #{address.state} #{address.postalcode}"
+- if address.country != 'US'
+  %br
+  #{address.country_name}

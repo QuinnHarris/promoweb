@@ -251,8 +251,8 @@ class NorwoodCSV < GenericImport
       color_image_map, color_num_map = match_colors(product_data['supplier_num'], colors)
 
       if color_image_map.empty?
-        product_data['images'] = ImageNodeFetch.new("#{supplier_num}_Z.jpg",
-                                                    "http://norwood.com/images/products/zoom/#{supplier_num}_Z.jpg")
+        product_data['images'] = [ImageNodeFetch.new("#{supplier_num}_Z.jpg",
+                                                     "http://norwood.com/images/products/zoom/#{supplier_num}_Z.jpg")]
       else
         product_data['images'] = color_image_map[nil]
       end

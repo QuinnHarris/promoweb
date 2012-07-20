@@ -11,6 +11,7 @@
   
   h3 { border-bottom: medium solid black; }
 
+- customer = @order.customer
 #aknowledgement
   %table
     %tr
@@ -38,6 +39,8 @@
           Not Important
         - else
           = @order.delivery_date || "Not Specified"
+          - if customer.ship_address && customer.ship_address.country != 'US'
+            %strong (NOT GUARANTEED/BEST EFFORT)
         %br
         Rush Order:
         = @order.rush ? "YES" : "NO"
@@ -59,7 +62,6 @@
         Date:
         = (task ? task.created_at : Time.new).strftime("%b %d, %Y")
         %div
-          - customer = @order.customer
           %h3 Ship To
           - if valid?(customer.ship_address, :name)
             = customer.ship_address.name
@@ -84,6 +86,10 @@
               = customer.person_name
             %br
             = render :partial => '/orders/address', :locals => { :address => payment.address, :customer => customer }
+
+- if customer.ship_address && customer.ship_address.country != 'US'
+  %hr
+  %h1 No delivery date guarantee or refunds of any kind for delays on international shipments!
 
   %hr
 - for invoice in (@order.invoices + @order.payment_charges.sort_by { |i| i.created_at || Time.now })

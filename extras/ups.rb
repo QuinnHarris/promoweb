@@ -579,7 +579,7 @@ private
       i = 0
       reqs = requests.collect do |request|
         body = request_string(request)
-#        File.open("/home/quinn/request#{i += 1}.xml", 'w') { |f| f.write(body) }
+        File.open("/home/quinn/request#{i += 1}.xml", 'w') { |f| f.write(body) }
         req = Net::HTTP::Post.new(request.path)
         @connection.request_write(req, body)
         req
@@ -589,7 +589,7 @@ private
       requests.zip(reqs).collect do |request, req|
         response_plain = @connection.request_read(req).body
         response       = response_plain.include?('<?xml') ? REXML::Document.new(response_plain) : response_plain
-#        File.open("/home/quinn/response#{i += 1}.xml", 'w') { |f| f.write(response_plain) }
+        File.open("/home/quinn/response#{i += 1}.xml", 'w') { |f| f.write(response_plain) }
         request.parse(response)
       end
     end

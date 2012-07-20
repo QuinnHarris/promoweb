@@ -7,7 +7,7 @@ class ShippingRate < ActiveRecord::Base
   # data is list of [code, description, days, price]
 
   def self.carriers
-    %w(UPS FedEx DHL Trucking Other)
+    %w(UPS FedEx USPS DHL Trucking Other)
   end
 
   def self.get(qty, prod, cust, fetch = false)

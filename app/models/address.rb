@@ -15,7 +15,8 @@ class Address < ActiveRecord::Base
     'PR' => @@postal_8dig,
     'CA' => /^\w\d\w\s*\d\w\d$/,
     'NL' => /^\d{4}\s?[A-Z]{2}$/i,
-    'IN' => /^\d{6}$/
+    'IN' => /^\d{6}$/,
+    'GB' => /(GIR 0AA)|(((A[BL]|B[ABDHLNRSTX]?|C[ABFHMORTVW]|D[ADEGHLNTY]|E[HNX]?|F[KY]|G[LUY]?|H[ADGPRSUX]|I[GMPV]|JE|K[ATWY]|L[ADELNSU]?|M[EKL]?|N[EGNPRW]?|O[LX]|P[AEHLOR]|R[GHM]|S[AEGKLMNOPRSTY]?|T[ADFNQRSW]|UB|W[ADFNRSV]|YO|ZE)[1-9]?[0-9]|((E|N|NW|SE|SW|W)1|EC[1-4]|WC[12])[A-HJKMNPR-Y]|(SW|W)([2-9]|[1-9][0-9])|EC[1-9][0-9]) [0-9][ABD-HJLNP-UW-Z]{2})/i
   }
 
   def invalid_postal?
@@ -32,6 +33,10 @@ class Address < ActiveRecord::Base
     %w(address1 city state postalcode).find_all do |name|
       send(name).blank?
     end
+  end
+
+  def country_name
+    COUNTRY_HASH[country]
   end
 
   def UPSAddress
@@ -304,3 +309,7 @@ Address::COUNTRY_LIST = country_src.split("\n").collect do |l|
   raise "Unknown: #{l}" unless /^(\w{2}),\"(.+)\"$/ === l
   [$2, $1]
 end.sort_by { |name, code| name }
+
+Address::COUNTRY_HASH = Address::COUNTRY_LIST.each_with_object({}) do |(v, k), hash|
+  hash[k] = v
+end

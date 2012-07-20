@@ -969,9 +969,10 @@ private
 
         list.each do |e|
           entry = Net::FTP::List.parse(e)
+          puts "ENT: #{path.inspect} #{entry.basename.inspect}"
           if entry.file?
             img_id, prod_id, var_id, tag = yield path, entry.basename
-            url = "ftp://#{host}/#{path}/#{entry.basename}"
+            url = "ftp://#{host}/#{path && (path+'/')}#{entry.basename}"
             if prod_id
               products[prod_id] += [[img_id, url, var_id, tag]]
             else

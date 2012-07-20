@@ -95,6 +95,6 @@ class OrderItemDecoration < ActiveRecord::Base
   end
 
   def pdf_filename
-    "Proof for #{order_item.product.name.gsub('%','')} of #{artwork_group.name}.pdf"
+    "Proof for #{order_item.product.name.gsub('%','')} for #{artwork_group.name}.pdf"
   end
 end
