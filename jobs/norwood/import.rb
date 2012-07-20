@@ -1,5 +1,3 @@
-require 'rexml/document'
-
 class NorwoodAll < GenericImport
   def initialize
     @year = (Date.today + 7).year

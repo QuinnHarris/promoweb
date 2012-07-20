@@ -518,9 +518,15 @@ public
     product_log = ''
     
     # check presense
-    %w(supplier_num name description decorations supplier_categories variants).each do |name|
-      if product_data[name].nil?
-        raise ValidateError, "#{name} is nil"
+    %w(supplier_num name description).each do |name|
+      unless product_data[name].is_a?(String)
+        raise ValidateError, "#{name} is not string"
+      end
+    end
+
+    %w(decorations supplier_categories variants images).each do |name|
+      unless product_data[name].is_a?(Array)
+        raise ValidateError, "#{name} is not array"
       end
     end
     
@@ -565,24 +571,15 @@ public
     end
     
     # check images
-    ([product_data['images']] + product_data['variants'].collect { |v| v['images'] }).each do |list|
-      raise ValidateError.new("Duplicate Image", list.inspect) unless list.nil? or (list == list.uniq)
-    end
     variant_images = product_data['variants'].collect { |v| v['images'] }.flatten.compact
     product_images = [product_data['images']].flatten.compact
     product_images.each do |pi|
       if variant_images.find { |vi| vi == pi }
-        raise ValidateError, "Duplicate image"
+        raise ValidateError.new("Duplicate image", "#{pi.inspect} of #{variant_images.inspect}")
       end
     end
 
-    if (variant_images + product_images).empty?
-      unless product_data["image-hires"] or product_data["images"]
-        %w(thumb main large).each do |name|
-          product_log << "  No #{name} image" unless product_data["image-#{name}"]
-        end
-      end
-    end
+    raise ValidateError, "No images" if (variant_images + product_images).empty?
     
     # check prices
     product_data['variants'].each do |variant|
