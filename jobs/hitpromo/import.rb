@@ -52,7 +52,7 @@ class HitPromoCSV < GenericImport
         'supplier_categories' => [[hash['category']]],
         'tags' => [] }
 
-      product_data['description'] = hash['description'].split(/\s*|\s*/).join("\n")
+      product_data['description'] = hash['description'].split(/\s*\|\s*/).join("\n")
 
       product_data['tags'] << 'new' if hash['new']
 
@@ -93,10 +93,18 @@ class HitPromoCSV < GenericImport
         }]
       product_data['decorations'] = decorations
 
-      colors = hash['colors_available'].split(/\s*,\s*/)
+      colors = hash['colors_available']
+        .scan(/(?:\s*([^,:]+?)(:|(?:\s*with)))?\s*(.+?)(?:\s*all\s*with\s*(.+?))?(?:\.|$)/)
+        .collect do |left, split, list, right|
+
+        list = list.split(/,|(?:\s+or\s+)/)
+        split = split.include?(':') ? ' ' : " #{split.strip} " if split
+        right = " with #{right}" if right
+        list.collect { |e| (right && e.include?('with')) ? e : "#{left}#{split}#{e.strip}#{right}".strip }
+      end.flatten.uniq
 
       product_data['variants'] = colors.collect do |color|
-        { 'supplier_num' => "#{supplier_num}-#{color}",
+        { 'supplier_num' => "#{supplier_num}-#{color.gsub(' ', '')}"[0..63],
           'properties' => common_properties.merge('color' => color),
         }.merge(common_variant)
       end

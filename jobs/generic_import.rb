@@ -966,7 +966,6 @@ private
 
         list.each do |e|
           entry = Net::FTP::List.parse(e)
-          puts "ENT: #{path.inspect} #{entry.basename.inspect}"
           if entry.file?
             img_id, prod_id, var_id, tag = yield path, entry.basename
             url = "ftp://#{host}/#{path && (path+'/')}#{entry.basename}"

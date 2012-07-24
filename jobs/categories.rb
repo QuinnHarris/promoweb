@@ -1448,7 +1448,7 @@ private
                     all(match('name','Magic'),
                         match('name', '&reg;'))) ]],
          ['Rubiks Cubes',
-          [match('name', 'rubik'),
+          [match(%w(name description), 'rubik'),
            match('name', 'rubi', 1),
            supplier('Prime Line',
                     category("Rubik's&reg; Cubes") ) ] ],

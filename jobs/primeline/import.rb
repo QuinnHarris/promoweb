@@ -57,7 +57,6 @@ class PrimeLineWeb < GenericImport
     end
 
     categories.each do |path, category_list|
-#      puts "Category: #{category_list.inspect}"
       url = "http://www.primeline.com/#{path}&TotalDisplay=#{@@display}"
       process_category(category_list.uniq.join(' '), url)
     end
@@ -181,8 +180,29 @@ class PrimeLineWeb < GenericImport
     
     # Features
     features = doc.xpath("//img[@src='images/bulletArrow.gif']").collect do |img|
-      str = iconv(img.next_sibling.inner_html).gsub(/(<[^>]+>)|(<--.*)/,'').strip
-      (/free shipping/i) === str ? nil : str
+      line = img.next_sibling.children.collect do |child|
+        next child.text.strip if child.text?
+        case child.name
+          when 'a'
+          unless child.attributes['href'] && 
+              (/\/Products\/ProductDetail\.aspx\?fpartno=(.+)$/ === child.attributes['href'].value)
+            puts "Unkown URL: #{data['supplier_num']} #{child.attributes['href'] && child.attributes['href'].value}"
+            next nil
+          end
+          product = get_product($1)
+          "<a href='#{product.web_id}'>#{child.inner_html.gsub($1,'').strip}</a>"
+
+          when 'font', 'b'
+          next nil if child.inner_html.downcase.include?('free ship') 
+          child.inner_html.strip
+
+          when 'img', 'br'
+          nil
+        else
+          raise "Unknown element #{data['supplier_num']} #{child.name}"
+        end
+      end.compact.collect { |s| s.encode('ISO-8859-1') }.join(' ')
+      line.blank? ? nil : line
     end.compact
 #    log << " * NO FEATURES" if features.empty?
     
@@ -248,8 +268,10 @@ class PrimeLineWeb < GenericImport
       data['lead_time_rush'] = 1
     end
 
-    it = doc.xpath("//table/tbody/tr/td/span[@class='black11']").last
-    if it 
+    if categories.include?('Overseas')
+      data['lead_time_normal_min'] = 20
+      data['lead_time_normal_max'] = 60
+    elsif it = doc.xpath("//table/tbody/tr/td/span[@class='black11']").last
       data['lead_time_normal_min'], data['lead_time_normal_max'] = it.inner_html.scan(/(?:(?:(\d+)\s*-\s*)?(\d+) days)|(?:(?:(\d+)\s*-\s*)?(\d+) weeks)/).collect { |dl, dh, wl, wh| dh ? [dl ? dl.to_i : dh.to_i, dh.to_i] : [(wl ? wl.to_i : wh.to_i)*5, wh.to_i*5] }.max
     else
       data['lead_time_normal_min'] = 3
@@ -332,9 +354,7 @@ class PrimeLineWeb < GenericImport
         'color' => name
       }
     end
-    
-    puts "Categories: #{categories.inspect}"
-    
+        
     data.merge!({
       'description' => features ? features.join("\n").strip : '',
       'decorations' => [], #decorations,
