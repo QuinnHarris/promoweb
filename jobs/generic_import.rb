@@ -237,8 +237,10 @@ class WebFetch
       return nil if f.length == 0
       if f.respond_to?(:path)
         FileUtils.mv(f.path, path)
+      elsif f.respond_to?(:save_as)
+        f.save_as path
       else
-        File.open(path, 'w') { |a| a.write(f) }
+        File.open(path, "w:#{f.external_encoding}") { |file| file.write(f.read) }
       end
       puts
       return path
@@ -993,6 +995,11 @@ private
       [ImageNodeFetch.new(image_id, url, tag), (suffix || '').split('_').first || '']
     end
 
+    match_image_colors(image_list, colors, supplier_num)
+  end
+
+  def match_image_colors(image_list, colors, supplier_num = nil)
+
 #    if colors.length == 1
 #      return { colors.first => image_list.collect { |image, suffix| image } }
 #    end
@@ -1002,57 +1009,60 @@ private
 
     supplier_map = {}
 
-    # Exact Suffix Match then remove color from furthur match
-    remove_colors = []
-    image_list.delete_if do |image, suffix|
-      if suffix.empty?
-        image_map[nil] += [image]
-        next true
-      end
-
-      if color = colors.find { |c| color_map[c.downcase] && [color_map[c.downcase]].flatten.include?(suffix) }
-        image_map[color] += [image]
-        if supplier_map[color]
-          puts "Supplier Num mismatch #{supplier_num}: #{colors.inspect} => #{supplier_map[color]} != #{suffix}" unless supplier_map[color] == suffix
-        else
-          supplier_map[color] = suffix
+    if respond_to?(:color_map)
+      # Exact Suffix Match then remove color from furthur match
+      remove_colors = []
+      image_list.delete_if do |image, suffix|
+        if suffix.empty?
+          image_map[nil] += [image]
+          next true
         end
-        remove_colors << color unless remove_colors.include?(color)
-        true
+        
+        if color = colors.find { |c| color_map[c.downcase] && [color_map[c.downcase]].flatten.include?(suffix) }
+          image_map[color] += [image]
+          if supplier_map[color]
+            puts "Supplier Num mismatch #{supplier_num}: #{colors.inspect} => #{supplier_map[color]} != #{suffix}" unless supplier_map[color] == suffix
+          else
+            supplier_map[color] = suffix
+          end
+          remove_colors << color unless remove_colors.include?(color)
+          true
+        end
       end
-    end
-    colors -= remove_colors
-
-    # Component Suffix Match
-    mapped = colors.collect do |color|
-      names = color_map.keys.find_all { |c| [c].flatten.find { |d| color.downcase.include?(d) } }
-      names = names.find_all { |n| !names.find { |o| (o != n) and o.include?(n) } }
-      names.sort_by! { |n| color.downcase.index(n) }
-      results = ['']
-      names.each do |n| 
-        results = [color_map[n]].flatten.collect do |c|
+      colors -= remove_colors
+      
+      # Component Suffix Match
+      mapped = colors.collect do |color|
+        names = color_map.keys.find_all { |c| [c].flatten.find { |d| color.downcase.include?(d) } }
+        names = names.find_all { |n| !names.find { |o| (o != n) and o.include?(n) } }
+        names.sort_by! { |n| color.downcase.index(n) }
+        results = ['']
+        names.each do |n| 
+          results = [color_map[n]].flatten.collect do |c|
           results.collect { |r| r + c }
+          end
+          results.flatten!
         end
-        results.flatten!
+        results
       end
-      results
-    end
+      
+      remove_colors = []
+      image_list.delete_if do |image, suffix|
+        if list = mapped.find { |sufs| sufs.include?(suffix) }
+          color = colors[mapped.index(list)]
+          image_map[color] += [image]
+          if supplier_map[color]
+            raise "Supplier Num mismatch #{supplier_num}: #{colors.inspect} => #{supplier_map[color]} != #{suffix}" unless supplier_map[color] == suffix
+          else
+            supplier_map[color] = suffix
+          end
+          remove_colors << color unless remove_colors.include?(color)
+          true
+        end
+      end
+      colors -= remove_colors
 
-    remove_colors = []
-    image_list.delete_if do |image, suffix|
-      if list = mapped.find { |sufs| sufs.include?(suffix) }
-        color = colors[mapped.index(list)]
-        image_map[color] += [image]
-        if supplier_map[color]
-          raise "Supplier Num mismatch #{supplier_num}: #{colors.inspect} => #{supplier_map[color]} != #{suffix}" unless supplier_map[color] == suffix
-        else
-          supplier_map[color] = suffix
-        end
-        remove_colors << color unless remove_colors.include?(color)
-        true
-      end
     end
-    colors -= remove_colors
 
 
     image_list.each do |image, suffix|
