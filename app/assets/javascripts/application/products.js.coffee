@@ -244,10 +244,10 @@ class window.ProductPricing extends PricingBase
         dd.hide()
 
     $("#dec_desc").html(li.children('span').html())
-    if @params.technique_id == 1
-      $('#sample').show()
-    else
-      $('#sample').hide()
+#    if @params.technique_id == 1
+#      $('#sample').show()
+#    else
+#      $('#sample').hide()
 
   onMouseTechnique: (event) =>
     li = $(event.target).parents('li')
