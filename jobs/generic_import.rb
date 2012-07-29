@@ -1009,30 +1009,60 @@ private
 
     supplier_map = {}
 
-    if respond_to?(:color_map)
-      # Exact Suffix Match then remove color from furthur match
-      remove_colors = []
-      image_list.delete_if do |image, suffix|
-        if suffix.empty?
-          image_map[nil] += [image]
-          next true
-        end
-        
-        if color = colors.find { |c| color_map[c.downcase] && [color_map[c.downcase]].flatten.include?(suffix) }
-          image_map[color] += [image]
-          if supplier_map[color]
-            puts "Supplier Num mismatch #{supplier_num}: #{colors.inspect} => #{supplier_map[color]} != #{suffix}" unless supplier_map[color] == suffix
-          else
-            supplier_map[color] = suffix
-          end
-          remove_colors << color unless remove_colors.include?(color)
-          true
+    multiple_map = {}
+    multiple_map.default = []
+
+    #af = remove_common_prefix_postfix(colors)
+    #unless colors == aft
+    #  puts " Prune: #{colors.inspect} => #{aft.inspect}"
+    #  colors = aft
+    #end
+    strings = colors.collect { |s| s.split(/([^A-Z]+)/i) }
+    common = remove_common_prefix_postfix(strings).collect { |l| l.join}
+    common = common.collect { |s| s.gsub('/', ' ') }
+    unless common == colors
+      puts " Prune: #{colors.inspect} => #{common.inspect}"
+    end
+    match_list = colors.zip(common)
+
+
+    # Exact Suffix Match then remove color from furthur match
+    remove_matches = []
+    image_list.delete_if do |image, suffix|
+      if suffix.empty?
+        image_map[nil] += [image]
+        next true
+      end
+      
+      list = nil
+      list = match_list.find_all { |id, c| color_map[c.downcase] && [color_map[c.downcase]].flatten.include?(suffix) } if respond_to?(:color_map)
+      unless list
+        list = match_list.find_all { |id, c| suffix.downcase.include?(c.downcase) }
+        if list.length > 1
+          less = list.find_all { |id, c| c.downcase.include?(suffix.downcase) }
+          list = less unless less.empty?
         end
       end
-      colors -= remove_colors
-      
+      if list.length > 1
+        multiple_map[image] += list
+      elsif list.length == 1
+        elem = list.first
+        id = elem.first
+        image_map[id] += [image]
+        if supplier_map[id]
+          puts "Supplier Num mismatch #{supplier_num}: #{id.inspect} => #{supplier_map[id]} != #{suffix}" unless supplier_map[id] == suffix
+        else
+          supplier_map[id] = suffix
+        end
+        remove_matches << elem unless remove_matches.include?(elem)
+        true
+      end
+    end
+    match_list -= remove_matches
+
+    if respond_to?(:color_map)      
       # Component Suffix Match
-      mapped = colors.collect do |color|
+      mapped = match_list.collect do |id, color|
         names = color_map.keys.find_all { |c| [c].flatten.find { |d| color.downcase.include?(d) } }
         names = names.find_all { |n| !names.find { |o| (o != n) and o.include?(n) } }
         names.sort_by! { |n| color.downcase.index(n) }
@@ -1046,47 +1076,81 @@ private
         results
       end
       
-      remove_colors = []
+      remove_matches = []
       image_list.delete_if do |image, suffix|
         if list = mapped.find { |sufs| sufs.include?(suffix) }
-          color = colors[mapped.index(list)]
-          image_map[color] += [image]
-          if supplier_map[color]
-            raise "Supplier Num mismatch #{supplier_num}: #{colors.inspect} => #{supplier_map[color]} != #{suffix}" unless supplier_map[color] == suffix
+          elem = match_list[mapped.index(list)]
+          id = elem.first
+          image_map[id] += [image]
+          if supplier_map[id]
+            raise "Supplier Num mismatch #{supplier_num}: #{id.inspect} => #{supplier_map[id]} != #{suffix}" unless supplier_map[id] == suffix
           else
-            supplier_map[color] = suffix
+            supplier_map[id] = suffix
           end
-          remove_colors << color unless remove_colors.include?(color)
+          remove_matches << elem unless remove_matches.include?(elem)
           true
         end
       end
-      colors -= remove_colors
-
+      match_list -= remove_matches
     end
 
 
     image_list.each do |image, suffix|
       reg = Regexp.new(suffix.split('').collect { |s| [s, '.*'] }.flatten[0..-2].join, Regexp::IGNORECASE)
-      list = colors.find_all do |color|
+      list = match_list.find_all do |id, color|
         (reg === color)
-      end
-
-      if list.length == 1
-        color = list.first
-        image_map[color] += [image]
-        unless supplier_map[color] or supplier_map.values.include?(suffix)
-          supplier_map[color] = suffix
-        end
-        next
-      end
+      end.compact
 
       if list.length > 1
-        puts "Multiple Match: #{supplier_num} #{image} #{suffix} #{list.inspect}"
+        multiple_map[image] += list
+      elsif list.length == 1
+        id = list.first.first
+        image_map[id] += [image]
+        unless supplier_map[id] or supplier_map.values.include?(suffix)
+          supplier_map[id] = suffix
+        end
+        next
       end
 
       image_map[nil] += [image]
     end
 
+    unless multiple_map.empty?
+      puts "Multiple Match: #{supplier_num}"
+      multiple_map.each do |image, list|
+        puts "  #{image} => #{list.inspect}"
+      end
+    end
+
     [image_map, supplier_map]
+  end
+
+  def remove_common_prefix_postfix(strings)
+    return strings if strings.length <= 1
+
+    # Prefix
+    shortest = strings.min_by(&:length)
+    maxlen = shortest.length
+    maxlen.downto(1) do |len|
+      substr = shortest[0...len]
+      if strings.all? { |s| s[0...len] == substr }
+        strings = strings.collect { |s| s[len..-1] }
+        break
+      end
+    end
+
+    # Postifx
+    shortest = strings.min_by(&:length)
+    maxlen = shortest.length
+    maxlen.downto(1) do |len|
+      substr = shortest[-len..-1]
+      if strings.all? { |s| s[-len..-1] == substr }
+        puts "Len: #{len}"
+        strings = strings.collect { |s| s[0...-len] }
+        break
+      end
+    end
+
+    strings
   end
 end

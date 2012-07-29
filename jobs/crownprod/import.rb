@@ -82,11 +82,12 @@ class CrownProdXLS < GenericImport
       images = doc.xpath("//td[@class='hires_download_file']/a").collect do |a|
         href = a.attributes['href'].value
  
-        unless /file=((?:(.+?)%5C)?.+?(?:[+_](.+?))?\.jpg)$/i === href
+        unless /file=((?:(.+?)%5C)?(.+?(?:[+_](.+?))?)\.jpg)$/i === href
           raise "Unknown href: #{href}"
         end
+        desc = $4 || $3
 
-        [ImageNodeFetch.new($1, href, ($2 == 'Blanks') ? 'blank' : nil), $3 ? $3.gsub(/\+|_/,' ').strip : '']
+        [ImageNodeFetch.new($1, href, ($2 == 'Blanks') ? 'blank' : nil), desc.gsub(/\+|_/,' ').strip]
       end
 
       if images.empty?
@@ -97,6 +98,13 @@ class CrownProdXLS < GenericImport
       else
         color_image_map, color_num_map = match_image_colors(images, colors, supplier_num)
         product_data['images'] = color_image_map[nil]
+        puts "ColorMap: #{supplier_num}"
+        color_image_map.each do |color, list|
+          puts "  #{color}: #{list.inspect}"
+        end
+        (colors - color_image_map.keys).each do |color|
+          puts "  #{color} ---"
+        end
       end
 
       product_data['variants'] = colors.collect do |color|
@@ -109,7 +117,7 @@ class CrownProdXLS < GenericImport
       add_product(product_data)
     end
 
-
+    raise "DIE"
   end
 
 end
