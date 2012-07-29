@@ -53,8 +53,8 @@ private
   end
 
   def category(*cat)
-    @used_categories << cat unless @used_categories.include?(cat)
     Proc.new do |record, match_category|
+      @used_categories << cat unless @used_categories.include?(cat)
       [match_category] if record['supplier_categories'].find { |c| c[0...cat.length] == cat }
     end
   end
@@ -361,7 +361,10 @@ private
        supplier('High Caliber Line',
                 category('Auto') ),
        supplier('Bullet Line',
-                category('Travel, Health & Beauty', 'Automotive Accessories') ) ] ],
+                category('Travel, Health & Beauty', 'Automotive Accessories') ),
+       supplier('Crown Products',
+                category('Auto Accessories') )
+      ] ],
      ['Auto Organizers',
       [match('name', %w(organize contain), 1)
       ] ],
@@ -393,6 +396,9 @@ private
    supplier('Hit Promotional Products',
             category('Bags, Totes & Koolers'),
             exclude(match('name', 'kool')) ),
+   supplier('Crown Products',
+            category('Bags'),
+            category('Bags, Bags') )
   ],[
      ['Backpacks',
       [match('name', %w(Backpack Daypack Sports\ Pack)),
@@ -1204,9 +1210,11 @@ private
                 match('name', 'cooler'))),
    supplier('Bullet Line',
             category('Coolers', 'Rolling & Chair Coolers') ), 
-  supplier('Hit Promotional Products',
+   supplier('Hit Promotional Products',
             all(category('Bags, Totes & Koolers'),
                 match('name', 'kool') ) ),
+   supplier('Crown Products',
+            category('Coolers') )
   ],[
      ['Beverage Holders',
       [supplier('Leeds',
@@ -1262,7 +1270,9 @@ private
    supplier('Lanco',
             category('Drinkware', 'Cups') ),
    supplier('Hit Promotional Products',
-            category('Plastic & Metal Drinkware') )
+            category('Plastic & Metal Drinkware') ),
+   supplier('Crown Products',
+            category('Drinkware') )
   ],[
      ['Aluminum Bottles',
       [match(%w(name description material), 'aluminum', 1),
@@ -1527,6 +1537,8 @@ private
    supplier('Gemline',
             category('Gifts', 'Travel') ),
    supplier('High Caliber Line',
+            category('Travel') ),
+   supplier('Crown Products',
             category('Travel') )
   ],[
      ['Luggage Tags',
@@ -1874,7 +1886,9 @@ private
                 category('Keychains, Keylights & Carabiners', 'Keychains') ),
        supplier('Bullet Line',
                 category('Stress Relievers', 'Stress Reliever Keychains'),
-                category('Key Tags & Badge Holders', 'Key Tags'))
+                category('Key Tags & Badge Holders', 'Key Tags')),
+       supplier('Crown Products',
+                category('Key Chains') ),
       ],[
          ['Bottle Opener Key Chains',
           [match('name', 'opener', 1),
@@ -1959,6 +1973,8 @@ private
                 category('Recreation', 'Golf') ) ,
        supplier('Norwood',
                 category('GOLF') ),
+       supplier('Crown Products',
+                category('Golf') )
       ],[
          ['Ladies Golf',
           [supplier('Norwood',
@@ -2123,6 +2139,9 @@ private
             category('Tools') ),
    supplier('Hit Promotional Products',
             category('Carabiners, Tools, Lights & Keytags') ),
+   supplier('Crown Products',
+            category('Tools'),
+            category('Tools, Gifts') )
   ],[
      dup('Tools / Knives', 'Ice Scraper'),
      ['Bag Clips',
@@ -2248,7 +2267,9 @@ private
     supplier('Norwood',
              category('WRITE', 'PENCIL') ),
     supplier('Hit Promotional Products',
-             category('Writing Instruments') )
+             category('Writing Instruments') ),
+    supplier('Crown Products',
+             category('Writing Instruments') ),
   ],[
      ['Highlighters',
       [match('name', 'highlighter', 1),
@@ -2309,7 +2330,7 @@ private
                 
       ],[
          ['Light Up Pens',
-          [match('name', 'light', 1),
+          [match('name', /(^|\s)light/, 1),
            supplier('Bullet Line',
                     category('Writing Instruments', 'Light-up Pens') ) ] ],
          ['Pen Gift Boxes',
@@ -2373,7 +2394,8 @@ private
            supplier('Bic Graphics',
                     category('Writing Instruments', 'Ballpoint') ), ]],
          ['Two-Piece Stic Pens',
-          [supplier('Bic Graphics',
+          [match('name', 'stick pen'),
+           supplier('Bic Graphics',
                     match('supplier_num', [/^STYL/, /^RS/, /^BC/, 'ATS']) )
           ]],
          ['Gel Pens',
