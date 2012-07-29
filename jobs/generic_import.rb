@@ -1012,18 +1012,15 @@ private
     multiple_map = {}
     multiple_map.default = []
 
-    #af = remove_common_prefix_postfix(colors)
-    #unless colors == aft
-    #  puts " Prune: #{colors.inspect} => #{aft.inspect}"
-    #  colors = aft
-    #end
+
     strings = colors.collect { |s| s.split(/([^A-Z]+)/i) }
-    common = remove_common_prefix_postfix(strings).collect { |l| l.join}
-    common = common.collect { |s| s.gsub('/', ' ') }
-    unless common == colors
-      puts " Prune: #{colors.inspect} => #{common.inspect}"
+    common_tok = remove_common_prefix_postfix(strings)
+    common_str = common_tok.collect { |s| s.join }
+    common_tok = common_tok.collect { |t| t.collect { |s| s.blank? ? nil : s.downcase }.compact.uniq }
+    unless common_str == colors
+      puts " Prune: #{colors.inspect} => #{common_str.inspect}"
     end
-    match_list = colors.zip(common)
+    match_list = colors.zip(common_str, common_tok)
 
 
     # Exact Suffix Match then remove color from furthur match
@@ -1037,11 +1034,24 @@ private
       list = nil
       list = match_list.find_all { |id, c| color_map[c.downcase] && [color_map[c.downcase]].flatten.include?(suffix) } if respond_to?(:color_map)
       unless list
-        list = match_list.find_all { |id, c| suffix.downcase.include?(c.downcase) }
-        if list.length > 1
-          less = list.find_all { |id, c| c.downcase.include?(suffix.downcase) }
-          list = less unless less.empty?
+        hash = {}
+        hash.default = []
+        match_list.each do |elem|
+          id, str, tok = elem
+
+          sep = 0
+          last = nil
+          score = 100 * tok.count do |s| 
+            next unless i = suffix.downcase.index(s)
+            sep += (last - i).abs if last
+            last = i + s.length
+          end
+          score -= 10 * tok.length
+          score -= sep
+
+          hash[score] += [elem]
         end
+        list = hash.keys.max > 0 ? hash[hash.keys.max] : []
       end
       if list.length > 1
         multiple_map[image] += list
@@ -1116,9 +1126,21 @@ private
     end
 
     unless multiple_map.empty?
-      puts "Multiple Match: #{supplier_num}"
-      multiple_map.each do |image, list|
-        puts "  #{image} => #{list.inspect}"
+      matched = image_map.keys
+      multiple_map.delete_if do |image, list|
+        list = list.find_all { |id, c, t| !matched.include?(id) }
+        if list.length == 1
+          image_map[list.first.first] += [image]
+          puts " PostMatch: #{list.first.first}: #{image}"
+          true
+        end
+      end
+
+      unless multiple_map.empty?
+        puts "Multiple Match: #{supplier_num}"
+        multiple_map.each do |image, list|
+          puts "  #{image} => #{list.inspect}"
+        end
       end
     end
 
