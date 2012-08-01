@@ -4,8 +4,8 @@
   - else
     %h3 Available Tasks
     = render :partial => 'pending_tasks'
-  - if allowed?('Super') and @order.task_ready?(CancelOrderTask) and !@order.task_completed?(RequestOrderTask) and @order.customer.orders.length > 1
-    = link_to "Remove Order", admin_order_path(@order), :method => :delete
+  - if allowed?('Super') and @order.task_ready?(CancelOrderTask) and !@order.task_completed?(RequestOrderTask)
+    = link_to("Remove Order" + (@order.customer.orders.length == 1 ? ' and Customer' : ''), admin_order_path(@order), :method => :delete, :confirm => "Really remove Order #{@order.id}")
   %hr
 
 %h2 Order Status Overview

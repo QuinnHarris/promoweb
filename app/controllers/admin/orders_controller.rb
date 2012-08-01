@@ -371,13 +371,19 @@ class Admin::OrdersController < Admin::BaseController
       fall = @order.customer.orders.find(:first, :conditions => "id != #{@order.id}", :order => 'id DESC')
 
       User.where(:current_order_id => @order.id).each do |user|
-        user.update_attributes(:current_order_id => fall.id)
+        user.update_attributes(:current_order_id => fall && fall.id)
       end
 
       @order.destroy
+      @order.customer.destroy unless fall
     end
-    session[:order_id] = fall.id
-    redirect_to status_order_path(fall)
+    if fall
+      session[:order_id] = fall.id
+      redirect_to status_order_path(fall)
+    else
+      session[:order_id] = nil
+      redirect_to :controller => '/admin/orders', :action => :show
+    end
   end
 
   def invoice_create

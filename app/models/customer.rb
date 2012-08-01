@@ -75,5 +75,7 @@ class Customer < ActiveRecord::Base
   def remove_contacts
     phone_numbers.each { |pn| pn.destroy }
     email_addresses.each { |ea| ea.destroy }
+    shipping_rates.each { |sr| sr.destroy }
+    (tasks_active+tasks_inactive+tasks_other).each { |t| t.destroy }
   end
 end
