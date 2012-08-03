@@ -623,6 +623,7 @@ public
     product_new = nil
         
     product_record = @supplier_record.get_product(product_data['supplier_num'])
+    puts "Product REF: #{product_record.inspect}"
         
     begin     
       Product.transaction do
@@ -651,6 +652,7 @@ public
         end
         
         product_record.save! #if changed or product_new
+        puts "PROD:#{product_record.inspect}"
 
        # Fetch images (Remove for next)
         %w(thumb main large hires).each do |name|
@@ -708,6 +710,7 @@ public
           variant_record.save! if variant_new
 
           # Fetch Images
+          puts "IT: #{variant_record.product.inspect}"
           variant_log << variant_record.set_images(variant_data['images'] - remove_images) if variant_data['images']
           
           # Properties

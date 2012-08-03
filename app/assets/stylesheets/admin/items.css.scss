@@ -138,8 +138,6 @@ div.invoice {
         margin: 0.5em;
         clear: both;
 
-	div.notes { float: right; }
-
 	div.add_dec {
 	  background-color: #F0F0FF;
 
@@ -153,6 +151,7 @@ div.invoice {
 	}
       }
       
+      h3 { font-size: 1.1em; }
       div.notes {
           background-color: white;
           margin: 0.5em;

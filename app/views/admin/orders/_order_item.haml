@@ -1,4 +1,9 @@
 .item
+  - unless item.customer_notes.nil? or item.customer_notes.strip.empty?
+    .notes.block
+      %h3 Customer Notes
+      %p= item.customer_notes
+
   %table.block{ :id => "item-#{item.id}" }
     %thead
       %tr
@@ -118,10 +123,6 @@
         %td.admin ???
         %td.admin ???
     %script!= "window.merge_listing(#{item.normal_all_h.to_json})"
-    - unless item.customer_notes.nil? or item.customer_notes.strip.empty?
-      .notes.block
-        %h3 Customer Notes
-        %p= item.customer_notes
     .notes.block{ :id => "notes-#{item.id}", :class => item.our_notes.blank? ? 'hide' : '' }
       %h3 Common Notes
       = text_area_tag "OrderItem-#{item.id}-our_notes", item.our_notes, :class => 'null', :rows => [6, item.our_notes ? item.our_notes.split("\n").length : 0].max, :cols => 40
