@@ -259,14 +259,20 @@ private
                 category('AWARD', 'ACRYLIC') ) ] ],
      ['Art Glass',
       [supplier('Norwood',
-                category('AWARD', 'ART') ) ] ],
+                category('AWARD', 'ART') ),
+       supplier('Logomark',
+                category('Crystal Awards') )] ],
      ['Awards & Plaques',
       [match('name', 'trophy'),
        supplier('Norwood',
                 category('AWARD', 'AWARDS') ),
        supplier('Leeds',
             all(category('Awards', 'Awards'),
-                match('name', 'award') ) ) ] ],
+                match('name', 'award') ) ),
+       supplier('Logomark',
+                category('Crystal Awards'),
+                category('Metal and Wood Awards') )
+      ] ],
      ['Clocks',
       [supplier('Norwood',
                 category('AWARD', 'CLOCKS') ) ] ],
@@ -342,7 +348,9 @@ private
      ['Stick up Calendars',
       [supplier('Norwood',
                 category('CALENDAR', 'SUC') ) ]],
-
+     ['Perpetual Calendars',
+      [supplier('Logomark',
+                category('Perpetual Calendars') ) ] ],
     ] ],
 
  ['Automobile',
@@ -363,7 +371,9 @@ private
        supplier('Bullet Line',
                 category('Travel, Health & Beauty', 'Automotive Accessories') ),
        supplier('Crown Products',
-                category('Auto Accessories') )
+                category('Auto Accessories') ),
+       supplier('Logomark',
+                category('Auto Accessories') ),
       ] ],
      ['Auto Organizers',
       [match('name', %w(organize contain), 1)
@@ -418,6 +428,8 @@ private
        supplier('High Caliber Line',
                 all(category('Bags'),
                     match('name', 'backpack'))),
+       supplier('Logomark',
+                category('Backpacks and Slings') )
       ],[
          ['Cooler Backpacks',
           [match('name', 'cooler', 1)]],
@@ -488,7 +500,9 @@ private
                 category('BAG', 'BRIEFCASES') ),
        supplier('Bullet Line',
                 all(category('Bags', 'Briefcases & Laptop Cases'),
-                    match('name', ['brief', 'messenger', 'document']) ) )
+                    match('name', ['brief', 'messenger', 'document']) ) ),
+       supplier('Logomark',
+                category('Briefcases') )
       ],[
          ['Computer Business Bags',
           [supplier('Leeds',
@@ -506,12 +520,19 @@ private
            supplier('Gemline',
                     category('Portfolios', 'Saddlebags'),
                     category('Portfolios', 'Business'),
-                    category('Portfolios', 'Messenger Bags') ) ]],
+                    category('Portfolios', 'Messenger Bags') ),
+           supplier('Logomark',
+                    category('Shoulder Bags') )
+          ]],
          ['Leather Business Bags',
           [match('name', 'lthr', 1), # Why doesn't this work?
            match('material', 'leather', 1),
            supplier('Gemline',
-                    category('Portfolios', 'Leather Bags') ) ]],
+                    category('Portfolios', 'Leather Bags') ),
+           supplier('Logomark',
+                    all(category('Leather Bags'),
+                        match('name', 'brief') ) ),
+          ]],
          ['Recycled Business Bags',
           [match(%w(name description), 'recycle', 1),
            supplier('Leeds',
@@ -544,7 +565,9 @@ private
        supplier('Norwood',
                 category('BAG', 'DUFFELS')),
        supplier('Bullet Line',
-                category('Bags', 'Duffels') )
+                category('Bags', 'Duffels') ),
+       supplier('Logomark',
+                category('Duffel Bags') ),
       ],[
          ['Executive Duffel Bags',
           [supplier('Leeds',
@@ -587,18 +610,26 @@ private
                 category('Luggage & Golf', 'Luggage') ),
        supplier('Norwood',
                 category('TRAVEL', 'LUGGAGE'),
-                match('name', 'carry on') )]],
+                match('name', 'carry on') ),
+       supplier('Logomark',
+                category('Luggage') ),
+      ]],
      ['Checkpoint Friendly Bags',
       [ ],
       [dup('Bags', 'Backpacks', 'Checkpoint Friendly Backpacks'),
        dup('Bags', 'Portfolios & Business Bags', 'Checkpoint Friendly Portfolios') ] ],
      ['Leather Bags',
-      [match('material', 'leather', 1)]],
+      [match('material', 'leather', 1),
+       supplier('Logomark',
+                category('Leather Bags') )
+      ]],
      ['Computer Bags',
       [match('name', ['computer case', 'computer bag', 'laptop bag', 'laptop case']),
        match('name', 'compu', 1),
        supplier('Prime Line',
-                match('name', ['computer sleeve', 'laptop sleeve']) )
+                match('name', ['computer sleeve', 'laptop sleeve']) ),
+       supplier('Logomark',
+                category('Computer Cases') ),
                
       ],[dup('Bags', 'Backpacks', 'Computer Backpacks'),
          ['Laptop Sleeves',
@@ -630,7 +661,9 @@ private
        supplier('Norwood',
                 category('BAG', 'TOTE') ),
        supplier('Bullet Line',
-                category('Bags', 'Totes'))
+                category('Bags', 'Totes') ),
+       supplier('Logomark',
+                category('Tote and Shoppers') )
       ],[
          ['Business & Meeting Totes',
           [match(%w(name description), %w(business meeting computer laptop), 1),
@@ -782,7 +815,9 @@ private
    supplier('Norwood',
             category('TECHNOLOGY', 'ELEC') ),
    supplier('LogoIncluded',
-            category('Card Reader') )
+            category('Card Reader') ),
+   supplier('Logomark',
+            category('Computer Accessories') )
   ],[
      ['Apple Accessories',
       [match('name', /iP(o|a)d/),
@@ -893,6 +928,8 @@ private
                 category('Gifts', 'USB Drives') ),
        supplier('Prime Line',
                 category('USB Memory') ),
+       supplier('Logomark',
+                category('USB Drives') )
       ],[
          ['Pen USB Flash Drives',
           [match('name', 'pen', 1),
@@ -941,6 +978,8 @@ private
             category('Desktop', 'Desktop Accessories') ),
    supplier('Hit Promotional Products',
             category('Desk, Office & Electronics') ),
+   supplier('Logomark',
+            category('Desk and Office Accessories') )
   ],[
      ['Calculators',
       [match('name', 'calculator'),
@@ -951,7 +990,9 @@ private
        supplier('Lanco',
                 category('Calc / Clocks / Radios', 'Calculators') ),
        supplier('Hit Promotional Products',
-                match('name', 'calc') )
+                match('name', 'calc') ),
+       supplier('Logomark',
+                category('Calculators') )
        ]],
      ['Clocks',
       [match('name', 'clock'),
@@ -963,13 +1004,22 @@ private
                 category('Clocks') ),
        supplier('Norwood',
                 category('AWARD', 'CLOCKS') ),
+       supplier('Logomark',
+                category('Desk Clocks'),
+                category('Clocks with Photo Frames'),
+                category('Watch Clocks') )
       ],[
          ['Travel Clocks',
           match(%w(name description), 'travel', 1),
           supplier('Leeds',
                    all(category('Travel Gifts', 'Clocks & Wallets'),
-                       match('name', 'clock')) )]
-        ]],
+                       match('name', 'clock')) ),
+          supplier('Logomark',
+                   category('Travel Clocks') )
+         ] ] ],
+     ['Pen Stands and Holders',
+      [supplier('Logomark',
+                category('Pen Stands and Holders') ) ] ],
      ['Radios',
       [match('name', 'radio'),
        supplier('Prime Line',                
@@ -977,9 +1027,14 @@ private
        supplier('Lanco',
                 category('Calc / Clocks / Radios', 'Radios') ),
        supplier('Bullet Line',
-                category('Fitness & Recreation', 'Radios') ) ]],
+                category('Fitness & Recreation', 'Radios') ),
+       supplier('Logomark',
+                category('Radios') )
+      ]],
      ['Weather Station',
-      [match('name', 'weather station')]],
+      [match('name', 'weather station'),
+       supplier('Logomark',
+                category('Weather Stations') )]],
      dup('Computer Accessories', 'Digital Photo Frames'),
      ['Picture Frames',
       [match('name', ['photo frame', 'picture frame']),
@@ -992,7 +1047,11 @@ private
        supplier('High Caliber Line',
                 category('Picture Frames') ),
        supplier('Prime Line',
-                match('name', 'frame'))]],
+                match('name', 'frame')),
+       supplier('Logomark',
+                category('Photo Frames'),
+                category('Clocks with Photo Frames') )
+      ]],
      ['Photo Albums',
       [match('name', %w(photo\ album brag\ book)) ] ],
      ['Desktop Novelties',
@@ -1013,7 +1072,10 @@ private
       [match('name', ['letter opener', 'slitter']),
        match('name', 'opener', 1),
        supplier('Lanco',
-                category('Office / Computer Essentials', 'Letter Opener') )]],
+                category('Office / Computer Essentials', 'Letter Opener') ),
+       supplier('Logomark',
+                category('Letter Openers') )
+      ]],
      ['Laser Pointers',
       [match('name', 'laser', 1),
        match('name', 'laser pointer'),
@@ -1022,7 +1084,9 @@ private
        supplier('Bullet Line',
                 category('Lighting', 'Laser Pointers') ),
        supplier('LogoIncluded',
-                category('Wireless Presenter') )]],
+                category('Wireless Presenter') ),
+       supplier('Logomark',
+                category('Laser Pointers') )]],
      dup('Computer Accessories', 'Computer Mice'),
      ['Bookmarks',
       [match('name', ['bookmark', 'book mark']) ] ],
@@ -1051,7 +1115,9 @@ private
                 all(category('Office'),
                     match('name', 'card holder') ) ),
        supplier('Bullet Line',
-                match('name', 'card case') )] ],
+                match('name', 'card case') ),
+       supplier('Logomark',
+                category('Business Card Holders') )] ],
      ['Note Holders',
       [match('name', ['note holder', 'memo holder', 'memo stack', 'Post-it holder','note dispenser', 'sticky note', 'sticky flag']), #, 1),
        supplier('Lanco',
@@ -1068,7 +1134,9 @@ private
        supplier('Norwood',
                 category('OFFICE', 'NOTES') ),
        supplier('Bullet Line',
-                category('Sticky Notes', 'Office Accessories') )],
+                category('Sticky Notes', 'Office Accessories') ),
+       supplier('Logomark',
+                category('Memo Holders') )],
       [['Notenest & Note Clips',
         [match('name', 'clip', 1),
          match('name', ['notenest', 'memo clip']),
@@ -1214,6 +1282,8 @@ private
             all(category('Bags, Totes & Koolers'),
                 match('name', 'kool') ) ),
    supplier('Crown Products',
+            category('Coolers') ),
+   supplier('Logomark',
             category('Coolers') )
   ],[
      ['Beverage Holders',
@@ -1252,7 +1322,13 @@ private
      ['Wheeled Coolers',
       [match('name', %w(wheel rolling), 1),
        supplier('Gemline',
-                category('Coolers', 'Wheeled') )]],
+                category('Coolers', 'Wheeled') ),
+       supplier('Logomark',
+                category('Rolling Bags') )
+      ]],
+     ['Refrigerators',
+      [supplier('Logomark',
+                category('Refrigerators') ) ] ],
      ['Wine Coolers',
       [duplicate(['Bags', 'Wine Bags']),
        match(%w(name description), 'wine', 1)]]
@@ -1272,7 +1348,10 @@ private
    supplier('Hit Promotional Products',
             category('Plastic & Metal Drinkware') ),
    supplier('Crown Products',
-            category('Drinkware') )
+            category('Drinkware') ),
+   supplier('Logomark',
+            category('Water Bottles and Flasks'),
+            category('Executive Drinkware') )
   ],[
      ['Aluminum Bottles',
       [match(%w(name description material), 'aluminum', 1),
@@ -1298,7 +1377,10 @@ private
                     match('name', 'holder') ) ),
        supplier('Hit Promotional Products',
                 all(category('Leisure'),
-                    match('name', 'Kan') ) ) ] ],
+                    match('name', 'Kan') ) ),
+       supplier('Logomark',
+                category('Bottle Holders') )
+      ] ],
      ['Coasters', 
       [match('name', 'coaster'),
        supplier('Lanco',
@@ -1307,7 +1389,9 @@ private
                 category('HOUSEWARES', 'COASTERS'),
                 category('AWARD', 'COASTERS') ),
        supplier('Hit Promotional Products',
-                exclude(match('name', 'mug') ) )      ]],
+                exclude(match('name', 'mug') ) ),
+       supplier('Logomark',
+                category('Coasters') )]],
      ['Jigger',
       [match('name', 'jigger')]],
      ['Ceramic',
@@ -1338,8 +1422,10 @@ private
        supplier('High Caliber Line',
                 match('name', 'Mug') ),
        supplier('Bullet Line',
-                category('Drinkware', 'Mugs & Tumblers') )
-                
+                category('Drinkware', 'Mugs & Tumblers') ),
+       supplier('Logomark',
+                category('Mugs'),
+                category('Tumblers') ),                
       ],[
          ['Desk Mugs',
           [supplier('Leeds',
@@ -1368,7 +1454,9 @@ private
        supplier('Bullet Line',
                 category('Drinkware', 'Sports Bottles') ) ]],
      ['Wine Accessories',
-      [match('name', 'wine')]],
+      [match('name', 'wine'),
+       supplier('Logomark',
+                category('Wine Accessories') ) ]],
      ['Glassware',
       [supplier('Norwood',
                 category('DRINK', 'GLASS') ),
@@ -1462,6 +1550,8 @@ private
    supplier('Lanco',
             category('Toys & Games', 'Toys'),
             category('Tradeshow', 'Toys') ),
+   supplier('Logomark',
+            category('Executive Games') )
   ],[
      ['Electronic Games',
       [match('name', 'electr', 1),
@@ -1496,6 +1586,9 @@ private
            supplier('Prime Line',
                     category("Rubik's&reg; Cubes") ) ] ],
         ]],
+     ['Decision Makers',
+      [supplier('Logomark',
+                category('Decision Makers') ) ] ],
      ['Magic',
       [supplier('High Caliber Line',
                 category('Magic') ) ]],
@@ -1546,13 +1639,19 @@ private
        supplier('Leeds',
                 category('Travel Gifts', 'Luggage Tags') ),
        supplier('Lanco',
-                category('Travel / Personal Care', 'Luggage Tags') ) ]],
+                category('Travel / Personal Care', 'Luggage Tags') ),
+       supplier('Logomark',
+                category('Luggage Tags') )
+      ]],
      ['Travel Accessories',
       [supplier('Leeds',
                 category('Travel Gifts', 'Accessories'),
                 exclude(match('name', 'charge'))),
        supplier('Bullet Line',
-                category('Travel, Health & Beauty', 'Travel Accessories') )] ],
+                category('Travel, Health & Beauty', 'Travel Accessories') ),
+       supplier('Logomark',
+                category('Travel Accessories') )
+      ] ],
      ['Phone Chargers',
       [match('name', ['charger', 'charging']),
        supplier('Leeds',
@@ -1590,10 +1689,15 @@ private
                 category('HOUSEWARES', 'PICNIC2'),
                 category('OUTDOOR', 'PICNIC') ),
        exclude(supplier('LogoIncluded', always)),
+       supplier('Logomark',
+                category('BBQ Sets'),
+                category('Picnic') )
       ]],
      ['Beverage & Bar',
       [supplier('Leeds',
-                category('Housewares', 'Beverage & Bar') )
+                category('Housewares', 'Beverage & Bar') ),
+       supplier('Logomark',
+                category('Bar Accessories') )
       ],[
          ['Recycled Bar Sets',
           supplier('Leeds',
@@ -1662,6 +1766,8 @@ private
             category('Personal Care')),
    supplier('Hit Promotional Products',
             category('Amenities') ),
+   supplier('Logomark',
+            category('Health and Fitness') )          
   ],[
      ['First Aid Kits',
       [match('name', 'first aid'),
@@ -1843,6 +1949,8 @@ private
                 category('OFFICE', 'BADGE') ),
        supplier('Bullet Line',
                 category('Key Tags & Badge Holders', 'Badge Holders') ),
+       supplier('Logomark',
+                category('Badge Holders') ),
        exclude(match('name', 'lanyard'))]],
      ['Lanyards',
       [match('name', 'lanyard'),
@@ -1869,7 +1977,8 @@ private
                 category('Carabiners') ),
        supplier('Bullet Line',
                 category('Key Tags & Badge Holders', 'Carabiners'),
-                category('Lighting', 'Carabiners') ) ]],
+                category('Lighting', 'Carabiners') ),
+      ]],
      ['Key Chains',
       [match(%w(name description), ['key chain', 'keychain', 'key holder', 'key tag', 'key ring']),
        supplier('High Caliber Line',
@@ -1889,6 +1998,8 @@ private
                 category('Key Tags & Badge Holders', 'Key Tags')),
        supplier('Crown Products',
                 category('Key Chains') ),
+       supplier('Logomark',
+                category('Key Rings') )
       ],[
          ['Bottle Opener Key Chains',
           [match('name', 'opener', 1),
@@ -1912,14 +2023,21 @@ private
                 all(category('Travel Gifts', 'Clocks & Wallets'),
                     match('name', ['wallet', 'passport'])) ),
        supplier('Gemline',
-                category('Business Accessories', 'Travel Wallets') ) ]],
+                category('Business Accessories', 'Travel Wallets') ),               
+      ]],
      ['Money Clips',
-      [match('name', ['money clip', 'money band'])] ],
+      [match('name', ['money clip', 'money band']),
+       supplier('Logomark',
+                category('Money Clips') )
+      ] ],
      ['Wristbands',
       [match(%w(name description), [/wrist.*band/, 'bracelet']) ] ],
      ['Watches',
       [supplier('Leeds',
-                category('Watches', 'Watches') )
+                category('Watches', 'Watches') ),
+       supplier('Logomark',
+                category('Classic Watches'),
+                category('Fashion Watches') )
       ],[
          ['Cutter & Buck Watches',
           [supplier('Leeds',
@@ -1933,6 +2051,10 @@ private
          ['Wenger Watches',
           [supplier('Leeds',
                     category('Watches', 'Wenger Watches') ) ]],
+         ['Sport Watches',
+          [supplier('Logomark',
+                    category('Sport Watches') )
+          ] ],
         ] ],
      dup('Travel', 'Personal Travel'),
      ['Womens Accessories',
@@ -1974,7 +2096,9 @@ private
        supplier('Norwood',
                 category('GOLF') ),
        supplier('Crown Products',
-                category('Golf') )
+                category('Golf') ),
+       supplier('Logomark',
+                category('Golf Gifts' ) )
       ],[
          ['Ladies Golf',
           [supplier('Norwood',
@@ -2098,19 +2222,27 @@ private
                 category('MEETING', 'PAD'),
                 category('MEETING', 'FOLDERS')),
        supplier('Bullet Line',
-                category('Stationery', 'Portfolios') )
+                category('Stationery', 'Portfolios') ),
+       supplier('Logomark',
+                category('Letter Padfolios' ) ),
+
       ],[
          ['Jr. Padfolios',
           [match('name', 'jr', 1),
            supplier('Norwood',
                 category('MEETING', 'JUNIORS') ),
-           supplier('Bic Graphics', match('supplier_num', 'SHAJ1') )] ],
+           supplier('Bic Graphics', match('supplier_num', 'SHAJ1') ),
+           supplier('Logomark',
+                    category('Mini Padfolios'),
+                    category('Junior Padfolios') )
+          ] ],
          ['Kid Friendly Padfolios',
           [supplier('Gemline',
                     category('Kid-friendly', 'Padfolios') ) ] ],
          ['Leather Padfolios',
           [supplier('Gemline',
-                    category('Padfolios', 'Leather') ) ]],
+                    category('Padfolios', 'Leather') ),
+          ]],
          ['Recycled Pads',
           [match(%w(name description), 'recycle', 1),
            supplier('Leeds',
@@ -2141,7 +2273,10 @@ private
             category('Carabiners, Tools, Lights & Keytags') ),
    supplier('Crown Products',
             category('Tools'),
-            category('Tools, Gifts') )
+            category('Tools, Gifts') ),
+   supplier('Logomark',
+            category('Hand Tools') )
+
   ],[
      dup('Tools / Knives', 'Ice Scraper'),
      ['Bag Clips',
@@ -2162,12 +2297,15 @@ private
        supplier('Lanco',
                 category('Tools / Knives', 'Bottle Opener') ),
        supplier('Bullet Line',
-                category('Keytags & Badge Holders', 'Bottle Openers') ) ]],
+                category('Keytags & Badge Holders', 'Bottle Openers') ),
+       supplier('Logomark',
+                category('Bottle Openers') )
+      ]],
      ['Jar Openers',
       [match('name', 'jar opener') ]],
 
      ['Flashlights',
-      [match(%w(name description), %w(flashlight fingerlight LED)),
+      [match(%w(name description), %w(flashlight fingerlight) + [/(^|\s+)LED(\s+|$)/]),
        supplier('High Caliber Line',
                 category('Flashlights') ),
        supplier('Lanco',
@@ -2178,6 +2316,8 @@ private
                 category('AUTO', 'FLASH') ),
        supplier('Bullet Line',
                 category('Lighting', 'Flashlights') ),
+       supplier('Logomark',
+                category('Flash Lights') )
 
       ],[
          ['Emergency Flashlights',
@@ -2190,7 +2330,7 @@ private
           [supplier('Leeds',
                     category('Flashlights', 'Dynamo') ), ]],
          ['LED Flashlights',
-          [match('name', ['LED', 'L.E.D.'], 1) ]],
+          [match('name', /(^|\s+)L\.?E\.?D\.?(\s+|$)/, 1) ]],
          ['Specialty Flashlights',
           [supplier('Leeds',
                     category('Flashlights', 'Specialty') ) ]],
@@ -2205,6 +2345,8 @@ private
                 category('AUTO', 'KNIVES') ),
        supplier('Bullet Line',
                 category('Tools', 'Knives') ),
+       supplier('Logomark',
+                category('Knives') )
       ],[
          ['Wenger Knives',
           [supplier('Leeds',
@@ -2235,7 +2377,9 @@ private
        supplier('Norwood',
                 category('AUTO', 'MEASURE') ),
        supplier('Bullet Line',
-                category('Tools', 'Tape Measures') )]],
+                category('Tools', 'Tape Measures') ),
+       supplier('Logomark',
+                category('Tape Measures') )]],
      ['Tool Sets',
       [match('name', ['tool set', 'tool kit', 'gift set'], 1),
        supplier('Leeds',
@@ -2246,7 +2390,10 @@ private
                     match('name', 'set') ) ),
        supplier('Gemline',
                 all(category('Gifts', 'Home Improvement'),
-                    match('name', %w(kit set)) ) ) ]],
+                    match('name', %w(kit set)) ) ),
+       supplier('Logomark',
+                category('Tool Sets') )
+      ]],
      ['Multi Tools',
       [match('name', 'multi-', 1),
        supplier('Leeds',
@@ -2288,7 +2435,9 @@ private
                 category('Writing Instruments', 'Highlighters') ),
        supplier('Bic Graphics',
                 category('Writing Instruments', 'Highlighter'),
-                match('supplier_num', /^((BL)|(MRGE))/) )
+                match('supplier_num', /^((BL)|(MRGE))/) ),
+       supplier('Logomark',
+                category('Highlighters') )
        ]],
      ['Markers',
       [match('name', 'marker', 1),
@@ -2302,7 +2451,9 @@ private
                 category('Writing Instruments', 'Pencils') ),
        supplier('Bic Graphics',
                 category('Writing Instruments', 'Pencil'),
-                match('supplier_num', /(^BP)|(PMR)|(PEVECO)/) )
+                match('supplier_num', /(^BP)|(PMR)|(PEVECO)/) ),
+       supplier('Logomark',
+                category('Pencils') )
       ]],
      ['Pens',
       [match('name', /pens?($|\s)/i, 1),
@@ -2329,10 +2480,17 @@ private
                 category('Writing Instruments', 'Plastic Pens') ),
                 
       ],[
+         ['Carabiner Pens',
+          [match(%w(name description), 'carabiner', 1),
+           supplier('Logomark',
+                    category('Carabiners') ),
+          ] ],
          ['Light Up Pens',
           [match('name', /(^|\s)light/, 1),
            supplier('Bullet Line',
-                    category('Writing Instruments', 'Light-up Pens') ) ] ],
+                    category('Writing Instruments', 'Light-up Pens') ),
+           supplier('Logomark',
+                    category('Light Pens') )] ],
          ['Pen Gift Boxes',
           [match('name', ['gift box', 'pen box'], 1),
            supplier('Bullet Line',
@@ -2349,13 +2507,18 @@ private
            supplier('Lanco',
                     category('Writing Instruments', 'Pens with Staple Remover') ),
            supplier('Bic Graphics',
-                    match('supplier_num', /^((4C)|(4CL)|(B3)|(TWOS))$/) )
+                    match('supplier_num', /^((4C)|(4CL)|(B3)|(TWOS))$/) ),
+           supplier('Logomark',
+                    category('Multi-Function Pens') )
           ]],
          ['Pen Sets',
           [supplier('Leeds',
                     category('Pens-Metal', 'Gift Sets') ),
            supplier('Gemline',
-                    category('Writing Instruments', 'Pen Sets') ) ]],
+                    category('Writing Instruments', 'Pen Sets') ),
+           supplier('Logomark',
+                    category('Pen Sets'),
+                    category('Rollerball Ballpoint Sets') )]],
          ['Scripto Plastic Pens',
           [supplier('Leeds',
                     category('Pens-Plastic', 'Scripto') ) ]],
@@ -2384,6 +2547,9 @@ private
            supplier('Bic Graphics',
                     category('Writing Instruments', 'Rollerball'),
                     match('supplier_num', /^((GR)|(T537R)|(XS)|(Z4)|(PLCCR))/) ),
+           supplier('Logomark',
+                    category('Rollerball Pens'),
+                    category('Rollerball Ballpoint Sets')) 
           ]],
          ['Ballpoint Pens',
           [match(%w(name description), 'ballpoint'),
@@ -2392,7 +2558,10 @@ private
            supplier('Gemline',
                     category('Writing Instruments', 'Ballpoint') ),
            supplier('Bic Graphics',
-                    category('Writing Instruments', 'Ballpoint') ), ]],
+                    category('Writing Instruments', 'Ballpoint') ),
+           supplier('Logomark',
+                    category('Ballpoint Pens'),
+                    category('Rollerball Ballpoint Sets'))]],
          ['Two-Piece Stic Pens',
           [match('name', 'stick pen'),
            supplier('Bic Graphics',
@@ -2493,14 +2662,20 @@ private
        supplier('Leeds',
                 category('Outdoor Living', 'Blankets') ),
        supplier('Prime Line',
-                category('Blankets') ) ] ],
+                category('Blankets') ),
+       supplier('Logomark',
+                category('Blankets') )
+      ] ],
      ['Combo Products',
       [supplier('Prime Line',
                 category('Combos') ) ]],
      ['Whistles',
       [match('name', 'whistle') ]],
      ['Gardening',
-      [match('name', 'garden') ]],                
+      [match('name', 'garden') ]],
+     ['Gift Tins',
+      [supplier('Logomark',
+                category('Gift Tins') ) ] ],
     ] ],
 
  ['Ecologically Friendly',
@@ -2510,6 +2685,8 @@ private
             category('Eco-Choice', 'New Eco-Choice'),
             category('Eco-Choice', 'Under $10'),
             category('Eco-Choice', '$10+')),
+   supplier('Logomark',
+            category('Sustainable') )
 
   ],[
      ['Organic',
@@ -2525,6 +2702,8 @@ private
      ['Recycled',
       [supplier('Gemline',
                 category('Eco-Choice', 'Recycled') ),
+       supplier('Logomark',
+                category('Recycles') )
       ],[
          dup('Bags', 'Backpacks', 'Recycled Backpacks'),
          dup('Bags', 'Business Bags', 'Recycled Business Bags'),

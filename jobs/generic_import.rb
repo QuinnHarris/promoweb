@@ -45,6 +45,14 @@ class Spreadsheet::Excel::Row
       old_access(idx, len)
     end
   end
+
+  # Match CSV interface
+  def headers
+    worksheet.headers
+  end
+  def header?(name)
+    worksheet.header? name
+  end
 end
 
 class Spreadsheet::Excel::Worksheet
@@ -64,7 +72,121 @@ class Spreadsheet::Excel::Worksheet
     end
     @header_map
   end
+  
+  # Match CSV interface
+  def headers
+    header_map.keys
+  end
+  def header?(name)
+    headers.include? name
+  end    
 end
+
+
+# Utility Classes for Import
+class ProductRecordMerge
+  def initialize(unique_properties, common_properties, null_match = nil)
+    @unique_properties, @common_properties, @null_match = unique_properties, common_properties, null_match
+    @unique_hash = {}
+    @unique_hash.default = []
+    @common_hash = {}
+  end
+  attr_reader :id, :unique_properties, :common_properties, :null_match, :unique_hash, :common_hash
+
+  def merge(id, object)
+    if chash = common_hash[id]
+      common_properties.each do |name|
+        raise "Mismatch: #{id} #{name} #{chash[name].inspect} != #{object[name].inspect}" unless chash[name] == (object[name] === null_match ? nil : object[name])
+      end
+    else
+      chash = common_properties.each_with_object({}) do |name, hash|
+        hash[name] = object[name] unless object[name] === null_match
+      end
+      common_hash[id] = chash
+    end
+
+    uhash = unique_properties.each_with_object({}) do |name, hash|
+      hash[name] = object[name]
+    end
+    raise "Duplicate: #{id} #{uhash.inspect} in #{unique_hash[id].inspect}" if unique_hash[id] && unique_hash[id].include?(uhash)
+    unique_hash[id] += [uhash]
+    uhash
+  end
+
+  def each
+    unique_hash.each do |id, uhash|
+      chash = common_hash[id]
+      yield id, uhash, chash
+    end
+  end
+end
+
+class SupplierPricing
+  def initialize
+    @prices = []
+    @costs = []
+  end
+
+  def self.get
+    sp = new
+    yield sp
+    sp.to_hash
+  end
+
+  # Duplicated in GenericImport Remove from there eventually
+  def convert_pricecode(comp)
+    comp = comp.upcase[0] if comp.is_a?(String)
+    num = nil
+    num = comp.ord - ?A.ord if comp.ord >= ?A.ord and comp.ord <= ?G.ord
+    num = comp.ord - ?P.ord if comp.ord >= ?P.ord and comp.ord <= ?X.ord
+    
+    raise "Unknown PriceCode: #{comp}" unless num
+    
+    0.5 - (0.05 * num)
+  end
+  
+  def add(qty, price, code = nil)
+    base = { :fixed => Money.new(0),
+      :minimum => Integer(qty) }
+    price = Money.new(Float(price))
+    @prices << base.merge(:marginal => price)
+
+    if code
+      discount = convert_pricecode(code)
+      @costs << base.merge(:marginal => price * (1.0 - discount) )
+    end
+  end
+
+private
+  def ltm_common(charge, qty)
+    @costs.unshift({ :fixed => Money.new(Float(charge)),
+                    :marginal => @costs.first[:marginal],
+                    :minimum => qty || @costs.first[:minimum]/2 })
+  end
+public
+
+  def ltm(charge, qty = nil)
+    raise "Can't apply less than minimum with no prices" if @costs.empty?
+    qty = qty && Integer(qty)
+    raise "qty >= first qty: #{qty} >= #{@costs.first[:minimum]}" if qty >= @costs.first[:minimum]
+    ltm_common(charge, qty)
+  end
+
+  def ltm_if(charge, qty)
+    raise "Can't apply less than minimum with no prices" if @costs.empty?
+    qty = qty && Integer(qty)
+    ltm_common(charge, qty) if qty < @costs.first[:minimum]
+  end
+
+  def maxqty(qty = nil)
+    @costs << { :minimum => qty ? Integer(qty) : @costs.last[:minimum] * 2 } unless @costs.empty?
+  end
+
+  def to_hash
+    { 'prices' => @prices, 'costs' => @costs }
+  end
+end
+
 
 
 class ImageNode
@@ -623,7 +745,6 @@ public
     product_new = nil
         
     product_record = @supplier_record.get_product(product_data['supplier_num'])
-    puts "Product REF: #{product_record.inspect}"
         
     begin     
       Product.transaction do
@@ -652,7 +773,6 @@ public
         end
         
         product_record.save! #if changed or product_new
-        puts "PROD:#{product_record.inspect}"
 
        # Fetch images (Remove for next)
         %w(thumb main large hires).each do |name|
@@ -710,7 +830,6 @@ public
           variant_record.save! if variant_new
 
           # Fetch Images
-          puts "IT: #{variant_record.product.inspect}"
           variant_log << variant_record.set_images(variant_data['images'] - remove_images) if variant_data['images']
           
           # Properties
