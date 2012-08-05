@@ -502,7 +502,7 @@ class GenericImport
   def cache_marshal(name, predicate = nil)
     file_name = cache_file(name)
     if cache_exists(file_name)
-      unless predicate and [predicate].flatten.find { |p| File.mtime(p) > File.mtime(file_name) }
+      unless predicate and [predicate].flatten.find { |p| File.exists?(p) && (File.mtime(p) > File.mtime(file_name)) }
         return cache_read(file_name)
       end
     end

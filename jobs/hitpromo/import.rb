@@ -65,7 +65,7 @@ class HitPromoCSV < GenericImport
         product_data['description'] += str
       end
 
-      product_data['tags'] << 'new' if hash['new']
+      product_data['tags'] << 'New' if hash['new']
 
       # Packaging
 #      unless /(\d+) per carton.+?(\d+) lbs/ === hash['packaging']
