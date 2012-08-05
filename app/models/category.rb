@@ -208,9 +208,13 @@ public
         :conditions => "tags.name = '#{options[:tag]}' AND " + (options[:children] ? all_condition : "category_id = #{id}"),
         :include => [:categories, :tags])
     else
-      Product.count(:all,
-        :conditions => (options[:children] ? all_condition : "category_id = #{id}"),
-        :joins => :categories)
+      if options[:children]
+        Category.where(all_condition).joins("JOIN categories_products ON categories.id = categories_products.category_id").select('DISTINCT product_id').count
+      else
+        Product.count(:all,
+                      :conditions => ("category_id = #{id}"),
+                      :joins => :categories)
+      end
     end
   end
   
