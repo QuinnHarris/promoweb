@@ -62,13 +62,13 @@
             %img{ :src => "http://www.mountainofpromos.com#{thumb_path}" }
             %br
             %strong= "M#{order_item.product.id}"
-        - if @user and aspect == :cost and order_item.product.supplier_url
+        - if @user and aspect == :cost
           %br
           %em
-          = link_to "#{order_item.product.supplier.name}: #{order_item.product.supplier_num}", order_item.product.supplier_url
+          = link_to_if order_item.product.supplier_url, "#{order_item.product.supplier.name}: #{order_item.product.supplier_num}", order_item.product.supplier_url
       %td
-        - if aspect == :cost and order_item.product.supplier_url
-          = link_to "#{order_item.product.supplier_num}: ", order_item.product.supplier_url
+        - if aspect == :cost
+          = link_to_if order_item.product.supplier_url, "#{order_item.product.supplier_num}: ", order_item.product.supplier_url
 
         - unless absolute
           %strong

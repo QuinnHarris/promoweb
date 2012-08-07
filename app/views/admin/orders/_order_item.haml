@@ -42,7 +42,7 @@
         %td<
           %strong
             != "#{item.product.name} (M#{item.product.id}) - "
-            %em= link_to "#{item.product.supplier.name}: #{item.product.supplier_num}", item.product.supplier_url
+            %em= link_to_if item.product.supplier_url, "#{item.product.supplier.name}: #{item.product.supplier_num}", item.product.supplier_url
         = render :partial => 'order_item_entry_tail', :locals => { :object => item, :purchase_lock => purchase_lock, :null => false }
       %tr
         %td{ :colspan => 10 }

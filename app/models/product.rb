@@ -1018,7 +1018,7 @@ class Product < ActiveRecord::Base
         replace[part] || part
       end.join
     else
-      "http://www.mountainofpromos.com/search/#{supplier.name}"
+      nil
     end
   end
 end

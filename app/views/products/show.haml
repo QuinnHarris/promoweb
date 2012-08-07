@@ -20,7 +20,7 @@
       #prod
         #prod_title
           %span#prod_num
-            %em= link_to("#{@product.supplier.name}: #{@product.supplier_num}", @product.supplier_url)
+            %em= link_to_if(@product.supplier_url, "#{@product.supplier.name}: #{@product.supplier_num}", @product.supplier_url)
             %strong= "(M#{@product.id})"
           %span#share
             %div{ :class => "addthis_toolbox addthis_default_style" }

@@ -714,6 +714,7 @@ public
         raise ValidateError.new("#{type} Duplicate Entry", variant[type].inspect) unless variant[type].length == variant[type].uniq.length
         variant[type].each do |price|
           raise ValidateError.new("#{type} Minimum is null", variant[type].inspect) unless price[:minimum]
+          raise ValidateError.new("#{type} Marginal is <= 0", variant[type].inspect) if price[:marginal] and (price[:marginal] <= Money.new(0))
           raise ValidateError.new("#{type} Minimum not sequential", variant[type].inspect) if minimum and price[:minimum] <= minimum
           raise ValidateError.new("#{type} nil marginal not last item", variant[type].inspect) if minimum and !marginal
           raise ValidateError.new("#{type} Marginal not sequential", variant[type].inspect) if marginal and price[:marginal] and price[:marginal] > marginal
