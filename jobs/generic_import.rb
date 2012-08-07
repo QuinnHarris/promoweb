@@ -539,7 +539,7 @@ class GenericImport
 private
   def run_cleanup(product_ids)
     database = @supplier_record.products.collect do |p|
-      @invalid_prods.values.flatten.index(p.supplier_num) ? nil : p.id
+      (Rails.env.production? && @invalid_prods.values.flatten.index(p.supplier_num)) ? nil : p.id
     end.compact
     puts "#{database.size} - #{product_ids.size}"
     (database - product_ids).collect do |product_id|
