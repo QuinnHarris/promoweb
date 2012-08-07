@@ -7,24 +7,24 @@ class SwedaXML < GenericImport
     super 'Sweda'
   end
 
-# SizeCode SizeDesc AdditionalPrice GrossWeight ItemNo Specification Note RequestSample RelatedProducts TubeVideo SlideShow Thumbnail Image PdfFiles AdditionalImages MetaTitle MetaDesc MetaKeywords MetaPriority MetaPostDate ApplicationID ProductionTime ImprintArea VirtualLogo PackQty PackWeight ProductionMinTime ProductionMaxTime MaxOrder ApplicationName CloseOut BestSell NewArrive DisplayProduct IsSampleRequest Qty_Desc Qty_DisplayPoint1 Qty_Point1 Qty_Price1 Qty_Special1 Qty_DisplayPoint2 Qty_Point2 Qty_Price2 Qty_Special2 Qty_DisplayPoint3 Qty_Point3 Qty_Price3 Qty_Special3 Qty_DisplayPoint4 Qty_Point4 Qty_Price4 Qty_Special4 Qty_DisplayPoint5 Qty_Point5 Qty_Price5 Qty_Special5 Qty_DisplayPoint6 
+#  Specification Note RequestSample RelatedProducts TubeVideo SlideShow Thumbnail Image PdfFiles AdditionalImages MetaTitle MetaDesc MetaKeywords MetaPriority MetaPostDate ApplicationID ProductionTime ImprintArea VirtualLogo ApplicationName CloseOut BestSell NewArrive DisplayProduct IsSampleRequest Qty_Desc Qty_DisplayPoint1 Qty_Point1 Qty_Price1 Qty_Special1 Qty_DisplayPoint2 Qty_Point2 Qty_Price2 Qty_Special2 Qty_DisplayPoint3 Qty_Point3 Qty_Price3 Qty_Special3 Qty_DisplayPoint4 Qty_Point4 Qty_Price4 Qty_Special4 Qty_DisplayPoint5 Qty_Point5 Qty_Price5 Qty_Special5 Qty_DisplayPoint6 
 
-  # Ignore: Qty_Point6 Qty_Price6 Qty_Special6 Qty_Col1Name Qty_Col1Price1 Qty_Col1Price2 Qty_Col1Price3 Qty_Col1Price4 Qty_Col1Price5 Qty_Col1Price6 Qty_Col2Name Qty_Col2Price1 Qty_Col2Price2 Qty_Col2Price3 Qty_Col2Price4 Qty_Col2Price5 Qty_Col2Price6 Qty_Col3Name Qty_Col3Price1 Qty_Col3Price2 Qty_Col3Price3 Qty_Col3Price4 Qty_Col3Price5 Qty_Col3Price6
+  # Ignore: ProductId SizeCode SizeDesc MaxOrder AdditionalPrice GrossWeight Qty_Point6 Qty_Price6 Qty_Special6 Qty_Col1Name Qty_Col1Price1 Qty_Col1Price2 Qty_Col1Price3 Qty_Col1Price4 Qty_Col1Price5 Qty_Col1Price6 Qty_Col2Name Qty_Col2Price1 Qty_Col2Price2 Qty_Col2Price3 Qty_Col2Price4 Qty_Col2Price5 Qty_Col2Price6 Qty_Col3Name Qty_Col3Price1 Qty_Col3Price2 Qty_Col3Price3 Qty_Col3Price4 Qty_Col3Price5 Qty_Col3Price6
 
   def parse_products
-    unique_columns = %w(ProductId Sku ColorCode ColorDesc ColorSwatch VariantImage)
+    unique_columns = %w(Sku ColorCode ColorDesc ColorSwatch VariantImage)
     common_columns = %w(SizeCode SizeDesc AdditionalPrice GrossWeight ItemNo ProductName Description Specification Note RequestSample RelatedProducts TubeVideo SlideShow Thumbnail Image PdfFiles AdditionalImages MetaTitle MetaDesc MetaKeywords MetaPriority MetaPostDate ApplicationID ProductionTime ImprintArea VirtualLogo PackQty PackWeight ProductionMinTime ProductionMaxTime MaxOrder ApplicationName CATEGORY_NAME CloseOut BestSell NewArrive DisplayProduct IsSampleRequest Qty_Desc Qty_DisplayPoint1 Qty_Point1 Qty_Price1 Qty_Special1 Qty_DisplayPoint2 Qty_Point2 Qty_Price2 Qty_Special2 Qty_DisplayPoint3 Qty_Point3 Qty_Price3 Qty_Special3 Qty_DisplayPoint4 Qty_Point4 Qty_Price4 Qty_Special4 Qty_DisplayPoint5 Qty_Point5 Qty_Price5 Qty_Special5 Qty_DisplayPoint6 Qty_Point6 Qty_Price6 Qty_Special6 Qty_Col1Name Qty_Col1Price1 Qty_Col1Price2 Qty_Col1Price3 Qty_Col1Price4 Qty_Col1Price5 Qty_Col1Price6 Qty_Col2Name Qty_Col2Price1 Qty_Col2Price2 Qty_Col2Price3 Qty_Col2Price4 Qty_Col2Price5 Qty_Col2Price6 Qty_Col3Name Qty_Col3Price1 Qty_Col3Price2 Qty_Col3Price3 Qty_Col3Price4 Qty_Col3Price5 Qty_Col3Price6)
     product_merge = ProductRecordMerge.new(unique_columns, common_columns)
 
     CSV.foreach(@src_file, :headers => :first_row) do |row|
-      product_merge.merge(row['ItemNo'], row)
+      product_merge.merge(row['ItemNo'], row, true)
     end
 
     product_merge.each do |supplier_num, unique, common|
       product_data = {
         'supplier_num' => supplier_num,
         'name' => common['ProductName'],
-        'description' => common['Description'].gsub('&nbsp;', ' ').split(/\s*(?:\n|;)\s*/).join("\n"),
+        'description' => common['Description'].gsub('&nbsp;', ' ').split(/\s*[;\.!\n]\s*(?=[A-Z])/).join("\n"),
         'supplier_categories' => common['CATEGORY_NAME'].split(";").collect { |s| s.split("\\").collect { |t| t.strip } },
         'tags' => []
       }
@@ -55,25 +55,49 @@ class SwedaXML < GenericImport
         pricing.maxqty
       end
 
+#      str = common['Specification'].gsub('&nbsp;', ' ').strip
+#      puts "Orig: #{supplier_num} #{str.inspect}"
+#      str.scan(/^\s*([\w\s]+?)\s*:\s*(.+?)\s*$/).each do |key, value|
+#        puts "  #{key}: #{value}"
+#      end
+
 
       decorations = [{
                        'technique' => 'None',
                        'location' => ''
                      }]
+      { 'screen' => 'Screen Print',
+        'laser' => 'Laser Engrave' }.each do |match, tech|
+        decorations << { 'technique' => tech,
+          'location' => '' } if common['Specification'].downcase.include?(match)
+      end
       product_data['decorations'] = decorations
-      
-      product_data['images'] = [ImageNodeFetch.new(common['Image'],
-                                                   "http://www.swedausa.com/Uploads/Products/LargeImg/#{common['Image']}".gsub('[', '%5B').gsub(']', '%5D'))]
 
-#      product_data['images'] += common['AdditionalImages'].split(';').collect do |img|
-#        ImageNodeFetch.new(img,
-#                           "http://www.swedausa.com/Uploads/Products/AdditionalImg/#{img}")
-#      end
+      images = []
+      { 'LargeImg' => [common['Image']],
+        'AdditionalImg' => common['AdditionalImages'].split(';')
+      }.each do |path_sub, list|
+        images += list.collect do |img|
+          unless Regexp.new("^#{supplier_num}[-_]?(.*?)(?:-[15]{2,3}x)?\.jpg$", Regexp::IGNORECASE) === img
+            puts "Unkown Image: #{supplier_num} #{img.inspect}"
+            tail = img
+          else
+            tail = $1
+          end
+
+          [ImageNodeFetch.new(img,
+                              "http://www.swedausa.com/Uploads/Products/#{path_sub}/#{img.gsub('[','%5B').gsub(']','%5D')}"), tail]
+        end
+      end
+      
+      colors = unique.collect { |u| u['ColorCode'] }
+      color_image_map, color_num_map = match_image_colors(images, colors, supplier_num)
+      product_data['images'] = color_image_map[nil]
 
       product_data['variants'] = unique.collect do |uniq|
         { 'supplier_num' => uniq['Sku'],
           'properties' => { 'color' => uniq['ColorDesc'].blank? ? nil : uniq['ColorDesc'].strip },
-#          'images' => ,
+          'images' => color_image_map[uniq['ColorCode']],
         }.merge(common_variant)
       end
 

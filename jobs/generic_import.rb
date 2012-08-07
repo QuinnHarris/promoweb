@@ -93,7 +93,7 @@ class ProductRecordMerge
   end
   attr_reader :id, :unique_properties, :common_properties, :null_match, :unique_hash, :common_hash
 
-  def merge(id, object)
+  def merge(id, object, allow_dup = nil)
     if chash = common_hash[id]
       common_properties.each do |name|
         raise "Mismatch: #{id} #{name} #{chash[name].inspect} != #{object[name].inspect}" unless chash[name] == (object[name] === null_match ? nil : object[name])
@@ -108,8 +108,12 @@ class ProductRecordMerge
     uhash = unique_properties.each_with_object({}) do |name, hash|
       hash[name] = object[name]
     end
-    raise "Duplicate: #{id} #{uhash.inspect} in #{unique_hash[id].inspect}" if unique_hash[id] && unique_hash[id].include?(uhash)
-    unique_hash[id] += [uhash]
+    if unique_hash[id] && unique_hash[id].include?(uhash)
+      str = "Duplicate: #{id} #{uhash.inspect} in #{unique_hash[id].inspect}" 
+      allow_dup ? puts(str) : raise(str)
+    else
+      unique_hash[id] += [uhash]
+    end
     uhash
   end
 
@@ -284,6 +288,10 @@ class ImageNodeFetch < ImageNode
 
   def get
     File.open(get_local)
+  end
+
+  def inspect
+    "#{id}:#{uri}"
   end
 end
 
@@ -727,28 +735,27 @@ public
 
   # After validation (slower blocking checks)
   def validate_product_after(product_data)
-    all_images = ([product_data['images']] + 
-                  product_data['variants'].collect { |v| v['images'] }).flatten.compact.uniq
+    all_images = ((product_data['variants'].collect { |v| v['images'] }) + [product_data['images']]).flatten.compact.uniq
 
     remove_images = []
-    unless all_images.empty?
-      dup_hash = {}
-      dup_hash.default = []
-      all_images.each do |image|
-        unless size = image.size
-          remove_images << image
-          puts "  No Image: #{image.uri}\n"
-          next
-        end
-        
-        if (ref = dup_hash[size]) and (ref.find { |r| FileUtils.compare_file(r.path, image.path) })
-          remove_images << image
-          puts "  Duplicate Image: #{ref.inspect} #{image.uri}\n"
-        else
-          dup_hash[size] += [image]
-        end
+
+    dup_hash = {}
+    dup_hash.default = []
+    all_images.each do |image|
+      unless size = image.size
+        remove_images << image
+        puts "  No Image: #{image.uri}\n"
+        next
+      end
+      
+      if (ref = dup_hash[size]) and (ref.find { |r| FileUtils.compare_file(r.path, image.path) })
+        remove_images << image
+        puts "  Duplicate Image: #{product_data['supplier_num']} #{size} #{ref.inspect} #{image.inspect}\n"
+      else
+        dup_hash[size] += [image]
       end
     end
+
     raise ValidateError, 'No images after fetch' if (all_images - remove_images).empty?
     product_data['images'] -= remove_images if product_data['images']
     product_data['variants'].collect { |v| v['images'] -= remove_images if v['images'] }

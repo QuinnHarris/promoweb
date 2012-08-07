@@ -693,7 +693,10 @@ private
      ['Titleist®',
       [sup('Norwood', cat('GOLF', 'TITLEIST')) ]],
      ['Callaway®',
-      [sup('Norwood', cat('GOLF', 'GALLAWAY')) ]],
+      [match('name', 'callaway'),
+       sup('Norwood', cat('GOLF', 'CALLAWAY')),
+       sup('Sweda', cat('BRANDS', 'Callaway Golf') )
+      ]],
      ['Wilson®',
       [sup('Norwood', cat('GOLF', 'WILSON')) ]],
      ['Gusto!',
@@ -711,9 +714,6 @@ private
      ['Nike®',
       [match('name', 'nike'),
        sup('Norwood', cat('GOLF', 'NIKE')) ] ],
-     ['Callaway®',
-      [match('name', 'callaway'),
-       sup('Norwood', cat('GOLF', 'CALLAWAY')) ] ],
      ['Built®',
       [sup('Prime Line', cat('BUILT')) ]]
     ] ],
@@ -751,7 +751,9 @@ private
        sup('Norwood',
            all(match('name', ' mouse'),
                cat('TECHNOLOGY', 'OTHERTECH'), ) ),
-       sup('LogoIncluded', cat('Mouse') ) ]],
+       sup('LogoIncluded', cat('Mouse') ),
+       sup('Sweda', cat('Computer', 'Mouse') )
+      ]],
      ['Computer Keyboards / Keypads',
       [match('name', ['keyboard', 'keypad']),
       ]],
@@ -805,7 +807,9 @@ private
        sup('Norwood',
            all(match('name', ' hub'),
                cat('OFFICE', 'TECHNOLOGY') ) ),
-       sup('LogoIncluded', cat('USB Hub'))]],
+       sup('LogoIncluded', cat('USB Hub')),
+       sup('Sweda', cat('Computer', 'Hubs') )
+      ]],
      ['USB Accessories',
       [all(match('name', 'usb'),
            match('name', ['charger']) ),
@@ -844,7 +848,9 @@ private
        sup('Norwood',
            all(match('name', 'digital photo'),
                cat('OFFICE', 'TECHNOLOGY') ) ),
-       sup('LogoIncluded', cat('Digital Photo Frame') )]],
+       sup('LogoIncluded', cat('Digital Photo Frame') ),
+       sup('Sweda', cat('Computer', 'Digital Picture Frames') )
+      ]],
     ] ],
 
  ['Desktop Accessories',
@@ -887,7 +893,8 @@ private
            cat('Watch Clocks') ),
        sup('Sweda',
            cat('Clocks', 'Desktop'),
-           cat('Clocks', 'Wall Clocks') ),
+           cat('Clocks', 'Wall Clocks'),
+           cat('Clocks', 'Travel Alarm') ),
       ],[
          ['Travel Clocks',
           match(%w(name description), 'travel', 1),
@@ -895,7 +902,6 @@ private
               all(cat('Travel Gifts', 'Clocks & Wallets'),
                   match('name', 'clock')) ),
           sup('Logomark', cat('Travel Clocks') ),
-          sup('Sweda', cat('Clocks', 'Travel Alarm') )
          ] ] ],
      ['Pen Stands and Holders',
       [sup('Logomark', cat('Pen Stands and Holders') ) ] ],
@@ -1182,7 +1188,10 @@ private
    sup('Crown Products', cat('Drinkware') ),
    sup('Logomark',
        cat('Water Bottles and Flasks'),
-       cat('Executive Drinkware') )
+       cat('Executive Drinkware') ),
+   sup('Sweda',
+       cat('Drinkware', 'Water Bottles'),
+       cat('Drinkware', 'Water Bottles (Plastic)') )
   ],[
      ['Aluminum Bottles',
       [match(%w(name description material), 'aluminum', 1),
@@ -1192,8 +1201,9 @@ private
        sup('Lanco',
            cat('Drinkware', 'Metal Bottles') ) ]],
      ['Stainless Bottles',
-      [sup('Leeds',
-           cat('Drinkware', 'Stainless Sport Bottles'))]],
+      [sup('Leeds', cat('Drinkware', 'Stainless Sport Bottles')),
+       sup('Sweda', cat('Drinkware', 'Vacuum Bottles') )
+      ]],
      ['Can & Bottle Holders',
       [match(%w(name description), ['can holder', 'bottle holder', 'bottle insulator']),
        match('name', 'holder', 1),
@@ -1243,7 +1253,8 @@ private
        sup('Bullet Line', cat('Drinkware', 'Mugs & Tumblers') ),
        sup('Logomark',
            cat('Mugs'),
-           cat('Tumblers') ),                
+           cat('Tumblers') ),
+       sup('Sweda', cat('Drinkware', 'Travel Mugs') )
       ],[
          ['Desk Mugs',
           [sup('Leeds', cat('Drinkware', 'Desk Mugs') )]],
@@ -1580,12 +1591,14 @@ private
      ['Jump Rope',
       [match('name', 'jump rope') ] ],
      ['Fans',
-      [match('name', ['mini fan', 'hand fan']),
+      [match('name', ['mini fan', 'hand fan', 'personal fan']),
        sup('Lanco', cat('Travel / Personal Care', 'Fans') ),
        sup('High Caliber Line',
            all(cat('Toys & Games'),
                match('name', 'fan') ) ),
-       sup('Bullet Line', cat('Fitness & Recreation', 'Fans') ) ]],
+       sup('Bullet Line', cat('Fitness & Recreation', 'Fans') ),
+       sup('Sweda', cat('Unique', 'Fans') )
+      ]],
      ['Mirrors',
       [match('name', 'mirror'),
        sup('Lanco', cat('Travel / Personal Care', 'Mirrors') ) ]],
@@ -1629,7 +1642,10 @@ private
        sup('Lanco', cat('Sun / Outdoors / Sports', 'Umbrellas') ),
        sup('Bullet Line', cat('Fitness & Recreation', 'Umbrellas') ),
        sup('Sweda', cat('Umbrellas') ),
-      ] ],
+      ],[
+         ['London Fog',
+          [sup('Sweda', cat('BRANDS', 'London Fog') ) ]],
+        ] ],
      ['PDAs & Phone Holders',
       [match('name', ['phone holder', 'phone stand']),
        sup('Lanco', cat('Bags / Containers', 'PDA Holder') ),
@@ -1726,11 +1742,10 @@ private
      ['Wristbands',
       [match(%w(name description), [/wrist.*band/, 'bracelet']) ] ],
      ['Watches',
-      [sup('Leeds', cat('Watches', 'Watches') ),
+      [sup('Leeds',  ),
        sup('Logomark',
            cat('Classic Watches'),
            cat('Fashion Watches') ),
-       sup('Sweda', sup('Watches', 'Digital') )
       ],[
          ['Cutter & Buck Watches',
           [sup('Leeds', cat('Watches', 'Cutter & Buck Watches') ) ]],
@@ -1744,7 +1759,9 @@ private
          ['Sport Watches',
           [match('name', 'sport', 1),
            sup('Logomark', cat('Sport Watches') ),
-           sup('Sweda', cat('Watches', 'Analog Sport') ),
+           sup('Sweda',
+               cat('Watches', 'Analog Sport'),
+               cat('Watches', 'Digital') ),
           ] ],
         ] ],
      dup('Travel', 'Personal Travel'),
@@ -1852,7 +1869,8 @@ private
            match('name', 'notebook') ),
        sup('Bic Graphics',
            match('supplier_num', /^((NC4P57)|(NC57(ECO)?)|(NPP?57))$/),
-           exclude(match('name', 'notepad')))
+           exclude(match('name', 'notepad'))),
+       sup('Sweda', cat('Stationery', 'Jotters') )
       ],[
          ['Recycled Jotters',
           [sup('Leeds',
@@ -1866,7 +1884,8 @@ private
            cat('JournalBooks', 'Spiral') ),
        sup('Lanco', cat('Journals / Portfolios', 'Journal Books') ),
        sup('Prime Line', cat('Notebooks | Journals') ),
-       sup('Bullet Line', cat('Stationery', 'Notebooks') )
+       sup('Bullet Line', cat('Stationery', 'Notebooks') ),
+       sup('Sweda', cat('Stationery', 'Journals & Notebooks') ),
       ],[
          ['Recycled Journals',
           [sup('Leeds',
@@ -1885,7 +1904,7 @@ private
            cat('MEETING', 'FOLDERS')),
        sup('Bullet Line', cat('Stationery', 'Portfolios') ),
        sup('Logomark', cat('Letter Padfolios' ) ),
-
+       sup('Sweda', cat('Stationery', 'Portfolios') )
       ],[
          ['Jr. Padfolios',
           [match('name', 'jr', 1),
@@ -1923,8 +1942,8 @@ private
    sup('Crown Products',
        cat('Tools'),
        cat('Tools, Gifts') ),
-   sup('Logomark', cat('Hand Tools') )
-
+   sup('Logomark', cat('Hand Tools') ),
+   sup('Sweda', cat('Tools') ),
   ],[
      dup('Tools / Knives', 'Ice Scraper'),
      ['Bag Clips',
@@ -2028,7 +2047,11 @@ private
        sup('Lanco',
            all(cat('Tools / Knives', 'Screwdriver & Tool Set'),
                match('name', 'pocket tool')) ),
-       sup('Bullet Line', cat('Tools', 'Multi-Function Tools') ), ]],
+       sup('Bullet Line', cat('Tools', 'Multi-Function Tools') ),
+      ],[
+         ['Leatherman',
+          [sup('Sweda', cat('BRANDS', 'Leatherman') ) ]],
+        ] ],
      ['Locks',
       [match('name', ' lock') ]],
     ] ],
@@ -2055,7 +2078,8 @@ private
        sup('Bic Graphics',
            cat('Writing Instruments', 'Highlighter'),
            match('supplier_num', /^((BL)|(MRGE))/) ),
-       sup('Logomark', cat('Highlighters') )
+       sup('Logomark', cat('Highlighters') ),
+       sup('Sweda', cat('Writing Instruments', 'Highlighters') )
        ]],
      ['Markers',
       [match('name', 'marker', 1),
@@ -2092,7 +2116,9 @@ private
            cat('WRITE', 'PEN50'),
            cat('WRITE', 'PEN150')),
        sup('Bullet Line', cat('Writing Instruments', 'Plastic Pens') ),
-                
+       sup('Sweda',
+           cat('Writing Instruments', 'Plastic'),
+           cat('Writing Instruments', 'Metal') )
       ],[
          ['Carabiner Pens',
           [match(%w(name description), 'carabiner', 1),
@@ -2101,7 +2127,9 @@ private
          ['Light Up Pens',
           [match('name', /(^|\s)light/, 1),
            sup('Bullet Line', cat('Writing Instruments', 'Light-up Pens') ),
-           sup('Logomark', cat('Light Pens') )] ],
+           sup('Logomark', cat('Light Pens') ),
+           sup('Sweda', cat('Writing Instruments', 'Light-Up & Laser') )
+          ]],
          ['Pen Gift Boxes',
           [match('name', ['gift box', 'pen box'], 1),
            sup('Bullet Line', cat('Writing Instruments', 'Gift Boxes for Pens') ) ] ],
@@ -2169,7 +2197,9 @@ private
            sup('Bullet Line', cat('Writing Instruments', 'Gel Pens') ),
            sup('Bic Graphics',
                cat('Writing Instruments', 'Gel Pen'),
-               match('supplier_num', 'GEL') ) ] ],
+               match('supplier_num', 'GEL') ),
+           sup('Sweda', cat('Writing Instruments', 'Gel') )
+          ]],
          ['Metal Pens',
           [sup('Bullet Line',
                cat('Writing Instruments', 'Metal Pens'),
@@ -2253,6 +2283,8 @@ private
       [match('name', 'garden') ]],
      ['Gift Tins',
       [sup('Logomark', cat('Gift Tins') ) ] ],
+     ['Stopwatches & Timers',
+      [sup('Sweda', cat('Stopwatches & Timers') ) ] ],
     ] ],
 
  ['Ecologically Friendly',
