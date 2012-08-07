@@ -51,23 +51,6 @@ range_apply = (range, val) ->
   range.max = Math.max(range.max, val)
   range
 
-set_layout = ->
-  image = $("#prod_img")[0]
-  content = $("#content")[0]
-  prices = $("#prices")[0]
-  return unless prices?
-  offset = 0
-  for elem in $("#price_calc, #price_list")
-    o = elem.offsetWidth + elem.offsetLeft
-    offset = o  if o > offset
-
-  prices.style.minWidth = (offset + image.offsetWidth - prices.offsetLeft + 4) + "px"
-  bottom = image.offsetTop + image.offsetHeight
-  pos = $("#static").offsetTop
-  for div in $("div#static div")
-    div.style.maxWidth = image.offsetLeft - div.offsetLeft - 20 + "px"  if pos < bottom
-    pos += div.offsetHeight
-
 class PricingBase
   constructor: (@data) ->
 
@@ -439,6 +422,24 @@ $(document).ready ->
 #                        m.cycle('resume')
 
         )
-  set_layout
 
+
+set_layout = ->
+  image = $("#prod_img")[0]
+  content = $("#content")[0]
+  prices = $("#prices")[0]
+  return unless prices?
+  offset = 0
+  for elem in $("#price_calc, #price_list")
+    o = elem.offsetWidth + elem.offsetLeft
+    offset = o  if o > offset
+
+  prices.style.minWidth = (offset + image.offsetWidth - prices.offsetLeft + 4) + "px"
+  bottom = image.offsetTop + image.offsetHeight
+  pos = $("#static").offsetTop
+  for div in $("div#static div")
+    div.style.maxWidth = image.offsetLeft - div.offsetLeft - 20 + "px"  if pos < bottom
+    pos += div.offsetHeight
+
+$(window).ready set_layout
 $(window).resize set_layout

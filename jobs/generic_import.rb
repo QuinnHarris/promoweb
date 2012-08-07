@@ -467,16 +467,7 @@ class GenericImport
     end
     product_record
   end
-  
-  def run_parse
-    init_time = Time.now
-    puts "#{@supplier_record.name} parse start at #{init_time}"
-    @product_list = []
-    parse_products
-    stop_time = Time.now
-    puts "#{@supplier_record.name} parse stop at #{stop_time} for #{stop_time - init_time}s" 
-  end
-  
+    
   def cache_file(name)
     File.join(@@cache_dir, name)
   end
@@ -511,6 +502,31 @@ class GenericImport
     cache_write(file_name, res)
     res
   end
+
+  def run_parse
+    init_time = Time.now
+    puts "#{@supplier_record.name} parse start at #{init_time}"
+    @product_list = []
+    parse_products
+    mid_time = Time.now
+    puts "#{@supplier_record.name} parse stop at #{mid_time} for #{mid_time - init_time}s #{@product_list.length}"     
+    @product_list.delete_if do |product_data|
+      begin
+        validate_product_after(product_data)
+        next nil # Don't Delete
+      rescue => boom
+        if boom.is_a?(ValidateError)
+          @invalid_prods[boom.aspect] = (@invalid_prods[boom.aspect] || []) + [product_data['supplier_num']]
+          next true # Do Delete
+        else
+          raise
+        end
+      end
+    end
+
+    stop_time = Time.now
+    puts "#{@supplier_record.name} validate stop at #{stop_time} for #{stop_time - mid_time}s #{@product_list.length}"
+  end
   
   def run_parse_cache
     @product_list = cache_marshal("#{@supplier_record.name}_parse", @src_file || @src_files) do
@@ -518,25 +534,7 @@ class GenericImport
       @product_list
     end  
   end
-  
-#  def run_validate
-#    puts "#{@supplier_record.name} validate start <<<<<<<<<<<<<<<"
-##    @product_list.each { |prod| validate_product(prod) }
-#    @invalid_prods = []    
-#    @product_list.delete_if do |product|
-#      begin
-#        validate_product(product)
-#        next nil
-#      rescue => boom
-#        puts "Validate Error: #{product['supplier_num']} (Not Included)"
-#        puts boom
-#        puts boom.backtrace
-#        @invalid_prods << product['supplier_num']
-#        next true
-#      end
-#    end
-#    puts "#{@supplier_record.name} validate stop >>>>>>>>>>>>>>>>>"
-#  end
+
   
 private
   def run_cleanup(product_ids)
@@ -590,23 +588,26 @@ public
     rescue
     end
     
-    product_ids = @product_list.collect do |prod|
-      num = prod['supplier_num']
-      if last_data[num] != prod
-        if rec = apply_product(prod) 
-          last_ids[num] = rec.id
-          last_data[num] = prod
+    begin
+      product_ids = @product_list.collect do |prod|
+        num = prod['supplier_num']
+        if last_data[num] != prod
+          if rec = apply_product(prod) 
+            last_ids[num] = rec.id
+            last_data[num] = prod
+          end
         end
+        last_ids[num]
       end
-      last_ids[num]
+    
+      run_cleanup(product_ids).each do |product_record|
+        last_ids.delete(product_record.supplier_num)
+        last_data.delete(product_record.supplier_num)
+      end if cleanup
+
+    ensure
+      File.open(file_name,"w") { |f| Marshal.dump([last_data, last_ids], f) }
     end
-    
-    run_cleanup(product_ids).each do |product_record|
-      last_ids.delete(product_record.supplier_num)
-      last_data.delete(product_record.supplier_num)
-    end if cleanup
-    
-    File.open(file_name,"w") { |f| Marshal.dump([last_data, last_ids], f) }
 
     run_summary
   end
@@ -621,7 +622,7 @@ public
   
   def add_product(product_data)
     begin
-      validate_product(product_data)
+      validate_product_inline(product_data)
       @product_list << product_data
     rescue => boom
       puts "* Validate Error: #{product_data['supplier_num']}: #{boom}"
@@ -638,9 +639,8 @@ public
     @product_list.each { |p| yield p }
   end
   
-  def validate_product(product_data) 
-    product_log = ''
-    
+  # Inline validation (nothing blocking)
+  def validate_product_inline(product_data)    
     # check presense
     %w(supplier_num name description).each do |name|
       unless product_data[name].is_a?(String)
@@ -723,22 +723,35 @@ public
         end
       end
     end
+  end
 
-#    costs, prices = product_data['variants'].collect { |v| [v['costs'], v['prices']] }.transpose
-#    raise "Must have matching number of cost and price groups: #{costs.uniq.length} != #{prices.uniq.length}" if costs.uniq.length != prices.uniq.length
-    
-    # check images
-#    unless product_data["image-hires"] and product_data["image-hires"].get_path
-#      %w(thumb main).each do |name|
-#        unless product_data["image-#{name}"].get_path
-#          raise "Image not found"
-#        end
-#      end
-#    end
-    
-    unless product_log.empty?
-      puts " Product: #{product_data['supplier_num']}\n" + product_log
+  # After validation (slower blocking checks)
+  def validate_product_after(product_data)
+    all_images = ([product_data['images']] + 
+                  product_data['variants'].collect { |v| v['images'] }).flatten.compact.uniq
+
+    remove_images = []
+    unless all_images.empty?
+      dup_hash = {}
+      dup_hash.default = []
+      all_images.each do |image|
+        unless size = image.size
+          remove_images << image
+          puts "  No Image: #{image.uri}\n"
+          next
+        end
+        
+        if (ref = dup_hash[size]) and (ref.find { |r| FileUtils.compare_file(r.path, image.path) })
+          remove_images << image
+          puts "  Duplicate Image: #{ref.inspect} #{image.uri}\n"
+        else
+          dup_hash[size] += [image]
+        end
+      end
     end
+    raise ValidateError, 'No images after fetch' if (all_images - remove_images).empty?
+    product_data['images'] -= remove_images if product_data['images']
+    product_data['variants'].collect { |v| v['images'] -= remove_images if v['images'] }
   end
     
   def apply_product(product_data)
@@ -798,30 +811,8 @@ public
         # Fetch Images
         all_images = ([product_data['images']] + 
                       product_data['variants'].collect { |v| v['images'] }).flatten.compact.uniq
-        remove_images = []
-        unless all_images.empty?
-          dup_hash = {}
-          dup_hash.default = []
-          all_images.each do |image|
-            unless size = image.size
-              remove_images << image
-              product_log << "  No Image: #{image.uri}\n"
-              next
-            end
-
-            if (ref = dup_hash[size]) and (ref.find { |r| FileUtils.compare_file(r.path, image.path) })
-              remove_images << image
-              product_log << "  Duplicate Image: #{ref.inspect} #{image.uri}\n"
-            else
-              dup_hash[size] += [image]
-            end
-          end
-
-#          if product_data['images']
-            product_log << product_record.set_images(product_data['images'] - remove_images)
-            product_log << product_record.delete_images_except(all_images - remove_images)
-#          end
-        end
+        product_log << product_record.delete_images_except(all_images)
+        product_log << product_record.set_images(product_data['images'])
        
         # Process Variants
         variant_records = product_data['variants'].collect do |variant_data|
@@ -831,7 +822,7 @@ public
           variant_record.save! if variant_new
 
           # Fetch Images
-          variant_log << variant_record.set_images(variant_data['images'] - remove_images) if variant_data['images']
+          variant_log << variant_record.set_images(variant_data['images']) if variant_data['images']
           
           # Properties
           properties = @@properties

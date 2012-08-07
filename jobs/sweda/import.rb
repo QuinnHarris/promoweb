@@ -24,9 +24,14 @@ class SwedaXML < GenericImport
       product_data = {
         'supplier_num' => supplier_num,
         'name' => common['ProductName'],
-        'description' => common['Description'].gsub('&nbsp;', ' ').split(/\s*(\n|;)\s*/).join("\n"),
-        'supplier_categories' => common['CATEGORY_NAME'].split(";").collect { |s| s.split("\\").collect { |t| t.strip } }
+        'description' => common['Description'].gsub('&nbsp;', ' ').split(/\s*(?:\n|;)\s*/).join("\n"),
+        'supplier_categories' => common['CATEGORY_NAME'].split(";").collect { |s| s.split("\\").collect { |t| t.strip } },
+        'tags' => []
       }
+      if product_data['supplier_categories'].find { |c| c.shift if c.first == 'CLEARANCE'  }
+        product_data['tags'] << 'Closeout'
+      end
+      product_data['tags'] << 'New' if product_data['supplier_categories'].find { |c| c.include?('2012 New Items') }
       
       { 'PackQty' => 'package_units',
         'PackWeight' => 'pacakge_weight',
@@ -35,6 +40,8 @@ class SwedaXML < GenericImport
       }.each do |row_name, prop_name|
         product_data[prop_name] = common[row_name].include?('.') ? Float(common[row_name]) : Integer(common[row_name]) unless common[row_name].blank? || common[row_name] == '0'
       end
+      product_data['lead_time_normal_max'] ||= product_data['lead_time_normal_min']
+      product_data['lead_time_normal_min'] ||= product_data['lead_time_normal_max']
 
       common_variant = SupplierPricing.get do |pricing|
         (1..6).each do |i|
@@ -58,14 +65,14 @@ class SwedaXML < GenericImport
       product_data['images'] = [ImageNodeFetch.new(common['Image'],
                                                    "http://www.swedausa.com/Uploads/Products/LargeImg/#{common['Image']}".gsub('[', '%5B').gsub(']', '%5D'))]
 
-      product_data['images'] += common['AdditionalImages'].split(';').collect do |img|
-        ImageNodeFetch.new(img,
-                           "http://www.swedausa.com/Uploads/Products/AdditionalImg/#{img}")
-      end
+#      product_data['images'] += common['AdditionalImages'].split(';').collect do |img|
+#        ImageNodeFetch.new(img,
+#                           "http://www.swedausa.com/Uploads/Products/AdditionalImg/#{img}")
+#      end
 
       product_data['variants'] = unique.collect do |uniq|
         { 'supplier_num' => uniq['Sku'],
-          'properties' => { 'color' => uniq['ColorDesc'].strip },
+          'properties' => { 'color' => uniq['ColorDesc'].blank? ? nil : uniq['ColorDesc'].strip },
 #          'images' => ,
         }.merge(common_variant)
       end
