@@ -139,13 +139,11 @@ class SupplierPricing
 
   # Duplicated in GenericImport Remove from there eventually
   def convert_pricecode(comp)
-    comp = comp.upcase[0] if comp.is_a?(String)
-    num = nil
+    return nil unless comp.is_a?(String) && /^[A-GP-X]$/i === comp
+    comp = comp.upcase[0]
     num = comp.ord - ?A.ord if comp.ord >= ?A.ord and comp.ord <= ?G.ord
     num = comp.ord - ?P.ord if comp.ord >= ?P.ord and comp.ord <= ?X.ord
-    
-    raise "Unknown PriceCode: #{comp}" unless num
-    
+        
     0.5 - (0.05 * num)
   end
   
@@ -157,7 +155,11 @@ class SupplierPricing
 
     if code
       discount = convert_pricecode(code)
-      @costs << base.merge(:marginal => price * (1.0 - discount) )
+      if discount
+        @costs << base.merge(:marginal => price * (1.0 - discount) )
+      else
+        @costs << base.merge(:marginal => Money.new(Float(code)))
+      end
     end
   end
 
@@ -731,6 +733,12 @@ public
         end
       end
     end
+    
+    # Check uniq variant properties
+    properties = product_data['variants'].collect { |v| v['properties'] }
+    unless properties.uniq.length == properties.length
+      raise ValidateError.new("Variant properties not unique", properties.inspect)
+    end    
   end
 
   # After validation (slower blocking checks)

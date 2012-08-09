@@ -69,7 +69,8 @@ class GemlineXML < GenericImport
         'package_height' => product['box_height_inches'].to_f,
         'package_width' => product['box_width_inches'].to_f,
         'package_length' => product['box_length_inches'].to_f,
-        'data' => { :id => product['Id'] }
+        'data' => { :id => product['Id'] },
+        'images' => []
       }
   
       dimension = {}

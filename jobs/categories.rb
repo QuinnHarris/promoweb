@@ -259,7 +259,9 @@ private
       [sup('Norwood', cat('AWARD', 'ACRYLIC') ) ] ],
      ['Art Glass',
       [sup('Norwood', cat('AWARD', 'ART') ),
-       sup('Logomark', cat('Crystal Awards') )] ],
+       sup('Logomark', cat('Crystal Awards') ),
+       sup('The Magnet Group', cat('Crystal', 'Art Glass') )
+      ] ],
      ['Awards & Plaques',
       [match('name', 'trophy'),
        sup('Norwood', cat('AWARD', 'AWARDS') ),
@@ -268,20 +270,50 @@ private
                match('name', 'award') ) ),
        sup('Logomark',
            cat('Crystal Awards'),
-           cat('Metal and Wood Awards') )
-      ] ],
+           cat('Metal and Wood Awards') ),
+       sup('The Magnet Group', cat('Crystal', 'Optically Perfect Awards') )
+      ],[ 
+         ['Dichroic Awards',
+          [match(%w(name description), 'dichroic', 1),
+           sup('The Magnet Group', cat('Crystal', 'Dichroic Awards') )
+          ]],
+         ['Star Awards',
+          [match('name', 'star', 1),
+           sup('The Magnet Group', cat('Crystal', 'Optically Perfect Award Stars') )
+          ]],
+         ['Globe Awards',
+          [match('name', 'globe', 1),
+           sup('The Magnet Group', cat('Crystal', 'Optically Perfect Award Globes') )
+          ]],
+         ['Glass Awards',
+          [match(%w(name description material), 'glass', 1),
+           sup('The Magnet Group', cat('Crystal', 'Glass Awards') )
+          ]],
+         ['Jade Glass Awards',
+          [match(%w(name description material), 'glass', 1),
+           sup('The Magnet Group', cat('Crystal', 'Jade Glass') )
+          ]],
+         ['Wood Awards',
+          [match(%w(name description material), 'wood', 1),
+           sup('The Magnet Group', cat('Crystal', 'Wood and Glass Awards') )
+          ]],
+        ] ],
      ['Clocks',
       [sup('Norwood', cat('AWARD', 'CLOCKS') ) ] ],
 #     ['Bases',
 #      [sup('Norwood', cat('AWARD', 'BASES') ) ] ],
 #     ['Coasters & Beverage Ware',
 #      [sup('Norwood', cat('AWARD', 'COASTER') ) ] ],
-     ['Image 3 Crystal(TM) Line',
-      [sup('Norwood', cat('AWARD', 'IMAGE3') ) ] ],
+     ['3D Lasered Crystal',
+      [sup('Norwood', cat('AWARD', 'IMAGE3') ),
+       sup('The Magnet Group', cat('Crystal', '3D Lasered') )
+      ] ],
      ['Specialty Gifts',
       [sup('Norwood', cat('AWARD', 'SPECIALTY') ) ] ],
      ['Vases',
-      [sup('Norwood', cat('AWARD', 'VASE') ) ] ],
+      [sup('Norwood', cat('AWARD', 'VASE') ),
+       sup('The Magnet Group', cat('Crystal', 'Vases') )
+      ] ],
 #     ['Trophies',
 #      [sup('Norwood',
 #                cat('AWARD', 'TROPHIES') ) ] ],
@@ -399,7 +431,8 @@ private
            all(cat('Bags'),
                match('name', 'backpack'))),
        sup('Logomark', cat('Backpacks and Slings') ),
-       sup('Sweda', cat('Bags', 'Backpacks') )
+       sup('Sweda', cat('Bags', 'Backpacks') ),
+       sup('The Magnet Group', cat('Bag Factory', 'Backpacks') )
       ],[
          ['Cooler Backpacks',
           [match('name', 'cooler', 1)]],
@@ -462,6 +495,7 @@ private
                match('name', ['brief', 'messenger', 'document']) ) ),
        sup('Logomark', cat('Briefcases') ),
        sup('Sweda', cat('Bags', 'Messenger & Laptop') ),
+       sup('The Magnet Group', cat('Bag Factory', 'Business Cases') ),
       ],[
          ['Computer Business Bags',
           [sup('Leeds',
@@ -593,7 +627,8 @@ private
        sup('Norwood', cat('BAG', 'TOTE') ),
        sup('Bullet Line', cat('Bags', 'Totes') ),
        sup('Logomark', cat('Tote and Shoppers') ),
-       sup('Sweda', cat('Bags', 'Totes') )
+       sup('Sweda', cat('Bags', 'Totes') ),
+       sup('The Magnet Group', cat('Bag Factory', 'Totes') )
       ],[
          ['Business & Meeting Totes',
           [match(%w(name description), %w(business meeting computer laptop), 1),
@@ -895,14 +930,54 @@ private
            cat('Clocks', 'Desktop'),
            cat('Clocks', 'Wall Clocks'),
            cat('Clocks', 'Travel Alarm') ),
+       sup('The Magnet Group',
+           cat('Clocks', 'Elegant Clocks'),
+           cat('Clocks', 'Clock/Frame Combos'),
+           cat('Innovations', 'Clocks') ),
+       sup('The Magnet Group', cat('Clocks') )
       ],[
+         ['Acrylic Clocks',
+          [match(%w(name description material), 'acrylic', 1),
+           sup('The Magnet Group', cat('Clocks', 'Acrylic Clocks') )
+          ] ],
+         ['Brass Clocks',
+          [match(%w(name description material), 'brass', 1),
+           sup('The Magnet Group', cat('Clocks', 'Brass Clocks') )
+          ] ],
+         ['Gimble Clocks',
+          [match(%w(name description), %w(gimble twist), 1),
+           sup('The Magnet Group', cat('Clocks', 'Gimble Clocks') )
+          ] ],
+         ['Glass Clocks',
+          [match(%w(name description material), 'glass', 1),
+           sup('The Magnet Group', cat('Clocks', 'Glass Clocks') )
+          ] ],
+         ['Marble Clocks',
+          [match(%w(name description material), 'marble', 1),
+           sup('The Magnet Group', cat('Clocks', 'Marble Clocks') )
+          ] ],
+         ['Wood Clocks',
+          [match(%w(name description material), 'wood', 1),
+           sup('The Magnet Group', cat('Clocks', 'Wood Clocks') )
+          ] ],
+         ['Silver Clocks',
+          [match(%w(name description material), 'silver', 1),
+           sup('The Magnet Group',
+               all(cat('Clocks', 'Silver and Unique Clocks'),
+                   match(%w(name description material), 'silver') ) ),
+          ] ],
+         ['Unique Clocks',
+          [sup('The Magnet Group',
+               cat('Clocks', 'Silver and Unique Clocks'),
+               exclude(match(%w(name description material), 'silver') ) ),
+          ] ],
          ['Travel Clocks',
-          match(%w(name description), 'travel', 1),
-          sup('Leeds',
-              all(cat('Travel Gifts', 'Clocks & Wallets'),
-                  match('name', 'clock')) ),
-          sup('Logomark', cat('Travel Clocks') ),
-         ] ] ],
+          [match(%w(name description), 'travel', 1),
+           sup('Leeds',
+               all(cat('Travel Gifts', 'Clocks & Wallets'),
+                   match('name', 'clock')) ),
+           sup('Logomark', cat('Travel Clocks') ),
+          ] ] ] ],
      ['Pen Stands and Holders',
       [sup('Logomark', cat('Pen Stands and Holders') ) ] ],
      ['Radios',
@@ -932,7 +1007,12 @@ private
            cat('Clocks with Photo Frames') ),
        sup('Sweda',
            cat('Photo Frames'),
-           cat('Picture Frames') )
+           cat('Picture Frames') ),
+       sup('The Magnet Group',
+           cat('Clocks', 'Clock/Frame Combos'),
+           cat('Innovations', 'Frames'),
+           cat('Innovations', 'Acrylic Frames'),
+           cat('Innovations', 'Metal Displays and Frames')),
       ]],
      ['Photo Albums',
       [match('name', %w(photo\ album brag\ book)) ] ],
@@ -990,7 +1070,11 @@ private
        sup('Bullet Line',
            match('name', 'card case') ),
        sup('Logomark',
-           cat('Business Card Holders') )] ],
+           cat('Business Card Holders') ),
+       sup('The Magnet Group',
+           cat('Innovations', 'Pocket Items'),
+           exclude(match(%w(name description), ['money clip', 'cloth']) ) ),
+      ] ],
      ['Note Holders',
       [match('name', ['note holder', 'memo holder', 'memo stack', 'Post-it holder','note dispenser', 'sticky note', 'sticky flag']), #, 1),
        sup('Lanco',
@@ -1006,24 +1090,30 @@ private
            match('name', 'note holder') ),
        sup('Norwood', cat('OFFICE', 'NOTES') ),
        sup('Bullet Line', cat('Sticky Notes', 'Office Accessories') ),
-       sup('Logomark', cat('Memo Holders') )],
-      [['Notenest & Note Clips',
-        [match('name', 'clip', 1),
-         match('name', ['notenest', 'memo clip']),
-         sup('Prime Line',
-             match('name', 'notenest') ),
-         sup('Hit Promotional Products',
-             match('name', 'clip', 2) ) ] ],
-       ['Memo Books',
-        [match('name', ['memo book', 'message pad holder'], 2)]],
-       ['Sticky Note Books',
-        [match('name', ['sticky memo', 'sticky flags', 'sticky note'], 1),
-         match('name', /stick.+((note)|(flag)).+book/i),
-         sup('Prime Line', cat('Sticky Books')),
-         sup('Bullet Line', cat('Sticky Notes', 'Booklets & Notebooks') ),
-         sup('Bic Graphics',
-             match('supplier_num', /^((MFP?B)|(PFBD)|(PF[CN]))$/) ) ] ]
-      ]],
+       sup('Logomark', cat('Memo Holders') ),
+       sup('The Magnet Group',
+           all(cat('Innovations', 'Paper Clip, Tape & Note Dispense'),
+               match('name', 'note dispenser') ) )
+      ],[
+         ['Notenest & Note Clips',
+          [match('name', 'clip', 1),
+           match('name', ['notenest', 'memo clip']),
+           sup('Prime Line',
+               match('name', 'notenest') ),
+           sup('Hit Promotional Products',
+               match('name', 'clip', 2) ),
+           sup('The Magnet Group', cat('Innovations', 'Power Clips') )
+          ] ],
+         ['Memo Books',
+          [match('name', ['memo book', 'message pad holder'], 2)]],
+         ['Sticky Note Books',
+          [match('name', ['sticky memo', 'sticky flags', 'sticky note'], 1),
+           match('name', /stick.+((note)|(flag)).+book/i),
+           sup('Prime Line', cat('Sticky Books')),
+           sup('Bullet Line', cat('Sticky Notes', 'Booklets & Notebooks') ),
+           sup('Bic Graphics',
+               match('supplier_num', /^((MFP?B)|(PFBD)|(PF[CN]))$/) ) ] ]
+        ]],
      ['Notepads',
       [],
       [['Adhesive Cubes',
@@ -1043,16 +1133,22 @@ private
      ['Paper Clips & Fasteners',
       [#match('name', 'paper clip'),
        sup('Norwood',
-           cat('OFFICE', 'CLIP') )]],
+           cat('OFFICE', 'CLIP') ),
+       sup('The Magnet Group',
+           all(cat('Innovations', 'Paper Clip, Tape & Note Dispense'),
+               match('name', 'paper clip') ) )
+      ]],
      ['Paper Clip Holders',
-      [match('name', ['clip dispenser', /paper.+clip.+dispens/i]),
+      [match('name', ['clip dispenser', /paper.+clip.+((dispens)|(holder))/i]),
        match('name', ['cache', 'clip holder', 'clip keeper'], 1),
        match(%w(name description), 'paper clip', 1),
        sup('Lanco', cat('Office / Computer Essentials', 'Paper Clip Holder') ),
        sup('Prime Line',
            match('name', 'cache') )]],
      ['Paperweights',
-      [match('name', 'paperweight')]],
+      [match('name', 'paperweight'),
+       sup('The Magnet Group', cat('Crystal', 'Paperweights and Crystal Boxes') )
+      ]],
      ['Piggy Bank',
       [match(%w(name description), /(pig(gy)?)|(coin) bank/i),
        all(match('name', 'bank'), match(%w(name description), 'coin')),
@@ -1069,7 +1165,9 @@ private
      ['Staplers',
       [match('name', 'stapler'),
        sup('Lanco', cat('Office / Computer Essentials', 'Stapler') ),
-       sup('Lanco', cat('Writing Instruments', 'Stapler') )]],
+       sup('Lanco', cat('Writing Instruments', 'Stapler') ),
+       sup('The Magnet Group', cat('Innovations', 'Staplers') )
+      ]],
      ['Staple Removers',
       [match('name', 'staple remover'),
        sup('Lanco', cat('Writing Instruments', 'Staple Remover') ) ]],
@@ -1080,10 +1178,17 @@ private
            all(cat('Office'),
                match('name', 'tape') ) )]],
      ['Magnets',
-      [sup('Norwood', cat('OFFICE', 'MAGNET') ) ],
+      [sup('Norwood', cat('OFFICE', 'MAGNET') ),
+       sup('The Magnet Group', cat('Innovations', 'Dots and Springs') ),
+       sup('The Magnet Group', cat('Magnets') ) ## TEMPORARY
+      ],
       [['Business Card Magnets',
         [sup('Bic Graphics',
-             match('supplier_num', /^MG[EJ]?BC/) )]],
+             match('supplier_num', /^MG[EJ]?BC/) ),
+         sup('The Magnet Group',
+             cat('Magnets', 'Business Card Magnets'),
+             cat('Magnets', 'Business Card Magnets - Unique') )
+        ]],
        ['Stock Shape Magnets',
         [sup('Bic Graphics',
              match('supplier_num', /^MGSS/) ) ]],
@@ -1095,16 +1200,24 @@ private
              match('supplier_num', /^MG[DS]E/) ) ]],
        ['Picture Frame Magnets',
         [sup('Bic Graphics',
-             match('supplier_num', /^MGSPF/) ) ]],
+             match('supplier_num', /^MGSPF/) ),
+         sup('The Magnet Group', cat('Magnets', 'Picture Frames') )
+        ]],
        ['Calendar & Schedule Magnets',
         [sup('Bic Graphics',
-             match('supplier_num', /^MG((CL)|(SCH))/) ) ]], 
+             match('supplier_num', /^MG((CL)|(SCH))/) ),
+         sup('The Magnet Group',
+             cat('Magnets', 'Calendars'),
+             cat('Magnets', 'Schedule Magnets') )
+        ]], 
        ['Mood Magnets',
         [sup('Bic Graphics',
              match('supplier_num', /^(MG((FM)|(M[AM])))$/) ) ]], 
        ['Car Magnets',
         [sup('Bic Graphics',
-             match('supplier_num', /^MGCAR/) ) ]], 
+             match('supplier_num', /^MGCAR/) ),
+         sup('The Magnet Group', cat('Magnets', 'Car Signs') )
+        ]], 
        ['Paper Magnets',
         [sup('Bic Graphics',
              match('supplier_num', /^MGECO/) ) ]], 
@@ -1139,7 +1252,8 @@ private
            match('name', 'kool') ) ),
    sup('Crown Products', cat('Coolers') ),
    sup('Logomark', cat('Coolers') ),
-   sup('Sweda', cat('Bags', 'Coolers') )
+   sup('Sweda', cat('Bags', 'Coolers') ),
+   sup('The Magnet Group', cat('Bag Factory', 'Coolers') )
   ],[
      ['Beverage Holders',
       [sup('Leeds', cat('Coolers', 'Beverage Holders') ) ]],
@@ -1289,6 +1403,8 @@ private
  ['Food Gifts',
   [
   ],[
+     ['Lollipop',
+      [sup('The Magnet Group', cat('Innovations', 'Make It Pop!') ) ] ],
      ['Candy',
       [match('name', %w(jelly\ bean skittles))] ],
      ['Gourmet Food Gifts',
@@ -1421,7 +1537,8 @@ private
       [match('name', 'luggage'),
        sup('Leeds', cat('Travel Gifts', 'Luggage Tags') ),
        sup('Lanco', cat('Travel / Personal Care', 'Luggage Tags') ),
-       sup('Logomark', cat('Luggage Tags') )
+       sup('Logomark', cat('Luggage Tags') ),
+       sup('The Magnet Group', cat('Innovations', 'Luggage Tags') )
       ] ],
      ['Travel Accessories',
       [sup('Leeds',
@@ -1505,6 +1622,8 @@ private
      ['Vases',
       [match('name', 'vase'),
        sup('Norwood', cat('AWARD', 'VASE') ) ] ],
+     ['Ornaments',
+      [sup('The Magnet Group', cat('Crystal', 'Ornaments') ) ] ],
     ] ],
  ['Health & Personal Care',
   [sup('Gemline',
@@ -1694,6 +1813,7 @@ private
        sup('Bullet Line',
            cat('Key Tags & Badge Holders', 'Carabiners'),
            cat('Lighting', 'Carabiners') ),
+       sup('The Magnet Group', cat('Innovations', 'Carabiners') )
       ]],
      ['Key Chains',
       [match(%w(name description), ['key chain', 'keychain', 'key holder', 'key tag', 'key ring']),
@@ -1713,7 +1833,10 @@ private
        sup('Logomark', cat('Key Rings') ),
        sup('Sweda',
            cat('Key Tags'),
-           cat('Keychains') )
+           cat('Keychains') ),
+       sup('The Magnet Group',
+           cat('Innovations', 'Keytags'),
+           cat('Innovations', 'Keychains') )
       ],[
          ['Bottle Opener Key Chains',
           [match('name', 'opener', 1),
@@ -1723,7 +1846,9 @@ private
            match('name', /LED.+?light.+?key/i),
            exclude(match('name', 'limelight')),
            sup('Leeds', cat('Keychains, Keylights & Carabiners', 'Keylights') ),
-           sup('Bullet Line', cat('Lighting', 'Key Lights') ) ] ],
+           sup('Bullet Line', cat('Lighting', 'Key Lights') ),
+           sup('The Magnet Group', cat('Innovations', 'Key Lights') )
+          ] ],
          ['Flash Drive Key Chains',
           [sup('LogoIncluded', match(%w(name description), ['key chain', 'keychain', 'key holder']))]],
         ] ],
@@ -1851,6 +1976,7 @@ private
          cat('Padfolios', name)
        end),
    sup('Hit Promotional Products', cat('Portfolios & Jotters') ),
+   sup('The Magnet Group', cat('Bag Factory', 'Stationery & Writing') )
   ],[
      ['Jotters',
       [match('name', 'notepad'),
@@ -1929,6 +2055,8 @@ private
       [match('name', ['ringfolio', 'ringbinder']),
        sup('Leeds', cat('Stationery', 'Ringbinders') ),
        sup('Gemline', cat('Padfolios', 'Ringbinders') )]],
+     ['Postcards & Greeting Cards',
+      [sup('The Magnet Group', cat('SmartLine') ) ] ],
     ] ],
 
  ['Tools',
@@ -1944,6 +2072,7 @@ private
        cat('Tools, Gifts') ),
    sup('Logomark', cat('Hand Tools') ),
    sup('Sweda', cat('Tools') ),
+   sup('The Magnet Group', cat('Innovations', 'Tools') )
   ],[
      dup('Tools / Knives', 'Ice Scraper'),
      ['Bag Clips',
@@ -1977,7 +2106,8 @@ private
        sup('Logomark', cat('Flash Lights') ),
        sup('Sweda',
            cat('Flashlights', 'Metal'),
-           cat('Flashlights', 'Plastic') )
+           cat('Flashlights', 'Plastic') ),
+       sup('The Magnet Group', cat('Innovations', 'Flashlights') ),
       ],[
          ['Emergency Flashlights',
           [sup('Leeds', cat('Flashlights', 'Emergency & Safety') ) ]],
@@ -2118,7 +2248,8 @@ private
        sup('Bullet Line', cat('Writing Instruments', 'Plastic Pens') ),
        sup('Sweda',
            cat('Writing Instruments', 'Plastic'),
-           cat('Writing Instruments', 'Metal') )
+           cat('Writing Instruments', 'Metal') ),
+       sup('The Magnet Group', cat('Innovations', 'Pens') ),
       ],[
          ['Carabiner Pens',
           [match(%w(name description), 'carabiner', 1),
@@ -2237,6 +2368,9 @@ private
                    cat('WRITE', 'GIFTPEN') ) )]],
          ['Eco Friendly Pens',
           [sup('High Caliber Line', cat('Writing Instruments', 'Eco Friendly Pens') ) ] ],
+         ['Magnetic Pens',
+          [match('name', 'magnet', 1),
+           sup('The Magnet Group', cat('Innovations', 'Magnetic Pens') ) ] ],
         ] ],
     ] ],
 
@@ -2273,7 +2407,8 @@ private
        sup('Leeds', cat('Outdoor Living', 'Blankets') ),
        sup('Prime Line', cat('Blankets') ),
        sup('Logomark', cat('Blankets') ),
-       sup('Sweda', cat('Blankets') )
+       sup('Sweda', cat('Blankets') ),
+       sup('The Magnet Group', cat('Bag Factory', 'Blankets') )
       ] ],
      ['Combo Products',
       [sup('Prime Line', cat('Combos') ) ]],
