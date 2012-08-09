@@ -4,7 +4,7 @@ module ProductsHelper
       category_path(category)
     end
     return '' unless list
-    '<ul>' +
+    '<ul itemprop="category">' +
     list.collect { |i| "<li>#{i}</li>" }.join +
     '</ul>'
     

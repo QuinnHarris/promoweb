@@ -118,7 +118,7 @@ module ApplicationHelper
   
   def path_text
     product_count +
-    '<h1 id="path">' +
+    '<h1 id="path" propname="category">' +
     path_name +
     '</h1>'
   end

@@ -17,9 +17,9 @@
               = render :partial => 'categories/thumb', :locals => { :product => prod, :category => @category, :context => @context }
 
     %td.layout
-      #prod
+      #prod{ :itemscope => true, :itemtype => 'http://schema.org/Product' }
         #prod_title
-          %span#prod_num
+          %span#prod_num{ :itemprop => "identifier", :content => "mpn:#{@product.supplier_num}" }
             %em= link_to_if(@product.supplier_url, "#{@product.supplier.name}: #{@product.supplier_num}", @product.supplier_url)
             %strong= "(M#{@product.id})"
           %span#share
@@ -35,7 +35,7 @@
               var addthis_config = {"data_track_clickback":true};
             %script{ :type => "text/javascript", :src => "//s7.addthis.com/js/250/addthis_widget.js#username=mountainxpress" }
 
-          %h1!= @product.name
+          %h1{ :itemprop => 'name' }!= @product.name
           
           - unless @product.tags.empty?
             .tags
@@ -72,7 +72,7 @@
               - images.delete_if { |i| i.tag == 'blank' } if images.length > 6
               %ul#main_imgs
                 - images.each_with_index do |image, idx|
-                  %li{ :style => (idx == 0 ? nil : 'display: none;')}= image_tag(image.image.url(:medium), :alt => @product.name)
+                  %li{ :style => (idx == 0 ? nil : 'display: none;')}= image_tag(image.image.url(:medium), :alt => @product.name, :itemprop => 'image' )
               %br
               = link_to "Large Image", images.first.image.url(:large), :rel => 'external'
 
@@ -135,7 +135,8 @@
                           %span= dec.display
 
           - unless false #@product.deleted
-            #prices.box
+	    %meta{ :itemprop => 'condition', :content => 'new' }
+            #prices.box{ :itemprop => 'offers', :itemscope => true, :itemtype => 'http://schema.org/Offer' }
               = form_tag(add_orders_url(:protocol => Rails.env.production? ? 'https://' : nil), {:name => "productform", :class => 'noauto' }) do
                 %p
                   = hidden_field_tag "product", @product.id
@@ -204,6 +205,7 @@
 
 
                 - unless @prices.price_sets.empty? or @prices.price_sets.first.breaks.first.marginal.nil?
+                  %meta{ :itemprop => 'priceCurrency', :content => 'USD' }
                   %table#price_list
                     %thead
                       %tr#qty_row<
@@ -214,7 +216,7 @@
                       %tr#price_row<
                         %th> Unit Price
                         - for qty in @minimums
-                          %td>= @prices.price_range(qty).to_perty
+                          %td{ :itemprop => 'price' }>= @prices.price_range(qty).to_perty
 
           :javascript
             new window.ProductPricing(#{ {
@@ -279,7 +281,7 @@
             - unless @product.description.nil? or @product.description.empty?
               .desc#features
                 %h2 Features
-                %ul#description
+                %ul#description{ :itemprop => 'description' }
                   - for desc in @product.description.split("\n")
                     %li!= desc
 
