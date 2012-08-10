@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 require 'csv'
 
 class HitPromoCSV < GenericImport  
@@ -54,6 +55,8 @@ class HitPromoCSV < GenericImport
         'tags' => [] }
 
       product_data['description'] = hash['description'] ? hash['description'].split(/\s*\|\s*/).join("\n") : ''
+
+      product_data['description'] += hash['please_note'].gsub(/\s*((<.+?>)|[^[[:ascii:]]])\s*/,' ').split(/\s*\n\s*/).join("\n") if hash['please_note']
 
       %w(precious_metal_imprint for_gold_banding for_halo refills optional_carabiner optional_pen battery).each do |name|
         next unless hash[name]

@@ -93,7 +93,7 @@ class GemlineXML < GenericImport
           end
                   
           decoration.elements.each do |location|
-            s = location.text #.gsub(/[\200-\350]+/,' ')
+            s = location.text.strip #.gsub(/[\200-\350]+/,' ')
             full, name, width, height, diameter = decoration_reg.match(s).to_a
             
             if full
@@ -236,12 +236,14 @@ class GemlineXML < GenericImport
         list.collect do |variant|
           data = {
             'supplier_num' => variant['num'],
-            'material' => variant['material'],
+            'properties' => { 
+              'material' => variant['material'],
+              'dimension' => dimension,
+              'color' => variant['color']
+            },
             'images' => variant['images'],
-            'dimension' => dimension,
             'prices' => prices,
             'costs' => costs,
-            'color' => variant['color']
           }
  
           %w(small medium).each do |name|

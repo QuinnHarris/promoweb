@@ -135,7 +135,7 @@
                           %span= dec.display
 
           - unless false #@product.deleted
-	    %meta{ :itemprop => 'condition', :content => 'new' }
+            %meta{ :itemprop => 'condition', :content => 'new' }
             #prices.box{ :itemprop => 'offers', :itemscope => true, :itemtype => 'http://schema.org/Offer' }
               = form_tag(add_orders_url(:protocol => Rails.env.production? ? 'https://' : nil), {:name => "productform", :class => 'noauto' }) do
                 %p

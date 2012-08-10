@@ -20,7 +20,7 @@ class NewCategoryTransform
     # Remove parent categories after all rules to work correct with exclude
     remove_sub_dups(record['categories'])
 
-    if Rails.env.production?
+    if true #Rails.env.production?
       record['categories'] = [['Other']] if record['categories'].empty?
     else
       record['categories'] = record['categories'] + record['categories'].collect { |cat| ['YBySupplier', @supplier] + cat }

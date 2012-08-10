@@ -194,12 +194,12 @@ public
       
       @email_subject = "#{@product.name} (M#{@product.id})"
     
-      @description = "#{@product.name} from #{@product.price_min_cache} to #{@product.price_max_cache}."
+      @description = "#{@product.name}, Price: #{@product.price_min_cache.to_perty} to #{@product.price_max_cache.to_perty}."
 #      @description += "Availible in " + @properties.collect do |name, values|
 #        next nil if values.first.is_image?
 #        name + ': ' + values.collect { |prop| prop.translate }.join(', ')
-#      end.compact.join('; ') + '.  ' unless @properties.empty?
-#      @description += "Customize with #{@techniques.collect { |t| t.name }.join(', ')}"  
+#      end.compact.join(', ') + '.  ' unless @properties.blank?
+#      @description += ", Customize with #{@techniques.collect { |t| t.name }.join(', ')}"  
     
       @keywords = "Custom Imprinted #{@product.name} #{@product.supplier.name} #{@product.supplier_num}"
       

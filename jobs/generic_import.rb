@@ -130,6 +130,8 @@ class SupplierPricing
     @prices = []
     @costs = []
   end
+  # Temp?
+  attr_accessor :prices, :costs
 
   def self.get
     sp = new
@@ -193,11 +195,7 @@ public
   end
 end
 
-
-
 class ImageNode
-  @@cache_dir = CACHE_ROOT
-
   def initialize(id, tag = nil)
     @id = id
     @tag = tag
@@ -227,102 +225,11 @@ class ImageNodeFile < ImageNode
   end
 end
 
-class ImageNodeFetch < ImageNode
-  def initialize(id, uri, tag = nil)
-    super id, tag
-    @uri = URI.parse(uri.gsub(' ', '%20'))
-  end
-
-  attr_reader :uri
-
-  def uri_tail
-    @uri.respond_to?(:request_uri) ? @uri.request_uri : @uri.path
-  end
-
-  def path
-    base = "#{@@cache_dir}/#{@uri.host}/#{uri_tail}"
-    base = "#{base}/index.html" if @uri.path[-1..-1] == '/'
-    base
-  end
-
-  def get_local
-    unless File.exists?(path)
-      puts "GET: #{uri}"
-      FileUtils.mkdir_p(File.split(path).first)
-
-      begin
-        puts "Fetch: #{@uri}"
-        pbar = nil
-        f = @uri.open(:content_length_proc => lambda {|t|
-                    if t && 0 < t
-                      name = /\/(\w+)(?:\.(\w+))?$/ =~ uri_tail ? $1 : uri_tail
-                      pbar = ProgressBar.new(name, t)
-                      pbar.file_transfer_mode
-                    end },
-                  :progress_proc => lambda {|s|
-                    pbar.set s if pbar
-                  })
-        return nil if f.length == 0
-        if f.respond_to?(:path)
-          FileUtils.mv(f.path, path)
-        elsif f.respond_to?(:save_as)
-          f.save_as path
-        else
-          File.open(path, "w:#{f.external_encoding}") { |file| file.write(f.read) }
-        end
-        puts
-      rescue OpenURI::HTTPError, URI::InvalidURIError, Errno::ETIMEDOUT => e
-        puts " * #{e.class} : #{@uri}"
-        return nil
-      end
-    end
-
-    path
-  end
-
-  def size
-    begin
-      File.size(get_local)
-    rescue
-      return nil
-    end
-  end
-
-  def get
-    File.open(get_local)
-  end
-
-  def inspect
-    "#{id}:#{uri}"
-  end
-end
-
-class LocalFetch
-  def initialize(path, filename)
-    @filename = filename
-    @path = File.join(path, filename)
-  end
-
-  attr_reader :path, :filename
-#  def get_path; @path; end
-
-  def apply_image(type, record)
-    return true if record.image_exists?(type)
-    return nil unless @path
-    record.image_copy(path, type)
-    return true
-  end
-end
-
-class WebFetch
+module WebFetchCommon
   @@cache_dir = CACHE_ROOT
-  
-  def initialize(uri)
-    @uri = URI.parse(uri.gsub(' ', '%20'))
-  end
-  
+
   attr_reader :uri
-  
+
   def ==(other)
     @uri == other.uri
   end
@@ -340,32 +247,34 @@ class WebFetch
   def filename
     path.split('/').last
   end
-  
+
   def get_path(time = nil)
-    begin
-      stat = File.stat(path)
-      if stat.file? and
-         (!time or stat.mtime > time)
+    if File.exists?(path)
+      if time
+        stat = File.stat(path)
+        if stat.file? and
+            (!time or stat.mtime > time)
+          return path
+        end
+      else
         return path
       end
-    rescue Errno::ENOENT
-
     end
 
     FileUtils.mkdir_p(File.split(path).first)
-
+    
     begin
       puts "Fetch: #{@uri}"
       pbar = nil
       f = @uri.open(:content_length_proc => lambda {|t|
-        if t && 0 < t
-          name = /\/(\w+)(?:\.(\w+))?$/ =~ uri_tail ? $1 : uri_tail
-          pbar = ProgressBar.new(name, t)
-          pbar.file_transfer_mode
-        end },
-      :progress_proc => lambda {|s|
-        pbar.set s if pbar
-      })
+                      if t && 0 < t
+                        name = /\/(\w+)(?:\.(\w+))?$/ =~ uri_tail ? $1 : uri_tail
+                        pbar = ProgressBar.new(name, t)
+                        pbar.file_transfer_mode
+                      end },
+                    :progress_proc => lambda {|s|
+                      pbar.set s if pbar
+                    })
       return nil if f.length == 0
       if f.respond_to?(:path)
         FileUtils.mv(f.path, path)
@@ -375,18 +284,54 @@ class WebFetch
         File.open(path, "w:#{f.external_encoding}") { |file| file.write(f.read) }
       end
       puts
-      return path
     rescue OpenURI::HTTPError, URI::InvalidURIError, Errno::ETIMEDOUT => e
       puts " * #{e.class} : #{@uri}"
-      nil
+      return nil
     end
-  end 
+
+    path
+  end
+
+  def get(time = nil)
+    File.open(get_path(time))
+  end
+
+  def size(time = nil)
+    begin
+      File.size(get_path(time))
+    rescue
+      return nil
+    end
+  end
+end
+
+class ImageNodeFetch < ImageNode
+  include WebFetchCommon
+
+  def initialize(id, uri, tag = nil)
+    super id, tag
+    @uri = URI.parse(uri.gsub(' ', '%20'))
+  end
+
+  def inspect
+    "#{id}:#{uri}"
+  end
+end
+
+class WebFetch
+  include WebFetchCommon
+
+  def initialize(uri)
+    @uri = URI.parse(uri.gsub(' ', '%20'))
+  end
 end
 
 class GenericImageFetch < WebFetch
 
 end
 
+
+# Still used by gemline swatches
 class CopyImageFetch < GenericImageFetch
   def apply_image(type, record)
     return true if record.image_exists?(type)
@@ -397,34 +342,25 @@ class CopyImageFetch < GenericImageFetch
   end
 end
 
-class TransformImageFetch < GenericImageFetch 
+# used by highcal
+class LocalFetch
+  def initialize(path, filename)
+    @filename = filename
+    @path = File.join(path, filename)
+  end
+
+  attr_reader :path, :filename
+#  def get_path; @path; end
+
   def apply_image(type, record)
     return true if record.image_exists?(type)
-    return nil unless path = get_path
-    begin
-      record.image_transform(path, type)
-    rescue Magick::ImageMagickError
-      return nil
-    end
+    return nil unless @path
+    record.image_copy(path, type)
     return true
   end
 end
 
-class HiResImageFetch < GenericImageFetch 
-  def apply_image(type, record)
-    return true if record.image_exists?('thumb')
-    if path = get_path
-      if hires = record.image_convert(path, 'hires')
-        hires.strip!
-        %w(thumb main large).each do |name|
-          record.image_transform(hires, name)
-        end
-      end
-      return true
-    end
-    return nil
-  end
-end
+
 
 class ValidateError < StandardError
   def initialize(aspect, value = nil)
@@ -436,6 +372,10 @@ class ValidateError < StandardError
     "#{aspect}: #{value}"
   end
 end
+
+
+# New Product Record Interface
+require_relative 'product_description'
 
 class GenericImport
   @@properties = %w(material color dimension thickness base fill container pieces shape size memory)
@@ -520,10 +460,16 @@ class GenericImport
     parse_products
     mid_time = Time.now
     puts "#{@supplier_record.name} parse stop at #{mid_time} for #{mid_time - init_time}s #{@product_list.length}"     
+    supplier_nums = Set.new
     @product_list.delete_if do |product_data|
       begin
-        validate_product_after(product_data)
-        next nil # Don't Delete
+        if supplier_nums.include?(product_data['supplier_num'])
+          raise ValidateError.new('Duplicate product')
+        else
+          supplier_nums.add(product_data['supplier_num'])
+          validate_product_after(product_data)
+          next nil # Don't Delete
+        end
       rescue => boom
         if boom.is_a?(ValidateError)
           @invalid_prods[boom.aspect] = (@invalid_prods[boom.aspect] || []) + [product_data['supplier_num']]
@@ -745,28 +691,33 @@ public
   def validate_product_after(product_data)
     all_images = ((product_data['variants'].collect { |v| v['images'] }) + [product_data['images']]).flatten.compact.uniq
 
-    remove_images = []
+    replace_images = {}
 
     dup_hash = {}
     dup_hash.default = []
     all_images.each do |image|
       unless size = image.size
-        remove_images << image
+        replace_images[image] = nil
         puts "  No Image: #{image.uri}\n"
         next
       end
       
-      if (ref = dup_hash[size]) and (ref.find { |r| FileUtils.compare_file(r.path, image.path) })
-        remove_images << image
+      if (ref = dup_hash[size]) and
+          match = ref.find { |r| FileUtils.compare_file(r.path, image.path) }
+        replace_images[image] = match
         puts "  Duplicate Image: #{product_data['supplier_num']} #{size} #{ref.inspect} #{image.inspect}\n"
       else
         dup_hash[size] += [image]
       end
     end
 
-    raise ValidateError, 'No images after fetch' if (all_images - remove_images).empty?
-    product_data['images'] -= remove_images if product_data['images']
-    product_data['variants'].collect { |v| v['images'] -= remove_images if v['images'] }
+    raise ValidateError, 'No images after fetch' if (all_images - replace_images.keys).empty?
+
+    variant_images = product_data['variants'].collect do |variant|
+      variant['images'] = variant['images'].collect { |i| replace_images.has_key?(i) ? replace_images[i] : i }.compact.uniq if variant['images']
+    end.flatten
+
+    product_data['images'] = product_data['images'].collect { |i| replace_images.has_key?(i) ? replace_images[i] : i }.compact.uniq - variant_images if product_data['images']
   end
     
   def apply_product(product_data)
