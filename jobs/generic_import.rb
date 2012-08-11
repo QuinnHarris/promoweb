@@ -378,8 +378,6 @@ end
 require_relative 'product_description'
 
 class GenericImport
-  @@properties = %w(material color dimension thickness base fill container pieces shape size memory)
-
   @@cache_dir = File.join(CACHE_ROOT, "jobs")
   
   def initialize(supplier)
@@ -578,6 +576,19 @@ public
   
   def add_product(product_data)
     begin
+      pd = ProductDesc.new(product_data)
+      pd.validate
+    rescue => boom
+      puts "+ Validate Error: #{product_data['supplier_num']}: #{boom}"
+      if boom.is_a?(ValidateError)
+        @invalid_prods[boom.aspect] = (@invalid_prods[boom.aspect] || []) + [product_data['supplier_num']]
+      else
+        puts boom.backtrace
+        @invalid_prods['Other'] = (@invalid_prods[boom.to_s] || []) + [product_data['supplier_num']]
+      end
+    end
+
+    begin
       validate_product_inline(product_data)
       @product_list << product_data
     rescue => boom
@@ -613,8 +624,7 @@ public
     raise ValidateError, "No Variants" if product_data['variants'].empty?
     
     # check all variants have the same set of properties
-    prop_list = @@properties.find_all { |p| product_data['variants'].find { |v| not v[p].blank? } }
-    prop_list += product_data['variants'].collect { |v| v['properties'] && v['properties'].keys }.flatten.compact
+    prop_list = product_data['variants'].collect { |v| v['properties'] && v['properties'].keys }.flatten.compact
     prop_list = prop_list.uniq.sort
     product_data['variants'].each do |variant|
       next if variant['properties'] && (variant['properties'].keys.sort == prop_list)
@@ -753,16 +763,6 @@ public
         end
         
         product_record.save! #if changed or product_new
-
-       # Fetch images (Remove for next)
-        %w(thumb main large hires).each do |name|
-          if product_data["image-#{name}"]
-            unless product_data["image-#{name}"].apply_image(name, product_record)
-              puts "  *** Failed with no image"
-              return nil
-            end
-          end
-        end
         
         decorations = product_data['decorations'].collect do |decoration|
           decoration.merge({ 'technique' => @decoration_techniques[decoration['technique']]})
@@ -791,17 +791,8 @@ public
           variant_log << variant_record.set_images(variant_data['images']) if variant_data['images']
           
           # Properties
-          properties = @@properties
-          properties -= variant_data['properties'].keys if variant_data['properties']
-          properties.each do |attr_name|
-            value = variant_data[attr_name]
-            value = nil if value.blank?
-            value = value.collect { |k, v| "#{k}:#{v}" }.sort.join(',') if value.is_a?(Hash)
-          
-            variant_record.set_property(attr_name, value, variant_log)
-          end
-
           variant_data['properties'].each do |name, value|
+            value = nil if value.blank?
             value = value.collect { |k, v| "#{k}:#{v}" }.sort.join(',') if value.is_a?(Hash)
             variant_record.set_property(name, value, variant_log)
           end if variant_data['properties']

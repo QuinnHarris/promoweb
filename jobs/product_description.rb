@@ -1,11 +1,11 @@
-class PropertyError < StandardError
-  def initialize(msg, property = nil)
-    @msg, @property = msg, property
+class PropertyError < ValidateError
+  def initialize(value, property = nil)
+    @value, @property = value, property
   end
-  attr_reader :msg, :property
+  attr_reader :property
 
-  def to_s
-    "#{msg} for #{property}"
+  def aspect
+    "Property #{property}"
   end
 end
 
@@ -19,8 +19,8 @@ module PropertyObject
 
   module InstanceMethods
     def merge(hash)
-      unknown = (hash.keys - self.class.properties.keys )
-      PropertyError.new("unknown key: #{unkown.inspect}") unless unkown.empty?
+      unknown = hash.keys - self.class.properties.keys
+      PropertyError.new("invalid key: #{unknown.inspect}") unless unknown.empty?
       hash.each do |key, value|
         send("#{key}=", value)
       end
@@ -36,15 +36,15 @@ module PropertyObject
       @properties ||= {}
     end
 
-    def test_type(name, type, value, tail = '')
+    def test_type(name, type, value, options, tail = '')
       if Array === type
-        raise PropertyError.new("expected #{type}" + tail, name) unless Array === value
+        raise PropertyError.new("expected #{type} got #{value.inspect}" + tail, name) unless Array === value
         value.each do |e|
-          raise PropertyError.new("expected #{type} in Array" + tail, name) unless value.is_a?(type.first)
+          raise PropertyError.new("expected #{type} in Array got #{e.inspect}" + tail, name) unless e.is_a?(type.first)
         end
         raise PropertyError.new("expected unique Array" + tail, name) unless value.uniq.length == value.length
       else
-        raise PropertyError.new("expected #{type}" + tail, name) unless value.is_a?(type)
+        raise PropertyError.new("expected #{type} got #{value.inspect}" + tail, name) unless value.is_a?(type) || (options[:nil] && value.nil?)
       end
     end
 
@@ -52,29 +52,29 @@ module PropertyObject
       properties[name] = options[:nil]
       define_method("#{name}=") do |value|
         if block
-          self.class.test_type(name, type, value) unless options[:no_pre]
+          self.class.test_type(name, type, value, options) unless options[:no_pre]
           begin
             value = block.call(value)
           rescue PropertyError => e
-            raise PropertyError.new(e.msg, name)
+            raise PropertyError.new(e.value, name)
           end
-          self.class.test_type(name, type, value, ' from property method')
+          self.class.test_type(name, type, value, options, ' after method')
         else
-          self.class.test_type(name, type, value)
+          self.class.test_type(name, type, value, options)
         end
         instance_variable_set("@#{name}", value)
       end
 
       define_method(name) do
-        raise PropertyError.new("didn't expect block", name) if block and !options[:block]
-        if block_given?
-          i = type.new
-          yield i
-        else
+#        if block_given?
+#          raise PropertyError.new("didn't expect block", name) unless options[:block]
+#          i = type.new
+#          yield i
+#        else
           i = instance_variable_get("@#{name}")
-        end
+#        end
         return i if i || options[:nil]
-        instance_variable_set("@#{name}", type.new)
+        instance_variable_set("@#{name}", Array === type ? Array.new : type.new)
       end
     end
   end
@@ -89,7 +89,7 @@ class DecorationDesc
 
   property :technique, String ## !!!! Add validation here
   property :location, String
-  property :limit, Integer
+  property :limit, Integer, :nil => true
 
   [:width, :height, :diameter].each do |name|
     property name, Float, :nil => true
@@ -163,7 +163,7 @@ class ProductDesc
   property :tags, Array[String]  # !!! PROVIDE WARNING WHEN TAG IS CREATED
 
   property :supplier_categories, Array do |v|
-    raise PropertyError, "expected non empty Array" if v.empty?
+#    raise PropertyError, "expected non empty Array" if v.empty?
     v.each do |e|
       raise PropertyError, "expected Array of Array" unless Array === e
       riase PropertyError, "expected Array of non empty Array" if e.empty?
@@ -179,7 +179,8 @@ class ProductDesc
   property :decorations, Array[DecorationDesc]
 
   property :variants, Array[VariantDesc] do |v|
-    raise PropertyError.new("expected at least 1") if v.empty?
+    raise PropertyError.new("empty") if v.empty?
+    v
   end
 
   property :properties, Hash # Properties applied to all variants
@@ -194,10 +195,10 @@ class ProductDesc
     # check all variants have the same set of properties
     prop_list = variants.collect { |v| v.properties.keys }.flatten.compact.uniq.sort
     variants.each do |variant|
-      next if properties.keys.sort == prop_list
+      next if variant.properties.keys.sort == prop_list
       prop_list.each do |prop_name|
         unless properties[prop_name]
-          raise ValidateError.new("Variant property mismatch", "Variant \"#{variant['supplier_num']}\" doesn't have property \"#{prop_name}\" unlike [#{(product_data['variants'].collect { |v| v['supplier_num'] } - [variant['supplier_num']]).join(', ')}]")
+          raise ValidateError.new("Variant property mismatch", "Variant \"#{supplier_num}\" doesn't have property \"#{prop_name}\" unlike [#{(variants.collect { |v| v.supplier_num } - [variant.supplier_num]).join(', ')}]")
         end
       end
     end
@@ -216,24 +217,23 @@ class ProductDesc
         raise ValidateError.new("Duplicate image", "#{pi.inspect} of #{variant_images.inspect}")
       end
     end
-
   end
 
   def merge(hash)
     hash.each do |key, value|
       case key
       when 'lead_time_normal_min'
-        lead_time.normal_min = value
+        self.lead_time.normal_min = value
       when 'lead_time_normal_max'
-        lead_time.normal_max = value
+        self.lead_time.normal_max = value
       when 'lead_time_rush'
-        lead_time.rush = value
+        self.lead_time.rush = value
       when /^package_(\w+)$/
-        package.send("#{$1}=", value)
+        self.package.send("#{$1}=", value)
       when 'decorations'
-        decorations = value.collect { |d| DecorationDesc.new(d) }
+        self.decorations = value.collect { |d| DecorationDesc.new(d) }
       when 'variants'
-        variants = value.collect { |d| VariantDesc.new(d) }
+        self.variants = value.collect { |d| VariantDesc.new(d) }
       else
         send("#{key}=", value)
       end
@@ -241,8 +241,6 @@ class ProductDesc
   end
 
   def initialize(hash = nil)
-    if hash
-      
-    end
+    merge(hash) if hash
   end
 end

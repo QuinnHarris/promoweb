@@ -249,9 +249,11 @@ class PolyXLS < GenericImport
 #          postfix = color[0...8]
         end
         { 'supplier_num' => "#{product_data['supplier_num']}#{postfix}",
-          'color' => color.strip.capitalize,
-          'material' => material,
-          'dimension' => dimension,
+          'properties' => {
+            'color' => color.strip.capitalize,
+            'material' => material,
+            'dimension' => dimension,
+          },
           'prices' => prices,
           'costs' => costs,
           'images' => color_image_map[color]

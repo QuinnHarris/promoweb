@@ -65,7 +65,6 @@ class GemlineXML < GenericImport
         'description' => product['description'].split('^').delete_if { |s| s.empty? }.join("\n"),
         'package_weight' => product['box_weight'].to_f,
         'package_units' => product['products_per_box'].to_i,
-        'package_unit_weight' => 0.0,
         'package_height' => product['box_height_inches'].to_f,
         'package_width' => product['box_width_inches'].to_f,
         'package_length' => product['box_length_inches'].to_f,
@@ -241,7 +240,7 @@ class GemlineXML < GenericImport
               'dimension' => dimension,
               'color' => variant['color']
             },
-            'images' => variant['images'],
+            'images' => variant['images'] || [],
             'prices' => prices,
             'costs' => costs,
           }
