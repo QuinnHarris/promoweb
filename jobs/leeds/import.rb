@@ -182,8 +182,7 @@ class PolyXLS < GenericImport
         'CartonWeight' => 'package_weight' }.each do |src, dst|
         product_data[dst] = row[src].to_f unless row[src].to_f == 0.0
       end
-      product_data.merge!('package_units' => row['CartonPackQTY'].to_i,
-                          'package_unit_weight' => 0.0)
+      product_data['package_units'] = row['CartonPackQTY'].to_i
     
       product_data['description'] = row['ItemDescription'].to_s.split(/[\r\n]+|(?:\. )\s*/).collect do |line|
         line.strip

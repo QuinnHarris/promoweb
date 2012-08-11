@@ -116,10 +116,9 @@ class PackageDesc
 end
 
 class VariantDesc
-  include Comparable
-  def <=>(right)
-    supplier_num <=> right.supplier_num
-  end
+  # Cause uniq to consider only supplier_num
+  def eql?(other); supplier_num.eql?(supplier_num); end
+  def hash; supplier_num.hash; end
 
   include PropertyObject
 
