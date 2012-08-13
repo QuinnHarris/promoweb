@@ -274,54 +274,48 @@ class PolyXLS < GenericImport
     'Watch Printing' => ['Screen Print', 3],
 
     'PhotoReal' => ['Photo Transfer',3],
+    'Photografixx' => ['Photo Transfer',1],
     'Deboss' => ['Deboss',1],
-    'Deboss Initials' => ['x', 1],
+    'Deboss Initials' => nil,
     'Laser Etching' => ['Laser Engrave',1],
-    'Laser Etching Name' => ['x',1],
-    'Laser Etching Initials' => ['x',1],
-    'Laser Etch With Outline' => ['x',1],
-    'Laser Outline Only' => ['x',1],
-    'Name- personalization' => ['x',1],
+    'Laser Etching Name' => [nil,1],
+    'Laser Etching Initials' => [nil,1],
+    'Laser Etch With Outline' => [nil,1],
+    'Laser Outline Only' => [nil,1],
+    'Name- personalization' => [nil,1],
 
     'Embroidery' => ['Embroidery', 10000],
-    'Embroidery Initials' => ['x', 1],
-    'Embroidery Name' => ['x', 1],
+    'Embroidery Initials' => nil,
+    'Embroidery Name' => nil,
 
-    'Custom Dome' => ['x', 1],
+    'Custom Dome' => nil,
     'Epoxy Dome' => ['Dome', 1],
-    'Epoxy Dome Pers' => ['x', 1],
+    'Epoxy Dome Pers' => nil,
 
-    'Color Fill' => ['x', 1],
-    'Color Fill Initials' => ['x', 1],
+    'Color Fill' => nil,
+    'Color Fill Initials' => nil,
 
     'Color Stamp' => ['Stamp', 1],
-    'Color Stamp DB' => ['x', 1],
-    'Color Stamp Name' => ['x', 1],
-    'Color Stamp Initials' => ['x', 1],
+    'Color Stamp DB' => nil,
+    'Color Stamp Name' => nil,
+    'Color Stamp Initials' => nil,
 
-    'Oxidize' => ['x', 1],
+    'Oxidize' => nil,
 
-    'Sticker' => ['x', 1],
+    'Sticker' => nil,
 
-    'Upload' => ['x', 1],
+    'Upload' => nil,
 
-    'Metal' => ['x', 1],
+    'Metal' => nil,
 
-    '3d' => ['x', 1],
+    '3d' => nil,
 
     
     # Bullet
     'Silkscreened' => ['Screen Print',3],
     'Laser Engraved' => ['Laser Engrave',1],
   }
-  
-  def dec_replace(name)
-    ret = @@decoration_replace[name]
-    puts name unless ret
-    ret = [name,1] unless ret
-    ret
-  end
-  
+    
   def parse_decorations(file)
     puts "Loading Decorations"
 
@@ -366,7 +360,11 @@ class PolyXLS < GenericImport
 
       entries = []
       decoration_entries.each do |entry|
-        technique, limit = dec_replace(entry['technique'])
+        technique, limit = @@decoration_replace[entry['technique']]
+        unless technique
+          puts "Unknown Decoration: #{entry['technique']}"
+          next
+        end
         if decoration_onecolor[[supplier_num, entry['technique']]]
           limit = 1
         end

@@ -26,8 +26,28 @@ module PropertyObject
       end
     end
 
+    def to_hash
+      self.class.properties.keys.each_with_object({}) do |key, hash|
+        hash[key] = send(key)
+      end
+    end
+
     def initialize(hash = nil)
       merge(hash) if hash
+    end
+
+    def [](key)
+      return nil unless self.class.properties.keys.include?(key.to_s)
+      send(key.to_s)
+    end
+
+    def ==(right)
+      not self.class.properties.keys.find do |key|
+        not send(key) == right.send(key)
+      end
+    end
+    def !=(right)
+      not self == right
     end
   end
 
@@ -49,7 +69,7 @@ module PropertyObject
     end
 
     def property(name, type, options = {}, &block)
-      properties[name] = options[:nil]
+      properties[name.to_s] = options[:nil]
       define_method("#{name}=") do |value|
         if block
           self.class.test_type(name, type, value, options) unless options[:no_pre]
@@ -94,11 +114,25 @@ class DecorationDesc
     raise PropertyError, "got #{s} expected in #{@@techniques.keys.inspect}" unless @@techniques.keys.include?(s)
     s
   end
+  def technique_record
+    @@techniques[technique]
+  end
+  def to_hash
+    super.merge('technique' => technique_record)
+  end
+
   property :location, String
   property :limit, Integer, :nil => true
 
   [:width, :height, :diameter].each do |name|
     property name, Float, :nil => true
+  end
+
+  def ==(right)
+    return false if (self.class.properties.keys - ['technique']).find do |prop|
+      not send(prop) == right.send(prop)
+    end
+    right.is_a?(Decoration) ? technique_record.id == right.technique_id : technique == right.technique
   end
 end
 
@@ -108,6 +142,7 @@ class LeadTimeDesc
   property :normal_min, Integer
   property :normal_max, Integer
   property :rush, Integer, :nil => true
+  # Rush Charge?
 end
 
 class PackageDesc
@@ -185,6 +220,8 @@ class ProductDesc
     v
   end
 
+  property :categories, Array, :nil => true
+
   property :images, Array[ImageNodeFetch]
 
   property :decorations, Array[DecorationDesc]
@@ -234,6 +271,38 @@ class ProductDesc
         raise ValidateError.new("Duplicate image", "#{pi.inspect} of #{variant_images.inspect}")
       end
     end
+  end
+
+  def validate_after
+    all_images = ((variants.collect { |v| v.images }) + self.images).flatten.compact.uniq
+
+    replace_images = {}
+
+    dup_hash = {}
+    dup_hash.default = []
+    all_images.each do |image|
+      unless size = image.size
+        replace_images[image] = nil
+        puts "  No Image: #{image.uri}\n"
+        next
+      end
+      
+      if (ref = dup_hash[size]) and
+          match = ref.find { |r| FileUtils.compare_file(r.path, image.path) }
+        replace_images[image] = match
+        puts "  Duplicate Image: #{supplier_num} #{size} #{ref.inspect} #{image.inspect}\n"
+      else
+        dup_hash[size] += [image]
+      end
+    end
+
+    raise ValidateError, 'No images after fetch' if (all_images - replace_images.keys).empty?
+
+    variant_images = variants.collect do |variant|
+      variant.images = variant.images.collect { |i| replace_images.has_key?(i) ? replace_images[i] : i }.compact.uniq
+    end.flatten
+
+    self.images = self.images.collect { |i| replace_images.has_key?(i) ? replace_images[i] : i }.compact.uniq - variant_images
   end
 
   def merge(hash)

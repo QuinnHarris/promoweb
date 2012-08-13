@@ -133,6 +133,10 @@ class SupplierPricing
   # Temp?
   attr_accessor :prices, :costs
 
+  def ==(right)
+    prices == right.prices && costs == right.costs
+  end
+
   def self.get
     sp = new
     yield sp
@@ -468,18 +472,18 @@ class GenericImport
     mid_time = Time.now
     puts "#{@supplier_record.name} parse stop at #{mid_time} for #{mid_time - init_time}s #{@product_list.length}"     
     supplier_nums = Set.new
-    @product_list.delete_if do |product_data|
+    @product_list.delete_if do |pd|
       begin
-        if supplier_nums.include?(product_data['supplier_num'])
+        if supplier_nums.include?(pd.supplier_num)
           raise ValidateError.new('Duplicate product')
         else
-          supplier_nums.add(product_data['supplier_num'])
-          validate_product_after(product_data)
+          supplier_nums.add(pd.supplier_num)
+          pd.validate_after
           next nil # Don't Delete
         end
       rescue => boom
         if boom.is_a?(ValidateError)
-          @invalid_prods[boom.aspect] = (@invalid_prods[boom.aspect] || []) + [product_data['supplier_num']]
+          @invalid_prods[boom.aspect] = (@invalid_prods[boom.aspect] || []) + [pd.supplier_num]
           next true # Do Delete
         else
           raise
@@ -522,7 +526,7 @@ private
   
 public
   def run_apply_single(supplier_num)
-    product = @product_list.find { |prod| prod['supplier_num'] == supplier_num }
+    product = @product_list.find { |prod| pd.supplier_num == supplier_num }
     apply_product(product)
   end
 
@@ -552,12 +556,12 @@ public
     end
     
     begin
-      product_ids = @product_list.collect do |prod|
-        num = prod['supplier_num']
-        if last_data[num] != prod
-          if rec = apply_product(prod) 
+      product_ids = @product_list.collect do |pd|
+        num = pd.supplier_num
+        unless last_data[num] == pd
+          if rec = apply_product(pd)
             last_ids[num] = rec.id
-            last_data[num] = prod
+            last_data[num] = pd
           end
         end
         last_ids[num]
@@ -577,9 +581,9 @@ public
   
   # For debuging
   def run_apply_for_product(num)
-    @product_list.each do |prod|
-      next unless prod['supplier_num'] == num
-      apply_product(prod)
+    @product_list.each do |pd|
+      next unless pd.supplier_num == num
+      apply_product(pd)
     end
   end
   
@@ -587,14 +591,14 @@ public
     begin
       pd = ProductDesc.new(product_data)
       pd.validate
-      @product_list << product_data
+      @product_list << pd
     rescue => boom
-      puts "+ Validate Error: #{product_data['supplier_num']}: #{boom}"
+      puts "+ Validate Error: #{pd && pd.supplier_num}: #{boom}"
       if boom.is_a?(ValidateError)
-        @invalid_prods[boom.aspect] = (@invalid_prods[boom.aspect] || []) + [product_data['supplier_num']]
+        @invalid_prods[boom.aspect] = (@invalid_prods[boom.aspect] || []) + [pd && pd.supplier_num]
       else
         puts boom.backtrace
-        @invalid_prods['Other'] = (@invalid_prods[boom.to_s] || []) + [product_data['supplier_num']]
+        @invalid_prods['Other'] = (@invalid_prods[boom.to_s] || []) + [pd.supplier_num]
       end
     end
   end
@@ -602,45 +606,12 @@ public
   def each_product
     @product_list.each { |p| yield p }
   end
-  
-  # After validation (slower blocking checks)
-  def validate_product_after(product_data)
-    all_images = ((product_data['variants'].collect { |v| v['images'] }) + [product_data['images']]).flatten.compact.uniq
-
-    replace_images = {}
-
-    dup_hash = {}
-    dup_hash.default = []
-    all_images.each do |image|
-      unless size = image.size
-        replace_images[image] = nil
-        puts "  No Image: #{image.uri}\n"
-        next
-      end
-      
-      if (ref = dup_hash[size]) and
-          match = ref.find { |r| FileUtils.compare_file(r.path, image.path) }
-        replace_images[image] = match
-        puts "  Duplicate Image: #{product_data['supplier_num']} #{size} #{ref.inspect} #{image.inspect}\n"
-      else
-        dup_hash[size] += [image]
-      end
-    end
-
-    raise ValidateError, 'No images after fetch' if (all_images - replace_images.keys).empty?
-
-    variant_images = product_data['variants'].collect do |variant|
-      variant['images'] = variant['images'].collect { |i| replace_images.has_key?(i) ? replace_images[i] : i }.compact.uniq if variant['images']
-    end.flatten
-
-    product_data['images'] = product_data['images'].collect { |i| replace_images.has_key?(i) ? replace_images[i] : i }.compact.uniq - variant_images if product_data['images']
-  end
     
-  def apply_product(product_data)
+  def apply_product(pd)
     product_log = ''
     product_new = nil
         
-    product_record = @supplier_record.get_product(product_data['supplier_num'])
+    product_record = @supplier_record.get_product(pd.supplier_num)
         
     begin     
       Product.transaction do
@@ -658,69 +629,81 @@ public
         end
         
         # Set Product record properties
-        %w(name description
-           package_weight package_units package_unit_weight
-           package_height package_width package_length data
-           lead_time_normal_min lead_time_normal_max lead_time_rush lead_time_rush_charge).each do |attr_name|
-          if !product_data[attr_name].nil? and (product_record[attr_name] != product_data[attr_name])
-            product_log << "  #{attr_name}: #{product_record[attr_name].inspect} => #{product_data[attr_name].inspect}\n"
-            product_record[attr_name] = product_data[attr_name]
+        %w(name description data).each do |name|
+          value = pd.send(name)
+          value = value.join("\n") if name == 'description'
+          value = nil if name == 'data' and value.empty?
+          if !value.nil? and product_record[name] != value
+            product_log << "  #{name}: #{product_record[name].inspect} => #{value.inspect}\n"
+            product_record[name] = value
           end
+        end
+
+        PackageDesc.properties.keys do |name|
+          value = pd.package.send(name)
+          if !value.nil? and product_record["package_#{name}"] != value
+            product_log << "  Package #{name}: #{product_record[attr_name].inspect} => #{value.inspect}\n"
+            product_record["package_#{name}"] = value
+          end
+        end
+
+        LeadTimeDesc.properties.keys do |name|
+          value = pd.lead_time.send(name)
+          if !value.nil? and product_record["lead_time_#{name}"] != value
+            product_log << "  Lead Time #{name}: #{product_record[attr_name].inspect} => #{value.inspect}\n"
+            product_record["lead_time_#{name}"] = value
+          end          
         end
         
         product_record.save! #if changed or product_new
-        
-        decorations = product_data['decorations'].collect do |decoration|
-          decoration.merge({ 'technique' => @decoration_techniques[decoration['technique']]})
-        end
-        
-        product_log << product_record.set_decorations(decorations)
-        product_log << product_record.set_categories(product_data['categories'].collect { |a| a.collect { |b| b[0...32] } })
-        product_log << product_record.set_tags(product_data['tags'] || [])
+                
+        product_log << product_record.set_decorations(pd.decorations)
+        product_log << product_record.set_categories(pd.categories.collect { |a| a.collect { |b| b[0...32] } })
+        product_log << product_record.set_tags(pd.tags)
         
         new_price_groups, new_cost_groups = [], []
 
         # Fetch Images
-        all_images = ([product_data['images']] + 
-                      product_data['variants'].collect { |v| v['images'] }).flatten.compact.uniq
+        all_images = (pd.images + pd.variants.collect { |v| v.images }).flatten.compact.uniq
         product_log << product_record.delete_images_except(all_images)
-        product_log << product_record.set_images(product_data['images'])
+        product_log << product_record.set_images(pd.images)
        
         # Process Variants
-        variant_records = product_data['variants'].collect do |variant_data|
+        variant_records = pd.variants.collect do |vd|
           variant_log = ''
-          variant_record = product_record.get_variant(variant_data['supplier_num'])
+          variant_record = product_record.get_variant(vd.supplier_num)
           variant_new = variant_record.new_record?
           variant_record.save! if variant_new
 
           # Fetch Images
-          variant_log << variant_record.set_images(variant_data['images']) if variant_data['images']
+          variant_log << variant_record.set_images(vd.images)
           
           # Properties
-          variant_data['properties'].each do |name, value|
+          vd.properties.each do |name, value|
             value = nil if value.blank?
             value = value.collect { |k, v| "#{k}:#{v}" }.sort.join(',') if value.is_a?(Hash)
             variant_record.set_property(name, value, variant_log)
-          end if variant_data['properties']
-  
-          if variant_data["swatch-medium"]  
-            swatch_prop = variant_record.set_property('swatch', variant_data["swatch-medium"].filename, variant_log)
-            
-            # Fetch images
-            %w(small medium).each do |name|
-              variant_data["swatch-#{name}"].apply_image(name, swatch_prop) if variant_data["swatch-#{name}"]
-            end
           end
+ 
+          # REPLACE THIS
+#          if variant_data["swatch-medium"]  
+#            swatch_prop = variant_record.set_property('swatch', variant_data["swatch-medium"].filename, variant_log)
+#            
+#            # Fetch images
+#            %w(small medium).each do |name|
+#              variant_data["swatch-#{name}"].apply_image(name, swatch_prop) if variant_data["swatch-#{name}"]
+#            end
+#          end
           
           # Match groups to variant list.  Ensure cost and price lists match
           if pg = new_price_groups.zip(new_cost_groups).find do |(dp, vp), (dc, vc)|
-              dp == variant_data['prices'] and dc == variant_data['costs']
+              dp == vd.pricing.prices and dc == vd.pricing.costs
             end
             pg[0][1] << variant_record
             pg[1][1] << variant_record
           else
-            new_price_groups << [variant_data['prices'], [variant_record]]
-            new_cost_groups << [variant_data['costs'], [variant_record]]
+            new_price_groups << [vd.pricing.prices, [variant_record]]
+            new_cost_groups << [vd.pricing.costs, [variant_record]]
           end
 
 #          [[new_price_groups, 'prices'], [new_cost_groups, 'costs']].each do |group, name|
@@ -733,9 +716,9 @@ public
                     
           # Log it
           if variant_new
-            product_log << "  Variant: #{variant_data['supplier_num']} (NEW)\n"
+            product_log << "  Variant: #{vd.supplier_num} (NEW)\n"
           elsif !variant_log.empty?
-            product_log << "  Variant: #{variant_data['supplier_num']}\n"
+            product_log << "  Variant: #{vd.supplier_num}\n"
             product_log << variant_log
             variant_record.save! # Update updated_at
           end
@@ -776,7 +759,7 @@ public
         
         if recache_prices
           pc = PriceCollectionCompetition.new(product_record)
-          pc.calculate_price(product_data['price_params'] || {})
+          pc.calculate_price({}) # product_data['price_params']
         end
 
         product_record.association(:variants).target = variant_records
@@ -787,14 +770,14 @@ public
         product_record.save! # Update updated_at
       end
     rescue Exception
-      puts product_data.inspect
+      puts pd.inspect
       raise
     ensure
       # Log it
       if product_new
-        puts " Product: #{product_data['supplier_num']} (M#{product_record.id}) (NEW)"
+        puts " Product: #{pd.supplier_num} (M#{product_record.id}) (NEW)"
       elsif !product_log.empty?
-        puts " Product: #{product_data['supplier_num']} (M#{product_record.id})\n" + product_log
+        puts " Product: #{pd.supplier_num} (M#{product_record.id})\n" + product_log
       end
     end
     

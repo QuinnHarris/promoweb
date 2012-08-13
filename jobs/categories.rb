@@ -6,32 +6,30 @@ class NewCategoryTransform
     end
   end
 
-  def apply_rules(record)
-#    puts "Apply Rule: #{record['supplier_num']}"
-    remove_sub_dups(record['supplier_categories'])
-    record['categories'] ||= []
+  def apply_rules(pd)
+    remove_sub_dups(pd.supplier_categories)
+    pd.categories = []
     @rules.each do |rule, category|
-      if res = rule.call(record, category)
-        record['categories'] += res
-        record['categories'].uniq!
+      if res = rule.call(pd, category)
+        pd.categories = (pd.categories + res).uniq
       end
     end
 
     # Remove parent categories after all rules to work correct with exclude
-    remove_sub_dups(record['categories'])
+    remove_sub_dups(pd['categories'])
 
     if true #Rails.env.production?
-      record['categories'] = [['Other']] if record['categories'].empty?
+      pd.categories = [['Other']] if pd.categories.empty?
     else
-      record['categories'] = record['categories'] + record['categories'].collect { |cat| ['YBySupplier', @supplier] + cat }
+      pd.categories += pd.categories.collect { |cat| ['YBySupplier', @supplier] + cat }
 
-      unused_categories = record['supplier_categories'] - @used_categories   
-      unused_categories << ['AAA'] if record['categories'].empty?
+      unused_categories = pd.supplier_categories - @used_categories   
+      unused_categories << ['AAA'] if pd.categories.empty?
       unless unused_categories.uniq.empty?
-        record['categories'] = record['categories'] + unused_categories.collect { |cat| ['XUnOrganized', @supplier] + cat }
+        pd.categories += unused_categories.collect { |cat| ['XUnOrganized', @supplier] + cat }
       end
 
-      record['categories'] = record['categories'] + (record['supplier_categories'] - unused_categories).collect { |cat| ['ZSuppliers', @supplier] + cat }
+      pd.categories += (pd.supplier_categories - unused_categories).collect { |cat| ['ZSuppliers', @supplier] + cat }
     end
   end
 
@@ -84,14 +82,15 @@ private
         else
           cat = exclude
         end
-        next nil unless record['categories'].find { |cs| cs[0...(cat.length)] == cat }
+        next nil unless record.categories.find { |cs| cs[0...(cat.length)] == cat }
       end
 #      puts "Match #{match_category.inspect} : #{properties.inspect} : #{values.inspect}"
       match = properties.find do |property|
         if record[property]
           val = record[property]
+          val = val.join("\n") if property == 'description'
         else
-          list = record['variants'].collect { |v| v[property] || (v['properties'] && v['properties'][property]) }.compact.uniq
+          list = record.variants.collect { |v| v[property] || (v.properties[property]) }.compact.uniq
           next if list.empty?
           val = list.join(' ')
         end
@@ -113,7 +112,7 @@ private
     Proc.new do |record, match_category|
       [elements].flatten.compact.each do |elem|
         if elem.call(record, match_category)
-          record['categories'].delete_if { |cat| cat == match_category }
+          record.categories.delete_if { |cat| cat == match_category }
         end
       end
       nil

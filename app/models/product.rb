@@ -889,7 +889,7 @@ class Product < ActiveRecord::Base
     create = []
     
     dst.each do |d|
-      if match = src.find { |s| not d.find { |k, v| s.send(k) != v } }
+      if match = src.find { |s| d == s }
         src.delete(match)
       else
         create << d
@@ -899,9 +899,9 @@ class Product < ActiveRecord::Base
     created = []
     
     src.each do |s|
-      if d = create.find { |c| c['technique'] == s.technique }
+      if d = create.find { |c| c.technique_record == s.technique }
         # Recycle old decoration
-        s.update_attributes(d)
+        s.update_attributes(d.to_hash)
         created << s
         create.delete(d)
       else
@@ -918,7 +918,7 @@ class Product < ActiveRecord::Base
     end
     
     # Create remaining
-    created += create.collect { |d| decorations.create(d) }
+    created += create.collect { |d| decorations.create(d.to_hash) }
     
     (src.empty? and created.empty?) ? '' : "  Decoration: #{Product.print_records_two(src, created)}"
   end
