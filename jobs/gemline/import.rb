@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 class GemlineXML < GenericImport
   @@decoration_replace = { 'Print' => ['Screen Print', 6],
   'Embroidery' => ['Embroidery', 20000],
@@ -9,7 +11,7 @@ class GemlineXML < GenericImport
   'Gemphoto/Heat Transfers' => ['Photo Transfer', nil],
   'Gemphoto' => ['Photo Transfer', nil],
   'Print (one color only)' => ['Screen Print', 1],
-  "Print (case only \342\200\223 one color print)" => ['Screen Print', 1],
+  "Print (case only – one color print)" => ['Screen Print', 1],
   'Initials' => ['Personalization', nil],
   'Laser Engraving' => ['Laser Engrave', 1]}
 

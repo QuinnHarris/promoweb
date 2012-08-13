@@ -87,7 +87,13 @@ class SupplierPricing; end
 class DecorationDesc
   include PropertyObject
 
-  property :technique, String ## !!!! Add validation here
+  @@techniques = DecorationTechnique.all.each_with_object({}) { |i, h| h[i.name] = i }
+  cattr_reader :techniques
+
+  property :technique, String do |s|
+    raise PropertyError, "got #{s} expected in #{@@techniques.keys.inspect}" unless @@techniques.keys.include?(s)
+    s
+  end
   property :location, String
   property :limit, Integer, :nil => true
 
@@ -159,7 +165,13 @@ class ProductDesc
     end
   end
 
-  property :tags, Array[String]  # !!! PROVIDE WARNING WHEN TAG IS CREATED
+  @@tags = Tag.select(:name).uniq.collect { |t| t.name }
+  property :tags, Array[String] do |array|
+    array.each do |s|
+      raise PropertyError, "got #{s} expected in #{@@tags.inspect}" unless @@tags.include?(s)
+    end
+    array
+  end
 
   property :supplier_categories, Array do |v|
 #    raise PropertyError, "expected non empty Array" if v.empty?
@@ -191,6 +203,12 @@ class ProductDesc
   property :data, Hash
 
   def validate
+    # check presense
+    self.class.properties.each do |key, value|
+      next if value
+      raise PropertyError.new("nil", key) if send(key).nil?
+    end
+
     # check all variants have the same set of properties
     prop_list = variants.collect { |v| v.properties.keys }.flatten.compact.uniq.sort
     variants.each do |variant|

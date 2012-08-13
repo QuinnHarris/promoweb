@@ -150,18 +150,26 @@ class SupplierPricing
   end
   
   def add(qty, price, code = nil)
-    base = { :fixed => Money.new(0),
-      :minimum => Integer(qty) }
+    qty = Integer(qty)
+    raise PropertyError, "qty must be positive" unless qty > 0
+    raise ValidateError, "minimums must be sequential" if @prices.last && @prices.last[:minimum] >= qty
+
     price = Money.new(Float(price))
+    raise ValidateError, "marginal price must be sequential" if @prices.last && @prices.last[:marginal] > price
+
+    base = { :fixed => Money.new(0), :minimum => qty }
     @prices << base.merge(:marginal => price)
 
     if code
       discount = convert_pricecode(code)
       if discount
-        @costs << base.merge(:marginal => price * (1.0 - discount) )
+        price *= 1.0 - discount
       else
-        @costs << base.merge(:marginal => Money.new(Float(code)))
+        price = Money.new(Float(code))
       end
+      
+      raise ValidateError, "marginal cost must be sequential" if @costs.last && @costs.last[:marginal] > price
+      @costs << base.merge(:marginal => price)
     end
   end
 
@@ -187,6 +195,7 @@ public
   end
 
   def maxqty(qty = nil)
+    raise ValidateError, "maxqty can only be called once" unless @costs.last[:marginal]
     @costs << { :minimum => qty ? Integer(qty) : @costs.last[:minimum] * 2 } unless @costs.empty?
   end
 
@@ -578,21 +587,9 @@ public
     begin
       pd = ProductDesc.new(product_data)
       pd.validate
-    rescue => boom
-      puts "+ Validate Error: #{product_data['supplier_num']}: #{boom}"
-      if boom.is_a?(ValidateError)
-        @invalid_prods[boom.aspect] = (@invalid_prods[boom.aspect] || []) + [product_data['supplier_num']]
-      else
-        puts boom.backtrace
-        @invalid_prods['Other'] = (@invalid_prods[boom.to_s] || []) + [product_data['supplier_num']]
-      end
-    end
-
-    begin
-      validate_product_inline(product_data)
       @product_list << product_data
     rescue => boom
-      puts "* Validate Error: #{product_data['supplier_num']}: #{boom}"
+      puts "+ Validate Error: #{product_data['supplier_num']}: #{boom}"
       if boom.is_a?(ValidateError)
         @invalid_prods[boom.aspect] = (@invalid_prods[boom.aspect] || []) + [product_data['supplier_num']]
       else
@@ -606,97 +603,6 @@ public
     @product_list.each { |p| yield p }
   end
   
-  # Inline validation (nothing blocking)
-  def validate_product_inline(product_data)    
-    # check presense
-    %w(supplier_num name description).each do |name|
-      unless product_data[name].is_a?(String)
-        raise ValidateError, "#{name} is not string"
-      end
-    end
-
-    %w(decorations supplier_categories variants images).each do |name|
-      unless product_data[name].is_a?(Array)
-        raise ValidateError, "#{name} is not array"
-      end
-    end
-    
-    raise ValidateError, "No Variants" if product_data['variants'].empty?
-    
-    # check all variants have the same set of properties
-    prop_list = product_data['variants'].collect { |v| v['properties'] && v['properties'].keys }.flatten.compact
-    prop_list = prop_list.uniq.sort
-    product_data['variants'].each do |variant|
-      next if variant['properties'] && (variant['properties'].keys.sort == prop_list)
-      properties = variant['properties']
-      prop_list.each do |prop_name|
-        unless (variant && variant[prop_name]) or (properties && properties[prop_name])
-          raise ValidateError.new("Variant property mismatch", "Variant \"#{variant['supplier_num']}\" doesn't have property \"#{prop_name}\" unlike [#{(product_data['variants'].collect { |v| v['supplier_num'] } - [variant['supplier_num']]).join(', ')}]")
-        end
-      end
-    end
-
-    # check unique variant supplier_num
-    raise ValidateError.new("Variant supplier_num not unique", product_data['variants'].collect { |v| v['supplier_num'] }.inspect) unless product_data['variants'].collect { |v| v['supplier_num'] }.uniq.length == product_data['variants'].length
-  
-    # check technique
-    product_data['decorations'] = product_data['decorations'].collect do |decoration|
-      unless @decoration_techniques[decoration['technique']]
-#        product_log << "  Unknown Decoration Technique: #{decoration.inspect}\n"
-        nil
-      else
-        decoration
-      end
-    end.compact
-    
-    # check categories
-    if product_data['supplier_categories'].empty?
-      raise ValidateError, "No Categories"
-    else
-      raise ValidateError, "Category not list" unless product_data['supplier_categories'].is_a?(Array)
-      product_data['supplier_categories'].each do |category|
-        raise ValidateError, "SubCategory not list" unless category.is_a?(Array)
-        category.each { |str| raise ValidateError.new("Category not string", product_data['supplier_categories'].inspect) unless str.is_a?(String) }
-      end
-    end
-    
-    # check images
-    variant_images = product_data['variants'].collect { |v| v['images'] }.flatten.compact
-    product_images = [product_data['images']].flatten.compact
-    product_images.each do |pi|
-      if variant_images.find { |vi| vi == pi }
-        raise ValidateError.new("Duplicate image", "#{pi.inspect} of #{variant_images.inspect}")
-      end
-    end
-
-    raise ValidateError, "No images" if (variant_images + product_images).empty?
-    
-    # check prices
-    product_data['variants'].each do |variant|
-      %w(costs prices).each do |type|
-        minimum = nil
-        marginal = nil
-        raise ValidateError, "#{type} is nil" unless variant[type] and !variant[type].empty?
-        raise ValidateError.new("#{type} Duplicate Entry", variant[type].inspect) unless variant[type].length == variant[type].uniq.length
-        variant[type].each do |price|
-          raise ValidateError.new("#{type} Minimum is null", variant[type].inspect) unless price[:minimum]
-          raise ValidateError.new("#{type} Marginal is <= 0", variant[type].inspect) if price[:marginal] and (price[:marginal] <= Money.new(0))
-          raise ValidateError.new("#{type} Minimum not sequential", variant[type].inspect) if minimum and price[:minimum] <= minimum
-          raise ValidateError.new("#{type} nil marginal not last item", variant[type].inspect) if minimum and !marginal
-          raise ValidateError.new("#{type} Marginal not sequential", variant[type].inspect) if marginal and price[:marginal] and price[:marginal] > marginal
-          minimum = price[:minimum]
-          marginal = price[:marginal]
-        end
-      end
-    end
-    
-    # Check uniq variant properties
-    properties = product_data['variants'].collect { |v| v['properties'] }
-    unless properties.uniq.length == properties.length
-      raise ValidateError.new("Variant properties not unique", properties.inspect)
-    end    
-  end
-
   # After validation (slower blocking checks)
   def validate_product_after(product_data)
     all_images = ((product_data['variants'].collect { |v| v['images'] }) + [product_data['images']]).flatten.compact.uniq
