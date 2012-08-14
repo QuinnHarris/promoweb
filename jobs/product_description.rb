@@ -19,7 +19,7 @@ module PropertyObject
 
   module InstanceMethods
     def merge(hash)
-      unknown = hash.keys - self.class.properties.keys
+      unknown = hash.keys - self.class.properties
       PropertyError.new("invalid key: #{unknown.inspect}") unless unknown.empty?
       hash.each do |key, value|
         send("#{key}=", value)
@@ -27,7 +27,7 @@ module PropertyObject
     end
 
     def to_hash
-      self.class.properties.keys.each_with_object({}) do |key, hash|
+      self.class.properties.each_with_object({}) do |key, hash|
         hash[key] = send(key)
       end
     end
@@ -37,12 +37,12 @@ module PropertyObject
     end
 
     def [](key)
-      return nil unless self.class.properties.keys.include?(key.to_s)
+      return nil unless self.class.properties.include?(key.to_s)
       send(key.to_s)
     end
 
     def ==(right)
-      not self.class.properties.keys.find do |key|
+      not self.class.properties.find do |key|
         not send(key) == right.send(key)
       end
     end
@@ -52,8 +52,11 @@ module PropertyObject
   end
 
   module ClassMethods
+    def properties_hash
+      @properties_hash ||= {}
+    end
     def properties
-      @properties ||= {}
+      @properties_hash.keys
     end
 
     def test_type(name, type, value, options, tail = '')
@@ -69,7 +72,7 @@ module PropertyObject
     end
 
     def property(name, type, options = {}, &block)
-      properties[name.to_s] = options[:nil]
+      properties_hash[name.to_s] = options[:nil]
       define_method("#{name}=") do |value|
         if block
           self.class.test_type(name, type, value, options) unless options[:no_pre]
@@ -129,7 +132,7 @@ class DecorationDesc
   end
 
   def ==(right)
-    return false if (self.class.properties.keys - ['technique']).find do |prop|
+    return false if (self.class.properties - ['technique']).find do |prop|
       not send(prop) == right.send(prop)
     end
     right.is_a?(Decoration) ? technique_record.id == right.technique_id : technique == right.technique
@@ -187,7 +190,6 @@ class ProductDesc
   include PropertyObject
 
   property :supplier_num, String do |s| s.strip end
-
   property :name, String do |s| s.strip end
 
   property :description, Array, :no_pre => true do |v|
@@ -200,6 +202,10 @@ class ProductDesc
     end
   end
 
+  property :lead_time, LeadTimeDesc
+  property :package, PackageDesc
+  property :data, Hash
+
   @@tags = Tag.select(:name).uniq.collect { |t| t.name }
   property :tags, Array[String] do |array|
     array.each do |s|
@@ -209,7 +215,6 @@ class ProductDesc
   end
 
   property :supplier_categories, Array do |v|
-#    raise PropertyError, "expected non empty Array" if v.empty?
     v.each do |e|
       raise PropertyError, "expected Array of Array" unless Array === e
       riase PropertyError, "expected Array of non empty Array" if e.empty?
@@ -233,15 +238,9 @@ class ProductDesc
 
   property :properties, Hash # Properties applied to all variants
 
-  property :lead_time, LeadTimeDesc
-
-  property :package, PackageDesc
-
-  property :data, Hash
-
   def validate
     # check presense
-    self.class.properties.each do |key, value|
+    self.class.properties_hash.each do |key, value|
       next if value
       raise PropertyError.new("nil", key) if send(key).nil?
     end

@@ -390,6 +390,190 @@ end
 # New Product Record Interface
 require_relative 'product_description'
 
+class ProductApply
+  def initialize(record, current, previous = nil)
+    @record, @current, @previous = record, current, previous
+  end
+  attr_reader :record, :current, :previous
+  
+  def apply
+    product_log = ''
+    product_new = record.new_record?
+    
+    changed = ProductDesc.properties
+    changed = changed.find_all do |prop|
+      current.send(prop) != previous.send(prop)
+    end if previous
+
+    begin
+      Product.transaction do
+        changed.each do |prop|
+          product_log += send("apply_#{prop}", current.send(prop), previous && previous.send(prop))
+        end
+        
+        unless product_log.empty?
+          record.updated_at_will_change! # Update updated_at
+        end
+        record.save!
+      end
+    rescue Exception
+      puts current.inspect
+      raise
+    ensure
+      # Log it
+      if product_new
+        puts " Product: #{current.supplier_num} (M#{record.id}) (NEW)"
+      elsif !product_log.empty?
+        puts " Product: #{current.supplier_num} (M#{record.id})\n" + product_log
+      end
+    end
+
+    not product_log.empty?
+  end
+
+  %w(name data).each do |name|
+    define_method "apply_#{name}" do |curr, prev|
+      return nil if (old = record.send(name)) == curr
+      record.name = curr
+      "  #{old.inspect} => #{curr.inspect}"
+    end
+  end
+
+  def apply_description(curr, prev)
+    return nil if (old = record.send(name)) == (val = curr.join("\n"))
+    record.name = val
+    "  #{old.inspect} => #{curr.inspect}"
+  end
+
+  %w(package lead_time).each do |name|
+    properties = Kernel.const_get("#{name.classify}Desc").properties
+    define_method "apply_#{name}" do |curr, prev|
+      properties.collect do |prop|
+        val = curr.send(prop)
+        unless (prev && val == prev.send(prop)) ||
+            ((old = record["#{name}_#{prop}"]) == val)
+          record["#{name}_#{prop}"] = val
+          "  #{old.inspect} => #{curr.inspect}"
+        end
+      end.join("\n")
+    end
+  end
+
+  def apply_tags(curr, prev)
+    record.save! if record.new_record? # Allocate ID
+    record.set_tags(pd.tags)
+  end
+
+  def apply_decorations(curr, prev)
+    record.set_decorations(curr)
+  end
+
+  def apply_categories(curr, prev)
+    record.set_categories(curr.collect { |a| a.collect { |b| b[0...32] } })
+  end
+
+  def apply_images(curr, prev)
+    all_images = (curr + current.variants.collect { |v| v.images }).flatten.compact.uniq
+    record.delete_images_except(all_images) + record.set_images(curr)
+  end
+
+  def apply_variants(curr, prev)
+    new_price_groups, new_cost_groups = [], []
+
+    product_log = []
+       
+    # Process Variants
+    variant_records = curr.collect do |vd|
+      variant_log = ''
+      variant_record = record.get_variant(vd.supplier_num)
+      variant_new = variant_record.new_record?
+      variant_record.save! if variant_new
+
+      # Fetch Images
+      variant_log << variant_record.set_images(vd.images)
+          
+      # Properties
+      vd.properties.each do |name, value|
+        value = nil if value.blank?
+        value = value.collect { |k, v| "#{k}:#{v}" }.sort.join(',') if value.is_a?(Hash)
+        variant_record.set_property(name, value, variant_log)
+      end
+      
+      # REPLACE THIS
+#          if variant_data["swatch-medium"]  
+#            swatch_prop = variant_record.set_property('swatch', variant_data["swatch-medium"].filename, variant_log)
+#            
+#            # Fetch images
+#            %w(small medium).each do |name|
+#              variant_data["swatch-#{name}"].apply_image(name, swatch_prop) if variant_data["swatch-#{name}"]
+#            end
+#          end
+          
+      # Match groups to variant list.  Ensure cost and price lists match
+      if pg = new_price_groups.zip(new_cost_groups).find do |(dp, vp), (dc, vc)|
+          dp == vd.pricing.prices and dc == vd.pricing.costs
+        end
+        pg[0][1] << variant_record
+        pg[1][1] << variant_record
+      else
+        new_price_groups << [vd.pricing.prices, [variant_record]]
+        new_cost_groups << [vd.pricing.costs, [variant_record]]
+      end
+
+      # Log it
+      if variant_new
+        product_log << "  Variant: #{vd.supplier_num} (NEW)\n"
+      elsif !variant_log.empty?
+        product_log << "  Variant: #{vd.supplier_num}\n"
+        product_log << variant_log
+        variant_record.save! # Update updated_at
+      end
+      
+      variant_record
+    end
+       
+    # Remove variants
+    (product_record.variants - variant_records).each do |variant_record|
+      if variant_record.order_item_variants.empty? and
+          (variant_record.price_group_order_items_count == 0)
+        product_log << "  Deleted Variant: #{variant_record['supplier_num']} (#{variant_record.id})\n"
+        variant_record.destroy
+      else
+        product_log << "  Marked Deleted Variant: #{variant_record['supplier_num']} (#{variant_record.id})\n"
+        variant_record.deleted = true
+        variant_record.save!
+      end
+    end
+
+    recache_prices = false
+    
+    [[new_price_groups, @supplier_record.price_source],
+     [new_cost_groups, nil]].each do |dst, source_id|
+      log = product_record.set_prices(source_id, dst)
+      recache_prices = true unless log.empty?
+      product_log += log
+    end
+    
+    # Check shit
+    product_record.variants.each do |variant|
+      srcs = variant.price_groups.collect { |g| g.source }
+      unless srcs.length == srcs.uniq.length
+        puts "#{variant.id}: #{variant.price_groups.inspect}"
+        raise "Multiple price groups from the same source" 
+      end
+    end
+        
+    if recache_prices
+      pc = PriceCollectionCompetition.new(record)
+      pc.calculate_price({}) # product_data['price_params']
+    end
+    
+    record.association(:variants).target = variant_records
+
+    product_log
+  end
+end
+
 class GenericImport
   @@cache_dir = File.join(CACHE_ROOT, "jobs")
   
@@ -525,16 +709,10 @@ private
   end
   
 public
-  def run_apply_single(supplier_num)
-    product = @product_list.find { |prod| pd.supplier_num == supplier_num }
-    apply_product(product)
-  end
-
-  def run_apply(cleanup = true)
-    product_ids = @product_list.collect { |prod| apply_product(prod).id }
-    run_cleanup(product_ids) if cleanup
-    run_summary
-  end
+#  def run_apply_single(supplier_num)
+#    product = @product_list.find { |prod| pd.supplier_num == supplier_num }
+#    apply_product(product)
+#  end
   
   def run_transform
     trans = NewCategoryTransform.new [@supplier_name].flatten.first
@@ -542,6 +720,12 @@ public
       trans.apply_rules(prod)
     end
   end
+
+#  def run_apply(cleanup = true)
+#    product_ids = @product_list.collect { |prod| apply_product(prod).id }
+#    run_cleanup(product_ids) if cleanup
+#    run_summary
+#  end
   
   def run_apply_cache(cleanup = true)
     file_name = File.join(@@cache_dir,"#{@supplier_record.name}_database")
@@ -557,14 +741,24 @@ public
     
     begin
       product_ids = @product_list.collect do |pd|
-        num = pd.supplier_num
-        unless last_data[num] == pd
-          if rec = apply_product(pd)
-            last_ids[num] = rec.id
-            last_data[num] = pd
+        unless last_data[pd.supplier_num] == pd
+          record = @supplier_record.get_product(pd.supplier_num)
+          pa = ProductApply.new(record, pd, last_data[pd.supplier_num])
+          if pa.apply
+            last_ids[pd.supplier_num] = record.id
+            last_data[pd.supplier_num] = pd
           end
         end
-        last_ids[num]
+        last_ids[pd.supplier_num]
+
+#        num = pd.supplier_num        
+#        unless last_data[num] == pd
+#          if rec = apply_product(pd)
+#            last_ids[num] = rec.id
+#            last_data[num] = pd
+#          end
+#        end
+#        last_ids[num]
       end
     
       run_cleanup(product_ids).each do |product_record|
@@ -639,7 +833,7 @@ public
           end
         end
 
-        PackageDesc.properties.keys do |name|
+        PackageDesc.properties do |name|
           value = pd.package.send(name)
           if !value.nil? and product_record["package_#{name}"] != value
             product_log << "  Package #{name}: #{product_record[attr_name].inspect} => #{value.inspect}\n"
@@ -647,7 +841,7 @@ public
           end
         end
 
-        LeadTimeDesc.properties.keys do |name|
+        LeadTimeDesc.properties do |name|
           value = pd.lead_time.send(name)
           if !value.nil? and product_record["lead_time_#{name}"] != value
             product_log << "  Lead Time #{name}: #{product_record[attr_name].inspect} => #{value.inspect}\n"
@@ -661,12 +855,12 @@ public
         product_log << product_record.set_categories(pd.categories.collect { |a| a.collect { |b| b[0...32] } })
         product_log << product_record.set_tags(pd.tags)
         
-        new_price_groups, new_cost_groups = [], []
-
         # Fetch Images
         all_images = (pd.images + pd.variants.collect { |v| v.images }).flatten.compact.uniq
         product_log << product_record.delete_images_except(all_images)
         product_log << product_record.set_images(pd.images)
+
+        new_price_groups, new_cost_groups = [], []
        
         # Process Variants
         variant_records = pd.variants.collect do |vd|
