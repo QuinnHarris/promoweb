@@ -126,7 +126,7 @@ class MagnetGroupXLS < GenericImport
       end
 
       unique.each do |uniq|
-        uniq[:pricing] = SupplierPricing.get do |pricing|
+        uniq[:pricing] = PricingDesc.get do |pricing|
           (1..10).each do |i|
             next if (qty = uniq["qty#{i}"]).blank?
             pricing.add(qty, uniq["catalog#{i}"], uniq["net#{i}"])

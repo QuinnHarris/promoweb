@@ -33,18 +33,6 @@ class GemlineXML < GenericImport
     categories.uniq
   end
   
-  def to_utf(str)
-    str.unpack("C*").map do |c|
-        if c < 0x80
-            next c.chr
-        elsif c < 0xC0
-            next "\xC2" + c.chr
-        else
-            next "\xC3" + (c - 64).chr
-        end
-    end.join('')
-  end
-
   def parse_products
     puts "Reading XML"  
     doc = File.open(@src_file) { |f| Nokogiri::XML(f) }
@@ -52,27 +40,27 @@ class GemlineXML < GenericImport
     break_reg = /(\d+)[-+](\d+)?/
     decoration_reg = /^([A-Za-z0-9 \(\),]+?) ?(?:(?:([0-9\.]+)"?W? ?x? ?([0-9\.]+)"?H?)|(?:([0-9\.]+)"? *(?:(?:dia.?)|(?:diameter))))?$/
 
-    gemroot = doc.xpath('/xml/gemlineproductdata/product').each do |product|
+    ProductDesc.over_each(self, doc.xpath('/xml/gemlineproductdata/product')) do |pd, product|
       prod_log_str = ''
        
       next if (product['isflyer'] == "True") or (product['iscatalog'] == "True") # We don't care about fylers
 
       # Product Record
-      prod_data = {
-        'supplier_num' => product['mainstyle'],
-        'name' => product['name'].strip,
-        'lead_time_normal_min' => 3,
-        'lead_time_normal_max' => 5,
-        'lead_time_rush' => 1,
-        'description' => product['description'].split('^').delete_if { |s| s.empty? }.join("\n"),
-        'package_weight' => product['box_weight'].to_f,
-        'package_units' => product['products_per_box'].to_i,
-        'package_height' => product['box_height_inches'].to_f,
-        'package_width' => product['box_width_inches'].to_f,
-        'package_length' => product['box_length_inches'].to_f,
-        'data' => { :id => product['Id'] },
-        'images' => []
-      }
+      pd.supplier_num = product['mainstyle']
+      pd.name = product['name']
+      pd.description = product['description'].split('^')
+      pd.data = { :id => product['Id'] }
+      
+      pd.lead_time.normal_min = 3
+      pd.lead_time.normal_max = 5
+      pd.lead_time.rush = 1
+
+      pd.package.merge_from_object(product,
+                                   { 'units' => 'products_per_box',
+                                     'weight' => 'box_weight',
+                                     'height' => 'box_height_inches',
+                                     'width' => 'box_width_inches',
+                                     'length' => 'box_length_inches' })
   
       dimension = {}
       %w(diameter length height width).each { |n| dimension[n] = product[n].to_f if product[n] and product[n].to_f != 0.0 }
@@ -80,10 +68,7 @@ class GemlineXML < GenericImport
   
       # Decorations
       begin
-        list = [{
-          'technique' => 'None',
-          'location' => ''
-        }]
+        list = [DecorationDesc.none]
 
         product.xpath('decorations/decoration').each do |decoration|
           technique = decoration["technique"]
@@ -94,26 +79,25 @@ class GemlineXML < GenericImport
           end
                   
           decoration.elements.each do |location|
-            s = location.text.strip #.gsub(/[\200-\350]+/,' ')
+            s = location.text.strip
             full, name, width, height, diameter = decoration_reg.match(s).to_a
             
             if full
-              puts "#{prod_data['supplier_num']}: #{name}" if name.split(' ').size == 2 and !name.index('panel')
-              elem = {
-                'technique' => technique,
-                'limit' => limit,
-                'location' => name.strip.split(' ').join(' ').capitalize }  # Do we still need this?
-              elem['width'] = width.to_f if width
-              elem['height'] = height.to_f if height
-              elem['diameter'] = diameter.to_f if diameter          
+              puts "#{pd.supplier_num}: #{name}" if name.split(' ').size == 2 and !name.index('panel')
+              dd = DecorationDesc.new(:technique => technique,
+                                      :location => name.strip.gsub(/\s+/, ' ').capitalize,
+                                      :limit => limit)
+              dd.width = width if width
+              dd.height = height if height
+              dd.diameter = diameter if diameter
            
-              list << elem
+              list << dd
             else
               prod_log_str << " * Unknown decoration: #{s}\n"
             end
           end
         end
-        prod_data['decorations'] = list
+        pd.decorations = list
       end
   
       # related-products
@@ -198,14 +182,13 @@ class GemlineXML < GenericImport
           'New Products' => 'New',
           'Eco-Choice' => 'Eco' }.each do |cat, tag|
           if category.include?(cat)
-            prod_data['tags'] = (prod_data['tags'] || []) + [tag]
+            pd.tags << tag unless pd.tags.include?(tag)
             delete = true
           end
         end
         delete
       end
-      prod_data['tags'].uniq! if prod_data['tags']
-      prod_data['supplier_categories'] = prod_categories
+      pd.supplier_categories = prod_categories
 
 
       hash = {}
@@ -215,10 +198,10 @@ class GemlineXML < GenericImport
         [prices.first.first * 10, prices.last.first].max
       end.max
               
-      prod_data['variants'] = hash.collect do |prices, list|
+      pd.variants = hash.collect do |prices, list|
         marginal = Money.new((prices.last[1] * (1.0 - prices.last[2]))).round_cents
         if prices.last[2] > 0.4
-          prod_data['tags'] ||= ['Special']
+          pd.tags << 'Special'
         end
         costs = [
             { :fixed => Money.new(60.00),
@@ -235,26 +218,23 @@ class GemlineXML < GenericImport
         prices = prices.collect { |p| {:minimum => p[0], :marginal => Money.new(p[1]).round_cents, :fixed => Money.new(0)} }
       
         list.collect do |variant|
-          data = {
-            'supplier_num' => variant['num'],
-            'properties' => { 
-              'material' => variant['material'],
-              'dimension' => dimension,
-              'color' => variant['color']
-            },
-            'images' => variant['images'] || [],
-            'prices' => prices,
-            'costs' => costs,
+          vd = VariantDesc.new(:supplier_num => variant['num'])
+          vd.properties = { 
+            'material' => variant['material'],
+            'dimension' => dimension,
+            'color' => variant['color']
           }
+          vd.images = variant['images']
+          vd.pricing = PricingDesc.new(prices, costs)
  
-          %w(small medium).each do |name|
-            data["swatch-#{name}"] = CopyImageFetch.new(variant['swatches'][name]) if variant['swatches'][name]
-          end
-          data
+#          %w(small medium).each do |name|
+#            data["swatch-#{name}"] = CopyImageFetch.new(variant['swatches'][name]) if variant['swatches'][name]
+#          end
+          vd
         end
       end.flatten # hash.each
 
-      add_product(prod_data)
+#      add_product(pd)
     end # gemroot.each_element
   end
 end

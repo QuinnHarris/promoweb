@@ -88,7 +88,6 @@ private
       match = properties.find do |property|
         if record[property]
           val = record[property]
-          val = val.join("\n") if property == 'description'
         else
           list = record.variants.collect { |v| v[property] || (v.properties[property]) }.compact.uniq
           next if list.empty?

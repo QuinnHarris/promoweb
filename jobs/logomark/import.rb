@@ -104,7 +104,7 @@ class LogomarkXLS < GenericImport
         }
 
 
-        common_variant = SupplierPricing.get do |pricing|
+        common_variant = PricingDesc.get do |pricing|
           (1..6).each do |i|
             qty = common["PricePoint#{i}Qty"]
             break if qty.blank? or qty == '0'

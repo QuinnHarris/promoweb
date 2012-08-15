@@ -43,7 +43,7 @@ class SwedaXML < GenericImport
       product_data['lead_time_normal_max'] ||= product_data['lead_time_normal_min']
       product_data['lead_time_normal_min'] ||= product_data['lead_time_normal_max']
 
-      common_variant = SupplierPricing.get do |pricing|
+      common_variant = PricingDesc.get do |pricing|
         (1..6).each do |i|
           qty = common["Qty_Point#{i}"]
           break if qty.blank? or qty == '0'

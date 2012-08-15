@@ -26,6 +26,13 @@ module PropertyObject
       end
     end
 
+    def merge_from_object(object, hash)
+      hash.each do |key, value|
+        PropertyError.new("invalid key: #{key.inspect}") unless self.class.properties.include?(key)
+        send("#{key}=", object[value])
+      end
+    end
+
     def to_hash
       self.class.properties.each_with_object({}) do |key, hash|
         hash[key] = send(key)
@@ -73,6 +80,9 @@ module PropertyObject
 
     def property(name, type, options = {}, &block)
       properties_hash[name.to_s] = options[:nil]
+      if [Integer, Float].include?(type) and !block
+        options.merge!(:no_pre => true, :cast => true)
+      end
       define_method("#{name}=") do |value|
         if block
           self.class.test_type(name, type, value, options) unless options[:no_pre]
@@ -83,6 +93,13 @@ module PropertyObject
           end
           self.class.test_type(name, type, value, options, ' after method')
         else
+          if value and options[:cast]
+            begin
+              value = eval "#{type}(value)"
+            rescue ArgumentError
+              raise PropertyError.new("Invalide Argument: #{value}", name)
+            end
+          end
           self.class.test_type(name, type, value, options)
         end
         instance_variable_set("@#{name}", value)
@@ -105,7 +122,6 @@ end
 
 
 class ImageNodeFetch; end
-class SupplierPricing; end
 
 class DecorationDesc
   include PropertyObject
@@ -137,6 +153,9 @@ class DecorationDesc
     end
     right.is_a?(Decoration) ? technique_record.id == right.technique_id : technique == right.technique
   end
+
+  @@none = self.new(:technique => 'None', :location => '').freeze
+  cattr_reader :none
 end
 
 class LeadTimeDesc
@@ -159,6 +178,90 @@ class PackageDesc
   property :units, Integer
 end
 
+class PricingDesc
+  def initialize(prices = [], costs = [])
+    @prices = prices
+    @costs = costs
+  end
+  # Temp?
+  attr_accessor :prices, :costs
+
+  def ==(right)
+    prices == right.prices && costs == right.costs
+  end
+
+  def self.get
+    sp = new
+    yield sp
+    sp.to_hash
+  end
+
+  # Duplicated in GenericImport Remove from there eventually
+  def convert_pricecode(comp)
+    return nil unless comp.is_a?(String) && /^[A-GP-X]$/i === comp
+    comp = comp.upcase[0]
+    num = comp.ord - ?A.ord if comp.ord >= ?A.ord and comp.ord <= ?G.ord
+    num = comp.ord - ?P.ord if comp.ord >= ?P.ord and comp.ord <= ?X.ord
+        
+    0.5 - (0.05 * num)
+  end
+  
+  def add(qty, price, code = nil)
+    qty = Integer(qty)
+    raise PropertyError, "qty must be positive" unless qty > 0
+    raise ValidateError, "minimums must be sequential" if @prices.last && @prices.last[:minimum] >= qty
+
+    price = Money.new(Float(price))
+    raise ValidateError, "marginal price must be sequential" if @prices.last && @prices.last[:marginal] > price
+
+    base = { :fixed => Money.new(0), :minimum => qty }
+    @prices << base.merge(:marginal => price)
+
+    if code
+      discount = convert_pricecode(code)
+      if discount
+        price *= 1.0 - discount
+      else
+        price = Money.new(Float(code))
+      end
+      
+      raise ValidateError, "marginal cost must be sequential" if @costs.last && @costs.last[:marginal] > price
+      @costs << base.merge(:marginal => price)
+    end
+  end
+
+private
+  def ltm_common(charge, qty)
+    @costs.unshift({ :fixed => Money.new(Float(charge)),
+                    :marginal => @costs.first[:marginal],
+                    :minimum => qty || @costs.first[:minimum]/2 })
+  end
+public
+
+  def ltm(charge, qty = nil)
+    raise "Can't apply less than minimum with no prices" if @costs.empty?
+    qty = qty && Integer(qty)
+    raise "qty >= first qty: #{qty} >= #{@costs.first[:minimum]}" if qty >= @costs.first[:minimum]
+    ltm_common(charge, qty)
+  end
+
+  def ltm_if(charge, qty)
+    raise "Can't apply less than minimum with no prices" if @costs.empty?
+    qty = qty && Integer(qty)
+    ltm_common(charge, qty) if qty < @costs.first[:minimum]
+  end
+
+  def maxqty(qty = nil)
+    raise ValidateError, "maxqty can only be called once" unless @costs.last[:marginal]
+    @costs << { :minimum => qty ? Integer(qty) : @costs.last[:minimum] * 2 } unless @costs.empty?
+  end
+
+  def to_hash
+    { 'prices' => @prices, 'costs' => @costs }
+  end
+end
+
+
 class VariantDesc
   # Cause uniq to consider only supplier_num
   def eql?(other); supplier_num.eql?(supplier_num); end
@@ -167,10 +270,11 @@ class VariantDesc
   include PropertyObject
 
   property :supplier_num, String do |s| s.strip end
+  def error_id; "Variant #{supplier_num}"; end
   property :properties, Hash
   property :images, Array[ImageNodeFetch]
 
-  property :pricing, SupplierPricing, :block => true
+  property :pricing, PricingDesc, :block => true
 
   def merge(hash)
     hash.each do |key, value|
@@ -190,13 +294,19 @@ class ProductDesc
   include PropertyObject
 
   property :supplier_num, String do |s| s.strip end
+  def error_id; "Product #{supplier_num}"; end
   property :name, String do |s| s.strip end
 
-  property :description, Array, :no_pre => true do |v|
+  property :description, String, :no_pre => true do |v|
     if Array === v
-      v.each { |e| raise PropertyError, "expected Array of String" unless String === e }
+      v.each do |e|
+        raise PropertyError, "expected Array of String" unless String === e
+        e.strip!
+      end
+      v.delete_if { |e| e.empty? }
+      v.join("\n")
     elsif String === v
-      v.split("\n")
+      v
     else
       raise PropertyError, "expected String or Array of String"
     end
@@ -327,5 +437,18 @@ class ProductDesc
 
   def initialize(hash = nil)
     merge(hash) if hash
+  end
+
+  def self.over_each(context, object)
+    object.each do |val|
+      desc = self.new
+      begin
+        yield desc, val
+        context.add_product(desc)
+      rescue ValidateError => boom
+        puts "- Validate Error: #{desc.error_id}: #{boom}"
+        context.add_error(boom, desc.error_id)
+      end
+    end
   end
 end

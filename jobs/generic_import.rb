@@ -125,89 +125,6 @@ class ProductRecordMerge
   end
 end
 
-class SupplierPricing
-  def initialize
-    @prices = []
-    @costs = []
-  end
-  # Temp?
-  attr_accessor :prices, :costs
-
-  def ==(right)
-    prices == right.prices && costs == right.costs
-  end
-
-  def self.get
-    sp = new
-    yield sp
-    sp.to_hash
-  end
-
-  # Duplicated in GenericImport Remove from there eventually
-  def convert_pricecode(comp)
-    return nil unless comp.is_a?(String) && /^[A-GP-X]$/i === comp
-    comp = comp.upcase[0]
-    num = comp.ord - ?A.ord if comp.ord >= ?A.ord and comp.ord <= ?G.ord
-    num = comp.ord - ?P.ord if comp.ord >= ?P.ord and comp.ord <= ?X.ord
-        
-    0.5 - (0.05 * num)
-  end
-  
-  def add(qty, price, code = nil)
-    qty = Integer(qty)
-    raise PropertyError, "qty must be positive" unless qty > 0
-    raise ValidateError, "minimums must be sequential" if @prices.last && @prices.last[:minimum] >= qty
-
-    price = Money.new(Float(price))
-    raise ValidateError, "marginal price must be sequential" if @prices.last && @prices.last[:marginal] > price
-
-    base = { :fixed => Money.new(0), :minimum => qty }
-    @prices << base.merge(:marginal => price)
-
-    if code
-      discount = convert_pricecode(code)
-      if discount
-        price *= 1.0 - discount
-      else
-        price = Money.new(Float(code))
-      end
-      
-      raise ValidateError, "marginal cost must be sequential" if @costs.last && @costs.last[:marginal] > price
-      @costs << base.merge(:marginal => price)
-    end
-  end
-
-private
-  def ltm_common(charge, qty)
-    @costs.unshift({ :fixed => Money.new(Float(charge)),
-                    :marginal => @costs.first[:marginal],
-                    :minimum => qty || @costs.first[:minimum]/2 })
-  end
-public
-
-  def ltm(charge, qty = nil)
-    raise "Can't apply less than minimum with no prices" if @costs.empty?
-    qty = qty && Integer(qty)
-    raise "qty >= first qty: #{qty} >= #{@costs.first[:minimum]}" if qty >= @costs.first[:minimum]
-    ltm_common(charge, qty)
-  end
-
-  def ltm_if(charge, qty)
-    raise "Can't apply less than minimum with no prices" if @costs.empty?
-    qty = qty && Integer(qty)
-    ltm_common(charge, qty) if qty < @costs.first[:minimum]
-  end
-
-  def maxqty(qty = nil)
-    raise ValidateError, "maxqty can only be called once" unless @costs.last[:marginal]
-    @costs << { :minimum => qty ? Integer(qty) : @costs.last[:minimum] * 2 } unless @costs.empty?
-  end
-
-  def to_hash
-    { 'prices' => @prices, 'costs' => @costs }
-  end
-end
-
 class ImageNode
   def initialize(id, tag = nil)
     @id = id
@@ -391,23 +308,26 @@ end
 require_relative 'product_description'
 
 class ProductApply
-  def initialize(record, current, previous = nil)
-    @record, @current, @previous = record, current, previous
+  def initialize(supplier, current, previous = nil)
+    @supplier, @current, @previous = supplier, current, previous
   end
-  attr_reader :record, :current, :previous
+  attr_reader :supplier, :record, :current, :previous
   
   def apply
     product_log = ''
-    product_new = record.new_record?
     
-    changed = ProductDesc.properties
-    changed = changed.find_all do |prop|
+    @changed = ProductDesc.properties
+    @changed = @changed.find_all do |prop|
       current.send(prop) != previous.send(prop)
     end if previous
 
+    product_new = nil
     begin
       Product.transaction do
-        changed.each do |prop|
+        @record = supplier.get_product(current.supplier_num)
+        product_new = record.new_record?
+
+        @changed.each do |prop|
           product_log += send("apply_#{prop}", current.send(prop), previous && previous.send(prop))
         end
         
@@ -428,21 +348,15 @@ class ProductApply
       end
     end
 
-    not product_log.empty?
+    product_log.empty? ? nil : record
   end
 
-  %w(name data).each do |name|
+  %w(supplier_num name description data).each do |name|
     define_method "apply_#{name}" do |curr, prev|
-      return nil if (old = record.send(name)) == curr
-      record.name = curr
-      "  #{old.inspect} => #{curr.inspect}"
+      return '' if (old = record.send(name)) == curr
+      record[name] = curr
+      "  #{name}: #{old.inspect} => #{curr.inspect}"
     end
-  end
-
-  def apply_description(curr, prev)
-    return nil if (old = record.send(name)) == (val = curr.join("\n"))
-    record.name = val
-    "  #{old.inspect} => #{curr.inspect}"
   end
 
   %w(package lead_time).each do |name|
@@ -453,7 +367,7 @@ class ProductApply
         unless (prev && val == prev.send(prop)) ||
             ((old = record["#{name}_#{prop}"]) == val)
           record["#{name}_#{prop}"] = val
-          "  #{old.inspect} => #{curr.inspect}"
+          "  #{name}.#{prop}: #{old.inspect} => #{curr.inspect}"
         end
       end.join("\n")
     end
@@ -461,7 +375,7 @@ class ProductApply
 
   def apply_tags(curr, prev)
     record.save! if record.new_record? # Allocate ID
-    record.set_tags(pd.tags)
+    record.set_tags(curr)
   end
 
   def apply_decorations(curr, prev)
@@ -471,16 +385,22 @@ class ProductApply
   def apply_categories(curr, prev)
     record.set_categories(curr.collect { |a| a.collect { |b| b[0...32] } })
   end
+  def apply_supplier_categories(curr, prev); ''; end
 
   def apply_images(curr, prev)
     all_images = (curr + current.variants.collect { |v| v.images }).flatten.compact.uniq
     record.delete_images_except(all_images) + record.set_images(curr)
   end
 
+  def apply_properties(curr, prev)
+    @changed << 'variants' unless @changed.include?('variants')
+    ''
+  end
+
   def apply_variants(curr, prev)
     new_price_groups, new_cost_groups = [], []
 
-    product_log = []
+    product_log = ''
        
     # Process Variants
     variant_records = curr.collect do |vd|
@@ -493,7 +413,7 @@ class ProductApply
       variant_log << variant_record.set_images(vd.images)
           
       # Properties
-      vd.properties.each do |name, value|
+      current.properties.merge(vd.properties).each do |name, value|
         value = nil if value.blank?
         value = value.collect { |k, v| "#{k}:#{v}" }.sort.join(',') if value.is_a?(Hash)
         variant_record.set_property(name, value, variant_log)
@@ -533,7 +453,7 @@ class ProductApply
     end
        
     # Remove variants
-    (product_record.variants - variant_records).each do |variant_record|
+    (record.variants - variant_records).each do |variant_record|
       if variant_record.order_item_variants.empty? and
           (variant_record.price_group_order_items_count == 0)
         product_log << "  Deleted Variant: #{variant_record['supplier_num']} (#{variant_record.id})\n"
@@ -547,15 +467,15 @@ class ProductApply
 
     recache_prices = false
     
-    [[new_price_groups, @supplier_record.price_source],
+    [[new_price_groups, supplier.price_source],
      [new_cost_groups, nil]].each do |dst, source_id|
-      log = product_record.set_prices(source_id, dst)
+      log = record.set_prices(source_id, dst)
       recache_prices = true unless log.empty?
       product_log += log
     end
     
     # Check shit
-    product_record.variants.each do |variant|
+    record.variants.each do |variant|
       srcs = variant.price_groups.collect { |g| g.source }
       unless srcs.length == srcs.uniq.length
         puts "#{variant.id}: #{variant.price_groups.inspect}"
@@ -742,9 +662,8 @@ public
     begin
       product_ids = @product_list.collect do |pd|
         unless last_data[pd.supplier_num] == pd
-          record = @supplier_record.get_product(pd.supplier_num)
-          pa = ProductApply.new(record, pd, last_data[pd.supplier_num])
-          if pa.apply
+          pa = ProductApply.new(@supplier_record, pd, last_data[pd.supplier_num])
+          if record = pa.apply
             last_ids[pd.supplier_num] = record.id
             last_data[pd.supplier_num] = pd
           end
@@ -780,10 +699,14 @@ public
       apply_product(pd)
     end
   end
+
+  def add_error(boom, id)
+    @invalid_prods[boom.aspect] = (@invalid_prods[boom.aspect] || []) + [id]
+  end
   
-  def add_product(product_data)
+  def add_product(pd)
     begin
-      pd = ProductDesc.new(product_data)
+      pd = ProductDesc.new(pd) unless pd.is_a?(ProductDesc)
       pd.validate
       @product_list << pd
     rescue => boom
@@ -825,7 +748,6 @@ public
         # Set Product record properties
         %w(name description data).each do |name|
           value = pd.send(name)
-          value = value.join("\n") if name == 'description'
           value = nil if name == 'data' and value.empty?
           if !value.nil? and product_record[name] != value
             product_log << "  #{name}: #{product_record[name].inspect} => #{value.inspect}\n"
