@@ -56,6 +56,14 @@ module PropertyObject
     def !=(right)
       not self == right
     end
+
+    def valid?
+      self.class.properties_hash.each do |key, value|
+        next if value
+        return false if send(key).nil?
+      end
+      true
+    end
   end
 
   module ClassMethods
@@ -80,6 +88,8 @@ module PropertyObject
 
     def property(name, type, options = {}, &block)
       properties_hash[name.to_s] = options[:nil]
+      # Return nil if no new method but object is invalid if not set
+      options[:nil] = true unless type.respond_to?(:new)
       if [Integer, Float].include?(type) and !block
         options.merge!(:no_pre => true, :cast => true)
       end
@@ -174,7 +184,7 @@ class PackageDesc
   include PropertyObject
   
   [:length, :width, :height].each do |name|
-    property name, Float
+    property name, Float, :nil => true
   end
   
   property :weight, Float
@@ -317,7 +327,7 @@ class ProductDesc
 
   property :lead_time, LeadTimeDesc
   property :package, PackageDesc
-  property :data, Hash
+  property :data, Hash, :nil => true
 
   @@tags = Tag.select(:name).uniq.collect { |t| t.name }
   property :tags, Array[String] do |array|
@@ -351,7 +361,12 @@ class ProductDesc
 
   property :properties, Hash # Properties applied to all variants
 
-  def validate
+  def validate(import)
+    unless package.valid?
+      import.add_error(PropertyError.new("Invalid Package"), supplier_num)
+      @package = nil
+    end
+
     # check presense
     self.class.properties_hash.each do |key, value|
       next if value
@@ -427,7 +442,7 @@ class ProductDesc
       when 'lead_time_rush'
         self.lead_time.rush = value
       when /^package_(\w+)$/
-        self.package.send("#{$1}=", value)
+        self.package.send("#{$1}=", value) if value
       when 'decorations'
         self.decorations = value.collect { |d| DecorationDesc.new(d) }
       when 'variants'

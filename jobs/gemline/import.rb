@@ -76,7 +76,6 @@ class GemlineXML < GenericImport
     puts "Reading XML"  
     doc = File.open(@src_file) { |f| Nokogiri::XML(f) }
     
-    break_reg = /(\d+)[-+](\d+)?/
     decoration_reg = /^([A-Za-z0-9 \(\),]+?) ?(?:(?:([0-9\.]+)"?W? ?x? ?([0-9\.]+)"?H?)|(?:([0-9\.]+)"? *(?:(?:dia.?)|(?:diameter))))?$/
 
     ProductDesc.over_each(self, doc.xpath('/xml/gemlineproductdata/product')) do |pd, product|
@@ -181,7 +180,7 @@ class GemlineXML < GenericImport
         prices = []
         last_max = nil
         item.xpath("pricing[@type='US']/price").each do |price|
-          br = break_reg.match(price['break'])
+          br = /(\d+)[-+](\d+)?/.match(price['break'])
           prod_log_str << " * Non contigious prices" if last_max and br[1].to_i != last_max + 1
           last_max = br[2] ? br[2].to_i : nil
           price_val = price.text[1..-1].to_f

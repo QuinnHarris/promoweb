@@ -188,7 +188,7 @@ class PolyXLS < GenericImport
         line.strip
         next nil if line.empty?
         line.scan(/\(#(.+?)\)/).flatten.each do |num|
-          puts "MATCHING: #{num.inspect}"
+#          puts "MATCHING: #{num.inspect}"
           next unless product = @supplier_record.products.find_by_supplier_num(num)
           unless line.sub!("#{product.name} (##{num})", "<a href='#{product.web_id}'>#{product.name}</a>")
             line.sub!("(##{num})", "<a href='#{product.web_id}'>(M#{product.id})</a>")
@@ -237,7 +237,7 @@ class PolyXLS < GenericImport
       colors = [''] if colors.empty?
 
       color_image_map, color_num_map = match_colors(product_data['supplier_num'], colors)
-      puts "ColorMap: #{product_data['supplier_num']} #{color_image_map.inspect} #{color_num_map.inspect}"
+#      puts "ColorMap: #{product_data['supplier_num']} #{color_image_map.inspect} #{color_num_map.inspect}"
       product_data['images'] = color_image_map[nil]
 
       product_data['variants'] = colors.collect do |color|

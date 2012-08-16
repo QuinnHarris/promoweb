@@ -356,7 +356,7 @@ class ProductApply
     define_method "apply_#{name}" do |curr, prev|
       return '' if (old = record.send(name)) == curr
       record[name] = curr
-      "  #{name}: #{old.inspect} => #{curr.inspect}"
+      "  #{name}: #{old.inspect} => #{curr.inspect}\n"
     end
   end
 
@@ -367,7 +367,7 @@ class ProductApply
         val = curr.send(prop)
         unless (prev && val == prev.send(prop)) ||
             ((old = record["#{name}_#{prop}"]) == val)
-          record["#{name}_#{prop}"] = val
+          record["#{name}_#{prop}"] = val unless val.nil?
           "  #{name}.#{prop}: #{old.inspect} => #{val.inspect}\n"
         end
       end.compact.join
@@ -588,7 +588,7 @@ class GenericImport
         end
       rescue => boom
         if boom.is_a?(ValidateError)
-          @invalid_prods[boom.aspect] = (@invalid_prods[boom.aspect] || []) + [pd.supplier_num]
+          add_error(boom, pd.supplier_num)
           next true # Do Delete
         else
           raise
@@ -643,6 +643,11 @@ class GenericImport
       end
 
       # Print Stats
+      puts "Invalid Products:" unless @invalid_prods.empty?
+      @invalid_prods.each do |aspect, list|
+        puts "  #{aspect}: #{list.join(', ')}"
+      end
+
       total = @product_list.length
       puts "Update Stats:"
       puts "   Total:#{'%5d' % total}"
@@ -677,10 +682,7 @@ class GenericImport
       cache_write(file_name, last_data)
     end
 
-    puts "Invalid Products:" unless @invalid_prods.empty?
-    @invalid_prods.each do |aspect, list|
-      puts "  #{aspect}: #{list.join(', ')}"
-    end
+
   end
 
   def run_all(cache = true)
@@ -701,15 +703,19 @@ class GenericImport
     @invalid_prods[boom.aspect] = (@invalid_prods[boom.aspect] || []) + [id]
   end
   
-  def add_product(pd)
+  def add_product(object)
     begin
-      pd = ProductDesc.new(pd) unless pd.is_a?(ProductDesc)
-      pd.validate
+      if object.is_a?(ProductDesc)
+        pd = object # Remove this eventually
+      else
+        pd = ProductDesc.new(object)
+      end
+      pd.validate(self)
       @product_list << pd
     rescue => boom
       puts "+ Validate Error: #{pd && pd.supplier_num}: #{boom}"
       if boom.is_a?(ValidateError)
-        @invalid_prods[boom.aspect] = (@invalid_prods[boom.aspect] || []) + [pd && pd.supplier_num]
+        add_error(boom, pd && pd.supplier_num)
       else
         puts boom.backtrace
         @invalid_prods['Other'] = (@invalid_prods[boom.to_s] || []) + [pd.supplier_num]
