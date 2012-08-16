@@ -334,6 +334,7 @@ class ProductApply
         unless product_log.empty?
           record.updated_at_will_change! # Update updated_at
         end
+        record.deleted = false
         record.save!
       end
     rescue Exception
@@ -367,9 +368,9 @@ class ProductApply
         unless (prev && val == prev.send(prop)) ||
             ((old = record["#{name}_#{prop}"]) == val)
           record["#{name}_#{prop}"] = val
-          "  #{name}.#{prop}: #{old.inspect} => #{curr.inspect}"
+          "  #{name}.#{prop}: #{old.inspect} => #{val.inspect}\n"
         end
-      end.join("\n")
+      end.compact.join
     end
   end
 
@@ -605,91 +606,87 @@ class GenericImport
       @product_list
     end  
   end
-
-  
-private
-  def run_cleanup(product_ids)
-    database = @supplier_record.products.collect do |p|
-      (Rails.env.production? && @invalid_prods.values.flatten.index(p.supplier_num)) ? nil : p.id
-    end.compact
-    puts "#{database.size} - #{product_ids.size}"
-    (database - product_ids).collect do |product_id|
-      product_record = Product.find(product_id)
-      puts " Deleted Product: #{product_record['supplier_num']} (M#{product_record.id})"
-      product_record.delete
-      product_record
-    end  
-  end
-
-  def run_summary
-    puts "Invalid Products:" unless @invalid_prods.empty?
-    @invalid_prods.each do |aspect, list|
-      puts "  #{aspect}: #{list.join(', ')}"
-    end
-  end
-  
-public
-#  def run_apply_single(supplier_num)
-#    product = @product_list.find { |prod| pd.supplier_num == supplier_num }
-#    apply_product(product)
-#  end
-  
+    
   def run_transform
     trans = NewCategoryTransform.new [@supplier_name].flatten.first
     @product_list.each do |prod|
       trans.apply_rules(prod)
     end
   end
-
-#  def run_apply(cleanup = true)
-#    product_ids = @product_list.collect { |prod| apply_product(prod).id }
-#    run_cleanup(product_ids) if cleanup
-#    run_summary
-#  end
   
   def run_apply_cache(cleanup = true)
-    file_name = File.join(@@cache_dir,"#{@supplier_record.name}_database")
-    last_data = {}
-    last_ids = {}
-    begin
-      if File.ftype(file_name) == "file"
-        puts "#{@supplier_record.name} reading apply cached marshal"
-        last_data, last_ids = File.open(file_name) { |f| Marshal.load(f) }
-      end
-    rescue
+    file_name = cache_file("#{@supplier_record.name}_database")
+    if cache_exists(file_name)
+      last_data = cache_read(file_name)
+    else
+      puts "No Database Cache: #{file_name}"
+      last_data = {}
     end
     
     begin
-      product_ids = @product_list.collect do |pd|
-        unless last_data[pd.supplier_num] == pd
-          pa = ProductApply.new(@supplier_record, pd, last_data[pd.supplier_num])
-          if record = pa.apply
-            last_ids[pd.supplier_num] = record.id
-            last_data[pd.supplier_num] = pd
-          end
+      # Find Current
+      supplier_num_set = Set.new
+      update_pd_list = @product_list.find_all do |pd|
+        supplier_num_set.add(pd.supplier_num)
+        last_data[pd.supplier_num] != pd
+      end
+      
+      common_count = 0
+      delete_id_list = []
+      current_id_list = @supplier_record.products.select([:id, :supplier_num]).collect do |p|
+        if supplier_num_set.delete?(p.supplier_num)
+          common_count += 1
+        elsif !(Rails.env.production? && @invalid_prods.values.flatten.index(p.supplier_num))
+          delete_id_list << p.id 
         end
-        last_ids[pd.supplier_num]
-
-#        num = pd.supplier_num        
-#        unless last_data[num] == pd
-#          if rec = apply_product(pd)
-#            last_ids[num] = rec.id
-#            last_data[num] = pd
-#          end
-#        end
-#        last_ids[num]
+        p.id
       end
-    
-      run_cleanup(product_ids).each do |product_record|
-        last_ids.delete(product_record.supplier_num)
-        last_data.delete(product_record.supplier_num)
-      end if cleanup
 
+      # Print Stats
+      total = @product_list.length
+      puts "Update Stats:"
+      puts "   Total:#{'%5d' % total}"
+      { '   New' => supplier_num_set.size,
+        'Change' => change_count = update_pd_list.size - supplier_num_set.size,
+        'Delete' => delete_id_list.length }.each do |name, count|
+        puts "  #{name}:#{'%5d' % count} (#{'%0.02f%' % (count * 100.0 / total)})"
+      end
+
+      if (change_count * 10 > total) || (delete_id_list.length * 20 > total)
+        if ARGV.include?('override')
+          puts "Override excessive change"
+        else
+          raise "Aborting. To many changes"
+        end
+      end
+
+      # Apply Updates
+      update_pd_list.each do |pd|
+        pa = ProductApply.new(@supplier_record, pd, last_data[pd.supplier_num])
+        pa.apply
+        last_data[pd.supplier_num] = pd
+      end
+      
+      # Cleanup
+      delete_id_list.each do |product_id|
+        product_record = Product.find(product_id)
+        puts " Deleted Product: #{product_record['supplier_num']} (M#{product_record.id})"
+        product_record.delete
+      end if cleanup
     ensure
-      File.open(file_name,"w") { |f| Marshal.dump([last_data, last_ids], f) }
+      cache_write(file_name, last_data)
     end
 
-    run_summary
+    puts "Invalid Products:" unless @invalid_prods.empty?
+    @invalid_prods.each do |aspect, list|
+      puts "  #{aspect}: #{list.join(', ')}"
+    end
+  end
+
+  def run_all(cache = true)
+    cache ? run_parse_cache : run_parse
+    run_transform
+    run_apply_cache
   end
   
   # For debuging

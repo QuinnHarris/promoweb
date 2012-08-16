@@ -132,9 +132,12 @@ class DecorationDesc
   property :technique, String do |s|
     raise PropertyError, "got #{s} expected in #{@@techniques.keys.inspect}" unless @@techniques.keys.include?(s)
     s
-  end
+  end   
   def technique_record
     @@techniques[technique]
+  end
+  def technique_id
+    technique_record.id
   end
   def to_hash
     super.merge('technique' => technique_record)
