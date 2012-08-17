@@ -211,7 +211,6 @@ class PrimeLineWeb < GenericImport
     price_no_less = nil
     price_note = doc.xpath("//span[@id='ctl00_content_PriceNote']").to_a.join.strip
     unless price_note.empty?
-      data['price_note'] = price_note
       price_note = price_note.downcase
       price_no_special = true if price_note.index('special pricing') 
       price_no_less = true if price_note.index('less than minimum')

@@ -159,12 +159,8 @@ class GemlineXML < GenericImport
           'material' => material
         }
 
-        if swatches_element = item.at_xpath('swatches')
-          swatches = {}
-          swatches_element.elements.each do |image|
-            swatches[image.name] = image['path'] + image['name']
-          end
-          val['swatches'] = swatches
+        if swatch_node = item.at_xpath('swatches/image')
+          val['swatch'] = ImageNodeFetch.new(swatch_node['name'].split('.').first, "#{swatch_node['path']}#{swatch_node['name']}")
         end
 
         if image_node = item.at_xpath('images/zoomed')
@@ -260,7 +256,8 @@ class GemlineXML < GenericImport
           vd.properties = { 
             'material' => variant['material'],
             'dimension' => dimension,
-            'color' => variant['color']
+            'color' => variant['color'],
+            'swatch' => variant['swatch']
           }
           vd.images = variant['images']
           vd.pricing = PricingDesc.new(prices, costs)

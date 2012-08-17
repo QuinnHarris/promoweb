@@ -57,13 +57,15 @@ module PropertyObject
       not self == right
     end
 
-    def valid?
+    def valid_props?
       self.class.properties_hash.each do |key, value|
         next if value
         return false if send(key).nil?
       end
       true
     end
+
+    def valid?; valid_props?; end
   end
 
   module ClassMethods
@@ -89,7 +91,7 @@ module PropertyObject
     def property(name, type, options = {}, &block)
       properties_hash[name.to_s] = options[:nil]
       # Return nil if no new method but object is invalid if not set
-      options[:nil] = true unless type.respond_to?(:new)
+      options[:nil] = true unless type.respond_to?(:new) || Array === type
       if [Integer, Float].include?(type) and !block
         options.merge!(:no_pre => true, :cast => true)
       end
@@ -177,7 +179,7 @@ class LeadTimeDesc
   property :normal_min, Integer
   property :normal_max, Integer
   property :rush, Integer, :nil => true
-  # Rush Charge?
+  property :rush_charge, Float, :nil => true
 end
 
 class PackageDesc
@@ -187,8 +189,14 @@ class PackageDesc
     property name, Float, :nil => true
   end
   
-  property :weight, Float
+  property :weight, Float, :nil => true
+  property :unit_weight, Float, :nil => true
   property :units, Integer
+
+  def valid?
+    return false unless valid_props?
+    weight || unit_weight
+  end
 end
 
 class PricingDesc
@@ -403,25 +411,7 @@ class ProductDesc
   def validate_after
     all_images = ((variants.collect { |v| v.images }) + self.images).flatten.compact.uniq
 
-    replace_images = {}
-
-    dup_hash = {}
-    dup_hash.default = []
-    all_images.each do |image|
-      unless size = image.size
-        replace_images[image] = nil
-        puts "  No Image: #{image.uri}\n"
-        next
-      end
-      
-      if (ref = dup_hash[size]) and
-          match = ref.find { |r| FileUtils.compare_file(r.path, image.path) }
-        replace_images[image] = match
-        puts "  Duplicate Image: #{supplier_num} #{size} #{ref.inspect} #{image.inspect}\n"
-      else
-        dup_hash[size] += [image]
-      end
-    end
+    replace_images = find_duplicate_images(all_images, supplier_num)
 
     raise ValidateError, 'No images after fetch' if (all_images - replace_images.keys).empty?
 
@@ -435,12 +425,8 @@ class ProductDesc
   def merge(hash)
     hash.each do |key, value|
       case key
-      when 'lead_time_normal_min'
-        self.lead_time.normal_min = value
-      when 'lead_time_normal_max'
-        self.lead_time.normal_max = value
-      when 'lead_time_rush'
-        self.lead_time.rush = value
+      when /^lead_time_(\w+)$/
+        self.lead_time.send("#{$1}=", value)
       when /^package_(\w+)$/
         self.package.send("#{$1}=", value) if value
       when 'decorations'

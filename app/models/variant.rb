@@ -66,7 +66,7 @@ class Variant < ActiveRecord::Base
     orig = nil
     if prop
       orig = prop.value
-      return prop if prop.value == value
+      return nil if prop.value == value
       properties.delete(prop)
     end
     if value

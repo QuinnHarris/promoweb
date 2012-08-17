@@ -321,8 +321,7 @@ class LancoXLS < GenericImport
               @@fills[letter].collect do |fill|
                 hash.merge('supplier_num' => "#{hash['supplier_num'][0..12]}-#{letter}-#{fill}"[0..31],
                            'fill' => "#{letter}-#{fill}",
-                           'swatch-medium' => LocalFetch.new(File.join(JOBS_DATA_ROOT, 'Lanco-Fills-Swatches'), "#{fill}.png"))
-                
+                           'swatch-medium' => LocalFetch.new(File.join(JOBS_DATA_ROOT, 'Lanco-Fills-Swatches'), "#{fill}.png"))                
               end
             else
               hash.merge('fill' => fill_name)
