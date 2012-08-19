@@ -194,7 +194,9 @@ public
       
       @email_subject = "#{@product.name} (M#{@product.id})"
     
-      @description = "#{@product.name}, Price: #{@product.price_min_cache.to_perty} to #{@product.price_max_cache.to_perty}."
+      @description = "#{@product.name}, Price: " +
+        [@product.price_min_cache, @product.price_max_cache].compact.collect { |m| m.to_perty }.join(' to ')
+
 #      @description += "Availible in " + @properties.collect do |name, values|
 #        next nil if values.first.is_image?
 #        name + ': ' + values.collect { |prop| prop.translate }.join(', ')
