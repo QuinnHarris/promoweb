@@ -260,37 +260,30 @@ class GenericImageFetch < WebFetch
 
 end
 
-
-# Still used by gemline swatches
-class CopyImageFetch < GenericImageFetch
-  def apply_image(type, record)
-    return true if record.image_exists?(type)
-    return nil unless path = get_path
-#    record.image_import(path, type)
-    record.image_copy(path, type)
-    return true
+# Used in validate_after in ProductDesc and validate between in GenericImport
+def find_duplicate_images(images, id = nil)
+  replace_images = {}
+  
+  dup_hash = {}
+  dup_hash.default = []
+  images.each do |image|
+    unless size = image.size
+      replace_images[image] = nil
+      puts "  No Image: #{image.uri}\n"
+      next
+    end
+    
+    if (ref = dup_hash[size]) and
+        match = ref.find { |r| FileUtils.compare_file(r.path, image.path) }
+      replace_images[image] = match
+      puts "  Duplicate Image: #{id} #{size} #{ref.inspect} #{image.inspect}\n"
+    else
+      dup_hash[size] += [image]
+    end
   end
+
+  replace_images
 end
-
-# used by highcal
-class LocalFetch
-  def initialize(path, filename)
-    @filename = filename
-    @path = File.join(path, filename)
-  end
-
-  attr_reader :path, :filename
-#  def get_path; @path; end
-
-  def apply_image(type, record)
-    return true if record.image_exists?(type)
-    return nil unless @path
-    record.image_copy(path, type)
-    return true
-  end
-end
-
-
 
 class ValidateError < StandardError
   def initialize(aspect, value = nil)
@@ -415,20 +408,19 @@ class ProductApply
           
       # Properties
       current.properties.merge(vd.properties).each do |name, value|
+        next if name == 'swatch'
         value = nil if value.blank?
         value = value.collect { |k, v| "#{k}:#{v}" }.sort.join(',') if value.is_a?(Hash)
         variant_record.set_property(name, value, variant_log)
       end
       
-      # REPLACE THIS
-#          if variant_data["swatch-medium"]  
-#            swatch_prop = variant_record.set_property('swatch', variant_data["swatch-medium"].filename, variant_log)
-#            
-#            # Fetch images
-#            %w(small medium).each do |name|
-#              variant_data["swatch-#{name}"].apply_image(name, swatch_prop) if variant_data["swatch-#{name}"]
-#            end
-#          end
+      # Swatch Property
+      if img = vd.properties['swatch']
+        if swatch_prop = variant_record.set_property('swatch', img.id, variant_log)
+          swatch_prop.image = img.get
+          swatch_prop.save!
+        end
+      end
           
       # Match groups to variant list.  Ensure cost and price lists match
       if pg = new_price_groups.zip(new_cost_groups).find do |(dp, vp), (dc, vc)|
@@ -569,6 +561,23 @@ class GenericImport
     res
   end
 
+  def validate_interproduct
+    puts "Swatch DeDup START <<"
+    swatches = @product_list.collect { |pd| ([pd.properties['swatch']] +  pd.variants.collect { |pv| pv.properties['swatch'] }).compact }.flatten.uniq
+
+    replace_images = find_duplicate_images(swatches)
+
+    @product_list.each do |pd|
+      swatch = pd.properties['swatch']
+      pd.properties['swatch'] = replace_images[swatch] if replace_images.has_key?(swatch)
+      pd.variants.each do |pv|
+        swatch = pv.properties['swatch']
+        pv.properties['swatch'] = replace_images[swatch] if replace_images.has_key?(swatch)
+      end
+    end
+    puts ">> Swatch DeDup STOP: #{swatches.size} #{replace_images.size}"
+  end
+
   def run_parse
     init_time = Time.now
     puts "#{@supplier_record.name} parse start at #{init_time}"
@@ -595,6 +604,8 @@ class GenericImport
         end
       end
     end
+
+    validate_interproduct
 
     stop_time = Time.now
     puts "#{@supplier_record.name} validate stop at #{stop_time} for #{stop_time - mid_time}s #{@product_list.length}"

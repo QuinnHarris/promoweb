@@ -1,3 +1,11 @@
+module Paperclip
+  module Interpolations
+    def name_value attachment, style_name
+      "#{attachment.instance.name}_#{attachment.instance.value}"
+    end
+  end
+end
+
 class Property < ActiveRecord::Base
   has_and_belongs_to_many :variants
   
@@ -17,7 +25,7 @@ class Property < ActiveRecord::Base
         end
       end,
       'swatch' => Proc.new do |v|
-        image_path_relative('medium')
+        image.url
       end
     }
     
@@ -40,9 +48,13 @@ class Property < ActiveRecord::Base
   def is_option?
     name != 'swatch'
   end
+
+  has_attached_file :image, :url => "/data/property/:name_value.:extension", :path => "#{DATA_ROOT}:url", :styles => {
+    :original => { :geometry => '72x36>', :format => 'png' } }, :default_style => :original, :convert_options => { :all => "-strip" }
+
+  def image_file_name; "x.png"; end
+  def image_file_name=(set); end;
   
-  record_images({ 'medium' => { :ext => 'gif' },
-                  'small' => { :ext => 'gif' } })
   
   def self.get(name, value)
     prop = Property.find_by_name_and_value(name, value)
