@@ -269,7 +269,7 @@ def find_duplicate_images(images, id = nil)
   images.each do |image|
     unless size = image.size
       replace_images[image] = nil
-      puts "  No Image: #{image.uri}\n"
+      puts "  No Image: #{id} #{image.uri}\n"
       next
     end
     
@@ -381,6 +381,8 @@ class ProductApply
   end
   def apply_supplier_categories(curr, prev); ''; end
 
+  def apply_pricing_params(curr, prev); ''; end
+
   def apply_images(curr, prev)
     all_images = (curr + current.variants.collect { |v| v.images }).flatten.compact.uniq
     record.delete_images_except(all_images) + record.set_images(curr)
@@ -478,7 +480,7 @@ class ProductApply
         
     if recache_prices
       pc = PriceCollectionCompetition.new(record)
-      pc.calculate_price({}) # product_data['price_params']
+      pc.calculate_price(current.pricing_params || {})
     end
     
     record.association(:variants).target = variant_records
@@ -503,6 +505,7 @@ class GenericImport
     @decoration_techniques = DecorationTechnique.find(:all).inject({}) { |h, i| h[i.name] = i; h }
     @product_list = []
     @invalid_prods = {}
+    @warning_prods = {}
   end
 
   def set_standard_colors(colors = nil)
@@ -654,9 +657,17 @@ class GenericImport
       end
 
       # Print Stats
-      puts "Invalid Products:" unless @invalid_prods.empty?
-      @invalid_prods.each do |aspect, list|
-        puts "  #{aspect}: #{list.join(', ')}"
+      [['Product Warnings', @warning_prods],
+       ['Invalid Products', @invalid_prods]].each do |name, hash|
+        puts name unless hash.empty?
+        hash.each do |aspect, list|
+          if list.length * 2 > supplier_num_set.length
+            list = supplier_num_set.to_a - list
+            puts "  #{aspect}: ALL - #{list.join(', ')}"
+          else
+            puts "  #{aspect}: #{list.join(', ')}"
+          end
+        end
       end
 
       total = @product_list.length
@@ -712,6 +723,11 @@ class GenericImport
 
   def add_error(boom, id)
     @invalid_prods[boom.aspect] = (@invalid_prods[boom.aspect] || []) + [id]
+  end
+
+  def add_warning(boom, id)
+    puts "* #{id}: #{boom}"
+    @warning_prods[boom.aspect] = (@warning_prods[boom.aspect] || []) + [id]
   end
   
   def add_product(object)

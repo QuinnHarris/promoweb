@@ -18,12 +18,12 @@ class NewCategoryTransform
     # Remove parent categories after all rules to work correct with exclude
     remove_sub_dups(pd['categories'])
 
-    if true #Rails.env.production?
+    if Rails.env.production?
       pd.categories = [['Other']] if pd.categories.empty?
     else
       pd.categories += pd.categories.collect { |cat| ['YBySupplier', @supplier] + cat }
 
-      unused_categories = pd.supplier_categories - @used_categories   
+      unused_categories = (pd.supplier_categories - @used_categories).collect { |cat| cat.collect { |s| s.gsub('/', 'slash') } }
       unused_categories << ['AAA'] if pd.categories.empty?
       unless unused_categories.uniq.empty?
         pd.categories += unused_categories.collect { |cat| ['XUnOrganized', @supplier] + cat }
@@ -850,6 +850,7 @@ private
            match(%w(name description), 'USB')),
        sup('LogoIncluded',
            cat('USB Accessories'),
+           cat('SD Cards  Readers'),
            all(cat('Tech Accessories'),
                match(%w(name description), 'USB'))) ]],
      ['USB Flash Drives',
@@ -857,7 +858,8 @@ private
        sup('Leeds', cat('Memory', 'Flash Drives') ),
        sup('Gemline', cat('Gifts', 'USB Drives') ),
        sup('Prime Line', cat('USB Memory') ),
-       sup('Logomark', cat('USB Drives') )
+       sup('Logomark', cat('USB Drives') ),
+       sup('LogoIncluded', cat('USB Drive') )
       ],[
          ['Pen USB Flash Drives',
           [match('name', 'pen', 1),
@@ -871,8 +873,7 @@ private
         ["#{name}B Flash Drives",
          [match('name', name, 1),
           sup('LogoIncluded',
-              cat('USB Drive'),
-              cat('Wireless Presenter') )]]
+              match('memory', name) ) ]]
       end
      ],
      ['Digital Photo Frames',
@@ -2095,7 +2096,8 @@ private
       [match('name', 'jar opener') ]],
 
      ['Flashlights',
-      [match(%w(name description), %w(flashlight fingerlight) + [/(^|\s+)LED(\s+|$)/]),
+      [match('name', /(^|\s+)LED(\s+|$)/),
+       match(%w(name description), %w(flashlight fingerlight)),
        sup('High Caliber Line', cat('Flashlights') ),
        sup('Lanco', cat('Tools / Knives', 'Flashlights') ),
        sup('Prime Line', match('name', 'torch') ),

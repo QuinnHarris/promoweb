@@ -1,11 +1,19 @@
 class PropertyError < ValidateError
-  def initialize(value, property = nil)
-    @value, @property = value, property
+  def initialize(value, prop = nil)
+    @value= value
+    @properties = []
+    @properties << prop if prop
   end
-  attr_reader :property
+  attr_reader :properties
+
+  def append(prop)
+    raise "Append must be string" unless prop.is_a?(String)
+    @properties << prop
+    self
+  end
 
   def aspect
-    "Property #{property}"
+    "Property #{properties.reverse.join('.')}"
   end
 end
 
@@ -47,6 +55,10 @@ module PropertyObject
       return nil unless self.class.properties.include?(key.to_s)
       send(key.to_s)
     end
+    def []=(key, value)
+      return nil unless self.class.properties.include?(key.to_s)
+      send("#{key}=", value)
+    end
 
     def ==(right)
       not self.class.properties.find do |key|
@@ -57,15 +69,51 @@ module PropertyObject
       not self == right
     end
 
-    def valid_props?
-      self.class.properties_hash.each do |key, value|
-        next if value
-        return false if send(key).nil?
+    def validate_properties
+      self.class.properties_hash.each do |key, (type, options)|
+        value = instance_variable_get("@#{key}")
+        raise PropertyError.new("nil", key) if !(options[:nil] || options[:warn] || options[:no_check]) && value.nil?
+        next unless value
+        begin
+          value.validate if value.respond_to?(:validate)
+          if type.is_a?(Array)
+            value.each do |elem|
+              elem.validate if elem.respond_to?(:validate)
+            end
+          end
+        rescue PropertyError => e
+          raise e.append(key)
+        end
       end
-      true
     end
+    def validate; validate_properties; end
 
-    def valid?; valid_props?; end
+    def warnings(import, context = nil)
+      self.class.properties_hash.each do |key, (type, options)|
+        value = instance_variable_get("@#{key}")
+        if options[:warn]
+          begin
+            raise PropertyError.new("nil") if !(options[:nil] || options[:no_check]) && value.nil?
+            value.validate if value.respond_to?(:validate)
+          rescue PropertyError => e
+            e.append(key)
+            e.append(context) if context
+            import.add_warning(e, supplier_num)
+            instance_variable_set("@#{key}", nil)
+          end
+        end
+        next unless value
+        if type.is_a?(Array)
+          value.each do |elem|
+            begin
+              elem.warnings(import, key) if elem.respond_to?(:warnings)
+            rescue PropertyError => e
+              import.add_warning(e.append(key), supplier_num)
+            end
+          end
+        end
+      end
+    end
   end
 
   module ClassMethods
@@ -82,14 +130,14 @@ module PropertyObject
         value.each do |e|
           raise PropertyError.new("expected #{type} in Array got #{e.inspect}" + tail, name) unless e.is_a?(type.first)
         end
-        raise PropertyError.new("expected unique Array" + tail, name) unless value.uniq.length == value.length
+        raise PropertyError.new("expected unique Array" + tail + ": #{value.inspect}", name) unless value.uniq.length == value.length
       else
         raise PropertyError.new("expected #{type} got #{value.inspect}" + tail, name) unless value.is_a?(type) || (options[:nil] && value.nil?)
       end
     end
 
     def property(name, type, options = {}, &block)
-      properties_hash[name.to_s] = options[:nil]
+      properties_hash[name.to_s] = [type, options]
       # Return nil if no new method but object is invalid if not set
       options[:nil] = true unless type.respond_to?(:new) || Array === type
       if [Integer, Float].include?(type) and !block
@@ -101,7 +149,7 @@ module PropertyObject
           begin
             value = block.call(value)
           rescue PropertyError => e
-            raise PropertyError.new(e.value, name)
+            raise e.append(name.to_s)
           end
           self.class.test_type(name, type, value, options, ' after method')
         else
@@ -155,7 +203,7 @@ class DecorationDesc
     super.merge('technique' => technique_record)
   end
 
-  property :location, String
+  property :location, String do |s| s.strip end
   property :limit, Integer, :nil => true
 
   [:width, :height, :diameter].each do |name|
@@ -180,6 +228,11 @@ class LeadTimeDesc
   property :normal_max, Integer
   property :rush, Integer, :nil => true
   property :rush_charge, Float, :nil => true
+
+  def validate
+    validate_properties
+    raise PropertyError, "must have rush if rush_charge" if rush_charge && !rush
+  end
 end
 
 class PackageDesc
@@ -193,9 +246,9 @@ class PackageDesc
   property :unit_weight, Float, :nil => true
   property :units, Integer
 
-  def valid?
-    return false unless valid_props?
-    weight || unit_weight
+  def validate
+    validate_properties
+    raise PropertyError, "weight and unit_weight empty" unless weight || unit_weight
   end
 end
 
@@ -206,6 +259,11 @@ class PricingDesc
   end
   # Temp?
   attr_accessor :prices, :costs
+
+  def validate
+    raise ValidateError, "price empty" if prices.empty?
+    raise ValidateError, "costs empty" if costs.empty?
+  end
 
   def ==(right)
     prices == right.prices && costs == right.costs
@@ -293,7 +351,7 @@ class VariantDesc
   property :supplier_num, String do |s| s.strip end
   def error_id; "Variant #{supplier_num}"; end
   property :properties, Hash
-  property :images, Array[ImageNodeFetch]
+  property :images, Array[ImageNodeFetch], :warn => true
 
   property :pricing, PricingDesc, :block => true
 
@@ -327,18 +385,19 @@ class ProductDesc
       v.delete_if { |e| e.empty? }
       v.join("\n")
     elsif String === v
-      v
+      v.strip
     else
       raise PropertyError, "expected String or Array of String"
     end
   end
 
-  property :lead_time, LeadTimeDesc
-  property :package, PackageDesc
+  property :lead_time, LeadTimeDesc, :warn => true
+  property :package, PackageDesc, :warn => true
   property :data, Hash, :nil => true
+  property :pricing_params, Hash, :nil => true
 
   @@tags = Tag.select(:name).uniq.collect { |t| t.name }
-  property :tags, Array[String] do |array|
+  property :tags, Array[String], :warn => true do |array|
     array.each do |s|
       raise PropertyError, "got #{s} expected in #{@@tags.inspect}" unless @@tags.include?(s)
     end
@@ -367,19 +426,35 @@ class ProductDesc
     v
   end
 
-  property :properties, Hash # Properties applied to all variants
+  property :properties, Hash, :no_check => true # Properties applied to all variants
+
+  def variants_multiply_properties(list)
+    return if list.empty?
+    keys = list.first.keys
+    raise "Must have same properties" unless list.collect { |h| h.keys }.uniq.length == keys.length
+    raise "Must have unique list" unless list.uniq.length == list.length
+    self.variants = self.variants.collect do |vd|
+      list.collect do |h|
+        v = vd.dup
+        if num = keys.delete('supplier_num')
+          v.supplier_num = num
+        elsif post = keys.delete('postfix')
+          v.supplier_num += post
+        else
+          v.supplier_num += keys.collect { |k| "-#{h[k]}" }.join
+        end
+        v.properties = v.properties.merge(h)
+        v
+      end
+    end.flatten
+  end
 
   def validate(import)
-    unless package.valid?
-      import.add_error(PropertyError.new("Invalid Package"), supplier_num)
-      @package = nil
-    end
+    # Apply Warnings
+    warnings(import)
 
     # check presense
-    self.class.properties_hash.each do |key, value|
-      next if value
-      raise PropertyError.new("nil", key) if send(key).nil?
-    end
+    validate_properties
 
     # check all variants have the same set of properties
     prop_list = variants.collect { |v| v.properties.keys }.flatten.compact.uniq.sort

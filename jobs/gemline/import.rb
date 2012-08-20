@@ -261,15 +261,9 @@ class GemlineXML < GenericImport
           }
           vd.images = variant['images']
           vd.pricing = PricingDesc.new(prices, costs)
- 
-#          %w(small medium).each do |name|
-#            data["swatch-#{name}"] = CopyImageFetch.new(variant['swatches'][name]) if variant['swatches'][name]
-#          end
           vd
         end
       end.flatten # hash.each
-
-#      add_product(pd)
     end # gemroot.each_element
   end
 end

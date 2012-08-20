@@ -27,76 +27,61 @@ class LogoIncludedXML < GenericImport
 
   def parse_products
     puts "Reading XML"
-    doc = File.open(@src_file) { |f| Nokogiri::XML(f) }
+    doc = File.open(@src_file) { |f| Nokogiri::XML(f.read.gsub('&', '&amp;')) }
     
-    doc.xpath('/ProductList/Product').each do |product|
+    ProductDesc.over_each(self, doc.xpath('/ProductList/Product')) do |pd, product|
       # Product Record
       @product_id = "#{product.at_xpath('SKU').text} #{product.at_xpath('Name').text}"
 
+      pd.supplier_num = product.at_xpath('SKU').text
+
       category = product.at_xpath('Category').text
-      if %w(USB\ Accessories).include?(category)
-        name = product.at_xpath('Name').text
+      if %w(USB\ Accessories SD\ Cards\ \ Readers).include?(category)
+        pd.name = product.at_xpath('Name').text
       else
-        name = (product.at_xpath('Name').text.split(' ')+category.split(' ')).reverse.uniq.reverse.join(' ')
+        pd.name = (product.at_xpath('Name').text.split(' ')+category.split(' ')).reverse.uniq.reverse.join(' ')
       end
-      product_data = {
-        'supplier_num' => product.at_xpath('SKU').text,
-        'name' => name,
-        'supplier_categories' => [[category]],
-        'description' => product.at_xpath('Description').text.gsub(/\.\s+/,".\n"),
-        'data' => { :url => product.at_xpath('LogoincludedURL').text.strip }
-      }
-
-      url_string = product.at_xpath('LogoincludedURL').text.strip
-      unless url_string.empty?
-        unless /^http:\/\/www\.logoincluded\.com\/products\/(.+)$/ === url_string
-          raise "Unknown URL: #{url_string}"
-        end
-        product_data['data'] = { :path => $1 }
-      end
-        
-
-
-#      puts "Product: #{product_data['supplier_num']} : #{product_data['name']}"
+      pd.supplier_categories = [[category]]
+      
+      pd.description = product.at_xpath('Description').text.gsub(/\.\s+/,".\n")
+      
 
       begin # Shipping
-        ship_indiv = product.at_xpath('ShippingInfo/IndividualWeight').text
-#        raise "unit not g: #{ship_indiv.attributes.inspect}" unless ship_indiv.attributes['unit'] != 'g'
-        ship_unit = product.at_xpath('ShippingInfo/MasterCartonWeight').text
-#        raise "unit not lbs" unless ship_unit.attributes['unit'] != 'lbs'
+        ship_indiv = product.at_xpath('ShippingInfo/IndividualWeight')
+        raise "unit not g: #{ship_indiv.attributes.inspect}" unless ship_indiv.attributes['unit'].value == 'g'
+        pd.package.unit_weight = ship_indiv.text.blank? ? nil : (Float(ship_indiv.text) * 0.00220462262)
+
+        ship_weight = product.at_xpath('ShippingInfo/MasterCartonWeight')
+        raise "unit not lbs" unless ship_weight.attributes['unit'].value == 'lbs'
+        pd.package.weight = ship_weight.text.blank? ? nil : Float(ship_weight.text)
+
+
         master_qty = product.at_xpath('ShippingInfo/MasterCartonQty').text
-        if master_qty.empty?
-          warning "Empty Master Carton"
-          master_qty = nil 
+        if master_qty.blank?
+          warning "Empty Master Carton" if pd.package.unit_weight || pd.package.weight
+          master_qty = nil
+        else
+          warning "Invalid MasterCartonQty: #{master_qty}" if master_qty.to_i.to_s != master_qty
+          pd.package.units = Integer(master_qty)
         end
-        warning "Invalid MasterCartonQty: #{master_qty}" if master_qty.to_i.to_s != master_qty
-        product_data.merge!({ 'package_unit_weight' => (ship_indiv && !ship_indiv.empty?) ? (Float(ship_indiv) * 0.00220462262) : nil,
-                              'package_units' => master_qty && master_qty.to_i,
-                              'package_weight' => (ship_unit && !ship_unit.empty?) ? Float(ship_unit) : nil })
       end
 
       begin # Lead Times
-        production_time_reg = /(\d+)(?:-(\d+))? days?/
+        production_time_reg = /(\d+)(?:-(\d+))?(?: +business)? +((?:days)|(?:weeks))/i
         std_time = product.at_xpath('ProductionTimes/StandardProductionTime').text
         unless std_time.blank?
-          case std_time
-          when /(\d+)(?:-(\d+))?(?: +business)? +days/i
-            product_data.merge!({ 'lead_time_normal_min' => Integer($1),
-                                  'lead_time_normal_max' => Integer($2 || $1) })
-          when /(\d+) weeks/
-            product_data.merge!({ 'lead_time_normal_min' => Integer($1)*5,
-                                  'lead_time_normal_max' => Integer($1)*5 })
-          else
-            raise "Unknown std time: #{std_time.inspect}" unless production_time_reg === std_time
+          unless production_time_reg === std_time
+            raise "Unknown std time: #{std_time.inspect}"
           end
-        else
-          warning "Unspecified Lead Time"
+          multi = ($3 == 'weeks') ? 5 : 1
+          pd.lead_time.normal_min = Integer($1) * multi
+          pd.lead_time.normal_max = Integer($2 || $1) * multi
         end
         
         rush_time = product.at_xpath('ProductionTimes/RushProductionTime').text
-        unless rush_time.blank? or (rush_time.strip == 'None')
+        unless rush_time.blank? or %w(None n/a).include?(rush_time.strip)
           if production_time_reg === rush_time
-            product_data.merge!({ 'lead_time_rush' => Integer($1) })
+            pd.lead_time.rush = Integer($1)
           else
             warning "Unknown rush time: #{rush_time.inspect}" 
           end
@@ -104,54 +89,43 @@ class LogoIncludedXML < GenericImport
       end
         
       begin # Decorations
-        list = [{
-          'technique' => 'None',
-          'location' => ''
-        }]
+        pd.decorations = [DecorationDesc.none]
 
-        list += product.xpath('ImprintArea/Location').collect do |location|
-          data = {
-            'technique' => 'Screen Print',
-            'limit' => 5,
-            'location' => location.at_xpath('Description').text }
+        pd.decorations += product.xpath('ImprintArea/Location').collect do |location|
+          dd = DecorationDesc.new(:technique => 'Screen Print',
+                                  :location => location.at_xpath('Description').text,
+                                  :limit => 5)
 
           { 'Length' => 'width',
             'Height' => 'height' }.each do |tag, attr|
             node = location.at_xpath(tag)
             raise "Unknown #{tag} unit" unless node['unit'] == 'mm'
-            data[attr] = (Float(node.text) * 3.93700787).round / 100.0
+            dd[attr] = (Float(node.text) * 3.93700787).round / 100.0 unless node.text.blank?
           end
 
-          data
+          dd
         end
-        product_data['decorations'] = list
       end
 
       begin # Product Image
         image_url = product.at_xpath('Image/Large').text
         unless image_url.blank?
-          product_data['image-large'] = CopyImageFetch.new(image_url)
-          %w(thumb main).each do |name|
-            product_data["image-#{name}"] = TransformImageFetch.new(image_url)
-          end
+          pd.images = [ImageNodeFetch.new(pd.supplier_num, image_url)]
         else
           warning "Unspecified image"
           next
         end
       end
- 
-      colors = product.xpath('ColorOptions/Color/Description').collect { |n| n.text }.uniq
 
-      nums = []
       min_units = 10000000
       max_units = 0
 
-      product_data['variants'] = product.xpath('Pricing/LineItem').collect do |li|
+      pd.variants = product.xpath('Pricing/LineItem').collect do |li|
         last_maximum = nil
         prices = li.xpath('UnitPriceBreaks/Quantity').collect do |qty|
           min, max = %w(minimum maximum).collect { |n| qty[n].blank? ? nil : Integer(qty[n]) }
           if min and max and max < min
-            puts "EXCLUDING: #{max} < #{min}"
+            warning "EXCLUDING: #{max} < #{min}"
             next
           end
           min_units = [min_units, max].min
@@ -188,42 +162,35 @@ class LogoIncludedXML < GenericImport
           end
         end
 
-        data = { 'prices' => prices, 'costs' => costs }
+#        puts "#{pd.supplier_num}: #{prices.inspect} #{costs.inspect}"
+
+        vd = VariantDesc.new
+        vd.pricing = PricingDesc.new(prices, costs)
+        vd.images = [] # Suppress warning
 
         description = li['description']
         case description
-          when /(\d+(?:(?:MB)|(?:GB?))) USB 2.0/
-          data['memory'] = $1
-          data['supplier_num'] = "#{product_data['supplier_num']}-#{$1}"
+          when /(\d+(?:(?:MB)|(?:GB?))) (USB ([23]).0)/
+          vd.properties['memory'] = $1
+          vd.properties['speed'] = $2
+          vd.supplier_num = pd.supplier_num + "-#{$1}"
+          vd.supplier_num += "-#{$3}" unless $3 == '2'
         else
           if description.blank?
-            data['supplier_num'] = product_data['supplier_num']
+            vd.supplier_num = pd.supplier_num
           else
             warning "Unknown description: #{description.inspect}"
             next
           end
         end
 
-        puts "SupplierNum: #{data['supplier_num']}"
+        vd
+      end.compact
 
-        if nums.include?(data['supplier_num'])
-          warning "Duplicate supplier_num: #{data['supplier_num']}"
-          next 
-        end
-        nums << data['supplier_num']
+      colors = product.xpath('ColorOptions/Color/Description').collect { |n| { 'color' => n.text } }.uniq
+      pd.variants_multiply_properties(colors)
 
-        next data if colors.empty?
-
-        colors.collect do |color|
-          data.merge('supplier_num' => (data['supplier_num'] + "-#{color}")[0..31],
-                     'color' => color)
-        end
-      end.flatten.compact
-
-      product_data['price_params'] = { :n1 => min_units, :m1 => 1.5, :n2 => max_units, :m2 => 1.2 }
-      puts product_data['price_params'].inspect
-
-      add_product(product_data)
+      pd.pricing_params = { :n1 => min_units, :m1 => 1.5, :n2 => max_units, :m2 => 1.2 }
     end
   end
 end
