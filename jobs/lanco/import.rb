@@ -214,9 +214,7 @@ class LancoXLS < GenericImport
         'isKosher' => 'Kosher',
         'MadeInUSA' => 'MadeInUSA',
         'isEcoFriendly' => 'Eco',
-      }.collect { |method, name|
-        puts "#{method} => #{product[method].inspect}"
-        name if yes_list.include?(product[method]) }.compact
+      }.collect { |method, name| name if yes_list.include?(product[method]) }.compact
 
       pd.supplier_categories = [[product['Category'] || 'unkown', product['Subcategory'] || 'unknown']]
       pd.package.unit_weight = product['shipping_info(wt/100)'].is_a?(String) ? (product['shipping_info(wt/100)'].to_f / 100.0) : nil
