@@ -13,7 +13,8 @@
           %div= link_to 'Items', items_order_path(order)
           %div= link_to 'Info', info_order_path(order)
         %td.products
-          - images = order.items.collect do |item|
+          - order.items.each do |item|
+            - next unless item.active_images.first
             - thumb_url = item.active_images.first.image.url(:thumb)
             %div
               = link_to(url_for_product(item.product)) do

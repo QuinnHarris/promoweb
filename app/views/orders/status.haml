@@ -36,7 +36,8 @@
             = link_to(url_for_product(td.item.product)) do
               = td.item.product.name
               %br
-              = image_tag(td.item.active_images.first.image.url(:thumb), :alt => "#{td.item.product.name} Thumbnail")
+              - if td.item.active_images.first
+                = image_tag(td.item.active_images.first.image.url(:thumb), :alt => "#{td.item.product.name} Thumbnail")
             %br
             Qty:
             = td.item.quantity
