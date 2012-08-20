@@ -205,16 +205,18 @@ class LancoXLS < GenericImport
           description.gsub!(num, "<a href='#{prod.web_id}'>M#{prod.id}</a>")
         end
       end
-      
-
+          
       pd.description = description
+      yes_list = ['YES', 'True', Date.parse("Sun, 31 Dec 1899 00:00:00 +0000")]
       pd.tags = {
         'New' => 'New',
         'Closeout' => 'Closeout',
         'isKosher' => 'Kosher',
         'MadeInUSA' => 'MadeInUSA',
         'isEcoFriendly' => 'Eco',
-      }.collect { |method, name| name if product[method].is_a?(String) && %w(yes true).include?(product[method].downcase) }.compact
+      }.collect { |method, name|
+        puts "#{method} => #{product[method].inspect}"
+        name if yes_list.include?(product[method]) }.compact
 
       pd.supplier_categories = [[product['Category'] || 'unkown', product['Subcategory'] || 'unknown']]
       pd.package.unit_weight = product['shipping_info(wt/100)'].is_a?(String) ? (product['shipping_info(wt/100)'].to_f / 100.0) : nil
