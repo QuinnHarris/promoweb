@@ -34,7 +34,7 @@ class LancoXLS < GenericImport
   end
 
   @@fills = {
-    'A' => %w(Animal\ Crackers Carmel\ Popcorn Honey\ Roasted\ Peanuts Gold\ Fish Jelly\ Beans Mini\ Pretzels Peanuts Red\ Hots Starlight\ Mints Tootsie\ Rolls),
+    'A' => %w(Animal\ Crackers Caramel\ Popcorn Honey\ Roasted\ Peanuts Gold\ Fish Jelly\ Beans Mini\ Pretzels Peanuts Red\ Hots Starlight\ Mints Tootsie\ Rolls),
     'B' => %w(Candy\ Corn Choc\ Covered\ Peanuts Choc\ Covered\ Rasins Gum\ Balls Gummy\ Bears Gummy\ Worms Pistachios Runts Sour\ Patch\ Kids Supermints Swedish\ Fish Teenie\ Beenies Trail\ Mix),
     'C' => %w(Granola American\ Flag\ Balls Cashews Milk\ Choc\ Balls Chocolate\ Coins Choc\ Covered\ Almonds Choc\ Covered\ Pretzels Christmas\ Balls Earth\ Balls Easter\ Eggs English\ Butter\ Toffee Chocolate\ Squares Halloween\ Balls Hershey\ Kisses Jelly\ Bellies M&Ms Pecan\ Turtles Red\ Foil\ Choc\ Hearts Choc\ Covered\ Sunflower\ Seeds Soy\ Nuts Sports\ Balls Truffles)
   }
@@ -93,12 +93,11 @@ class LancoXLS < GenericImport
       end
 
       if setup == 45.0 && (limit == 1 || running == 0.2)
-        return [{'technique' => 'None',
-                  'location' => ''
-                }] + sizes.collect do |s|
-          s.merge({'technique' => 'Screen Print',
-                    'limit' => limit || 4,
-                    'location' => ''})
+        return [DecorationDesc.none] + sizes.collect do |s|
+          dd = DecorationDesc.new(:technique => 'Screen Print',
+                                  :location => '',
+                                  :limit => limit || 4)
+          dd.merge!(s)
         end
       end
     end
@@ -138,8 +137,8 @@ class LancoXLS < GenericImport
         :marginal => cost_list.last,
       })
     end
-    
-    { 'prices' => prices, 'costs' => costs }
+
+    PricingDesc.new(prices, costs)
   end
 
   def find_common_list(orig_list)
@@ -179,7 +178,7 @@ class LancoXLS < GenericImport
     ws.each(1) do |row|
       data = ws.header_map.each_with_object({}) { |(k, v), h| h[k] = row[v] }
       unless row['ParentID'].blank?
-        puts "Sub: #{data['ParentID'].inspect}"
+#        puts "Sub: #{data['ParentID'].inspect}"
         sub_products[data['ParentID']] += [data]
       else
         products << data
@@ -189,57 +188,48 @@ class LancoXLS < GenericImport
     puts "Processing"
     
     products.each do |product|
-      sub = sub_products[product['ProductID']]
-      common, parts = find_common_list(([product] + sub).collect { |p| p['Prod_Name'].gsub(/(?:w\/)|(?:with)/i,'') })
-
-     
-#      description = product['CleanProd_Description'].strip + "\n" + product['Order_info'].strip
-#      description.gsub!('&nbsp;',' ')
-#      description.gsub!(/\s*\n\s*/,"\n")
+      pd = ProductDesc.new
+      pd.supplier_num = product['ProductID']
+      pd.name = convert_name(product['Alt_Prod_Name'].empty? ? product['Prod_Name'] : product['Alt_Prod_Name'])
 
       doc = Nokogiri::HTML(product['Prod_Description'])
       description = doc.root.search('text()').collect { |n| n.text.strip }.find_all { |s| !s.empty? }.join("\n")
       
       # Replace Lanco Product ID references to our product ids
       description.scan(/\w{2,3}\d{3,4}/).each do |num|
-        our_id = get_product(num).id
-        description.gsub!(num, "<a href='#{our_id}'>#{our_id}</a>")
+        sub_products.find { |parent, list| list.find { |h| (h['ProductID'] == num) && (num = parent) } }
+        if num == pd.supplier_num
+          description.gsub!(num)
+        else
+          prod = get_product(num)
+          description.gsub!(num, "<a href='#{prod.web_id}'>M#{prod.id}</a>")
+        end
       end
       
-#      if parts.find { |s| s.include?('A Fill')}
-#        @@fills.each do |name, list|
-#          description += "\n<a href='/static/fills##{name.downcase}'><strong>#{name} Fills:</strong></a>#{list.join(', ')}"
-#        end
-#      end
-      
-      product_data = {
-        'supplier_num' => product['ProductID'],
-        'name' => convert_name(product['Alt_Prod_Name'].empty? ? product['Prod_Name'] : product['Alt_Prod_Name']),
-        'description' => description,
-        'decorations' => [],
-        'tags' => {
-          'New' => 'New',
-          'Closeout' => 'Closeout',
-          'isKosher' => 'Kosher',
-          'MadeInUSA' => 'MadeInUSA',
-          'isEcoFriendly' => 'Eco',
-        }.collect { |method, name| name if product[method] == 'YES' }.compact,
-        'supplier_categories' => [[product['Category'], product['Subcategory']]],
-        'package_unit_weight' => product['shipping_info(wt/100)'].is_a?(String) ? (product['shipping_info(wt/100)'].to_f / 100.0) : nil
-      }
+
+      pd.description = description
+      pd.tags = {
+        'New' => 'New',
+        'Closeout' => 'Closeout',
+        'isKosher' => 'Kosher',
+        'MadeInUSA' => 'MadeInUSA',
+        'isEcoFriendly' => 'Eco',
+      }.collect { |method, name| name if product[method].is_a?(String) && %w(yes true).include?(product[method].downcase) }.compact
+
+      pd.supplier_categories = [[product['Category'] || 'unkown', product['Subcategory'] || 'unknown']]
+      pd.package.unit_weight = product['shipping_info(wt/100)'].is_a?(String) ? (product['shipping_info(wt/100)'].to_f / 100.0) : nil
 
       # Lead Times
       raise "Unkown Lead: #{product['production_time']}" unless /(\d+)-(\d+) ((?:Business Days)|(?:weeks))/i === product['production_time']
       multiplier = $3.include?('weeks') ? 7 : 1
-      product_data['lead_time_normal_min'] = $1.to_i * multiplier
-      product_data['lead_time_normal_max'] = $2.to_i * multiplier
+      pd.lead_time.normal_min = $1.to_i * multiplier
+      pd.lead_time.normal_max = $2.to_i * multiplier
 
-#      puts "Rush: #{product_data['supplier_num']} : #{product[:rushservice_id]}"
       # 0 - none
       # 1 - 3day, 1day, 2hr
       # 2 - 3day, 1day
       # 3 - 3day
-      product_data['lead_time_rush'], product_data['lead_time_rush_charge'] =
+      pd.lead_time.rush, pd.lead_time.rush_charge =
         case product['rush_svc_type'].to_i
         when 1,2
           [1, 1.25]
@@ -249,29 +239,25 @@ class LancoXLS < GenericImport
           [nil, nil]
         end
       
-#      product_data['image-thumb'] = product_data['image-main'] = product_data['image-large'] = HiResImageFetch.new("http://www.lancopromo.com/images/products/#{product_data['supplier_num'].downcase}/#{product_data['supplier_num'].downcase}.jpg")
-            
-      #puts
 
-      image_list = get_images(product_data['supplier_num'])
-      #puts "List #{product_data['supplier_num']}: #{image_list.inspect}"
-      image_list = image_list.collect { |img| ImageNodeFetch.new(img, "#{image_path(product_data['supplier_num'])}#{img}") }
+      image_list = get_images(pd.supplier_num)
+      image_list = image_list.collect { |img| ImageNodeFetch.new(img, "#{image_path(pd.supplier_num)}#{img}") }
 
       used_image_list = []
 
-      if img = image_list.find { |img| img.id == "#{product_data['supplier_num'].downcase}.jpg" }
+      if img = image_list.find { |img| img.id == "#{pd.supplier_num.downcase}.jpg" }
         used_image_list << img
-        product_data['images'] = [img]
+        pd.images = [img]
       else
 #        puts "NO MAIN IMAGE"
       end
 
 
       # Decorations
-      product_data['decorations'] = decorations(product)
+      pd.decorations = decorations(product)
 
+      # Match Colors to Images
       colors = product['colors'].split(/,\s*/)
-      #puts "Colors: #{colors.inspect}"
       color_image = {}
       colors.each do |color|
         images = image_list.find_all do |img|
@@ -286,63 +272,68 @@ class LancoXLS < GenericImport
           color_image[color] = nil
         end
       end
-
       colors = [nil] if colors.empty?
       color_image[nil] = nil if color_image.empty?
 
-      puts "Var: #{(([product] + sub).collect { |p| p['ProductID'] }).zip(parts).inspect}"
-      
+
+      sub = sub_products[product['ProductID']]
+      common, parts = find_common_list(([product] + sub).collect { |p| p['Prod_Name'].gsub(/(?:w\/)|(?:with)/i,'') })
+     
       full_color = false
       if parts.length == 2 and parts[0].blank? and parts[1].include?('Full Color')
         parts = ['Color Print', 'Full Color']
         full_color = true
       end
 
-      product_data['variants'] = ([product] + sub).zip(parts).collect do |prod, fill_name|
-        price_data = process_prices(prod)
+      pd.variants = ([product] + sub).zip(parts).collect do |prod, fill_name|
+        pricing = process_prices(prod)
         properties = { 'material' => prod['Materials'] }
         properties.merge!('dimension' => parse_volume(prod['Prod_size1'])) if prod['Prod_size1']
         properties.merge!('imprint' => fill_name) if full_color
         
-        vars = color_image.collect do |color, images|
-#          puts "Color: #{color}  Img: #{images && images.join(', ')}"
-          # For Each Variant
-          { 'supplier_num' => (prod['ProductID'] + (color && "-#{color}").to_s)[0...32],
-            'properties' => properties.merge('color' => color),
-            'images' => images
-          }.merge(price_data)
-        end
+        color_image.collect do |color, images|
+          vd = VariantDesc.new(:supplier_num => prod['ProductID'] + (color && "-#{color}").to_s,
+                               :properties => properties.merge('color' => color),
+                               :images => images || [], :pricing => pricing)
 
-        unless full_color or sub.empty?
-          vars = vars.collect do |hash|
-            puts "Fill Name: #{fill_name.inspect}"
-            if /^(A|B|C) Fill$/ === fill_name
-              letter = $1
-              @@fills[letter].collect do |fill|
-                hash.merge('supplier_num' => "#{hash['supplier_num'][0..12]}-#{letter}-#{fill}"[0..31],
-                           'fill' => "#{letter}-#{fill}",
-                           'swatch-medium' => LocalFetch.new(File.join(JOBS_DATA_ROOT, 'Lanco-Fills-Swatches'), "#{fill}.png"))                
-              end
-            else
-              hash.merge('fill' => fill_name)
+          next vd if full_color or sub.empty?
+
+          if /^(A|B|C) Fill$/i === fill_name
+            letter = $1
+            next @@fills[letter].collect do |fill|
+              v = vd.dup
+              v.supplier_num = "#{vd.supplier_num[0..12]}-#{letter}-#{fill}"
+              v.properties = v.properties
+                .merge('fill' => f = "#{letter}-#{fill}",
+                       'swatch' => ImageNodeFile.new(f, File.join(JOBS_DATA_ROOT, 'Lanco-Fills-Swatches', "#{fill}.png")) )
+              v
             end
-          end
-        end
+          else
+            path = File.join(JOBS_DATA_ROOT, 'Lanco-Fills-Swatches', "#{fill_name}.png")
+            puts "Fill: #{fill_name.inspect}: #{path.inspect}"
+            if File.exists?(path)
+              puts "MATCH"
+              swatch = ImageNodeFile.new(fill_name, path)
+            else
+              swatch = ImageNodeFile.new('Empty', File.join(JOBS_DATA_ROOT, "EmptySwatch.png"))
+            end
 
-        vars
+            vd.properties.merge!('fill' => fill_name, 'swatch' =>  swatch)
+          end
+          
+          vd
+        end
       end.flatten
 
       # All Unassociated images
       unused_image_list = image_list - used_image_list
       unless unused_image_list.empty?
-        puts "UNUSED IMG: #{unused_image_list.join(', ')}"
-        product_data['images'] += unused_image_list
+#        puts "UNUSED IMG: #{unused_image_list.join(', ')}"
+        pd.images += unused_image_list
       end
       
-      add_product(product_data)
+      add_product(pd)
     end
-
-    puts @decorations.keys.inspect
 
     cache_write(file_name, @image_list)
   end

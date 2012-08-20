@@ -154,6 +154,7 @@ class PricingBase
 class window.ProductPricing extends PricingBase
   constructor: (@data) ->
     @params = {}
+    @group_variants = {}
     @quantity = $("#quantity")
     @unit = $("#unit_value")
 
@@ -245,17 +246,30 @@ class window.ProductPricing extends PricingBase
     @_selectVariant li
     @params.location_id = id_parse(li[0].id)
 
+  _apply_group_variants: () =>
+    @params.variants = null
+    for group, list of @group_variants
+      if list
+        if @params.variants
+          @params.variants = (e for e in @params.variants when e in list)
+        else
+          @params.variants = list
+
   onMouseSelVariant: (event) =>
     li = $(event.target).parents('li')
     @_selectVariant li
-    @params.variants = (parseInt(str) for str in li[0].getAttribute("data-variants").split(" "))
+    ul = li.parent()
+    @group_variants[ul[0].id] = (parseInt(str) for str in li[0].getAttribute("data-variants").split(" "))
+    @_apply_group_variants()
     @applyPrices()
     $('#main_imgs').data('cycle.opts').setVariants(@params.variants)
 
 
   onMouseClrVariant: (event) =>
-    $(event.target).parents('dt').next().children().children().removeClass('sel')
-    @params.variants = null
+    ul = $(event.target).parents('dt').next().children()
+    ul.children().removeClass('sel')
+    @group_variants[ul[0].id] = null
+    @_apply_group_variants()
     @applyPrices()
     $('#main_imgs').data('cycle.opts').setVariants(@params.variants)
 
