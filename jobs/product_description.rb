@@ -26,12 +26,13 @@ module PropertyObject
   end
 
   module InstanceMethods
-    def merge(hash)
+    def merge!(hash)
       unknown = hash.keys - self.class.properties
       PropertyError.new("invalid key: #{unknown.inspect}") unless unknown.empty?
       hash.each do |key, value|
         send("#{key}=", value)
       end
+      self
     end
 
     def merge_from_object(object, hash)
@@ -48,7 +49,7 @@ module PropertyObject
     end
 
     def initialize(hash = nil)
-      merge(hash) if hash
+      merge!(hash) if hash
     end
 
     def [](key)
@@ -126,7 +127,7 @@ module PropertyObject
 
     def test_type(name, type, value, options, tail = '')
       if Array === type
-        raise PropertyError.new("expected #{type} got #{value.inspect}" + tail, name) unless Array === value
+        raise PropertyError.new("expected #{type} got #{value.inspect}" + tail, name) unless value.is_a?(Array)
         value.each do |e|
           raise PropertyError.new("expected #{type} in Array got #{e.inspect}" + tail, name) unless e.is_a?(type.first)
         end
@@ -406,10 +407,10 @@ class ProductDesc
 
   property :supplier_categories, Array do |v|
     v.each do |e|
-      raise PropertyError, "expected Array of Array" unless Array === e
+      raise PropertyError, "expected Array of Array" unless e.is_a?(Array)
       riase PropertyError, "expected Array of non empty Array" if e.empty?
       e.each do |s|
-        raise PropertyError, "expected Array of Array of String" unless String === s
+        raise PropertyError, "expected Array of Array of String got #{v.inspect}" unless s.is_a?(String)
       end
     end
     v
@@ -417,7 +418,7 @@ class ProductDesc
 
   property :categories, Array, :nil => true
 
-  property :images, Array[ImageNodeFetch]
+  property :images, Array[ImageNodeFetch], :warn => true
 
   property :decorations, Array[DecorationDesc]
 
@@ -471,7 +472,46 @@ class ProductDesc
     properties = variants.collect { |v| v.properties }
     unless properties.uniq.length == properties.length
       raise ValidateError.new("Variant properties not unique", properties.inspect)
-    end  
+    end
+
+
+    # Check if variant properties are orthoginal
+    prop_hash = {}
+    prop_hash.default = []
+    variants.each do |variant|
+      variant.properties.each do |key, value|
+        prop_hash[key] += [value] unless prop_hash[key].include?(value)
+      end
+    end
+    prop_hash.delete_if { |key, list| list.length == 1 }
+    # Remove common key names (e.g. color and swatch)
+    prop_hash.group_by { |key, list| list.length }.each do |len, list|
+      list = list.dup
+      while list.length > 1
+        (key, values), tail = list.first, list[1..-1]
+        tail.each do |k, vs|
+          if not values.zip(vs).find do |a, b|
+              properties.find { |prop| prop[key] == a && prop[k] != b }
+            end
+            prop_hash.delete(k)
+            list.delete(tail)
+          end
+        end
+        list.shift
+      end
+    end
+
+    expected = prop_hash.inject(1) { |total, (key, list)| total * list.length }
+    unless expected == variants.length
+#      full_list = [{}]
+#      prop_hash.each do |k, l|
+#          full_list = full_list.collect { |e| l.collect { |f| e.merge(k => f) } }.flatten
+#      end
+#      our_list = properties.collect do |p|
+#        prop_hash.keys.each_with_object({}) { |k, hash| hash[k] = p[k] }
+#      end
+      import.add_warning(ValidateError.new("Variants not orthoginal", "Expected: #{expected} Got: #{variants.length}"), supplier_num)
+    end
 
     # check images
     variant_images = variants.collect { |v| v.images }.flatten

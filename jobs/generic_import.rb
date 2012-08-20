@@ -134,28 +134,52 @@ class ImageNode
   attr_reader :id, :tag
 
   include Comparable
-  def <=>(r)
-    id <=> r.id
-  end
+  def <=>(r); id <=> r.id; end
+  def hash; id.hash; end
+  def eql?(r); id.eql?(r.id); end
 
   def to_s; id; end
 
   def inspect; id.inspect; end
 end
 
-class ImageNodeFile < ImageNode
-  def initialize(id, file, tag = nil)
-    super id, tag
-    @file = file
+module FileCommon
+  def filename
+    path.split('/').last
   end
-  attr_reader :file
 
-  def get
-    File.open(file)
+  def get(time = nil)
+    File.open(get_path(time))
+  end
+
+  def size(time = nil)
+    begin
+      File.size(get_path(time))
+    rescue
+      return nil
+    end
+  end
+end
+
+class ImageNodeFile < ImageNode
+  include FileCommon
+
+  def initialize(id, path, tag = nil)
+    super id, tag
+    @path = path
+  end
+  attr_reader :path
+
+  def get_path(time = nil); path; end
+
+  def inspect
+    "#{id}:#{path}"
   end
 end
 
 module WebFetchCommon
+  include FileCommon
+
   @@cache_dir = CACHE_ROOT
 
   attr_reader :uri
@@ -172,10 +196,6 @@ module WebFetchCommon
     base = "#{@@cache_dir}/#{@uri.host}/#{uri_tail}"
     base = "#{base}/index.html" if @uri.path[-1..-1] == '/'
     base
-  end
-  
-  def filename
-    path.split('/').last
   end
 
   def get_path(time = nil)
@@ -220,18 +240,6 @@ module WebFetchCommon
     end
 
     path
-  end
-
-  def get(time = nil)
-    File.open(get_path(time))
-  end
-
-  def size(time = nil)
-    begin
-      File.size(get_path(time))
-    rescue
-      return nil
-    end
   end
 end
 
@@ -644,17 +652,7 @@ class GenericImport
         supplier_num_set.add(pd.supplier_num)
         last_data[pd.supplier_num] != pd
       end
-      
-      common_count = 0
-      delete_id_list = []
-      current_id_list = @supplier_record.products.select([:id, :supplier_num]).collect do |p|
-        if supplier_num_set.delete?(p.supplier_num)
-          common_count += 1
-        elsif !(Rails.env.production? && @invalid_prods.values.flatten.index(p.supplier_num))
-          delete_id_list << p.id 
-        end
-        p.id
-      end
+
 
       # Print Stats
       [['Product Warnings', @warning_prods],
@@ -668,6 +666,18 @@ class GenericImport
             puts "  #{aspect}: #{list.join(', ')}"
           end
         end
+      end
+
+      
+      common_count = 0
+      delete_id_list = []
+      current_id_list = @supplier_record.products.select([:id, :supplier_num]).collect do |p|
+        if supplier_num_set.delete?(p.supplier_num)
+          common_count += 1
+        elsif !(Rails.env.production? && @invalid_prods.values.flatten.index(p.supplier_num))
+          delete_id_list << p.id 
+        end
+        p.id
       end
 
       total = @product_list.length
@@ -945,10 +955,9 @@ private
       { 'width' => width, 'height' => height }
     else
       all, pre, a, n, d, post = @@single_reg.match(str).to_a
-      post.downcase!
       val = (a ? a.to_f : 0.0) + (d ? (n.to_f/d.to_f) : 0.0)
       if all
-        case post
+        case post.downcase
           when /^ *sq/
             { 'width' => val, 'height' => val }
           when /^ *dia/

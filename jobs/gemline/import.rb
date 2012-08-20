@@ -88,6 +88,7 @@ class GemlineXML < GenericImport
       pd.name = product['name']
       pd.description = product['description'].split('^')
       pd.data = { :id => product['Id'] }
+      pd.images = [] # Suppress warnings, all images in variants
       
       pd.lead_time.normal_min = 3
       pd.lead_time.normal_max = 5
@@ -208,6 +209,8 @@ class GemlineXML < GenericImport
       if uses = product.xpath('product-uses/uses')
         prod_categories += uses.collect { |use| ['Uses', use['name']] }
       end
+
+      pd.tags = [] # Suppress tag warning
 
       # Turn closeout/new category to tag
       prod_categories.delete_if do |category|
