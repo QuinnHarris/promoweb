@@ -540,11 +540,6 @@ class Product < ActiveRecord::Base
   has_many :page_products
 
   has_many :product_images
-    
-  record_images({ "thumb" => { :ext => 'jpg', :size => "120x120", :quality => 80 },
-                  "main" => { :ext => 'jpg', :size => "400x320", :quality => 90 },
-                  "large" => { :ext => 'jpg', :size => "1024x768", :quality => 90 },
-                  "hires" => { :ext => 'png' } })
  
   composed_of :price_min_cache, :class_name => 'Money', :mapping => %w(price_min_cache units), :allow_nil => true
   composed_of :price_comp_cache, :class_name => 'Money', :mapping => %w(price_comp_cache units), :allow_nil => true
