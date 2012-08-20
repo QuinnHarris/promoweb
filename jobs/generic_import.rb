@@ -277,7 +277,7 @@ def find_duplicate_images(images, id = nil)
   images.each do |image|
     unless size = image.size
       replace_images[image] = nil
-      puts "  No Image: #{id} #{image.uri}\n"
+      puts "  No Image: #{id.inspect}\n"
       next
     end
     

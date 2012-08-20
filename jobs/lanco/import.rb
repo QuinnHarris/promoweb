@@ -310,9 +310,7 @@ class LancoXLS < GenericImport
             end
           else
             path = File.join(JOBS_DATA_ROOT, 'Lanco-Fills-Swatches', "#{fill_name}.png")
-            puts "Fill: #{fill_name.inspect}: #{path.inspect}"
             if File.exists?(path)
-              puts "MATCH"
               swatch = ImageNodeFile.new(fill_name, path)
             else
               swatch = ImageNodeFile.new('Empty', File.join(JOBS_DATA_ROOT, "EmptySwatch.png"))
