@@ -41,11 +41,8 @@
               %br
               %strong= link_to order.urgent_note, info_order_path(order)
           %td
-            - images = order.items[0..1].collect do |item|
-              - unless (images = item.active_images).empty?
-                = link_to(image_tag(images.first.image.url(:thumb)), url_for_product(item.product))
-              - else
-                = link_to(image_tag(item.product.image_path_relative('thumb')), url_for_product(item.product))
+            - order.items[0..1].each do |item|
+              = link_to(image_tag(item.active_images.first.image.url(:thumb)), url_for_product(item.product))
 
           %td
             - if allowed?('CustomerInformationTask')

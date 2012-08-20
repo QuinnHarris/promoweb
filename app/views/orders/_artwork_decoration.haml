@@ -3,12 +3,7 @@
   %table
     %tr
       %td{ :rowspan => '2' }
-        .thumb
-          - if product.product_images.empty?
-            - thumb_path = product.image_path_relative('thumb')
-          - else
-            - thumb_path = artwork_decoration.order_item.active_images.first.image.url(:thumb) 
-          = image_tag(thumb_path, :alt => "#{product.name} Thumbnail")
+        .thumb= image_tag(artwork_decoration.order_item.active_images.first.image.url(:thumb), :alt => "#{product.name} Thumbnail")
       %td
         %h3= "#{artwork_decoration.order_item.product.name} (#{artwork_decoration.order_item.quantity})"
         %div

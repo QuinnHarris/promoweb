@@ -33,14 +33,10 @@
         - class_name += " admin" if td.admin
         %td{ :class => class_name, :rowspan => td.rows, :colspan => (td.cols * @cols_mult).to_i }
           - if td.is_a?(HeaderItemTask)
-            - if td.item.product.product_images.empty?
-              - thumb_path = td.item.product.image_path_relative('thumb')
-            - else
-              - thumb_path = td.item.active_images.first.image.url(:thumb) 
             = link_to(url_for_product(td.item.product)) do
               = td.item.product.name
               %br
-              = image_tag(thumb_path, :alt => "#{td.item.product.name} Thumbnail")
+              = image_tag(td.item.active_images.first.image.url(:thumb), :alt => "#{td.item.product.name} Thumbnail")
             %br
             Qty:
             = td.item.quantity

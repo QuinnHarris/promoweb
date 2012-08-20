@@ -64,28 +64,23 @@
           - setup_main unless @user
           #prod_img
             - images = @product.product_images.to_a
-            - if images.empty?
-              = image_tag(@product.image_path_relative('main'), :alt => @product.name)
-              %br
-              = link_to "Large Image", @product.image_path_relative('large'), :rel => 'external'
-            - else
-              - if images.length > 6 && images.reject { |i| i.tag == 'blank' }.length > 1
-                - images.delete_if { |i| i.tag == 'blank' } if images.length > 6
-              %ul#main_imgs
-                - images.each_with_index do |image, idx|
-                  %li{ :style => (idx == 0 ? nil : 'display: none;')}= image_tag(image.image.url(:medium), :alt => @product.name, :itemprop => 'image' )
-              %br
-              - unless images.empty?
-                = link_to "Large Image", images.first.image.url(:large), :rel => 'external'
+            - if images.length > 6 && images.reject { |i| i.tag == 'blank' }.length > 1
+              - images.delete_if { |i| i.tag == 'blank' } if images.length > 6
+            %ul#main_imgs
+              - images.each_with_index do |image, idx|
+                %li{ :style => (idx == 0 ? nil : 'display: none;')}= image_tag(image.image.url(:medium), :alt => @product.name, :itemprop => 'image' )
+            %br
+            - unless images.empty?
+              = link_to "Large Image", images.first.image.url(:large), :rel => 'external'
 
-              #navv
+            #navv
 
-              #thumbs
-                - if images.length > 1
-                  - for group in images.in_groups_of(3)
-                    %ul
-                      - for images in group.compact                  
-                        %li.active{ 'data-variants' => images.variants.collect { |v| v.id }.join(' ') }= image_tag images.image.url(:thumb)          
+            #thumbs
+              - if images.length > 1
+                - for group in images.in_groups_of(3)
+                  %ul
+                    - for images in group.compact                  
+                      %li.active{ 'data-variants' => images.variants.collect { |v| v.id }.join(' ') }= image_tag images.image.url(:thumb)          
 
           - unless @properties.empty?
             #variants.box

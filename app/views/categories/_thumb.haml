@@ -1,10 +1,7 @@
 - if @user && category
   = link_to image_tag('remove.png'), product_remove_admin_category_path(category, :product_id => product), :confirm => "Remove #{product.name} from #{category.path}"
 %a.thumb{ :href => url_for_product(product, category, context) }
-  - if product.product_images.empty?
-    = image_tag product.image_path_relative('thumb'), :alt => "#{product.name} Thumbnail"
-  - else
-    = image_tag product.product_images.find(:first, :select => "*, id NOT IN (SELECT product_image_id FROM product_images_variants JOIN variants ON variant_id = id WHERE variants.product_id = #{product.id}) AS variant", :order => 'variant DESC').image.url(:thumb), :alt => "#{product.name} Thumbnail"
+  = image_tag product.product_images.find(:first, :select => "*, id NOT IN (SELECT product_image_id FROM product_images_variants JOIN variants ON variant_id = id WHERE variants.product_id = #{product.id}) AS variant", :order => 'variant DESC').image.url(:thumb), :alt => "#{product.name} Thumbnail"
   %br
   %span.name
     - if product.respond_to?(:name_headline)

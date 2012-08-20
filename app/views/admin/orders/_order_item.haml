@@ -48,12 +48,8 @@
         %td{ :colspan => 10 }
 
           .block.thumb
-            - if item.product.product_images.empty?
-              - thumb_path = item.product.image_path_relative('thumb')
-            - else
-              - thumb_path = item.active_images.first.image.url(:thumb)
             %a{ :href => url_for_product(item.product) }
-              = image_tag(thumb_path, :alt => "#{item.product.name} Thumbnail")
+              = image_tag(item.active_images.first.image.url(:thumb), :alt => "#{item.product.name} Thumbnail")
 
           %dl.variants
             - names = item.product.property_group_names

@@ -48,10 +48,7 @@
   %tbody
     %tr
       %td.thumb{ :rowspan => rows }
-        - if order_item.product.product_images.empty?
-          - thumb_path = order_item.product.image_path_relative('thumb')
-        - else
-          - thumb_path = order_item.active_images.first.image.url(:thumb) 
+        - thumb_path = order_item.active_images.first.image.url(:thumb) 
         - unless absolute
           = link_to(url_for_product(order_item.product)) do
             = image_tag(thumb_path, :alt => "#{order_item.product.name} Thumbnail")
