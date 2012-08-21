@@ -289,10 +289,10 @@ class PricingDesc
   def add(qty, price, code = nil)
     qty = Integer(qty)
     raise PropertyError, "qty must be positive" unless qty > 0
-    raise ValidateError, "minimums must be sequential" if @prices.last && @prices.last[:minimum] >= qty
+    raise ValidateError, "minimums must be sequential: #{@prices.last && @prices.last[:minimum]} >= #{qty}" if @prices.last && @prices.last[:minimum] >= qty
 
     price = Money.new(Float(price))
-    raise ValidateError, "marginal price must be sequential" if @prices.last && @prices.last[:marginal] > price
+    raise ValidateError, "marginal price must be sequential: #{@prices.last && @prices.last[:marginal]} < #{price} of #{@prices.inspect}" if @prices.last && @prices.last[:marginal] < price
 
     base = { :fixed => Money.new(0), :minimum => qty }
     @prices << base.merge(:marginal => price)
@@ -305,7 +305,7 @@ class PricingDesc
         price = Money.new(Float(code))
       end
       
-      raise ValidateError, "marginal cost must be sequential" if @costs.last && @costs.last[:marginal] > price
+      raise ValidateError, "marginal cost must be sequential: #{@costs.last && @costs.last[:marginal]} < #{price} of #{@prices.inspect}" if @costs.last && @costs.last[:marginal] < price
       @costs << base.merge(:marginal => price)
     end
   end

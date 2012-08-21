@@ -145,7 +145,8 @@ private
   def data
 [
   ['Apparel',
-  [sup('Ash City', cat('Catalog', 'NESPORT')) # Kludge for 68627
+  [sup('Ash City', cat('Catalog', 'NESPORT')), # Kludge for 68627,
+   sup('Ash City', cat('NEW STYLES'), cat('NEW Styles'))
   ],[
      ['Hats & Caps',
       [match('name', /(?:^| )hat(?:$| |\/)/),
@@ -156,16 +157,24 @@ private
            all(cat('GOLF'),
                match('name', 'cap') ) ),
        sup('Ash City',
-           all(cat('Accessories'),
+           match('name', 'cap'),
+           all(cat('Team Wear'),
                match('name', 'cap'))),
        sup('Hit Promotional Products', cat('Headwear') ),
        sup('Sweda', cat('Headwear') )
       ],[
          ['Visors',
-          [match('name', 'visor', 1), ] ],
+          [match('name', 'visor', 1),
+           sup('Ash City', match('name', 'visor')) ] ],
          ['Knit Caps',
           [match('name', 'knit', 1) ] ],
         ] ],
+     ['Team Wear',
+      [sup('Ash City', cat('Team Wear') ) ] ],
+     ['Talls',
+      [sup('Ash City', cat('Talls') ) ] ],
+     ['ECO Collection',
+      [sup('Ash City', cat('e.c.o Collection') ) ] ],
      ['Outerwear',
       [sup('Ash City',
            cat('Outerwear'),
@@ -183,7 +192,7 @@ private
              match('description', 'EZAWAY', 1) ) ] ],
       ] ],
      ['Soft Shell',
-      [sup('Ash City', cat('Soft Shell') ) ],
+      [sup('Ash City', cat('Soft Shells') ) ],
       [
        ['Performance Jackets',
         [sup('Ash City',
@@ -496,7 +505,8 @@ private
        sup('The Magnet Group', cat('Bag Factory', 'Business Cases') ),
       ],[
          ['Computer Business Bags',
-          [sup('Leeds',
+          [match('name', 'computer brief'),
+           sup('Leeds',
                cat('Business Cases', 'Compu-Cases'),
                cat('Business Cases', 'Compu-Messenger Bags') ),
            sup('Gemline',
@@ -2223,7 +2233,8 @@ private
        sup('Bic Graphics',
            cat('Writing Instruments', 'Pencil'),
            match('supplier_num', /(^BP)|(PMR)|(PEVECO)/) ),
-       sup('Logomark', cat('Pencils') )
+       sup('Logomark', cat('Pencils') ),
+       exclude(sup('Ash City', always))
       ]],
      ['Pens',
       [match('name', /pens?($|\s)/i, 1),

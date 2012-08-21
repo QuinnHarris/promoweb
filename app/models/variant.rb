@@ -42,6 +42,7 @@ class Variant < ActiveRecord::Base
           pi.save!
         end
       else
+        puts "IMG: #{img.inspect}"
         str << "   + Image: #{img.id}\n"
         pi = product_images.create(:supplier_ref => img.id,
                                    :image => img.get,
