@@ -286,13 +286,24 @@ class PricingDesc
     0.5 - (0.05 * num)
   end
   
-  def add(qty, price, code = nil)
-    qty = Integer(qty)
-    raise PropertyError, "qty must be positive" unless qty > 0
-    raise ValidateError, "minimums must be sequential: #{@prices.last && @prices.last[:minimum]} >= #{qty}" if @prices.last && @prices.last[:minimum] >= qty
+  def parse_qty(qty)
+    return qty if qty.is_a?(Integer)
+    Integer(qty.to_s.gsub(/(,(?=\d{3}(,|.|$)))|(\.0+$)/, ''))
+  end
 
-    price = Money.new(Float(price))
-    raise ValidateError, "marginal price must be sequential: #{@prices.last && @prices.last[:marginal]} < #{price} of #{@prices.inspect}" if @prices.last && @prices.last[:marginal] < price
+  def parse_money(val)
+    return val if val.is_a?(Money)
+    return Money.new(val) if val.is_a?(Float)
+    Money.new(Float(val.gsub(/^\$/, '')))
+  end
+
+  def add(qty, price, code = nil)
+    qty = parse_qty(qty)
+    raise PropertyError, "qty must be positive" unless qty > 0
+    raise ValidateError.new("minimums must be sequential", "#{@prices.last && @prices.last[:minimum]} >= #{qty}") if @prices.last && @prices.last[:minimum] >= qty
+
+    price = parse_money(price)
+    raise ValidateError.new("marginal price must be sequential", "#{@prices.last && @prices.last[:marginal]} < #{price} of #{@prices.inspect}") if @prices.last && @prices.last[:marginal] < price
 
     base = { :fixed => Money.new(0), :minimum => qty }
     @prices << base.merge(:marginal => price)
@@ -302,38 +313,46 @@ class PricingDesc
       if discount
         price *= 1.0 - discount
       else
-        price = Money.new(Float(code))
+        price = parse_money(code)
       end
       
-      raise ValidateError, "marginal cost must be sequential: #{@costs.last && @costs.last[:marginal]} < #{price} of #{@prices.inspect}" if @costs.last && @costs.last[:marginal] < price
+      raise ValidateError.new("marginal cost must be sequential", "#{@costs.last && @costs.last[:marginal]} < #{price} of #{@prices.inspect}") if @costs.last && @costs.last[:marginal] < price
       @costs << base.merge(:marginal => price)
     end
   end
 
 private
   def ltm_common(charge, qty)
-    @costs.unshift({ :fixed => Money.new(Float(charge)),
+    raise ValidateError, "First Costs minimum must be > 1" unless @costs.first[:minimum] > 1
+    @costs.unshift({ :fixed => parse_money(charge),
                     :marginal => @costs.first[:marginal],
                     :minimum => qty || @costs.first[:minimum]/2 })
   end
 public
 
   def ltm(charge, qty = nil)
-    raise "Can't apply less than minimum with no prices" if @costs.empty?
-    qty = qty && Integer(qty)
-    raise "qty >= first qty: #{qty} >= #{@costs.first[:minimum]}" if qty >= @costs.first[:minimum]
+    raise ValidateError, "Can't apply less than minimum with no prices" if @costs.empty?
+    qty = qty && parse_qty(qty)
+    raise ValidateError.new("qty >= first qty", "#{qty} >= #{@costs.first[:minimum]}") if qty && qty >= @costs.first[:minimum]
     ltm_common(charge, qty)
   end
 
   def ltm_if(charge, qty)
-    raise "Can't apply less than minimum with no prices" if @costs.empty?
-    qty = qty && Integer(qty)
+    raise ValidateError, "Can't apply less than minimum with no prices" if @costs.empty?
+    qty = qty && parse_qty(qty)
     ltm_common(charge, qty) if qty < @costs.first[:minimum]
   end
 
   def maxqty(qty = nil)
     raise ValidateError, "maxqty can only be called once" unless @costs.last[:marginal]
-    @costs << { :minimum => qty ? Integer(qty) : @costs.last[:minimum] * 2 } unless @costs.empty?
+    @costs << { :minimum => qty ? parse_qty(qty) : [@prices.last[:minimum], @costs.last[:minimum]].max * 2 } unless @costs.empty?
+  end
+
+  def eqp(discount = 0.4)
+    raise ValidateError, "Expected no costs" unless @costs.empty?
+    raise ValidateError, "Expected price" if @prices.empty?
+    @costs << { :minimum => @prices.first[:minimum],
+      :fixed => Money.new(0), :marginal => @prices.last[:marginal] * (1.0 - discount) }
   end
 
   def to_hash
@@ -558,16 +577,20 @@ class ProductDesc
     merge(hash) if hash
   end
 
-  def self.over_each(context, object)
+  def self.apply(context)
+    desc = self.new
+    begin
+      r = yield desc
+      context.add_product(desc) unless r == false
+    rescue ValidateError => boom
+      puts "- Validate Error: #{desc.error_id}: #{boom}"
+      context.add_error(boom, desc.error_id)
+    end
+  end
+
+  def self.over_each(context, object, &block)
     object.each do |val|
-      desc = self.new
-      begin
-        yield desc, val
-        context.add_product(desc)
-      rescue ValidateError => boom
-        puts "- Validate Error: #{desc.error_id}: #{boom}"
-        context.add_error(boom, desc.error_id)
-      end
+      self.apply(context, &block)
     end
   end
 end

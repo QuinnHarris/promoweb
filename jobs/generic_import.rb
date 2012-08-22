@@ -755,7 +755,7 @@ class GenericImport
         add_error(boom, pd && pd.supplier_num)
       else
         puts boom.backtrace
-        @invalid_prods['Other'] = (@invalid_prods[boom.to_s] || []) + [pd.supplier_num]
+        @invalid_prods['Other'] = (@invalid_prods[boom.to_s] || []) + [pd ? pd.supplier_num : 'unknown']
       end
     end
   end
