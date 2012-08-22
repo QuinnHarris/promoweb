@@ -340,7 +340,7 @@ public
   def ltm_if(charge, qty)
     raise ValidateError, "Can't apply less than minimum with no prices" if @costs.empty?
     qty = qty && parse_qty(qty)
-    ltm_common(charge, qty) if qty < @costs.first[:minimum]
+    ltm_common(charge, qty) if qty > 0 && qty < @costs.first[:minimum]
   end
 
   def maxqty(qty = nil)
@@ -584,6 +584,7 @@ class ProductDesc
       context.add_product(desc) unless r == false
     rescue ValidateError => boom
       puts "- Validate Error: #{desc.error_id}: #{boom}"
+      puts boom.backtrace
       context.add_error(boom, desc.error_id)
     end
   end

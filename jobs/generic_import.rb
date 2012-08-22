@@ -573,8 +573,10 @@ class GenericImport
   end
 
   def validate_interproduct
-    puts "Swatch DeDup START <<"
     swatches = @product_list.collect { |pd| ([pd.properties['swatch']] +  pd.variants.collect { |pv| pv.properties['swatch'] }).compact }.flatten.uniq
+    return if swatches.empty?
+
+    puts "Swatch DeDup START <<"
 
     replace_images = find_duplicate_images(swatches)
 
@@ -660,10 +662,10 @@ class GenericImport
         puts name unless hash.empty?
         hash.each do |aspect, list|
           if list.length * 2 > supplier_num_set.length
-            list = supplier_num_set.to_a - list
-            puts "  #{aspect}: ALL - #{list.join(', ')}"
+            negl = supplier_num_set.to_a - list
+            puts "  #{aspect}: #{list.length} ALL - #{negl.join(', ')}"
           else
-            puts "  #{aspect}: #{list.join(', ')}"
+            puts "  #{aspect}: #{list.length} #{list.join(', ')}"
           end
         end
       end

@@ -82,59 +82,53 @@ class LogomarkXLS < GenericImport
 
       product_merge.each do |supplier_num, unique, common|
         next if %w(EK500 FLASH GR6140 VK3009).include?(supplier_num)
-        product_data = {
-          'supplier_num' => supplier_num,
-          'name' => "#{common['Name'] || supplier_num} #{common['Description']}",
-          'description' => common['Features'] || '',
-          'supplier_categories' => (common['Categories'] || '').split(',').collect { |c| [c.strip] },
-          'package_units' => Integer(common['Quantity Per Box']),
-          'package_weight' => Float(common['Box Weight'])
-        }
 
-        unless /^(\d+)-(\d+) Working ((?:Days)|(?:Weeks))$/ === common['Production Time']
-          raise "Unkown Production Time: #{supplier_num} #{common['Production Time']}"
-        end
-        multiplier = ($3 == 'Days') ? 1 : 5
-        product_data.merge!('lead_time_normal_min' => Integer($1) * multiplier,
-                            'lead_time_normal_max' => Integer($2) * multiplier)
-        product_data['lead_time_rush'] = 1 if common['IsAdvantage24'] == 'YES'
+        ProductDesc.apply(self) do |pd|
+          pd.supplier_num = supplier_num
+          pd.name = "#{common['Name'] || supplier_num} #{common['Description']}"
+          pd.description = common['Features'] || ''
+          pd.supplier_categories = (common['Categories'] || '').split(',').collect { |c| [c.strip] }
 
-        common_properties = { 'material' => common['Finish / Material'],
-          'size' => common['Item Size'] && parse_volume(common['Item Size'])
-        }
+          pd.package.units = common['Quantity Per Box']
+          pd.package.weight = common['Box Weight']
+
+          unless /^(\d+)-(\d+) Working ((?:Days)|(?:Weeks))$/ === common['Production Time']
+            raise "Unkown Production Time: #{supplier_num} #{common['Production Time']}"
+          end
+          multiplier = ($3 == 'Days') ? 1 : 5
+          pd.lead_time.normal_min = Integer($1) * multiplier
+          pd.lead_time.normal_max = Integer($2) * multiplier
+          pd.lead_time.rush = 1 if common['IsAdvantage24'] == 'YES'
+
+          pd.properties = {
+            'material' => common['Finish / Material'],
+            'size' => common['Item Size'] && parse_volume(common['Item Size'])
+          }
 
 
-        common_variant = PricingDesc.get do |pricing|
+          pricing = PricingDesc.new
           (1..6).each do |i|
             qty = common["PricePoint#{i}Qty"]
-            break if qty.blank? or qty == '0'
+            next if qty.blank? or Integer(qty) < 1
             pricing.add(qty, common["PricePoint#{i}Price"], common["PricePoint#{i}Code"])
           end
           pricing.maxqty
           unless common['LessThanMin1Qty'] == 0
             pricing.ltm_if(common['LessThanMin1Charge'], common['LessThanMin1Qty'])
           end
+        
+          pd.decorations = [DecorationDesc.none]
+
+
+          pd.images = [ImageNodeFetch.new("Group/#{supplier_num}.jpg",
+                                          "http://www.logomark.com/Image/Group/Group800/#{supplier_num}.jpg")]
+          
+          pd.variants = unique.collect do |uniq|
+            VariantDesc.new(:supplier_num => uniq['SKU'],
+                            :images => uniq['images'] || [], :pricing => pricing,
+                            :properties => { 'color' => uniq['Item Color'].strip } )
+          end
         end
-
-
-        decorations = [{
-                         'technique' => 'None',
-                         'location' => ''
-                       }]
-        product_data['decorations'] = decorations
-
-
-        product_data['images'] = [ImageNodeFetch.new("Group/#{supplier_num}.jpg",
-                                                     "http://www.logomark.com/Image/Group/Group800/#{supplier_num}.jpg")]
-
-        product_data['variants'] = unique.collect do |uniq|
-          { 'supplier_num' => variant_num = uniq['SKU'],
-            'properties' => { 'color' => uniq['Item Color'] },
-            'images' => uniq['images']
-          }.merge(common_variant)
-        end
-
-        add_product(product_data)
       end
     end
   end
