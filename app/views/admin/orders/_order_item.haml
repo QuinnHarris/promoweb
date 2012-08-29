@@ -48,8 +48,9 @@
         %td{ :colspan => 10 }
 
           .block.thumb
-            %a{ :href => url_for_product(item.product) }
-              = image_tag(item.active_images.first.image.url(:thumb), :alt => "#{item.product.name} Thumbnail")
+            - if item.active_images.first
+              %a{ :href => url_for_product(item.product) }
+                = image_tag(item.active_images.first.image.url(:thumb), :alt => "#{item.product.name} Thumbnail")
 
           %dl.variants
             - names = item.product.property_group_names
