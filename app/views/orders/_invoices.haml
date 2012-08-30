@@ -162,3 +162,8 @@
         by #{invoice.method.type_name}
         - if invoice.method.has_name?
           to #{invoice.method.name}
+
+- if @order.task_completed?(AcknowledgeOrderTask)
+  %div
+    Current amount owed:
+    %strong= @order.total_chargeable.to_perty

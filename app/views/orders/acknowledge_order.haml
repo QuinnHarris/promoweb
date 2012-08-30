@@ -4,11 +4,6 @@
 
 = render :partial => 'invoices', :locals => { :static => false, :absolute => false }
 
-- if @order.task_completed?(AcknowledgeOrderTask)
-  %div
-    Current amount owed:
-    %strong= @order.total_chargeable.to_perty
-
 %hr
 .nav
   = form_for :order_task, :url => { :order_id => @order } do |ak|

@@ -713,29 +713,11 @@ class Product < ActiveRecord::Base
     end
   end
   
-  def assign_to_featured
-    category_ids = categories.collect do |c|
-      Category.find_by_id(c.id).path_obj_list
-    end.flatten.collect { |c| c.id }
-    
-    return nil if category_ids.empty?
-    
-    # Don't clober user settings   
-    return nil if self['featured_at'] and category_ids.index(self['featured_id'])
-          
-    category_id = Category.find_by_sql([
-      "SELECT categories.id, COUNT(*) AS count " + 
-      "FROM categories LEFT OUTER JOIN products ON products.featured_id = categories.id " +
-      "WHERE categories.id IN (?) " +
-      "GROUP BY categories.id " +
-      "ORDER BY count " +
-      "LIMIT 1", category_ids]).first.id
-
-    self['featured_id'] = category_id
-    self['featured_at'] = nil
+  def set_quickbooks
+    # Prevent from being added to quickbooks until used by order_item
+    self.quickbooks_id = 'BLOCKED' unless quickbooks_id
   end
-  
-#  before_create :assign_to_featured
+  before_create :set_quickbooks
 
   def delete
     # Remove from all categories

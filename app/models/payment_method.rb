@@ -188,7 +188,7 @@ class OnlineMethod < PaymentMethod
 end
 
 class PaymentCreditCard < OnlineMethod
-  def type_name; "Credit Card"; end
+  def type_name; "Credit Card ending in #{display_number}"; end
   def has_name?; true; end
   def has_number?; true; end
   def authorizeable?; true; end
