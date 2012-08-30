@@ -220,15 +220,15 @@ private
     })
   end
 
-  def apply_error!(transaction, response)
-    if response.success? and response.params['StatusResponse'] != 'UNSUCCESSFUL'
+  def apply_error!(transaction, response, error = nil)
+    if error.nil? and response.success? and response.params['StatusResponse'] != 'UNSUCCESSFUL'
       transaction.number = response.authorization
       transaction.auth_code = response.params['AUTHCODE']
       transaction.save!
       yield if block_given?
     else
       transaction.type = 'PaymentError'
-      transaction.data = response.params
+      transaction.data = response.params.merge(error)
       transaction.save!
       transaction = PaymentError.find(transaction.id)
     end
@@ -396,7 +396,20 @@ public
                                             gateway_options(order, transaction)
                                               .merge(:order_id => transaction.id))
     logger.info("Gateway Response: #{response.inspect}")
-    apply_error!(transaction, response)
+    error = nil
+    while true
+      res = gateway.status(transaction.id)
+      logger.info("Status Check: #{res.inspect}")
+      if res.params['TransactionStatusCode'] == '15'
+        error = nil
+      else
+        error = res.params
+      end
+      break unless res.params['TransactionStatusCode'] == '14'
+      sleep 0.5
+    end
+    logger.info("Error: #{error}")
+    apply_error!(transaction, response, error)
   end
 
   def charge(order, amount, comment)
