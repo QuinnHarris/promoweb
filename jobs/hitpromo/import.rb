@@ -48,27 +48,26 @@ class HitPromoCSV < GenericImport
     price_preference = %w(L S T E B)
 
     product_list.each do |supplier_num, hash|
-      product_data = { 
-        'supplier_num' => supplier_num,
-        'name' => hash['product_name'],
-        'supplier_categories' => [[hash['category'].strip]],
-        'tags' => [] }
+      ProductDesc.apply(self) do |pd|
+        pd.supplier_num = supplier_num
+        pd.name = hash['product_name']
+        pd.supplier_categories = [[hash['category'].strip]]
+        pd.tags = []
 
-      product_data['description'] = hash['description'] ? hash['description'].split(/\s*\|\s*/).join("\n") : ''
+        pd.description = hash['description'] ? hash['description'].split(/\s*\|\s*/).join("\n") : ''
+        pd.description += hash['please_note'].gsub(/\s*((<.+?>)|[^[[:ascii:]]])\s*/,' ').split(/\s*\n\s*/).join("\n") if hash['please_note']
 
-      product_data['description'] += hash['please_note'].gsub(/\s*((<.+?>)|[^[[:ascii:]]])\s*/,' ').split(/\s*\n\s*/).join("\n") if hash['please_note']
-
-      %w(precious_metal_imprint for_gold_banding for_halo refills optional_carabiner optional_pen battery).each do |name|
-        next unless hash[name]
-        str = "\n" + name.split('_').collect { |w| w.capitalize }.join(' ') + ": "
-        str << hash[name].gsub(/<a href=".+?">(\d+)<\/a>/) do |str|
-          product = get_product($1)
-          "<a href='#{product.web_id}'>#{product.name}</a>"
+        %w(precious_metal_imprint for_gold_banding for_halo refills optional_carabiner optional_pen battery).each do |name|
+          next unless hash[name]
+          str = "\n" + name.split('_').collect { |w| w.capitalize }.join(' ') + ": "
+          str << hash[name].gsub(/<a href=".+?">(\d+)<\/a>/) do |str|
+            product = get_product($1)
+            "<a href='#{product.web_id}'>#{product.name}</a>"
+          end
+          pd.description += str
         end
-        product_data['description'] += str
-      end
-
-      product_data['tags'] << 'New' if hash['new']
+        
+        pd.tags << 'New' if hash['new']
 
       # Packaging
 #      unless /(\d+) per carton.+?(\d+) lbs/ === hash['packaging']
@@ -78,66 +77,50 @@ class HitPromoCSV < GenericImport
 #                          'package_weight' => Integer($2))
 
 
-      # Prices
-      price_string = hash['price'][hash['price'].keys.sort_by { |s| price_preference.index(s) }.first]
-      prices = []
-      costs = []
-      discounts = convert_pricecodes(price_string['discount_code'])
-      (1..8).each do |i|
-        qty = price_string["quantity#{i}"]
-        break if qty.blank?
-        unless discounts.first
-          puts "Extra Column: #{supplier_num}"
-          break
+        # Prices
+        price_string = hash['price'][hash['price'].keys.sort_by { |s| price_preference.index(s) }.first]
+        pricing = PricingDesc.new
+        discounts = convert_pricecodes(price_string['discount_code'])
+        (1..8).each do |i|
+          qty = price_string["quantity#{i}"]
+          break if qty.blank?
+          unless discounts.first
+            puts "Extra Column: #{supplier_num}"
+            break
+          end
+          
+          pricing.add(qty, price_string["price#{i}"], discounts.shift)
         end
+        raise "Discount doesn't match: #{supplier_num} #{discounts.inspect}" unless discounts.empty?
+        pricing.maxqty
+
+
+        dimension = hash['approximate_size'] || hash['approximate_bag_size']
+        pd.properties['dimension'] = parse_volume(dimension) if dimension
+
+
+        pd.images = [ImageNodeFetch.new(hash['product_photo'],
+                                        "http://www.hitpromo.net/imageManager/show/#{hash['product_photo']}")]
+
+        pd.decorations = [DecorationDesc.none]
+
+        colors = hash['colors_available']
+          .scan(/(?:\s*([^,:]+?)(:|(?:\s*with)))?\s*(.+?)(?:\s*(?:(?:all)|(?:both))\s*with\s*(.+?))?(?:\.|$)/)
+          .collect do |left, split, list, right|\
+          
+          list = list.split(/,|(?:\s+or\s+)/)
+          split = split.include?(':') ? ' ' : " #{split.strip} " if split
+          right = " with #{right}" if right
+          list.collect { |e| (right && e.include?('with')) ? e : "#{left}#{split}#{e.strip}#{right}".strip }
+        end.flatten.uniq
         
-        base = {
-          :fixed => Money.new(0),
-          :minimum => Integer(qty) }
-
-        price = Money.new(Float(price_string["price#{i}"]))
-        prices << base.merge(:marginal => price)
-        costs << base.merge(:marginal => price * (1.0 - discounts.shift))
+        #      colors = hash['colors'].split(/\s*\|\s*/).compact.collect { |c| c.split(' ').collect { |w| w.capitalize }.join(' ') }
+        
+        pd.variants = colors.collect do |color|
+          VariantDesc.new( :supplier_num => "#{supplier_num}-#{color.gsub(' ', '')}",
+                           :pricing => pricing, :properties => { 'color' => color} )
+        end
       end
-      raise "Discount doesn't match: #{supplier_num} #{discounts.inspect}" unless discounts.empty?
-      costs << { :minimum => prices.last[:minimum] * 2 }
-      common_variant = { 'prices' => prices, 'costs' => costs }
-
-      common_properties = {}
-
-      dimension = hash['approximate_size'] || hash['approximate_bag_size']
-      common_properties.merge!( 'dimension' => parse_volume(dimension) ) if dimension
-
-
-      product_data['images'] = [ImageNodeFetch.new(hash['product_photo'],
-                                                   "http://www.hitpromo.net/imageManager/show/#{hash['product_photo']}")]
-
-      decorations = [{
-          'technique' => 'None',
-          'location' => ''
-        }]
-      product_data['decorations'] = decorations
-
-      colors = hash['colors_available']
-        .scan(/(?:\s*([^,:]+?)(:|(?:\s*with)))?\s*(.+?)(?:\s*(?:(?:all)|(?:both))\s*with\s*(.+?))?(?:\.|$)/)
-        .collect do |left, split, list, right|\
-
-        list = list.split(/,|(?:\s+or\s+)/)
-        split = split.include?(':') ? ' ' : " #{split.strip} " if split
-        right = " with #{right}" if right
-        list.collect { |e| (right && e.include?('with')) ? e : "#{left}#{split}#{e.strip}#{right}".strip }
-      end.flatten.uniq
-
-#      colors = hash['colors'].split(/\s*\|\s*/).compact.collect { |c| c.split(' ').collect { |w| w.capitalize }.join(' ') }
-
-      product_data['variants'] = colors.collect do |color|
-        { 'supplier_num' => "#{supplier_num}-#{color.gsub(' ', '')}"[0..63],
-          'properties' => common_properties.merge('color' => color),
-        }.merge(common_variant)
-      end
-
-
-      add_product(product_data)
     end
   end
 
