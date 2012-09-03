@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 require 'rubygems'
 #require 'RMagick'
 require File.dirname(__FILE__) + '/../config/environment'
@@ -625,10 +627,14 @@ class GenericImport
   end
   
   def run_parse_cache
-    @product_list = cache_marshal("#{@supplier_record.name}_parse", @src_file || @src_files) do
+    if ARGV.include?('parse')
       run_parse
-      @product_list
-    end  
+    else
+      @product_list = cache_marshal("#{@supplier_record.name}_parse", @src_file || @src_files) do
+        run_parse
+        @product_list
+      end
+    end
   end
     
   def run_transform
@@ -738,8 +744,12 @@ class GenericImport
   end
 
   def add_warning(boom, id)
-    puts "* #{id}: #{boom}"
+    puts "* #{id}: #{boom}"  unless ARGV.include?('nowarn')
     @warning_prods[boom.aspect] = (@warning_prods[boom.aspect] || []) + [id]
+  end
+
+  def warning(id, aspect, description = nil)
+    add_warning(ValidateError.new(aspect, description), id)
   end
   
   def add_product(object)
@@ -815,6 +825,76 @@ private
     end
 
     nil
+  end
+
+  # (?:([a-z ]+)[:;]? *)?
+
+  # (\d{1,2}(?:\.\d{1,2})?[^\/])?(?:(\d{1,2})\/(\d{1,2}))? ?"? ?w? +x +(\d{1,2}(?:\.\d{1,2})?[^\/])?(?:(\d{1,2})\/(\d{1,2}))? ?"? ?h?\.? ?([a-z]*)$/i
+  # (\d{1,2}(?:\.\d{1,2})?[ "])?(?:(\d{1,2})\/(\d{1,2}))? ?"? *([^0-9]*)/i
+  # (?:(\d{1,2})[- ])?(\d{1,2})(?:\/(\d{1,2}))?\"\s*(H|W)\s*x?\s*(?:(\d{1,2})[- ])?(\d{1,2})(?:\/(\d{1,2}))?\"\s*(W|H)\s*$/i
+
+  def parse_area_new(string)
+    regex =
+    /^(?<whole>\d{1,2}(?:\.\d{1,4})?)?
+      (?:\s*(?:(?:(?<numer>\d{1,2})\s*[\/∕]\s*(?<denom>\d{1,2}))
+              |(?<sym>[⅛¼⅓⅜½⅝¾⅞])))?
+      \s*[\"”]?\s*(?<aspect>w|width|h|height|dia|diameter|square)?$/xi
+
+    aspects = {}
+    no_aspect = nil
+    string.split(/x/i).each do |part|
+      return nil unless m = regex.match(part.strip)
+      num = m[:whole] ? Float(m[:whole]) : 0.0
+      num += Float(m[:numer])/Float(m[:denom]) if m[:numer]
+      num += case m[:sym]
+             when '⅛'
+               0.125
+             when '¼'
+               0.25
+             when '⅓'
+               1.0/3.0
+             when '⅜'
+               0.375
+             when '½'
+               0.5
+             when '⅝'
+               0.625
+             when '¾'
+               0.75
+             when '⅞'
+               0.875
+             end if m[:sym]
+      aspect = case m[:aspect]
+                 when /^h/i
+                 :height
+                 when /^w/i
+                 :width
+                 when /^dia/i
+                 :diameter
+                 when /^square$/i
+                 :square
+               end
+
+      if aspect
+        raise "With and without aspect: #{string}" if no_aspect
+        no_aspect = false
+        raise "Duplicate Aspect: #{string}" if aspects.has_key?(aspect)
+      else
+        raise "Without and With aspect: #{string}" if no_aspect == false
+        no_aspect = true
+        aspect = [:height, :width, :length].find { |s| !aspects.has_key?(s) }
+        raise "All aspects covered" unless aspect
+      end
+      
+      aspects[aspect] = num
+    end
+
+    if aspects[:square]
+      raise "Didn't Exepect height or width on square: #{string}" if aspects[:height] || aspects[:width]
+      aspects[:height] = aspects[:width] = aspects.delete(:square)
+    end
+
+    aspects
   end
   
   @@volume_reg = /^ *(\d{1,2}(?:\.\d{1,2})?[ -]?)?(?:(\d{1,2})\/(\d{1,2}))? ?"? ?([lwhd])?/i

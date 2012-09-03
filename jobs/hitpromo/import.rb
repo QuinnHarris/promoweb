@@ -10,6 +10,22 @@ class HitPromoCSV < GenericImport
   end
 
 #%w(colors_available imprint_colors approximate_size imprint_area set_up_charge multi_color_imprint packaging multi_panel_imprint second_side_imprint fob_zip second_handle_imprint please_note embroidery_information thread_colors tape_charge sizes approximate_bag_size optional_imprint second_positon non_woven_items label_color four_color_process optional_imprint_area second_position_imprint highlighters imprint catalog_page colors)
+
+  @@decoration_hash = {
+    'Debossed' => 'Deboss',
+    'Embroidered' => 'Embroidery',
+    'Embroidery' => 'Embroidery',
+    'Laser Engrave' => 'Laser Engrave',
+    'Laser Engraved' => 'Laser Engrave',
+    'Laser Engraving' => 'Laser Engrave',
+    'Optional Embroidered' => 'Embroidery',
+    'Oval' => 'Dome',
+    'Oval Dome' => 'Dome',
+    'Pad-Print' => 'Screen Print',
+    'Silk-Screen' => 'Screen Print',
+    'Silk-Screen or Transfer' => ['Screen Print', 'Photo Transfer'],
+    'Silk-Screened' => 'Screen Print',
+  }
  
   def parse_products
     common_list = %w(product_name new description category product_photo colors_available imprint_colors approximate_size imprint_area set_up_charge multi_color_imprint packaging multi_panel_imprint second_side_imprint fob_zip second_handle_imprint please_note embroidery_information thread_colors tape_charge sizes approximate_bag_size optional_imprint precious_metal_imprint for_gold_banding for_halo battery second_positon non_woven_items label_color four_color_process optional_imprint_area second_position_imprint highlighters refills optional_carabiner imprint catalog_page optional_pen colors)
@@ -46,6 +62,8 @@ class HitPromoCSV < GenericImport
     puts "Len: #{product_list.length}"
 
     price_preference = %w(L S T E B)
+    
+    variations = {}
 
     product_list.each do |supplier_num, hash|
       ProductDesc.apply(self) do |pd|
@@ -102,6 +120,39 @@ class HitPromoCSV < GenericImport
         pd.images = [ImageNodeFetch.new(hash['product_photo'],
                                         "http://www.hitpromo.net/imageManager/show/#{hash['product_photo']}")]
 
+        %w(set_up_charge multi_color_imprint).each do |name|
+          variations[name] ||= Set.new
+          variations[name] << hash[name]
+        end
+
+        puts
+        puts "Str: #{hash['imprint_area']}"
+        imprints = []
+        hash['imprint_area'].gsub(' ',' ').split('•').each do |str|
+          str.scan(/\s*(?:([A-Z\- ]+):)?\s*(?:([A-Z\- ]+):)?\s*(?:\((.+?)\):?)?\s*((?:[^A-Z]+W\s*x\s*[^A-Z]+?H)|(?:[^A-Z]+(?:Diameter|Square)))\s*(?:\((.+?)\))?/i).each do |a, b, c, dim, d|
+            loc = [a, b, c, d].compact
+            decoration = nil
+            loc.delete_if do |str|
+              if dec = @@decoration_hash[str.strip]
+                raise "Duplicate decoration" if decoration
+                decoration = dec
+              end
+            end
+            decoration ||= 'Screen Print'
+            if area = parse_area_new(dim)
+              imprints += [decoration].flatten.collect do |dec|
+                { :technique => dec, :location => loc.join(', ') }.merge(area)
+              end
+            else
+              warning supplier_num, "Unkown Decoration", "#{decoration.inspect}: #{area.inspect} (#{loc.join(', ')}) [#{dim.inspect} #{a.inspect} #{b.inspect} #{c.inspect}]"
+            end
+          end
+        end if hash['imprint_area']
+
+        imprints.each do |imprint|
+          puts "  #{imprint.inspect}"
+        end
+
         pd.decorations = [DecorationDesc.none]
 
         colors = hash['colors_available']
@@ -118,8 +169,16 @@ class HitPromoCSV < GenericImport
         
         pd.variants = colors.collect do |color|
           VariantDesc.new( :supplier_num => "#{supplier_num}-#{color.gsub(' ', '')}",
-                           :pricing => pricing, :properties => { 'color' => color} )
+                           :pricing => pricing, :properties => { 'color' => color},
+                           :images => [])
         end
+      end
+    end
+
+    variations.each do |name, set|
+      puts "#{name}:"
+      set.to_a.compact.sort.each do |elem|
+        puts "  #{elem}"
       end
     end
   end
