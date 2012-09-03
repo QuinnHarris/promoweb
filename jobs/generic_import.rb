@@ -835,46 +835,39 @@ private
 
   def parse_area_new(string)
     regex =
-    /^(?<whole>\d{1,2}(?:\.\d{1,4})?)?
-      (?:\s*(?:(?:(?<numer>\d{1,2})\s*[\/∕]\s*(?<denom>\d{1,2}))
-              |(?<sym>[⅛¼⅓⅜½⅝¾⅞])))?
-      \s*[\"”]?\s*(?<aspect>w|width|h|height|dia|diameter|square)?$/xi
+    /^(?<whole>\d{1,2})?
+      (?:(?<deci>\.\d{1,4}) |
+        (?:(?:^|\s+) (?<numer>\d{1,2}) \s*[\/∕]\s* (?<denom>\d{1,2}) ) |
+        (?:(?:^|\s+) (?<sym>[⅛¼⅓⅜½⅝¾⅞]) ) |
+        (?<=\d) )  # Postive lookbehid to match 'whole' alone
+     \s*[\"”]?\s*
+     (?<aspect>w|width|h|height|dia|diameter|square)?$/xi
 
     aspects = {}
     no_aspect = nil
     string.split(/x/i).each do |part|
       return nil unless m = regex.match(part.strip)
-      num = m[:whole] ? Float(m[:whole]) : 0.0
+      num = 0.0
+      num = Float(m[:whole]) if m[:whole]
+      num += Float(m[:deci]) if m[:deci]
       num += Float(m[:numer])/Float(m[:denom]) if m[:numer]
       num += case m[:sym]
-             when '⅛'
-               0.125
-             when '¼'
-               0.25
-             when '⅓'
-               1.0/3.0
-             when '⅜'
-               0.375
-             when '½'
-               0.5
-             when '⅝'
-               0.625
-             when '¾'
-               0.75
-             when '⅞'
-               0.875
+             when '⅛'; 0.125
+             when '¼'; 0.25
+             when '⅓'; 1.0/3.0
+             when '⅜'; 0.375
+             when '½'; 0.5
+             when '⅝'; 0.625
+             when '¾'; 0.75
+             when '⅞'; 0.875
              end if m[:sym]
-      aspect = case m[:aspect]
-                 when /^h/i
-                 :height
-                 when /^w/i
-                 :width
-                 when /^dia/i
-                 :diameter
-                 when /^square$/i
-                 :square
-               end
 
+      aspect = case m[:aspect]
+               when /^h/i;       :height
+               when /^w/i;       :width
+               when /^dia/i;     :diameter
+               when /^square$/i; :square
+               end
       if aspect
         raise "With and without aspect: #{string}" if no_aspect
         no_aspect = false
@@ -890,7 +883,7 @@ private
     end
 
     if aspects[:square]
-      raise "Didn't Exepect height or width on square: #{string}" if aspects[:height] || aspects[:width]
+      raise "Didn't Expect other aspects on square: #{string}" if aspects.length != 1
       aspects[:height] = aspects[:width] = aspects.delete(:square)
     end
 

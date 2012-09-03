@@ -175,6 +175,8 @@ class HitPromoCSV < GenericImport
       end
     end
 
+    raise "DIE"
+
     variations.each do |name, set|
       puts "#{name}:"
       set.to_a.compact.sort.each do |elem|
