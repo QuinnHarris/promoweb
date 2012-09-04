@@ -51,7 +51,7 @@ class CustomerSend < ActionMailer::Base
       order.artwork_proofs.sort_by { |a| a.art.size }.each do |artwork|
         size -= artwork.art.size
         break if size < 0
-        attachments[artwork.art.original_filename] = File.read(artwork.art.path)
+        attachments[artwork.art.original_filename] = File.read(artwork.art.path, :encoding => 'BINARY')
       end
     else #if !order.invoices_ref.empty?
       attachments[order.invoices_ref.empty? ? "MOP Quote.pdf" : "MOP Invoice (#{order.id}-#{order.invoices_ref.count}).pdf"] = WickedPdf.new.pdf_from_string(render(:file => '/orders/invoices', :layout => 'print', :body => { } ))
