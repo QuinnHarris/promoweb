@@ -83,7 +83,7 @@ public
 
       parameters.delete(:artwork) # Kludge to remove artwork upload info
 
-      access_attributes[:params] = parameters.empty? ? nil : parameters.to_hash
+      access_attributes[:params] = parameters.to_hash unless parameters.empty?
       PageAccess.create(access_attributes)
     end
     
