@@ -115,7 +115,7 @@ class Admin::ProductsController < Admin::BaseController
         pi.save!
       end
 
-      if params[:context][:order_id]
+      if params[:context] && params[:context][:order_id]
         @order = Order.find(params[:context][:order_id])
         item = @order.items.create(:product_id => product.id, :price_group_id => price_group.id)
         item.order_item_variants.create(:variant_id => variant.id, :quantity => 100)
