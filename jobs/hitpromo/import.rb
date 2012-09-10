@@ -121,12 +121,13 @@ class HitPromoCSV < GenericImport
                                         "http://www.hitpromo.net/imageManager/show/#{hash['product_photo']}")]
 
         %w(set_up_charge multi_color_imprint).each do |name|
-          variations[name] ||= Set.new
-          variations[name] << hash[name]
+          variations[name] ||= {}
+          value = hash[name]
+          variations[name][value] = (variations[name][value] || []) + [pd.supplier_num]
         end
 
         puts
-        puts "Str: #{hash['imprint_area']}"
+        puts "Area: #{hash['imprint_area']}"
         imprints = []
         hash['imprint_area'].gsub(' ',' ').split('•').each do |str|
           str.scan(/\s*(?:([A-Z\- ]+):)?\s*(?:([A-Z\- ]+):)?\s*(?:\((.+?)\):?)?\s*((?:[^A-Z]+W\s*x\s*[^A-Z]+?H)|(?:[^A-Z]+(?:Diameter|Square)))\s*(?:\((.+?)\))?/i).each do |a, b, c, dim, d|
@@ -153,6 +154,22 @@ class HitPromoCSV < GenericImport
           puts "  #{imprint.inspect}"
         end
 
+        puts "Setup: #{hash['set_up_charge']}"
+        setups = []
+        hash['set_up_charge'].split('•').each do |str|
+          str.scan(/\s*(?:([A-Z\- ]+):)?\s*\$?(\d{2,3}\.\d{2})\(G\)\s*((?:on re-orders)|(?:[,.]?\s*per\s+(?:color|side|position|panel|handle|location)\s*)*)/i).each do |type, setup, tail|
+#            puts "  #{type} : #{setup} : #{tail}"
+            next if tail.downcase.include?('re-order') or type.downcase.include?('re-order')
+            (type||''+' ').split('or').each do |tech|
+              setups << { :technique => tech.blank? ? 'Screen Print' : tech.strip, :price => Float(setup) }
+            end
+          end
+        end if hash['set_up_charge']
+
+        setups.each do |imprint|
+          puts "  #{imprint.inspect}"
+        end
+
         pd.decorations = [DecorationDesc.none]
 
         colors = hash['colors_available']
@@ -175,14 +192,14 @@ class HitPromoCSV < GenericImport
       end
     end
 
-    raise "DIE"
-
-    variations.each do |name, set|
+    variations.each do |name, hash|
       puts "#{name}:"
-      set.to_a.compact.sort.each do |elem|
-        puts "  #{elem}"
+      hash.to_a.sort_by { |k, v| k || '' }.each do |elem, list|
+        puts "  #{list.length}: #{elem.inspect}" # : #{list.join(',')}"
       end
     end
+
+    raise "DIE"
   end
 
 end
