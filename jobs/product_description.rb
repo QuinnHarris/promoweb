@@ -588,10 +588,4 @@ class ProductDesc
       context.add_error(boom, desc.error_id)
     end
   end
-
-  def self.over_each(context, object, &block)
-    object.each do |val|
-      self.apply(context, &block)
-    end
-  end
 end

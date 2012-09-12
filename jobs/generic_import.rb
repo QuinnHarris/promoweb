@@ -561,6 +561,7 @@ class GenericImport
     File.open(file_name,"w") { |f| Marshal.dump(res, f) }
   end
   
+  # Only used in primeline
   def cache_marshal(name, predicate = nil)
     file_name = cache_file(name)
     if cache_exists(file_name)
@@ -625,15 +626,23 @@ class GenericImport
     stop_time = Time.now
     puts "#{@supplier_record.name} validate stop at #{stop_time} for #{stop_time - mid_time}s #{@product_list.length}"
   end
+
+  def parse_cache_filename
+    "#{@supplier_record.name}_parse"
+  end
+
+  def fetch_parse?
+    file_name = cache_file(parse_cache_filename)
+    !cache_exists(file_name) || (File.mtime(file_name) < (Time.now - 1.day))
+  end
   
   def run_parse_cache
-    if ARGV.include?('parse')
+    file_name = cache_file(parse_cache_filename)
+    if fetch_parse? or ARGV.include?('parse') or !cache_exists(file_name)
       run_parse
+      cache_write(file_name, @product_list)
     else
-      @product_list = cache_marshal("#{@supplier_record.name}_parse", @src_file || @src_files) do
-        run_parse
-        @product_list
-      end
+      @product_list = cache_read(file_name)
     end
   end
     

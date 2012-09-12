@@ -642,7 +642,11 @@ class Product < ActiveRecord::Base
     variant_hash = {}
     variant_hash.default = []
     properties.each do |prop, var|
-      variant_hash[var] += [prop]
+      if prop.name == 'swatch' # swatch is not orthoginal
+        var.each { |v| variant_hash[[v]] += [prop] }
+      else
+        variant_hash[var] += [prop]
+      end
     end
     
     used = []
