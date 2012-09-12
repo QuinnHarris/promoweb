@@ -173,6 +173,7 @@ class GemlineXML < GenericImport
                 val['images'] << ImageNodeFetch.new("alts/#{alt['name']}", "#{alt['path']}#{alt['name']}".gsub('\\','/'))
               end
             end
+            val['images'].uniq!
           end
           
           prices = []
@@ -238,7 +239,7 @@ class GemlineXML < GenericImport
         
         pd.variants = hash.collect do |prices, list|
           marginal = Money.new((prices.last[1] * (1.0 - prices.last[2]))).round_cents
-          if prices.last[2] > 0.4
+          if prices.length == 1 and !pd.tags.include?('Closeout')
             pd.tags << 'Special'
           end
           costs = [
