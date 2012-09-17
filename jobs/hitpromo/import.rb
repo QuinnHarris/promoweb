@@ -120,7 +120,7 @@ class HitPromoCSV < GenericImport
         pd.images = [ImageNodeFetch.new(hash['product_photo'],
                                         "http://www.hitpromo.net/imageManager/show/#{hash['product_photo']}")]
 
-        %w(set_up_charge multi_color_imprint).each do |name|
+        %w(multi_color_imprint multi_panel_imprint second_side_imprint second_handle_imprint).each do |name|
           variations[name] ||= {}
           value = hash[name]
           variations[name][value] = (variations[name][value] || []) + [pd.supplier_num]
@@ -158,13 +158,33 @@ class HitPromoCSV < GenericImport
         setups = []
         hash['set_up_charge'].split('•').each do |str|
           str.scan(/\s*(?:([A-Z\- ]+):)?\s*\$?(\d{2,3}\.\d{2})\(G\)\s*((?:on re-orders)|(?:[,.]?\s*per\s+(?:color|side|position|panel|handle|location)\s*)*)/i).each do |type, setup, tail|
-#            puts "  #{type} : #{setup} : #{tail}"
-            next if tail.downcase.include?('re-order') or type.downcase.include?('re-order')
+            puts "  #{type} : #{setup} : #{tail}"
+            next if tail.downcase.include?('re-order') or (type && type.downcase.include?('re-order'))
             (type||''+' ').split('or').each do |tech|
-              setups << { :technique => tech.blank? ? 'Screen Print' : tech.strip, :price => Float(setup) }
+              setups << { :technique => tech.blank? ? nil : tech.strip, :fixed => Float(setup) }
             end
           end
         end if hash['set_up_charge']
+
+        limit = nil
+        multi_string = hash['multi_color_imprint']
+        if multi_string && multi_string.downcase.include?('not available')
+          limit = 1
+          multi_string = nil
+        end
+        %w(multi_panel_imprint second_side_imprint second_handle_imprint).each do |name|
+          break if multi_string = hash[name]
+        end
+
+        puts "Multi: #{multi_string}"
+        unless /^(?:(?<pre>[A-Z\- ]+):\s*)?Add (?<price>\.\d{2})\s*\(G\)\s*(?:per\s+(?:color|extra color|side|piece|position|panel|extra panel|location)[,.]?\s*)+\s*(?:\((?<limit>\d) Color Maximum\))?/ =~ multi_string
+          puts "  UNKOWN" if multi_string
+        else
+          setups.each do |s|
+            raise "Technique specified in setup and multi" if s[:technique] and pre
+            s.merge!(:marginal => Float(price), :limit => limit, :technique => pre)
+          end
+        end
 
         setups.each do |imprint|
           puts "  #{imprint.inspect}"
