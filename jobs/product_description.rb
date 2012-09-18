@@ -187,10 +187,19 @@ class ImageNodeFetch; end
 class DecorationDesc
   include PropertyObject
 
-  @@techniques = DecorationTechnique.all.each_with_object({}) { |i, h| h[i.name] = i }
+  @@techniques = DecorationTechnique.all.each_with_object({}) do |i, h|
+    key = []
+    p = i
+    while p
+      key << p.name
+      p = p.parent
+    end
+    h[key.reverse] = i
+  end
   cattr_reader :techniques
 
-  property :technique, String do |s|
+  property :technique, Array[String], :no_pre => true do |s|
+    s = [s].flatten
     raise PropertyError, "got #{s} expected in #{@@techniques.keys.inspect}" unless @@techniques.keys.include?(s)
     s
   end   
@@ -278,6 +287,7 @@ class PricingDesc
 
   # Duplicated in GenericImport Remove from there eventually
   def convert_pricecode(comp)
+    return comp if comp.is_a?(Float) && comp > 0.0 && comp < 0.9
     return nil unless comp.is_a?(String) && /^[A-GP-X]$/i === comp
     comp = comp.upcase[0]
     num = comp.ord - ?A.ord if comp.ord >= ?A.ord and comp.ord <= ?G.ord
