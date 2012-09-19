@@ -215,17 +215,22 @@ class window.ProductPricing extends PricingBase
 
     inp = $("#unit_value")
     if inp.length
-      @params.dec_count = dec.unit_default  unless @params.dec_count
       dd = inp.parent()
       dt = dd.prev()
-      if dec.unit_name and dec.unit_name.length > 0
+      limit = @decorationCountLimit(@params)
+      if !!dec.unit_name and limit > 1
         dt.html("<span>Number of " + dec.unit_name + "(s):</span>")
         dt.show()
         dd.show()
-        inp.value = @params.dec_count  if @params.dec_count
+        if !!!@params.dec_count or (@params.dec_count > limit)
+          @params.dec_count = dec.unit_default
+        inp[0].value = @params.dec_count
       else
         dt.hide()
         dd.hide()
+        inp.value = @params.dec_count = dec.unit_default
+  
+      $.cookie('count', @params.dec_count)
 
     $("#dec_desc").html(li.children('span').html())
 #    if @params.technique_id == 1

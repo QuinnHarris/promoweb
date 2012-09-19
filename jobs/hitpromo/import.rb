@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 require 'csv'
 
+# ToDo : No less than minimum on blank; Different pricing on embroidery
+
 class HitPromoCSV < GenericImport  
 
   def initialize(year)
@@ -57,18 +59,25 @@ path
     'Debossed' => 'Deboss',
     'Embroidered' => 'Embroidery',
     'Embroidery' => 'Embroidery',
+    'Laser' => 'Laser Engrave',
     'Laser Engrave' => 'Laser Engrave',
     'Laser Engraved' => 'Laser Engrave',
     'Laser Engraving' => 'Laser Engrave',
     'Optional Embroidered' => 'Embroidery',
     'Oval' => 'Dome',
     'Oval Dome' => 'Dome',
+    'Square Dome' => 'Dome',
     'Pad-Print' => 'Pad Print',
     'Silk-Screen' => 'Screen Print',
     'Silk-Screen or Transfer' => ['Screen Print', 'Photo Transfer'],
     'Silk-Screened' => 'Screen Print',
-    'Transfer' => 'Photo Transfer'
+    'Transfer' => 'Photo Transfer',
+    '1 - 4 Color Process Method' => 'Color Process',
+    '1-4 Color Process' => 'Color Process'
+    # insert into decoration_techniques (name, unit_name, unit_default) values ('Color Process', 'color', 1);
   }
+
+  @@decoration_with_units = %w(Screen\ Print Pad\ Print)
  
   def parse_products
     common_list = %w(product_name new description category product_photo colors_available imprint_colors approximate_size imprint_area set_up_charge multi_color_imprint packaging multi_panel_imprint second_side_imprint fob_zip second_handle_imprint please_note embroidery_information thread_colors tape_charge sizes approximate_bag_size optional_imprint precious_metal_imprint for_gold_banding for_halo battery second_positon non_woven_items label_color four_color_process optional_imprint_area second_position_imprint highlighters refills optional_carabiner imprint catalog_page optional_pen colors)
@@ -110,23 +119,25 @@ path
 
     product_list.each do |supplier_num, hash|
       ProductDesc.apply(self) do |pd|
+        puts
+        puts "Product: #{supplier_num}"
         pd.supplier_num = supplier_num
         pd.name = hash['product_name']
         pd.supplier_categories = [[hash['category'].strip]]
         pd.tags = []
 
-        pd.description = hash['description'] ? hash['description'].split(/\s*\|\s*/).join("\n") : ''
-        pd.description += hash['please_note'].gsub(/\s*((<.+?>)|[^[[:ascii:]]])\s*/,' ').split(/\s*\n\s*/).join("\n") if hash['please_note']
-
-        %w(precious_metal_imprint for_gold_banding for_halo refills optional_carabiner optional_pen battery).each do |name|
+        pd.description =
+          (hash['description'] ? hash['description'].split(/\s*\|\s*/) : []) +
+          (hash['please_note'] ? hash['please_note'].gsub(/\s*((<.+?>)|[^[[:ascii:]]])\s*/,' ').split(/\s*\n\s*/) : []) +
+          %w(precious_metal_imprint for_gold_banding for_halo refills optional_carabiner optional_pen battery).collect do |name|
           next unless hash[name]
-          str = "\n" + name.split('_').collect { |w| w.capitalize }.join(' ') + ": "
+          str = name.split('_').collect { |w| w.capitalize }.join(' ') + ": "
           str << hash[name].gsub(/<a href=".+?">(\d+)<\/a>/) do |str|
             product = get_product($1)
             "<a href='#{product.web_id}'>#{product.name}</a>"
           end
-          pd.description += str
-        end
+          str
+        end.compact
         
         pd.tags << 'New' if hash['new']
 
@@ -153,6 +164,10 @@ path
           pricing.add(qty, price_string["price#{i}"], discounts.shift)
         end
         raise "Discount doesn't match: #{supplier_num} #{discounts.inspect}" unless discounts.empty?
+        unless pd.supplier_categories.flatten.include?('Ceramics') or
+            hash['embroidery_information']
+          pricing.ltm(40.0)
+        end
         pricing.maxqty
 
         dimension = hash['approximate_size'] || hash['approximate_bag_size']
@@ -162,13 +177,12 @@ path
         pd.images = [ImageNodeFetch.new(hash['product_photo'],
                                         "http://www.hitpromo.net/imageManager/show/#{hash['product_photo']}")]
 
-        %w(multi_color_imprint multi_panel_imprint second_side_imprint second_handle_imprint).each do |name|
+        %w(embroidery_information thread_colors tape_charge).each do |name|
           variations[name] ||= {}
           value = hash[name]
           variations[name][value] = (variations[name][value] || []) + [pd.supplier_num]
         end
 
-        puts
         puts "Area: #{hash['imprint_area']}"
         locations = []
         hash['imprint_area'].gsub(' ',' ').split('•').each do |str|
@@ -199,10 +213,11 @@ path
         puts "Setup: #{hash['set_up_charge']}"
         setups = []
         hash['set_up_charge'].split('•').each do |str|
-          str.scan(/\s*(?:([A-Z\- ]+):)?\s*\$?(\d{2,3}\.\d{2})\(G\)\s*((?:on re-orders)|(?:[,.]?\s*per\s+(?:color|side|position|panel|handle|location)\s*)*)/i).each do |type, setup, tail|
-            puts "  #{type} : #{setup} : #{tail}"
+          str.scan(/\s*(?:([A-Z\- ]+):)?\s*\$?(\d{2,3}\.\d{2})\(G\)\s*((?:on re-orders)|(?:[,.]?\s*per\s+(?:color|side|position|panel|handle|location)|(?:1-4 Color Process)\s*)*)/i).each do |type, setup, tail|
+#            puts "  #{type} : #{setup} : #{tail}"
             next if tail.downcase.include?('re-order') or (type && type.downcase.include?('re-order'))
-            (type||''+' ').split('or').each do |str|
+            type = tail if tail == '1-4 Color Process'
+            (type||''+' ').split(/\s+or\s+/).each do |str|
               if str.blank?
                 tech = nil
               else
@@ -211,10 +226,21 @@ path
                   next
                 end
               end
-              setups << { :technique => tech, :fixed => Float(setup) }
+              if tech == 'Photo Transfer'
+                setups << { :technique => tech, :fixed => 200.0, :marginal => 1.5 }
+              else
+                setups << { :technique => tech, :fixed => Float(setup) }
+              end
             end
           end
         end if hash['set_up_charge']
+
+        case hash['embroidery_information']
+        when /5,000/
+          setups << { :technique => 'Embroidery', :method => 'Embroidery @ 5000', :limit => 20000 }
+        when /7,000/
+          setups << { :technique => 'Embroidery', :method => 'Embroidery @ 7000', :limit => 20000 }
+        end
 
         setups.each do |imprint|
           puts "  #{imprint.inspect}"
@@ -226,9 +252,9 @@ path
           limit = 1
           multi_string = nil
         end
-        %w(multi_panel_imprint second_side_imprint second_handle_imprint).each do |name|
+        %w(multi_panel_imprint second_side_imprint second_handle_imprint optional_imprint).each do |name|
           break if multi_string = hash[name]
-        end
+        end unless multi_string
 
         puts "Multi: #{multi_string}"
         running = []
@@ -263,20 +289,27 @@ path
           end
 
           def decend(hash, subs, tech)
-            if subs.empty?
-              return unless fixed = hash.delete(:fixed)
-              marginal = hash.delete(:marginal)
-              dec = get_decoration(tech, fixed, marginal)
-              hash = hash.merge(:technique => dec)
+            if subs.empty? or
+                (subs.length == 1 && !@@decoration_with_units.include?(tech))
+              if method = hash.delete(:method)
+                hash.merge!(:technique => [hash[:technique], method])
+              else
+                return unless fixed = hash.delete(:fixed)
+                marginal = hash.delete(:marginal)
+                dec = get_decoration(tech, fixed, marginal)
+                hash.merge!(:technique => dec)
+                hash = { :limit => 6 }.merge(hash) if marginal
+              end
               puts "  DecDesc: #{hash.inspect}"
-              DecorationDesc.new(hash)
+              DecorationDesc.new({ :limit => 1 }.merge(hash))
             else
               subs.first.collect do |sub|
-                decend(hash.merge(sub), subs[1..-1], tech)
+                decend(sub.merge(hash), subs[1..-1], tech)
               end
             end
           end
           
+          puts "Tech: #{tech}: #{subs.inspect}"
           pd.decorations += decend({}, subs, tech).flatten.compact
         end
 
