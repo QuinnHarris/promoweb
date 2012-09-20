@@ -354,6 +354,7 @@ public
   end
 
   def maxqty(qty = nil)
+    validate # Validate costs and prices are present
     raise ValidateError, "maxqty can only be called once" unless @costs.last[:marginal]
     @costs << { :minimum => qty ? parse_qty(qty) : [@prices.last[:minimum], @costs.last[:minimum]].max * 2 } unless @costs.empty?
   end

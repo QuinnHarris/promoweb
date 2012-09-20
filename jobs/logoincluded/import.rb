@@ -7,18 +7,19 @@ class LogoIncludedXML < GenericImport
     super "LogoIncluded"
   end
 
-  def fetch
+  def fetch_parse?
     puts "Fetching"
     remote_file = 'feed.xml'
     Net::FTP.open('ftp.logoincluded.com') do |ftp|
       ftp.login('mountainofpromos', 'Br3S9Ebr')
       if File.exists?(@src_file) and (ftp.mtime(remote_file) < File.mtime(@src_file))
         puts "** No update **"
-        return
+        return false
       end
       ftp.getbinaryfile(remote_file, @src_file)
     end
     puts "Fetched"
+    true
   end
 
   def warning(msg)
