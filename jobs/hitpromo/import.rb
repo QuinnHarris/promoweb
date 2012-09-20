@@ -68,7 +68,6 @@ class HitPromoCSV < GenericImport
     'Laser Engraved' => 'Laser Engrave',
     'Laser Engraving' => 'Laser Engrave',
     'Optional Embroidered' => 'Embroidery',
-    'Oval' => 'Dome',
     'Oval Dome' => 'Dome',
     'Square Dome' => 'Dome',
     'Pad-Print' => 'Pad Print',
@@ -135,7 +134,7 @@ class HitPromoCSV < GenericImport
 
     price_preference = %w(L S T E B)
     
-    variations = {}
+#    variations = {}
 
     product_list.each do |supplier_num, hash|
       ProductDesc.apply(self) do |pd|
@@ -198,11 +197,11 @@ class HitPromoCSV < GenericImport
         pd.images = [ImageNodeFetch.new(hash['product_photo'],
                                         "http://www.hitpromo.net/imageManager/show/#{hash['product_photo']}")]
 
-        %w(embroidery_information thread_colors tape_charge).each do |name|
-          variations[name] ||= {}
-          value = hash[name]
-          variations[name][value] = (variations[name][value] || []) + [pd.supplier_num]
-        end
+#        %w(imprint_colors).each do |name|
+#          variations[name] ||= {}
+#          value = hash[name]
+#          variations[name][value] = (variations[name][value] || []) + [pd.supplier_num]
+#        end
 
         puts "Area: #{hash['imprint_area']}"
         locations = []
@@ -302,6 +301,11 @@ class HitPromoCSV < GenericImport
 
         combos = [locations, setups, running]
         techniques = (locations + setups + running).collect { |e| e[:technique] }.compact.uniq
+        { 'laser' => 'Laser Engrave',
+          'screen' => 'Screen Print',
+          'pad' => 'Pad Print' }.each do |str, tech|
+          techniques << tech if hash['imprint_colors'] and hash['imprint_colors'].downcase.include?(str) and !techniques.include?(tech)
+        end
         techniques << "Screen Print" if techniques.empty?
         techniques.each do |tech|
           subs = combos.collect do |set|
@@ -355,12 +359,12 @@ class HitPromoCSV < GenericImport
       end
     end
 
-    variations.each do |name, hash|
-      puts "#{name}:"
-      hash.to_a.sort_by { |k, v| k || '' }.each do |elem, list|
-        puts "  #{list.length}: #{elem.inspect}" # : #{list.join(',')}"
-      end
-    end
+#    variations.each do |name, hash|
+#      puts "#{name}:"
+#      hash.to_a.sort_by { |k, v| k || '' }.each do |elem, list|
+#        puts "  #{list.length}: #{elem.inspect}" # : #{list.join(',')}"
+#      end
+#    end
   end
 
 end
