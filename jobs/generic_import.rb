@@ -9,13 +9,14 @@ require File.dirname(__FILE__) + '/categories'
 
 JOBS_DATA_ROOT = File.join(Rails.root, 'jobs/data')
 
-def apply_decorations(supplier_name)
+def apply_decorations(supplier_name, include = nil)
   supplier = Supplier.find_by_name(supplier_name)
   raise "Unknown Supplier: #{supplier_name}" unless supplier
   
   Supplier.transaction do
     # Remove all old records
     supplier.decoration_price_groups.each do |grp|
+      next if include and !include.include?(grp.technique.name)
       grp.entries.each do |entry|
         fixed = entry.fixed
         marginal = entry.marginal
@@ -678,9 +679,9 @@ class GenericImport
         hash.each do |aspect, list|
           if list.length * 2 > supplier_num_set.length
             negl = supplier_num_set.to_a - list
-            puts "  #{aspect}: #{list.length} ALL - #{negl.join(', ')}"
+            puts "  #{aspect}: (#{list.length}) ALL - #{negl.join(', ')}"
           else
-            puts "  #{aspect}: #{list.length} #{list.join(', ')}"
+            puts "  #{aspect}: (#{list.length}) #{list.join(', ')}"
           end
         end
       end

@@ -90,8 +90,8 @@ class PricingBase
       max: 0
 
     count_limit = @_decorationCountLimit(params, dec)
-    for entry in (if dec.entries then dec.entries.reverse() else [])
-      break  if params.dec_count and entry.minimum > params.dec_count
+    for entry in (if dec.entries then dec.entries else [])
+      continue if params.dec_count and entry.minimum > params.dec_count
       fixed_val = entry.fixed.price_fixed
       marginal_val = @_decorationPriceFunc(entry.fixed, params.quantity)
       unless params.dec_count
@@ -103,7 +103,7 @@ class PricingBase
         marginal_val += @_decorationPriceMult(entry.marginal, value, @_decorationPriceFunc(entry.marginal, params.quantity))
         range_apply fixed, fixed_val
         range_apply marginal, marginal_val
-      params.dec_count
+      break if params.dec_count
 
     fixed: fixed
     marginal: marginal

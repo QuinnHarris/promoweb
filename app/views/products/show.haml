@@ -238,7 +238,7 @@
                     next unless dec.technique == tech and !dec.display.blank?
                     { :id => dec.id, :display => dec.display, :limit => dec.limit }
                   end.compact,
-                  :entries => price_group && price_group.entries.collect do |entry|
+                  :entries => price_group && price_group.entries.reverse.collect do |entry|
                     { :minimum => entry.minimum }.merge(
                         %w(fixed marginal).inject({}) do |hash, aspect|
                           hash[aspect] = %w(price_fixed price_const price_exp price_marginal divisor offset).inject({}) do |h, prop|

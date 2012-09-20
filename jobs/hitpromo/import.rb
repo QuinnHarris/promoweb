@@ -1,13 +1,17 @@
 # -*- coding: utf-8 -*-
 require 'csv'
 
-# ToDo : No less than minimum on blank; Different pricing on embroidery
+# TODO
+# No less than minimum on blank;
+# Different pricing on embroidery
+# Unit predicated packaging
 
 class HitPromoCSV < GenericImport  
 
   def initialize(year)
     puts "Starting Fetch for #{year}"
     @src_file = WebFetch.new("http://www.hitpromo.net/fs/documents/hit_product_data_#{year}.csv").get_path(Time.now - 1.day)
+    @package_file = File.join(JOBS_DATA_ROOT, 'HitPackingData.xls')
     super 'Hit Promotional Products'
 
     @decoration_set = Set.new
@@ -50,7 +54,7 @@ class HitPromoCSV < GenericImport
       end
     end
     @decoration_set << path
-path
+    path
   end
 
 #%w(colors_available imprint_colors approximate_size imprint_area set_up_charge multi_color_imprint packaging multi_panel_imprint second_side_imprint fob_zip second_handle_imprint please_note embroidery_information thread_colors tape_charge sizes approximate_bag_size optional_imprint second_positon non_woven_items label_color four_color_process optional_imprint_area second_position_imprint highlighters imprint catalog_page colors)
@@ -80,6 +84,22 @@ path
   @@decoration_with_units = %w(Screen\ Print Pad\ Print)
  
   def parse_products
+    # Package File
+    package_list = {}
+    ws = Spreadsheet.open(@package_file).worksheet(0)
+    ws.use_header
+    ws.each(1) do |row|
+      supplier_num = row['Product #'].strip
+      desc = PackageDesc.new(:weight => row['Box Weight (lbs.)'],
+                             :units => row['Quantity per Box'],
+                             :length => row['Box Length (inches)'],
+                             :width => row['Box Width (inches)'],
+                             :height => row['Box Height (inches)'])
+      if !package_list[supplier_num] or package_list[supplier_num].units > desc.units
+        package_list[supplier_num] = desc
+      end
+    end
+
     common_list = %w(product_name new description category product_photo colors_available imprint_colors approximate_size imprint_area set_up_charge multi_color_imprint packaging multi_panel_imprint second_side_imprint fob_zip second_handle_imprint please_note embroidery_information thread_colors tape_charge sizes approximate_bag_size optional_imprint precious_metal_imprint for_gold_banding for_halo battery second_positon non_woven_items label_color four_color_process optional_imprint_area second_position_imprint highlighters refills optional_carabiner imprint catalog_page optional_pen colors)
 
     price_list = %w(discount_code) + (1..8).collect { |n| ["price#{n}", "quantity#{n}"] }.flatten
@@ -141,12 +161,13 @@ path
         
         pd.tags << 'New' if hash['new']
 
-      # Packaging
-#      unless /(\d+) per carton.+?(\d+) lbs/ === hash['packaging']
-#        raise "Unknown Packaging: #{hash['packaging'].inspect}"
-#      end
-#      product_data.merge!('package_units' => Integer($1),
-#                          'package_weight' => Integer($2))
+        # Packaging
+        pd.package = package_list[supplier_num] if package_list[supplier_num]
+
+        # Lead Times
+        pd.lead_time.normal_min = 3
+        pd.lead_time.normal_max = 10
+#        pd.rush = 3
 
 
         # Prices
@@ -292,7 +313,7 @@ path
             if subs.empty? or
                 (subs.length == 1 && !@@decoration_with_units.include?(tech))
               if method = hash.delete(:method)
-                hash.merge!(:technique => [hash[:technique], method])
+                hash.merge!(:technique => [tech, method])
               else
                 return unless fixed = hash.delete(:fixed)
                 marginal = hash.delete(:marginal)
