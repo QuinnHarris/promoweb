@@ -342,8 +342,10 @@ public
 
   def ltm(charge, qty = nil)
     raise ValidateError, "Can't apply less than minimum with no prices" if @costs.empty?
-    qty = qty && parse_qty(qty)
-    raise ValidateError.new("qty >= first qty", "#{qty} >= #{@costs.first[:minimum]}") if qty && qty >= @costs.first[:minimum]
+    if qty = qty && parse_qty(qty)
+      return if qty == @costs.first[:minimum]
+      raise ValidateError.new("qty >= first qty", "#{qty} >= #{@costs.first[:minimum]}") if qty > @costs.first[:minimum]
+    end
     ltm_common(charge, qty)
   end
 
@@ -419,7 +421,8 @@ class ProductDesc
       v.strip
     else
       raise PropertyError, "expected String or Array of String"
-    end
+    end.gsub(/\s+\$?(\d{1,3}|(?:\d{0,3}\.\d{2})?)\s*\(?[vg]\)?\s+/i) {
+      ' ' + Money.new(Float($1)).to_perty + ' ' }
   end
 
   property :lead_time, LeadTimeDesc, :warn => true

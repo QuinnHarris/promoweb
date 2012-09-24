@@ -750,16 +750,17 @@ class Product < ActiveRecord::Base
     var
   end
     
-  def self.print_records_two(deleted, created)
-    arr = deleted+created
+  def self.print_records_two(deleted, created, modified = [])
+    arr = deleted+created+modified
     columns = arr.first.class.column_names    
     widths = columns.collect { |column| ([column.size] + arr.collect { |rec| rec[column].to_s.size }).max }
     
     str = "\n     " + columns.zip(widths).collect { |column, width| column.ljust(width) }.join(' ')
-    str << "\n   " + arr.collect do |rec|
-      (deleted.index(rec) ? '- ' : '+ ') + 
-      columns.zip(widths).collect { |column, width| rec[column].to_s.ljust(width) }.join(' ')
-    end.join("\n   ") + "\n"
+    str << "\n   " + [[deleted, '-'], [created, '+'], [modified, '|']].collect do |list, sign|
+      list.collect do |rec|
+        sign + ' ' + columns.zip(widths).collect { |column, width| rec[column].to_s.ljust(width) }.join(' ')
+      end
+    end.flatten.compact.join("\n   ") + "\n"
   end
 
   def set_images(images)
@@ -877,13 +878,13 @@ class Product < ActiveRecord::Base
       end
     end
     
-    created = []
+    modified = []
     
     src.each do |s|
       if d = create.find { |c| c.technique_record == s.technique }
         # Recycle old decoration
         s.update_attributes(d.to_hash)
-        created << s
+        modified << s
         create.delete(d)
       else
         # This destroy can fail if it is referenced from order_item_decorations
@@ -897,11 +898,13 @@ class Product < ActiveRecord::Base
         end
       end
     end
+
+    src -= modified
     
     # Create remaining
-    created += create.collect { |d| decorations.create(d.to_hash) }
+    created = create.collect { |d| decorations.create(d.to_hash) }
     
-    (src.empty? and created.empty?) ? '' : "  Decoration: #{Product.print_records_two(src, created)}"
+    (src + created + modified).empty? ? '' : "  Decoration: #{Product.print_records_two(src, created, modified)}"
   end
   
   # source_id: Price Source ID

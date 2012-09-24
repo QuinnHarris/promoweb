@@ -758,8 +758,8 @@ class GenericImport
     @warning_prods[boom.aspect] = (@warning_prods[boom.aspect] || []) + [id]
   end
 
-  def warning(id, aspect, description = nil)
-    add_warning(ValidateError.new(aspect, description), id)
+  def warning(aspect, description = nil)
+    add_warning(ValidateError.new(aspect, description), @supplier_num)
   end
   
   def add_product(object)
@@ -837,26 +837,24 @@ private
     nil
   end
 
-  # (?:([a-z ]+)[:;]? *)?
 
-  # (\d{1,2}(?:\.\d{1,2})?[^\/])?(?:(\d{1,2})\/(\d{1,2}))? ?"? ?w? +x +(\d{1,2}(?:\.\d{1,2})?[^\/])?(?:(\d{1,2})\/(\d{1,2}))? ?"? ?h?\.? ?([a-z]*)$/i
-  # (\d{1,2}(?:\.\d{1,2})?[ "])?(?:(\d{1,2})\/(\d{1,2}))? ?"? *([^0-9]*)/i
-  # (?:(\d{1,2})[- ])?(\d{1,2})(?:\/(\d{1,2}))?\"\s*(H|W)\s*x?\s*(?:(\d{1,2})[- ])?(\d{1,2})(?:\/(\d{1,2}))?\"\s*(W|H)\s*$/i
+  @@component_regex = 
+    /(?<whole>\d{1,2})?
+     (?:(?<deci>\.\d{1,4}) |
+        (?:(?:^|\s+|-) (?<numer>\d{1,2}) \s*[\/∕]\s* (?<denom>\d{1,2}) ) |
+        (?:(?:^|\s+) (?<sym>[⅛¼⅓⅜½⅝¾⅞]) ) |
+        (?<=\d) )  # Postive lookbehind to match 'whole' alone
+     \s*[\"”]?\s*
+     (?<aspect>width|w|height|h|diameter|dia|square)?/xi
 
   def parse_area_new(string)
-    regex =
-    /^(?<whole>\d{1,2})?
-      (?:(?<deci>\.\d{1,4}) |
-        (?:(?:^|\s+) (?<numer>\d{1,2}) \s*[\/∕]\s* (?<denom>\d{1,2}) ) |
-        (?:(?:^|\s+) (?<sym>[⅛¼⅓⅜½⅝¾⅞]) ) |
-        (?<=\d) )  # Postive lookbehid to match 'whole' alone
-     \s*[\"”]?\s*
-     (?<aspect>w|width|h|height|dia|diameter|square)?$/xi
-
     aspects = {}
     no_aspect = nil
     string.split(/x/i).each do |part|
-      return nil unless m = regex.match(part.strip)
+      unless m = /^#{@@component_regex}$/.match(part.strip)
+        warning 'Parse Area', "RegEx mismatch: #{part}"
+        return
+      end
       num = 0.0
       num = Float(m[:whole]) if m[:whole]
       num += Float(m[:deci]) if m[:deci]
@@ -879,24 +877,43 @@ private
                when /^square$/i; :square
                end
       if aspect
-        raise "With and without aspect: #{string}" if no_aspect
+        if no_aspect
+          warning 'Parse Area', "With and without aspect: #{string}"
+          return
+        end
         no_aspect = false
-        raise "Duplicate Aspect: #{string}" if aspects.has_key?(aspect)
+        if aspects.has_key?(aspect)
+          warning 'Parse Area', "Duplicate Aspect: #{string}" 
+          return
+        end
       else
-        raise "Without and With aspect: #{string}" if no_aspect == false
+        if no_aspect == false
+          warning 'Parse Area', "Without and With aspect: #{string}"
+          return
+        end
         no_aspect = true
-        aspect = [:height, :width, :length].find { |s| !aspects.has_key?(s) }
-        raise "All aspects covered" unless aspect
+        unless aspect = [:height, :width, :length].find { |s| !aspects.has_key?(s) }
+          warning 'Parse Area', "All aspects covered"
+          return
+        end
       end
       
       aspects[aspect] = num
     end
 
     if aspects[:square]
-      raise "Didn't Expect other aspects on square: #{string}" if aspects.length != 1
+      if aspects.length != 1
+        warning 'Parse Area', "Didn't Expect other aspects on square: #{string}"
+        return
+      end
       aspects[:height] = aspects[:width] = aspects.delete(:square)
     end
-
+    
+    if (aspects[:height] || aspects[:width]) && (aspects[:height].nil? != aspects[:width].nil?)
+      warning 'Parse Area', "Missing both aspects: #{string}"
+      return
+    end
+    
     aspects
   end
   
@@ -1197,5 +1214,111 @@ private
     end
 
     strings
+  end
+
+  crn = @@component_regex.to_s.gsub(/\?<.+?>/,'?:').gsub(/\)\?\)$/,'))')
+  @@multi_area_regex = /\s*(?:([A-Z\- ]+):)?\s*(?:([A-Z\- ]+):)?\s*(?:\((.+?)\):?)?\s*(#{crn}(?:\s*x\s*#{crn})?)\s*(?:\(?([A-Z0-9 ]+)(?:$|[.!?)]|(?:  )))?/i
+
+  def parse_areas(string, seperator = 'or')
+    return [] if string.blank?
+    locations = []
+    string.gsub(' ',' ').split(seperator).each do |str|
+      str.scan(@@multi_area_regex).each do |a, b, c, dim, d|
+        loc = [a, b, c, d].compact.collect { |s| s.strip }
+        decoration = nil
+        loc.delete_if do |str|
+          if dec = decoration_map[str]
+            warning "Duplicate decoration" if decoration
+            decoration = dec
+          end
+        end if respond_to?(:decoration_map)
+        loc = block_given? ? yield(loc) : loc.join(', ')
+        if area = parse_area_new(dim)
+          locations += [decoration].flatten.collect do |dec|
+            { :technique => dec, :location => loc }.merge(area)
+          end
+        else
+          warning "Unkown Decoration", "#{decoration.inspect}: #{area.inspect} (#{loc}) [#{dim.inspect} #{a.inspect} #{b.inspect} #{c.inspect}]"
+        end
+      end
+    end
+    locations
+  end
+
+  def get_decoration(technique, fixed, marginal)
+    fixed = Money.new(fixed)
+    name = "#{technique} @ #{fixed}"
+    marginal = Money.new(marginal) if marginal
+    name += "/#{marginal}" if marginal
+    path = [technique, name]
+    return path if @decoration_set.include?(path)
+    
+    base_tech = DecorationTechnique.find_by_name(technique)
+    raise "Unkown Technique: #{technique}" unless base_tech
+    unless tech = base_tech.children.find_by_name(name)
+      DecorationTechnique.transaction do
+        tech = base_tech.children.create(:name => name, :unit_name => base_tech.unit_name,
+                                         :unit_default => base_tech.unit_default)
+        price_group = tech.price_groups.create(:supplier => @supplier_record)
+        price_group.entries.create(:minimum => 1,
+                                   :fixed_price_const => 0.0,
+                                   :fixed_price_exp => 0.0,
+                                   :fixed_price_marginal => Money.new(0),
+                                   :fixed_price_fixed => fixed,
+                                   :fixed => PriceGroup.create_prices([
+                                   {  :fixed => (fixed*0.8).round_cents,
+                                      :marginal => Money.new(0), :minimum => 1 }]),
+                                   :marginal_price_const => 0.0,
+                                   :marginal_price_exp => 0.0,
+                                   :marginal_price_marginal => marginal || Money.new(0),
+                                   :marginal_price_fixed => fixed,
+                                   :marginal => PriceGroup.create_prices([
+                                   {  :fixed => (fixed*0.8).round_cents,
+                                      :marginal => marginal ? (marginal*0.8).round_cents : Money.new(0), :minimum => 1 }]),
+                                   )
+
+        DecorationDesc.techniques[path] = tech
+      end
+    end
+    @decoration_set << path
+    path
+  end
+
+  @@decoration_with_units = %w(Screen\ Print Pad\ Print)
+  def decorations_from_parts(techniques, combos)
+    decorations = [DecorationDesc.none]
+    techniques = (techniques + combos.flatten.collect { |e| e[:technique] }).flatten.compact.uniq
+    techniques << "Screen Print" if techniques.empty?
+    techniques.each do |tech|
+      subs = combos.collect do |set|
+        r = set.find_all { |l| l[:technique].nil? || l[:technique] == tech }
+        r.empty? ? [{}] : r
+      end
+      
+      def decend(hash, subs, tech)
+        if subs.empty? or
+            (subs.length == 1 && !@@decoration_with_units.include?(tech))
+          if method = hash.delete(:method)
+            hash.merge!(:technique => [tech, method])
+          else
+            return unless fixed = hash.delete(:fixed)
+            marginal = hash.delete(:marginal)
+            dec = get_decoration(tech, fixed, marginal)
+            hash.merge!(:technique => dec)
+            hash = { :limit => 6 }.merge(hash) if marginal
+          end
+          puts "  DecDesc: #{hash.inspect}"
+          DecorationDesc.new({ :limit => 1 }.merge(hash))
+        else
+          subs.first.collect do |sub|
+            decend(sub.merge(hash), subs[1..-1], tech)
+          end
+        end
+      end
+      
+      puts "Tech: #{tech}: #{subs.inspect}"
+      decorations += decend({}, subs, tech).flatten.compact
+    end
+    decorations
   end
 end

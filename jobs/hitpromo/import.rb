@@ -18,48 +18,9 @@ class HitPromoCSV < GenericImport
 #    @decoration_set += @supplier_record.decoration_price_groups.all.collect(&:name)
   end
 
-  def get_decoration(technique, fixed, marginal)
-    fixed = Money.new(fixed)
-    name = "#{technique} @ #{fixed}"
-    marginal = Money.new(marginal) if marginal
-    name += "/#{marginal}" if marginal
-    path = [technique, name]
-    return path if @decoration_set.include?(path)
-    
-    base_tech = DecorationTechnique.find_by_name(technique)
-    raise "Unkown Technique: #{technique}" unless base_tech
-    unless tech = base_tech.children.find_by_name(name)
-      DecorationTechnique.transaction do
-        tech = base_tech.children.create(:name => name, :unit_name => base_tech.unit_name,
-                                         :unit_default => base_tech.unit_default)
-        price_group = tech.price_groups.create(:supplier => @supplier_record)
-        price_group.entries.create(:minimum => 1,
-                                   :fixed_price_const => 0.0,
-                                   :fixed_price_exp => 0.0,
-                                   :fixed_price_marginal => Money.new(0),
-                                   :fixed_price_fixed => fixed,
-                                   :fixed => PriceGroup.create_prices([
-                                   {  :fixed => (fixed*0.8).round_cents,
-                                      :marginal => Money.new(0), :minimum => 1 }]),
-                                   :marginal_price_const => 0.0,
-                                   :marginal_price_exp => 0.0,
-                                   :marginal_price_marginal => marginal || Money.new(0),
-                                   :marginal_price_fixed => fixed,
-                                   :marginal => PriceGroup.create_prices([
-                                   {  :fixed => (fixed*0.8).round_cents,
-                                      :marginal => marginal ? (marginal*0.8).round_cents : Money.new(0), :minimum => 1 }]),
-                                   )
-
-        DecorationDesc.techniques[path] = tech
-      end
-    end
-    @decoration_set << path
-    path
-  end
-
 #%w(colors_available imprint_colors approximate_size imprint_area set_up_charge multi_color_imprint packaging multi_panel_imprint second_side_imprint fob_zip second_handle_imprint please_note embroidery_information thread_colors tape_charge sizes approximate_bag_size optional_imprint second_positon non_woven_items label_color four_color_process optional_imprint_area second_position_imprint highlighters imprint catalog_page colors)
 
-  @@decoration_hash = {
+  @@decoration_map = {
     'Debossed' => 'Deboss',
     'Embroidered' => 'Embroidery',
     'Embroidery' => 'Embroidery',
@@ -79,8 +40,7 @@ class HitPromoCSV < GenericImport
     '1-4 Color Process' => 'Color Process'
     # insert into decoration_techniques (name, unit_name, unit_default) values ('Color Process', 'color', 1);
   }
-
-  @@decoration_with_units = %w(Screen\ Print Pad\ Print)
+  cattr_reader :decoration_map
  
   def parse_products
     # Package File
@@ -138,6 +98,7 @@ class HitPromoCSV < GenericImport
 
     product_list.each do |supplier_num, hash|
       ProductDesc.apply(self) do |pd|
+        @supplier_num = supplier_num
         puts
         puts "Product: #{supplier_num}"
         pd.supplier_num = supplier_num
@@ -204,28 +165,9 @@ class HitPromoCSV < GenericImport
 #        end
 
         puts "Area: #{hash['imprint_area']}"
-        locations = []
-        hash['imprint_area'].gsub(' ',' ').split('•').each do |str|
-          str.scan(/\s*(?:([A-Z\- ]+):)?\s*(?:([A-Z\- ]+):)?\s*(?:\((.+?)\):?)?\s*((?:[^A-Z]+W\s*x\s*[^A-Z]+?H)|(?:[^A-Z]+(?:Diameter|Square)))\s*(?:\((.+?)\))?/i).each do |a, b, c, dim, d|
-            loc = [a, b, c, d].compact
-            decoration = nil
-            loc.delete_if do |str|
-              if dec = @@decoration_hash[str.strip]
-                raise "Duplicate decoration" if decoration
-                decoration = dec
-              end
-            end
-#            decoration ||= 'Screen Print'
-            if area = parse_area_new(dim)
-              locations += [decoration].flatten.collect do |dec|
-                { :technique => dec, :location => loc.join(', ') }.merge(area)
-              end
-            else
-              warning supplier_num, "Unkown Decoration", "#{decoration.inspect}: #{area.inspect} (#{loc.join(', ')}) [#{dim.inspect} #{a.inspect} #{b.inspect} #{c.inspect}]"
-            end
-          end
-        end if hash['imprint_area']
-
+        locations = parse_areas(hash['imprint_area'], '•') do |locs|
+          locs.find_all { |s| not (/(?:See)|(?:Must)/ === s) }.join(', ')
+        end
         locations.each do |imprint|
           puts "  #{imprint.inspect}"
         end
@@ -241,8 +183,8 @@ class HitPromoCSV < GenericImport
               if str.blank?
                 tech = nil
               else
-                unless tech = @@decoration_hash[str.strip]
-                  warning(pd.supplier_num, 'Unkown Setup Technique', str.strip)
+                unless tech = @@decoration_map[str.strip]
+                  warning('Unkown Setup Technique', str.strip)
                   next
                 end
               end
@@ -283,7 +225,7 @@ class HitPromoCSV < GenericImport
         else
           tech = nil
           if pre
-            tech = @@decoration_hash[pre.strip]
+            tech = @@decoration_map[pre.strip]
             raise "Unkown Setup Technique: #{str}" unless tech
           end
           running << { :marginal => Float(price), :limit => limit, :technique => tech }
@@ -297,47 +239,15 @@ class HitPromoCSV < GenericImport
           puts "  #{imprint.inspect}"
         end
 
-        pd.decorations = [DecorationDesc.none]
 
-        combos = [locations, setups, running]
-        techniques = (locations + setups + running).collect { |e| e[:technique] }.compact.uniq
+        techniques = []
         { 'laser' => 'Laser Engrave',
           'screen' => 'Screen Print',
           'pad' => 'Pad Print' }.each do |str, tech|
           techniques << tech if hash['imprint_colors'] and hash['imprint_colors'].downcase.include?(str) and !techniques.include?(tech)
         end
-        techniques << "Screen Print" if techniques.empty?
-        techniques.each do |tech|
-          subs = combos.collect do |set|
-            r = set.find_all { |l| l[:technique].nil? || l[:technique] == tech }
-            r.empty? ? [{}] : r
-          end
-
-          def decend(hash, subs, tech)
-            if subs.empty? or
-                (subs.length == 1 && !@@decoration_with_units.include?(tech))
-              if method = hash.delete(:method)
-                hash.merge!(:technique => [tech, method])
-              else
-                return unless fixed = hash.delete(:fixed)
-                marginal = hash.delete(:marginal)
-                dec = get_decoration(tech, fixed, marginal)
-                hash.merge!(:technique => dec)
-                hash = { :limit => 6 }.merge(hash) if marginal
-              end
-              puts "  DecDesc: #{hash.inspect}"
-              DecorationDesc.new({ :limit => 1 }.merge(hash))
-            else
-              subs.first.collect do |sub|
-                decend(sub.merge(hash), subs[1..-1], tech)
-              end
-            end
-          end
-          
-          puts "Tech: #{tech}: #{subs.inspect}"
-          pd.decorations += decend({}, subs, tech).flatten.compact
-        end
-
+        pd.decorations = decorations_from_parts(techniques,
+                                                [locations, setups, running])
 
         colors = hash['colors_available']
           .scan(/(?:\s*([^,:]+?)(:|(?:\s*with)))?\s*(.+?)(?:\s*(?:(?:all)|(?:both))\s*with\s*(.+?))?(?:\.|$)/)

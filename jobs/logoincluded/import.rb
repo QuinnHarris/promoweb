@@ -22,10 +22,6 @@ class LogoIncludedXML < GenericImport
     true
   end
 
-  def warning(msg)
-    puts "#{@product_id} - #{msg}"
-  end
-
   def parse_products
     puts "Reading XML"
     doc = File.open(@src_file) { |f| Nokogiri::XML(f.read.gsub('&', '&amp;')) }
@@ -35,7 +31,7 @@ class LogoIncludedXML < GenericImport
         # Product Record
         @product_id = "#{product.at_xpath('SKU').text} #{product.at_xpath('Name').text}"
         
-        pd.supplier_num = product.at_xpath('SKU').text
+        @supplier_num = pd.supplier_num = product.at_xpath('SKU').text
         
         category = product.at_xpath('Category').text
         if %w(USB\ Accessories SD\ Cards\ \ Readers).include?(category)
@@ -60,10 +56,10 @@ class LogoIncludedXML < GenericImport
           
           master_qty = product.at_xpath('ShippingInfo/MasterCartonQty').text
           if master_qty.blank?
-            warning "Empty Master Carton" if pd.package.unit_weight || pd.package.weight
+            warning 'Empty Master Carton' if pd.package.unit_weight || pd.package.weight
             master_qty = nil
           else
-            warning "Invalid MasterCartonQty: #{master_qty}" if master_qty.to_i.to_s != master_qty
+            warning 'Invalid MasterCartonQty', master_qty if master_qty.to_i.to_s != master_qty
             pd.package.units = Integer(master_qty)
           end
         end
@@ -85,7 +81,7 @@ class LogoIncludedXML < GenericImport
             if production_time_reg === rush_time
             pd.lead_time.rush = Integer($1)
             else
-              warning "Unknown rush time: #{rush_time.inspect}" 
+              warning 'Unknown rush time', rush_time.inspect
             end
           end
         end
@@ -114,7 +110,7 @@ class LogoIncludedXML < GenericImport
           unless image_url.blank?
             pd.images = [ImageNodeFetch.new(pd.supplier_num, image_url)]
           else
-            warning "Unspecified image"
+            warning 'Unspecified image'
             next
           end
         end
@@ -127,7 +123,7 @@ class LogoIncludedXML < GenericImport
           prices = li.xpath('UnitPriceBreaks/Quantity').collect do |qty|
             min, max = %w(minimum maximum).collect { |n| qty[n].blank? ? nil : Integer(qty[n]) }
             if min and max and max < min
-              warning "EXCLUDING: #{max} < #{min}"
+              warning 'EXCLUDING', "#{max} < #{min}"
               next
             end
             min_units = [min_units, max].min
@@ -146,7 +142,7 @@ class LogoIncludedXML < GenericImport
           
           costs = []
           if prices.empty?
-            warning "No Prices"
+            warning 'No Prices'
           else
             # EQP
             costs = [{ :fixed => Money.new(0),
@@ -181,7 +177,7 @@ class LogoIncludedXML < GenericImport
             if description.blank?
               vd.supplier_num = pd.supplier_num
             else
-              warning "Unknown description: #{description.inspect}"
+              warning 'Unknown description', description.inspect
               next
             end
           end
