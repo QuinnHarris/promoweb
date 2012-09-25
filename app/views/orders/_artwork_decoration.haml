@@ -31,7 +31,9 @@
         - else
           - unless decorations.empty?
             %div= artwork_decoration.decoration.display
-            %div= artwork_decoration.our_notes
+          - if allowed?('Orders')
+            = fields_for "decoration[#{artwork_decoration.id}]", artwork_decoration do |dec|
+              = dec.text_area(:our_notes, :rows => 2)
 
         - if allowed?('Orders')
           %div.admin
