@@ -16,6 +16,7 @@ class HitPromoCSV < GenericImport
       WebFetch.new(url).get_path(Time.now - 1.day)
     end
     @package_file = File.join(JOBS_DATA_ROOT, 'HitPackingData.xls')
+    @rush_file = File.join(JOBS_DATA_ROOT, 'HitRushService.xls')
     super 'Hit Promotional Products'
 
     @decoration_set = Set.new
@@ -52,15 +53,22 @@ class HitPromoCSV < GenericImport
     ws = Spreadsheet.open(@package_file).worksheet(0)
     ws.use_header
     ws.each(1) do |row|
-      supplier_num = row['Product #'].strip
-      desc = PackageDesc.new(:weight => row['Box Weight (lbs.)'],
-                             :units => row['Quantity per Box'],
-                             :length => row['Box Length (inches)'],
-                             :width => row['Box Width (inches)'],
-                             :height => row['Box Height (inches)'])
+      supplier_num = row['Product #'].to_s.strip
+      desc = PackageDesc.new(:weight => row['prpWeight'],
+                             :units => row['prpQuantityPerBox'],
+                             :length => row['prpBoxLength'],
+                             :width => row['prpBoxWidth'],
+                             :height => row['prpBoxHeight'])
       if !package_list[supplier_num] or package_list[supplier_num].units > desc.units
         package_list[supplier_num] = desc
       end
+    end
+
+    rush_list = Set.new
+    ws = Spreadsheet.open(@rush_file).worksheet(0)
+    ws.use_header
+    ws.each(1) do |row|
+      rush_list << row['number'].to_s.strip
     end
 
     common_list = %w(product_name new description category product_photo colors_available imprint_colors approximate_size imprint_area set_up_charge multi_color_imprint packaging multi_panel_imprint second_side_imprint fob_zip second_handle_imprint please_note embroidery_information thread_colors tape_charge sizes approximate_bag_size optional_imprint precious_metal_imprint for_gold_banding for_halo battery second_positon non_woven_items label_color four_color_process optional_imprint_area second_position_imprint highlighters refills optional_carabiner imprint catalog_page optional_pen colors)
@@ -77,7 +85,7 @@ class HitPromoCSV < GenericImport
         unless /^(.+?)([BELST])?$/ === row['product_sku']
           raise "Bad Reg"
         end
-        supplier_num = $1
+        supplier_num = $1.strip
         postfix = $2
 
         if closeout and product_merge.include?(supplier_num)
@@ -127,9 +135,12 @@ class HitPromoCSV < GenericImport
         pd.package = package_list[supplier_num] if package_list[supplier_num]
 
         # Lead Times
-        pd.lead_time.normal_min = 3
+        pd.lead_time.normal_min = 5
         pd.lead_time.normal_max = 10
-#        pd.rush = 3
+        if rush_list.include?(supplier_num)
+          pd.lead_time.rush = 3
+          pd.lead_time.rush_charge = 0
+        end
 
 
         # Prices
