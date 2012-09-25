@@ -94,18 +94,25 @@ class ProductRecordMerge
     @unique_hash.default = []
     @common_hash = {}
   end
-  attr_reader :id, :unique_properties, :common_properties, :null_match, :unique_hash, :common_hash
+  attr_reader :unique_properties, :common_properties, :null_match, :unique_hash, :common_hash
 
-  def merge(id, object, allow_dup = nil)
+  def include?(id)
+    common_hash[id]
+  end
+
+  def merge(id, object, options = {})
     if chash = common_hash[id]
       common_properties.each do |name|
         raise "Mismatch: #{id} #{name} #{chash[name].inspect} != #{object[name].inspect}" unless chash[name] == (object[name] === null_match ? nil : object[name])
       end
+      options[:common].each do |key, value|
+        raise "Mismatch: #{id} #{name} #{chash[name].inspect} != #{value}" unless chash[key] == value
+      end if options[:common]
     else
       chash = common_properties.each_with_object({}) do |name, hash|
         hash[name] = object[name] unless object[name] === null_match
       end
-      common_hash[id] = chash
+      common_hash[id] = chash.merge(options[:common] || {})
     end
 
     uhash = unique_properties.each_with_object({}) do |name, hash|
@@ -113,7 +120,7 @@ class ProductRecordMerge
     end
     if unique_hash[id] && unique_hash[id].include?(uhash)
       str = "Duplicate: #{id} #{uhash.inspect} in #{unique_hash[id].inspect}" 
-      allow_dup ? puts(str) : raise(str)
+      options[:allow_dup] ? puts(str) : raise(str)
     else
       unique_hash[id] += [uhash]
     end
@@ -1307,7 +1314,7 @@ private
             hash.merge!(:technique => dec)
             hash = { :limit => 6 }.merge(hash) if marginal
           end
-          puts "  DecDesc: #{hash.inspect}"
+#          puts "  DecDesc: #{hash.inspect}"
           DecorationDesc.new({ :limit => 1 }.merge(hash))
         else
           subs.first.collect do |sub|
@@ -1316,7 +1323,7 @@ private
         end
       end
       
-      puts "Tech: #{tech}: #{subs.inspect}"
+#      puts "Tech: #{tech}: #{subs.inspect}"
       decorations += decend({}, subs, tech).flatten.compact
     end
     decorations

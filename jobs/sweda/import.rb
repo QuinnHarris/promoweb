@@ -17,7 +17,7 @@ class SwedaXML < GenericImport
     product_merge = ProductRecordMerge.new(unique_columns, common_columns)
 
     CSV.foreach(@src_file, :headers => :first_row) do |row|
-      product_merge.merge(row['ItemNo'], row, true)
+      product_merge.merge(row['ItemNo'], row, :allow_dup => true)
     end
 
     product_merge.each do |supplier_num, unique, common|

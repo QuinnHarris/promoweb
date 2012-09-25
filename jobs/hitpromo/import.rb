@@ -10,7 +10,11 @@ class HitPromoCSV < GenericImport
 
   def initialize(year)
     puts "Starting Fetch for #{year}"
-    @src_file = WebFetch.new("http://www.hitpromo.net/fs/documents/hit_product_data_#{year}.csv").get_path(Time.now - 1.day)
+    @src_files = 
+      ["http://www.hitpromo.net/fs/documents/hit_product_data_#{year}.csv",
+       "http://outlet.hitpromo.net/fs/documents/hit_outlet_data_#{year}.csv"].collect do |url|
+      WebFetch.new(url).get_path(Time.now - 1.day)
+    end
     @package_file = File.join(JOBS_DATA_ROOT, 'HitPackingData.xls')
     super 'Hit Promotional Products'
 
@@ -63,63 +67,61 @@ class HitPromoCSV < GenericImport
 
     price_list = %w(discount_code) + (1..8).collect { |n| ["price#{n}", "quantity#{n}"] }.flatten
 
-    product_list = {}
-    CSV.foreach(@src_file, :headers => :first_row, :col_sep => ' ', :quote_char => "'") do |row|
-      unless /^(.+?)([BELST])?$/ === row['product_sku']
-        raise "Bad Reg"
-      end
-      supplier_num = $1
-      postfix = $2
+    product_merge = ProductRecordMerge.new(price_list, common_list, '--')
 
-      if hash = product_list[supplier_num]
-        common_list.each do |name|
-          raise "Mismatch: #{supplier_num} #{name} #{hash[name]} != #{row[name]}" unless hash[name] == ((row[name] == '--') ? nil : row[name])
+    normal_file, closeout_file = @src_files
+    [[normal_file, false],
+     [closeout_file, true]
+    ].each do |file, closeout|
+      CSV.foreach(file, :headers => :first_row, :col_sep => ' ', :quote_char => "'") do |row|
+        unless /^(.+?)([BELST])?$/ === row['product_sku']
+          raise "Bad Reg"
         end
-        price_hash = hash['price']
-        puts "Duplicate Price: #{supplier_num} #{price_hash.inspect}" if price_hash[postfix]
-      else
-        hash = product_list[supplier_num] = common_list.each_with_object({}) do |name, hash|
-          hash[name] = row[name] unless row[name] == '--'
-        end
-        price_hash = {}
-      end
+        supplier_num = $1
+        postfix = $2
 
-      price_hash[postfix] = price_list.each_with_object({}) do |name, hash|
-        hash[name] = row[name]
+        if closeout and product_merge.include?(supplier_num)
+          puts "CLOSEOUT MATCHING: #{supplier_num}"
+          supplier_num += 'OUTLET'
+        end
+        
+        uhash = product_merge.merge(supplier_num, row, :common => { 'closeout' => closeout })
+        uhash['postfix'] = postfix
       end
-      hash['price'] = price_hash
     end
-
-    puts "Len: #{product_list.length}"
 
     price_preference = %w(L S T E B)
     
 #    variations = {}
 
-    product_list.each do |supplier_num, hash|
+    product_merge.each do |supplier_num, unique, common|
       ProductDesc.apply(self) do |pd|
         @supplier_num = supplier_num
         puts
         puts "Product: #{supplier_num}"
         pd.supplier_num = supplier_num
-        pd.name = hash['product_name']
-        pd.supplier_categories = [[hash['category'].strip]]
+        pd.name = common['product_name']
+        pd.supplier_categories = [[common['category'].strip]]
         pd.tags = []
 
         pd.description =
-          (hash['description'] ? hash['description'].split(/\s*\|\s*/) : []) +
-          (hash['please_note'] ? hash['please_note'].gsub(/\s*((<.+?>)|[^[[:ascii:]]])\s*/,' ').split(/\s*\n\s*/) : []) +
+          (common['description'] ? common['description'].split(/\s*\|\s*/) : []) +
+          (common['please_note'] ? common['please_note'].gsub(/\s*((<.+?>)|[^[[:ascii:]]])\s*/,' ').split(/\s*\n\s*/) : []) +
           %w(precious_metal_imprint for_gold_banding for_halo refills optional_carabiner optional_pen battery).collect do |name|
-          next unless hash[name]
+          next unless common[name]
           str = name.split('_').collect { |w| w.capitalize }.join(' ') + ": "
-          str << hash[name].gsub(/<a href=".+?">(\d+)<\/a>/) do |str|
+          str << common[name].gsub(/<a href=".+?">(\d+)<\/a>/) do |str|
             product = get_product($1)
             "<a href='#{product.web_id}'>#{product.name}</a>"
           end
           str
         end.compact
         
-        pd.tags << 'New' if hash['new']
+        if common['closeout']
+          pd.tags << 'Closeout' 
+        else
+          pd.tags << 'New' if common['new'] == 'yes'
+        end
 
         # Packaging
         pd.package = package_list[supplier_num] if package_list[supplier_num]
@@ -131,7 +133,7 @@ class HitPromoCSV < GenericImport
 
 
         # Prices
-        price_string = hash['price'][hash['price'].keys.sort_by { |s| price_preference.index(s) }.first]
+        price_string = unique.sort_by { |s| price_preference.index(s['postfix']) }.first
         pricing = PricingDesc.new
         discounts = convert_pricecodes(price_string['discount_code'])
         (1..8).each do |i|
@@ -146,35 +148,35 @@ class HitPromoCSV < GenericImport
         end
         raise "Discount doesn't match: #{supplier_num} #{discounts.inspect}" unless discounts.empty?
         unless pd.supplier_categories.flatten.include?('Ceramics') or
-            hash['embroidery_information']
+            common['embroidery_information']
           pricing.ltm(40.0)
         end
         pricing.maxqty
 
-        dimension = hash['approximate_size'] || hash['approximate_bag_size']
+        dimension = common['approximate_size'] || common['approximate_bag_size']
         pd.properties['dimension'] = parse_volume(dimension) if dimension
 
 
-        pd.images = [ImageNodeFetch.new(hash['product_photo'],
-                                        "http://www.hitpromo.net/imageManager/show/#{hash['product_photo']}")]
+        pd.images = [ImageNodeFetch.new(common['product_photo'],
+                                        "http://#{common['closeout'] ? 'outlet' : 'www'}.hitpromo.net/imageManager/show/#{common['product_photo']}")]
 
 #        %w(imprint_colors).each do |name|
 #          variations[name] ||= {}
-#          value = hash[name]
+#          value = common[name]
 #          variations[name][value] = (variations[name][value] || []) + [pd.supplier_num]
 #        end
 
-        puts "Area: #{hash['imprint_area']}"
-        locations = parse_areas(hash['imprint_area'], '•') do |locs|
+#        puts "Area: #{common['imprint_area']}"
+        locations = parse_areas(common['imprint_area'], '•') do |locs|
           locs.find_all { |s| not (/(?:See)|(?:Must)/ === s) }.join(', ')
         end
-        locations.each do |imprint|
-          puts "  #{imprint.inspect}"
-        end
+#        locations.each do |imprint|
+#          puts "  #{imprint.inspect}"
+#        end
 
-        puts "Setup: #{hash['set_up_charge']}"
+#        puts "Setup: #{common['set_up_charge']}"
         setups = []
-        hash['set_up_charge'].split('•').each do |str|
+        common['set_up_charge'].split('•').each do |str|
           str.scan(/\s*(?:([A-Z\- ]+):)?\s*\$?(\d{2,3}\.\d{2})\(G\)\s*((?:on re-orders)|(?:[,.]?\s*per\s+(?:color|side|position|panel|handle|location)|(?:1-4 Color Process)\s*)*)/i).each do |type, setup, tail|
 #            puts "  #{type} : #{setup} : #{tail}"
             next if tail.downcase.include?('re-order') or (type && type.downcase.include?('re-order'))
@@ -195,33 +197,33 @@ class HitPromoCSV < GenericImport
               end
             end
           end
-        end if hash['set_up_charge']
+        end if common['set_up_charge']
 
-        case hash['embroidery_information']
+        case common['embroidery_information']
         when /5,000/
           setups << { :technique => 'Embroidery', :method => 'Embroidery @ 5000', :limit => 20000 }
         when /7,000/
           setups << { :technique => 'Embroidery', :method => 'Embroidery @ 7000', :limit => 20000 }
         end
 
-        setups.each do |imprint|
-          puts "  #{imprint.inspect}"
-        end
+#        setups.each do |imprint|
+#          puts "  #{imprint.inspect}"
+#        end
 
         limit = nil
-        multi_string = hash['multi_color_imprint']
+        multi_string = common['multi_color_imprint']
         if multi_string && multi_string.downcase.include?('not available')
           limit = 1
           multi_string = nil
         end
         %w(multi_panel_imprint second_side_imprint second_handle_imprint optional_imprint).each do |name|
-          break if multi_string = hash[name]
+          break if multi_string = common[name]
         end unless multi_string
 
-        puts "Multi: #{multi_string}"
+#        puts "Multi: #{multi_string}"
         running = []
         unless /^(?:(?<pre>[A-Z\- ]+):\s*)?Add (?<price>\.\d{2})\s*\(G\)\s*(?:per\s+(?:color|extra color|side|piece|position|panel|extra panel|location)[,.]?\s*)+\s*(?:\((?<limit>\d) Color Maximum\))?/ =~ multi_string
-          puts "  UNKOWN" if multi_string
+          puts "  UNKOWN: #{multi_string}" if multi_string
         else
           tech = nil
           if pre
@@ -235,21 +237,21 @@ class HitPromoCSV < GenericImport
 #          end
         end
 
-        running.each do |imprint|
-          puts "  #{imprint.inspect}"
-        end
+#        running.each do |imprint|
+#          puts "  #{imprint.inspect}"
+#        end
 
 
         techniques = []
         { 'laser' => 'Laser Engrave',
           'screen' => 'Screen Print',
           'pad' => 'Pad Print' }.each do |str, tech|
-          techniques << tech if hash['imprint_colors'] and hash['imprint_colors'].downcase.include?(str) and !techniques.include?(tech)
+          techniques << tech if common['imprint_colors'] and common['imprint_colors'].downcase.include?(str) and !techniques.include?(tech)
         end
         pd.decorations = decorations_from_parts(techniques,
                                                 [locations, setups, running])
 
-        colors = hash['colors_available']
+        colors = common['colors_available']
           .scan(/(?:\s*([^,:]+?)(:|(?:\s*with)))?\s*(.+?)(?:\s*(?:(?:all)|(?:both))\s*with\s*(.+?))?(?:\.|$)/)
           .collect do |left, split, list, right|\
           
@@ -259,7 +261,7 @@ class HitPromoCSV < GenericImport
           list.collect { |e| (right && e.include?('with')) ? e : "#{left}#{split}#{e.strip}#{right}".strip }
         end.flatten.uniq
         
-        #      colors = hash['colors'].split(/\s*\|\s*/).compact.collect { |c| c.split(' ').collect { |w| w.capitalize }.join(' ') }
+        #      colors = common['colors'].split(/\s*\|\s*/).compact.collect { |c| c.split(' ').collect { |w| w.capitalize }.join(' ') }
         
         pd.variants = colors.collect do |color|
           VariantDesc.new( :supplier_num => "#{supplier_num}-#{color.gsub(' ', '')}"[0..63],
@@ -269,9 +271,9 @@ class HitPromoCSV < GenericImport
       end
     end
 
-#    variations.each do |name, hash|
+#    variations.each do |name, common|
 #      puts "#{name}:"
-#      hash.to_a.sort_by { |k, v| k || '' }.each do |elem, list|
+#      common.to_a.sort_by { |k, v| k || '' }.each do |elem, list|
 #        puts "  #{list.length}: #{elem.inspect}" # : #{list.join(',')}"
 #      end
 #    end

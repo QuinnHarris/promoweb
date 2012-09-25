@@ -358,7 +358,7 @@ public
   def maxqty(qty = nil)
     validate # Validate costs and prices are present
     raise ValidateError, "maxqty can only be called once" unless @costs.last[:marginal]
-    @costs << { :minimum => qty ? parse_qty(qty) : [@prices.last[:minimum], @costs.last[:minimum]].max * 2 } unless @costs.empty?
+    @costs << { :minimum => qty ? parse_qty(qty) : [@prices.first[:minimum]*10,@costs.first[:minimum]*10,@prices.last[:minimum]*2, @costs.last[:minimum]*2].max } unless @costs.empty?
   end
 
   def eqp(discount = 0.4)
@@ -421,7 +421,7 @@ class ProductDesc
       v.strip
     else
       raise PropertyError, "expected String or Array of String"
-    end.gsub(/\s+\$?(\d{1,3}|(?:\d{0,3}\.\d{2})?)\s*\(?[vg]\)?\s+/i) {
+    end.gsub(/\s+\$?(\d{1,3}|(?:\d{0,3}\.\d{2}))\s*\(?[cvg]\)?\s+/i) {
       ' ' + Money.new(Float($1)).to_perty + ' ' }
   end
 
