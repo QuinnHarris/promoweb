@@ -29,10 +29,10 @@ class CrownProdXLS < GenericImport
   end
 
   @@decoration_map = {
-    'Laser Engraved' => 'Laser Engrave',
-    'Silk Screen' => 'Screen Print',
-    'Silk Screened' => 'Screen Print',
-    'Debossed' => 'Deboss',
+    'laser engraved' => 'Laser Engrave',
+    'silk screen' => 'Screen Print',
+    'silk screened' => 'Screen Print',
+    'debossed' => 'Deboss',
   }
   cattr_reader :decoration_map
 
@@ -41,32 +41,37 @@ class CrownProdXLS < GenericImport
     ss = Spreadsheet.open(@src_file)
     ws = ss.worksheet(1)
     ws.use_header
-    decorations = {}
+    setups = {}
+    setups.default = []
+    running = {}
     ws.each(1) do |row|
       supplier_num = row['Item# (SKU)']
       case row['Charge Type']
-        when 'SETUP'
+      when 'SETUP'
         hash = { :fixed => Float(row['Setup']) }
-        when 'RUN'
+        case row['Charge Name']
+        when /deboss/i
+          hash.merge(:technique => 'Deboss')
+        when /laser/i
+          hash.merge(:technique => 'Laser Engrave')
+        end
+        setups[supplier_num] += [hash]
+
+      when 'RUN'
         list = []
         (1..5).each do |i|
           r = Float(row["Run Charge-Qty#{i}"])
           break if r == 0;
           list << r
         end
-#        hash = { :pricing => list }
+        #        hash = { :pricing => list }
         hash = { :marginal => list.first }
-        else
+        running[supplier_num] = (running[supplier_num] || {}).merge(hash)
+      else
         raise "Unkown Charge Type: #{row['Charge Type']}"
       end
-      decorations[supplier_num] = (decorations[supplier_num] || {}).merge(hash)
     end
 
-    puts "Decoration Pricing:"
-    decorations.values.uniq.each do |dec|
-      count = decorations.values.find_all { |v| v == dec }.length
-      puts "  #{count}: #{dec.inspect}"
-    end
 
     ws = ss.worksheet(2)
     ws.use_header
@@ -137,14 +142,47 @@ class CrownProdXLS < GenericImport
 
 
         puts "Area: #{row['Imprint Area']}"
-        locations = parse_areas(row['Imprint Area'], @supplier_num)
+        locations = parse_areas(row['Imprint Area'])
         locations.each do |imprint|
           puts "  #{imprint.inspect}"
         end
 
-        pd.decorations = [DecorationDesc.none]
+        includes = []
+        row['Price Includes'].split(',').each do |str|
+          location = nil
+          if /^(.+?)\s+on\s+(.+?)\.?$/ === str
+            str = $1
+            location = $2
+          end
 
+          hash = case str
+                 when /(\d)-(\d) color/i
+                   { :technique => 'Pad Print', :limit => Integer($2) }
+                 when /digital\s+color/i, /4\s+|-color\s+process/i
+                   { :technique => 'Photo Transfer' }
+                 when /dome/i
+                   { :technique => 'Dome' }
+                 when /laser/i
+                   { :technique => 'Laser Engrave' }
+                 when /embroider/i
+                   { :technique => 'Embroidery' }
+                 when /deboss/i
+                   { :technique => 'Deboss' }
+                 when /onc?e\s+color/i
+                   { :limit => 1 }
+                 when /\d side/i
+                   {}
+                 else
+                   warning 'Unkown Price Includes', "#{row['Price Includes']} => #{str}"
+                   {}
+                 end
+          includes << hash.merge(:location => location || '')
+        end if row['Price Includes']
 
+        combos = [locations, includes, setups[@supplier_num], [running[@supplier_num]]]
+        puts "PARTS: #{combos.inspect}"
+#        pd.decorations = [DecorationDesc.none]
+        pd.decorations = decorations_from_parts(combos, [], :minimal => true)
 
         
         
