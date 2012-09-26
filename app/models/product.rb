@@ -8,6 +8,7 @@ class PriceBand
   def exp; @set.exp; end
   
   def marginal_at(n)
+    return Money.new(0) if n == 0
     marginal.nil? ? nil : (marginal + const * (n ** exp)).round_cents
   end
   
