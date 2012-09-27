@@ -1234,7 +1234,7 @@ private
         loc = [a, b, c, d].compact.collect { |s| s.strip }
         decoration = nil
         loc.delete_if do |str|
-          if dec = decoration_map[str]
+          if dec = decoration_map[str.downcase]
             warning "Duplicate decoration" if decoration
             decoration = dec
           end
@@ -1253,6 +1253,7 @@ private
   end
 
   def get_decoration(technique, fixed, marginal)
+    @decoration_set ||= Set.new
     fixed = Money.new(fixed)
     name = "#{technique} @ #{fixed}"
     marginal = Money.new(marginal) if marginal
@@ -1263,9 +1264,12 @@ private
     base_tech = DecorationTechnique.find_by_name(technique)
     raise "Unkown Technique: #{technique}" unless base_tech
     unless tech = base_tech.children.find_by_name(name)
+      tech = base_tech.children.create(:name => name, :unit_name => base_tech.unit_name,
+                                       :unit_default => base_tech.unit_default)
+    end
+
+    unless tech.price_groups.where(:supplier_id => @supplier_record.id).first
       DecorationTechnique.transaction do
-        tech = base_tech.children.create(:name => name, :unit_name => base_tech.unit_name,
-                                         :unit_default => base_tech.unit_default)
         price_group = tech.price_groups.create(:supplier => @supplier_record)
         price_group.entries.create(:minimum => 1,
                                    :fixed_price_const => 0.0,
@@ -1292,19 +1296,29 @@ private
   end
 
   @@decoration_with_units = %w(Screen\ Print Pad\ Print)
-  def decorations_from_parts(techniques, combos)
+  def decorations_from_parts(combos, techniques = [], options = {})
     decorations = [DecorationDesc.none]
+    combos = combos.collect { |list| l = list.compact; l.empty? ? nil : l }.compact
+    return decorations if combos.empty?
     techniques = (techniques + combos.flatten.collect { |e| e[:technique] }).flatten.compact.uniq
     techniques << "Screen Print" if techniques.empty?
     techniques.each do |tech|
-      subs = combos.collect do |set|
-        r = set.find_all { |l| l[:technique].nil? || l[:technique] == tech }
-        r.empty? ? [{}] : r
+      if options[:minimal]
+        subs = combos.collect do |set|
+          r = set.find_all { |l| l[:technique] == tech }
+          r = set.find_all { |l| l[:technique].nil? } if r.empty?
+          r.empty? ? [{}] : r
+        end
+      else
+        subs = combos.collect do |set|
+          r = set.find_all { |l| l[:technique].nil? || l[:technique] == tech }
+          r.empty? ? [{}] : r
+        end
       end
       
       def decend(hash, subs, tech)
         if subs.empty? or
-            (subs.length == 1 && !@@decoration_with_units.include?(tech))
+            (subs.length == 1 && hash[:fixed] && !@@decoration_with_units.include?(tech))
           if method = hash.delete(:method)
             hash.merge!(:technique => [tech, method])
           else
@@ -1314,7 +1328,7 @@ private
             hash.merge!(:technique => dec)
             hash = { :limit => 6 }.merge(hash) if marginal
           end
-#          puts "  DecDesc: #{hash.inspect}"
+          puts "  Dec: #{hash.inspect}"
           DecorationDesc.new({ :limit => 1 }.merge(hash))
         else
           subs.first.collect do |sub|

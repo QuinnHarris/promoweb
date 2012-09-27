@@ -18,31 +18,28 @@ class HitPromoCSV < GenericImport
     @package_file = File.join(JOBS_DATA_ROOT, 'HitPackingData.xls')
     @rush_file = File.join(JOBS_DATA_ROOT, 'HitRushService.xls')
     super 'Hit Promotional Products'
-
-    @decoration_set = Set.new
-#    @decoration_set += @supplier_record.decoration_price_groups.all.collect(&:name)
   end
 
 #%w(colors_available imprint_colors approximate_size imprint_area set_up_charge multi_color_imprint packaging multi_panel_imprint second_side_imprint fob_zip second_handle_imprint please_note embroidery_information thread_colors tape_charge sizes approximate_bag_size optional_imprint second_positon non_woven_items label_color four_color_process optional_imprint_area second_position_imprint highlighters imprint catalog_page colors)
 
   @@decoration_map = {
-    'Debossed' => 'Deboss',
-    'Embroidered' => 'Embroidery',
-    'Embroidery' => 'Embroidery',
-    'Laser' => 'Laser Engrave',
-    'Laser Engrave' => 'Laser Engrave',
-    'Laser Engraved' => 'Laser Engrave',
-    'Laser Engraving' => 'Laser Engrave',
-    'Optional Embroidered' => 'Embroidery',
-    'Oval Dome' => 'Dome',
-    'Square Dome' => 'Dome',
-    'Pad-Print' => 'Pad Print',
-    'Silk-Screen' => 'Screen Print',
-    'Silk-Screen or Transfer' => ['Screen Print', 'Photo Transfer'],
-    'Silk-Screened' => 'Screen Print',
+    'debossed' => 'Deboss',
+    'embroidered' => 'Embroidery',
+    'embroidery' => 'Embroidery',
+    'laser' => 'Laser Engrave',
+    'laser engrave' => 'Laser Engrave',
+    'laser engraved' => 'Laser Engrave',
+    'laser engraving' => 'Laser Engrave',
+    'optional embroidered' => 'Embroidery',
+    'oval dome' => 'Dome',
+    'square dome' => 'Dome',
+    'pad-print' => 'Pad Print',
+    'silk-screen' => 'Screen Print',
+    'silk-screen or transfer' => ['Screen Print', 'Photo Transfer'],
+    'silk-screened' => 'Screen Print',
     'Transfer' => 'Photo Transfer',
-    '1 - 4 Color Process Method' => 'Color Process',
-    '1-4 Color Process' => 'Color Process'
+    '1 - 4 color process method' => 'Color Process',
+    '1-4 color process' => 'Color Process'
     # insert into decoration_techniques (name, unit_name, unit_default) values ('Color Process', 'color', 1);
   }
   cattr_reader :decoration_map
@@ -259,8 +256,7 @@ class HitPromoCSV < GenericImport
           'pad' => 'Pad Print' }.each do |str, tech|
           techniques << tech if common['imprint_colors'] and common['imprint_colors'].downcase.include?(str) and !techniques.include?(tech)
         end
-        pd.decorations = decorations_from_parts(techniques,
-                                                [locations, setups, running])
+        pd.decorations = decorations_from_parts([locations, setups, running], techniques)
 
         colors = common['colors_available']
           .scan(/(?:\s*([^,:]+?)(:|(?:\s*with)))?\s*(.+?)(?:\s*(?:(?:all)|(?:both))\s*with\s*(.+?))?(?:\.|$)/)
