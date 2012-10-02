@@ -848,7 +848,7 @@ private
   @@component_regex = 
     /(?<whole>\d{1,2})?
      (?:(?<deci>\.\d{1,4}) |
-        (?:(?:^|\s+|-) (?<numer>\d{1,2}) \s*[\/∕]\s* (?<denom>\d{1,2}) ) |
+        (?:(?: (?:^|\s+|-) (?<numer>\d{1,2}) )? \s*[\/∕]\s* (?<denom>\d{1,2}) ) |
         (?:(?:^|\s+) (?<sym>[⅛¼⅓⅜½⅝¾⅞]) ) |
         (?<=\d) )  # Postive lookbehind to match 'whole' alone
      \s*[\"”]?\s*
@@ -865,7 +865,11 @@ private
       num = 0.0
       num = Float(m[:whole]) if m[:whole]
       num += Float(m[:deci]) if m[:deci]
-      num += Float(m[:numer])/Float(m[:denom]) if m[:numer]
+      if m[:numer]
+        num += Float(m[:numer])/Float(m[:denom])
+      elsif m[:denom]
+        num /= Float(m[:denom])
+      end
       num += case m[:sym]
              when '⅛'; 0.125
              when '¼'; 0.25
@@ -1224,7 +1228,7 @@ private
   end
 
   crn = @@component_regex.to_s.gsub(/\?<.+?>/,'?:').gsub(/\)\?\)$/,'))')
-  @@multi_area_regex = /\s*(?:([A-Z\- ]+):)?\s*(?:([A-Z\- ]+):)?\s*(?:\((.+?)\):?)?\s*(#{crn}(?:\s*x\s*#{crn})?)\s*(?:\(?([A-Z0-9 ]+)(?:$|[.!?)]|(?:  )))?/i
+  @@multi_area_regex = /\s*(?:([A-Z\- ]+):)?\s*(?:([A-Z\- ]+):)?\s*(?:\((.+?)\):?)?\s*(#{crn}(?:\s*x\s*#{crn})?)\s{0,2}(?:\(?([A-Z0-9][A-Z0-9 ]*)(?:$|[.!?)]|(?:  )))?/i
 
   def parse_areas(string, seperator = 'or')
     return [] if string.blank?
