@@ -554,6 +554,16 @@ class ProductDesc
         raise ValidateError.new("Duplicate image", "#{pi.inspect} of #{variant_images.inspect}")
       end
     end
+
+    # check for different decoration techniques of the same general type
+    base_decorations = {}
+    decorations.each do |d|
+      dec = base_decorations[d.technique.first]
+      if dec && (dec != d.technique)
+        raise ValidateError.new("Multiple Decorations of same type", d.technique.inspect)
+      end
+      base_decorations[d.technique.first] = d.technique
+    end
   end
 
   def validate_after

@@ -240,6 +240,6 @@ class OrderItem < ActiveRecord::Base
     decorations.each { |d| d.destroy }
     entries.each { |e| e.destroy }
     order_item_variants.each { |v| v.destroy }
-    (tasks_active + tasks_inactive).each { |t| t.destroy }
+    (tasks_active + tasks_inactive + tasks_other).each { |t| t.destroy }
   end
 end

@@ -9,7 +9,7 @@ class CrownProdXLS < GenericImport
 
   def fetch_parse?
     if File.exists?(@src_file) and
-        File.mtime(@src_file) >= (Time.now - 1.day)
+        File.mtime(@src_file) >= (Time.now - 7.day)
       puts "File Fetched today"
       return false
     end
@@ -51,9 +51,11 @@ class CrownProdXLS < GenericImport
         hash = { :fixed => Float(row['Setup']) }
         case row['Charge Name']
         when /deboss/i
-          hash.merge(:technique => 'Deboss')
+          hash.merge!(:technique => 'Deboss')
         when /laser/i
-          hash.merge(:technique => 'Laser Engrave')
+          hash.merge!(:technique => 'Laser Engrave')
+        when /screen/i
+          hash.merge!(:technique => 'Screen Print')
         end
         setups[supplier_num] += [hash]
 
@@ -70,6 +72,17 @@ class CrownProdXLS < GenericImport
       else
         raise "Unkown Charge Type: #{row['Charge Type']}"
       end
+    end
+
+    # Remove duplicate setups and choose highest price
+    setups.each do |sup_num, list|
+      @supplier_num = sup_num
+      list = list.uniq.group_by { |h| h[:technique] }.collect do |tech, hashs|
+        next unless hashs.length > 1
+        warning "Duplicate Setups", hashs.inspect
+        hashs.sort_by { |h| h[:fixed] }.last
+      end.compact
+      setups[sup_num] = list unless list.empty?
     end
 
 
@@ -90,6 +103,9 @@ class CrownProdXLS < GenericImport
     ws.use_header
     ws.each(1) do |row|
       next unless @supplier_num = row['Item# (SKU)']
+
+      puts
+      puts "Product: #{@supplier_num}"
 
       %w(Price\ Includes).each do |name|
         variations[name] ||= {}
@@ -178,6 +194,18 @@ class CrownProdXLS < GenericImport
                  end
           includes << hash.merge(:location => location || '')
         end if row['Price Includes']
+
+        puts "Includes: #{row['Price Includes']}"
+        includes.each do |imprint|
+          puts "  #{imprint.inspect}"
+        end
+
+        puts "Setups:"
+        setups[@supplier_num].each do |imprint|
+          puts "  #{imprint.inspect}"
+        end
+
+        puts "Running: #{running[@supplier_num].inspect}"
 
         combos = [locations, includes, setups[@supplier_num], [running[@supplier_num]]]
         puts "PARTS: #{combos.inspect}"

@@ -31,6 +31,7 @@
           %th Notes:
           %td= decoration.our_notes
 
+  %h3 DO NOT RESIZE ART!!!  Please contact us if art needs to be resized.
   %h3 Artwork Files
   - for artwork in group.artworks.find_all { |a| a.has_tag?('supplier') }
     %div= link_to artwork.art.original_filename, "http://#{SITE_NAME}#{artwork.art.url}"
