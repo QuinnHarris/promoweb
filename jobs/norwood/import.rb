@@ -117,7 +117,7 @@ class NorwoodCSV < GenericImport
 
     CSV.foreach(File.join(JOBS_DATA_ROOT,@file_name), :headers => :first_row) do |row|
       product_data = {
-        'supplier_num' => supplier_num = row['Product ID'],
+        'supplier_num' => @supplier_num = row['Product ID'],
         'name' => row['Product Name'],
         'description' => row['Product Description'],
         'supplier_categories' => [%w(Category Sub-Taxonomy).collect { |n| row[n] }]
@@ -246,19 +246,19 @@ class NorwoodCSV < GenericImport
       end
 
 
-      color_image_map, color_num_map = match_colors(product_data['supplier_num'], colors)
+      color_image_map, color_num_map = match_colors(colors)
 
       if color_image_map.empty?
-        product_data['images'] = [ImageNodeFetch.new("#{supplier_num}_Z.jpg",
-                                                     "http://norwood.com/images/products/zoom/#{supplier_num}_Z.jpg")]
+        product_data['images'] = [ImageNodeFetch.new("#{@supplier_num}_Z.jpg",
+                                                     "http://norwood.com/images/products/zoom/#{@supplier_num}_Z.jpg")]
       else
         product_data['images'] = color_image_map[nil]
       end
 
       product_data['variants'] = variants.collect do |properties|
-        num_w = (32 - supplier_num.length-properties.length) / [properties.length,1].max
+        num_w = (32 - @supplier_num.length-properties.length) / [properties.length,1].max
         num_suf = properties.keys.sort.collect { |k| '-' + properties[k].reverse[0...num_w].reverse.strip }.join
-        { 'supplier_num' => supplier_num + num_suf,
+        { 'supplier_num' => @supplier_num + num_suf,
           'prices' => prices,
           'costs' => costs,
           'properties' => properties.merge(common_properties),

@@ -450,7 +450,8 @@ class PrimeLineWeb < GenericImport
 
       # Images
       colors = product['variants'].collect { |v| v['color'] }
-      color_image_map, color_num_map = match_colors(product['supplier_num'], colors)
+      @supplier_num = product['supplier_num']
+      color_image_map, color_num_map = match_colors(colors)
       color_image_map.each do |color, images|
         if color
           variant = product['variants'].find { |v| v['color'] == color }

@@ -326,7 +326,7 @@ class ProductApply
   
   def apply
     product_log = ''
-    
+
     @changed = ProductDesc.properties
     @changed = @changed.find_all do |prop|
       current.send(prop) != previous.send(prop)
@@ -605,20 +605,15 @@ class GenericImport
   def run_parse
     init_time = Time.now
     puts "#{@supplier_record.name} parse start at #{init_time}"
-    @product_list = []
+    @product_hash = {}
     parse_products
+    @product_list = @product_hash.values
+    @product_hash = nil # Don't need hash anymore
     mid_time = Time.now
     puts "#{@supplier_record.name} parse stop at #{mid_time} for #{mid_time - init_time}s #{@product_list.length}"     
-    supplier_nums = Set.new
-    @product_list.delete_if do |pd|
+    @product_list.each do |pd|
       begin
-        if supplier_nums.include?(pd.supplier_num)
-          raise ValidateError.new('Duplicate product')
-        else
-          supplier_nums.add(pd.supplier_num)
-          pd.validate_after
-          next nil # Don't Delete
-        end
+        pd.validate_after
       rescue => boom
         if boom.is_a?(ValidateError)
           add_error(boom, pd.supplier_num)
@@ -656,8 +651,8 @@ class GenericImport
     
   def run_transform
     trans = NewCategoryTransform.new [@supplier_name].flatten.first
-    @product_list.each do |prod|
-      trans.apply_rules(prod)
+    @product_list.each do |pd|
+      trans.apply_rules(pd)
     end
   end
   
@@ -738,8 +733,6 @@ class GenericImport
     ensure
       cache_write(file_name, last_data)
     end
-
-
   end
 
   def run_all(cache = true)
@@ -777,7 +770,32 @@ class GenericImport
         pd = ProductDesc.new(object)
       end
       pd.validate(self)
-      @product_list << pd
+      if prev = @product_hash[pd.supplier_num]
+        changed = ProductDesc.properties.find_all do |prop|
+          pd.send(prop) != prev.send(prop)
+        end
+        if changed.delete('supplier_categories')
+          pd.supplier_categories += prev.supplier_categories
+        end
+        if changed.delete('tags')
+          pd.tags += prev.tags
+        end
+        unless changed.empty?
+          warning "Duplicate Product", changed.inspect
+          changed.each do |prop|
+            l = pd.send(prop)
+            r = prev.send(prop)
+            if l.is_a?(Array) && l.is_a?(Array)
+              c = l & r
+              l -= c
+              r -= c
+            end
+            puts "  #{prop}: #{l} != #{r}"
+          end
+        end
+      else
+        @product_hash[pd.supplier_num] = pd
+      end
     rescue => boom
       puts "+ Validate Error: #{pd && pd.supplier_num}: #{boom}"
       if boom.is_a?(ValidateError)
@@ -1041,16 +1059,15 @@ private
     end
   end
 
-  def match_colors(supplier_num, colors)
+  def match_colors(colors, options = {}, supplier_num = @supplier_num)
     image_list = (@image_list[supplier_num] || []).collect do |image_id, url, suffix, tag|
       [ImageNodeFetch.new(image_id, url, tag), (suffix || '').split('_').first || '']
     end
 
-    match_image_colors(image_list, colors, supplier_num)
+    match_image_colors(image_list, colors, options, supplier_num)
   end
 
-  def match_image_colors(image_list, colors, supplier_num = nil)
-
+  def match_image_colors(image_list, colors, options = {}, supplier_num = @supplier_num)
 #    if colors.length == 1
 #      return { colors.first => image_list.collect { |image, suffix| image } }
 #    end

@@ -332,11 +332,15 @@ class PricingDesc
   end
 
 private
+  def ltm_default_qty
+    [((@costs.first[:minimum] + 0.5)/2).to_i, 1].max
+  end
+  
   def ltm_common(charge, qty)
     raise ValidateError, "First Costs minimum must be > 1" unless @costs.first[:minimum] > 1
     @costs.unshift({ :fixed => parse_money(charge),
                     :marginal => @costs.first[:marginal],
-                    :minimum => qty || @costs.first[:minimum]/2 })
+                    :minimum => qty })
   end
 public
 
@@ -346,12 +350,12 @@ public
       return if qty == @costs.first[:minimum]
       raise ValidateError.new("qty >= first qty", "#{qty} >= #{@costs.first[:minimum]}") if qty > @costs.first[:minimum]
     end
-    ltm_common(charge, qty)
+    ltm_common(charge, qty || ltm_default_qty)
   end
 
-  def ltm_if(charge, qty)
+  def ltm_if(charge, qty = nil)
     raise ValidateError, "Can't apply less than minimum with no prices" if @costs.empty?
-    qty = qty && parse_qty(qty)
+    qty = qty ? parse_qty(qty) : ltm_default_qty
     ltm_common(charge, qty) if qty > 0 && qty < @costs.first[:minimum]
   end
 
@@ -361,11 +365,13 @@ public
     @costs << { :minimum => qty ? parse_qty(qty) : [@prices.first[:minimum]*10,@costs.first[:minimum]*10,@prices.last[:minimum]*2, @costs.last[:minimum]*2].max } unless @costs.empty?
   end
 
-  def eqp(discount = 0.4)
+  def eqp(discount = 0.4, round = false)
     raise ValidateError, "Expected no costs" unless @costs.empty?
     raise ValidateError, "Expected price" if @prices.empty?
+    marginal = @prices.last[:marginal] * (1.0 - discount)
+    marginal = marginal.round_cents if round
     @costs << { :minimum => @prices.first[:minimum],
-      :fixed => Money.new(0), :marginal => @prices.last[:marginal] * (1.0 - discount) }
+      :fixed => Money.new(0), :marginal => marginal }
   end
 
   def to_hash

@@ -171,7 +171,7 @@ class BicGraphics < GenericImport
         }]
       product_data['decorations'] = decorations
 
-      color_image_map, color_num_map = match_colors(base_num, colors)
+      color_image_map, color_num_map = match_colors(colors, {}, base_num)
 
       product_data['images'] = [ImageNodeFetch.new(file = "#{base_num}_phto_lrg.jpg",
                                                    "http://www.bicgraphic.com/images/large/#{file}")] +
