@@ -7,6 +7,10 @@ class CrownProdXLS < GenericImport
     super 'Crown Products'
   end
 
+  def imprint_colors
+    %w(032 Reflex\ Blue Black White 021 161 872 877)
+  end
+
   def fetch_parse?
     if File.exists?(@src_file) and
         File.mtime(@src_file) >= (Time.now - 7.day)
