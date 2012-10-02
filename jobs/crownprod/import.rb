@@ -95,8 +95,11 @@ class CrownProdXLS < GenericImport
     sales = {}
     ws.each(1) do |row|
       next unless row['Sale?'] == 'Y'
+      next unless Float(row['Sale Qty']) > 0.0
       pricing = PricingDesc.new
       pricing.add(row['Sale Qty'], row['Sale Price'], row['Sale Code'])
+      sup_num = row['Item# (SKU)'].to_s.strip
+      sales[sup_num] = pricing
     end
 
     variations = {}
@@ -140,8 +143,8 @@ class CrownProdXLS < GenericImport
 
 
         if pricing = sales[@supplier_num]
-          tags << 'Special'
-          e = (1..5).collect { |i| Integer(row["Pricing-Qty#{i}"]) }.max
+          pd.tags << 'Special'
+          e = (1..5).collect { |i| row["Pricing-Qty#{i}"] && Integer(row["Pricing-Qty#{i}"]) }.compact.max
           pricing.maxqty(e*2)
         else
           pricing = PricingDesc.new
