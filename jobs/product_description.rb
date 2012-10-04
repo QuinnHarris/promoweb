@@ -131,7 +131,7 @@ module PropertyObject
         value.each do |e|
           raise PropertyError.new("expected #{type} in Array got #{e.inspect}" + tail, name) unless e.is_a?(type.first)
         end
-        raise PropertyError.new("expected unique Array" + tail + ": #{value.inspect}", name) unless value.uniq.length == value.length
+        raise PropertyError.new("expected unique Array" + tail + ": #{value.collect { |v| v.supplier_num }.inspect}", name) unless value.uniq.length == value.length
       else
         raise PropertyError.new("expected #{type} got #{value.inspect}" + tail, name) unless value.is_a?(type) || (options[:nil] && value.nil?)
       end
@@ -613,6 +613,7 @@ class ProductDesc
       r = yield desc
       context.add_product(desc) unless r == false
     rescue ValidateError => boom
+      boom.mark_duplicate! if context.has_product?(desc.supplier_num)
       puts "- Validate Error: #{desc.error_id}: #{boom}"
       puts boom.backtrace
       context.add_error(boom, desc.error_id)

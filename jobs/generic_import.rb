@@ -208,18 +208,23 @@ module WebFetchCommon
     base
   end
 
-  def get_path(time = nil)
+  def fetch?(time = nil)
     if File.exists?(path)
       if time
         stat = File.stat(path)
         if stat.file? and
             (!time or stat.mtime > time)
-          return path
+          return false
         end
       else
-        return path
+        return false
       end
     end
+    true
+  end
+
+  def get_path(time = nil)
+    return path unless fetch?(time)
 
     FileUtils.mkdir_p(File.split(path).first)
     
@@ -308,6 +313,10 @@ class ValidateError < StandardError
     @aspect, @value = aspect, value
   end
   attr_reader :aspect, :value
+
+  def mark_duplicate!
+    @aspect = "DUP #{@aspect}"
+  end
   
   def to_s
     "#{aspect}: #{value}"
@@ -522,8 +531,12 @@ class GenericImport
 #    end
     @decoration_techniques = DecorationTechnique.find(:all).inject({}) { |h, i| h[i.name] = i; h }
     @product_list = []
+
     @invalid_prods = {}
     @warning_prods = {}
+
+    @invalid_values = {}
+    @warning_values = {}
   end
 
   def set_standard_colors(colors = nil)
@@ -561,8 +574,8 @@ class GenericImport
   end
   
   def cache_read(file_name)
-    puts "#{file_name} reading cached marshal"
-    File.open(file_name) { |f| Marshal.load(f) }    
+    puts "Reading Cache from #{file_name}"
+    File.open(file_name) { |f| Marshal.load(f) }
   end
   
   def cache_write(file_name, res)
@@ -650,10 +663,14 @@ class GenericImport
   end
     
   def run_transform
-    trans = NewCategoryTransform.new [@supplier_name].flatten.first
+    init_time = Time.now
+    print "Applying Category Transform: "
+    trans = CategoryTransform.new [@supplier_name].flatten.first
+    print "APPLY(#{trans.rules_count}) "
     @product_list.each do |pd|
       trans.apply_rules(pd)
     end
+    puts "DONE in #{Time.now - init_time}s"
   end
   
   def run_apply_cache(cleanup = true)
@@ -675,16 +692,18 @@ class GenericImport
 
 
       # Print Stats
-      [['Product Warnings', @warning_prods],
-       ['Invalid Products', @invalid_prods]].each do |name, hash|
-        puts name unless hash.empty?
-        hash.each do |aspect, list|
+      [['Product Warnings', @warning_prods, @warning_values],
+       ['Invalid Products', @invalid_prods, @warning_values]].each do |name, prods, values|
+        puts name unless prods.empty?
+        prods.each do |aspect, list|
+          puts "  #{aspect} (#{list.length}): "
           if list.length * 2 > supplier_num_set.length
             negl = supplier_num_set.to_a - list
-            puts "  #{aspect}: (#{list.length}) ALL - #{negl.join(', ')}"
+            puts "    Items: ALL - #{negl.join(', ')}"
           else
-            puts "  #{aspect}: (#{list.length}) #{list.join(', ')}"
+            puts "    Items: #{list.join(', ')}"
           end
+          puts "  #{values[aspect].to_a.join(', ')}" unless values[aspect].blank?
         end
       end
 
@@ -751,17 +770,25 @@ class GenericImport
 
   def add_error(boom, id)
     @invalid_prods[boom.aspect] = (@invalid_prods[boom.aspect] || []) + [id]
+    @invalid_values[boom.aspect] ||= Set.new
+    @invalid_values[boom.aspect] << boom.value
   end
 
   def add_warning(boom, id)
     puts "* #{id}: #{boom}"  unless ARGV.include?('nowarn')
     @warning_prods[boom.aspect] = (@warning_prods[boom.aspect] || []) + [id]
+    @warning_values[boom.aspect] ||= Set.new
+    @warning_values[boom.aspect] << boom.value
   end
 
   def warning(aspect, description = nil)
     add_warning(ValidateError.new(aspect, description), @supplier_num)
   end
   
+  def has_product?(supplier_num)
+    @product_hash[supplier_num]
+  end
+
   def add_product(object)
     begin
       if object.is_a?(ProductDesc)
@@ -803,6 +830,8 @@ class GenericImport
       else
         puts boom.backtrace
         @invalid_prods['Other'] = (@invalid_prods[boom.to_s] || []) + [pd ? pd.supplier_num : 'unknown']
+        @invalid_values['Other'] ||= Set.new
+        @invalid_values['Other'] << boom.value
       end
     end
   end
@@ -1080,15 +1109,18 @@ private
     multiple_map = {}
     multiple_map.default = []
 
-
-    strings = colors.collect { |s| s.split(/([^A-Z]+)/i) }
-    common_tok = remove_common_prefix_postfix(strings)
-    common_str = common_tok.collect { |s| s.join }
-    common_tok = common_tok.collect { |t| t.collect { |s| s.blank? ? nil : s.downcase }.compact.uniq }
-    unless common_str == colors
-      puts " Prune: #{colors.inspect} => #{common_str.inspect}"
+    if options[:prune_colors]
+      strings = colors.collect { |s| s.split(/([^A-Z]+)/i) }
+      common_tok = remove_common_prefix_postfix(strings)
+      common_str = common_tok.collect { |s| s.join }
+      common_tok = common_tok.collect { |t| t.collect { |s| s.blank? ? nil : s.downcase }.compact.uniq }
+      unless common_str == colors
+        puts " Prune: #{colors.inspect} => #{common_str.inspect}"
+      end
+      match_list = colors.zip(common_str, common_tok)
+    else
+      match_list = colors.zip(colors, colors)
     end
-    match_list = colors.zip(common_str, common_tok)
 
 
     # Exact Suffix Match then remove color from furthur match
@@ -1199,6 +1231,7 @@ private
         list = list.find_all { |id, c, t| !matched.include?(id) }
         if list.length == 1
           image_map[list.first.first] += [image]
+          image_map[nil].delete(image)
           puts " PostMatch: #{list.first.first}: #{image}"
           true
         end

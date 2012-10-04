@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-class NewCategoryTransform
+class CategoryTransform
   def remove_sub_dups(list)
     list.delete_if do |sub|
       list.find { |s| (s.length > sub.length) && (s[0...(sub.size)] == sub) }
@@ -23,7 +23,7 @@ class NewCategoryTransform
     else
       pd.categories += pd.categories.collect { |cat| ['YBySupplier', @supplier] + cat }
 
-      unused_categories = (pd.supplier_categories - @used_categories).collect { |cat| cat.collect { |s| s.gsub('/', 'slash') } }
+      unused_categories = (pd.supplier_categories - @used_categories.to_a).collect { |cat| cat.collect { |s| s.gsub('/', 'slash') } }
       unused_categories << ['AAA'] if pd.categories.empty?
       unless unused_categories.uniq.empty?
         pd.categories += unused_categories.collect { |cat| ['XUnOrganized', @supplier] + cat }
@@ -37,8 +37,12 @@ class NewCategoryTransform
   def initialize(supplier)
     @supplier = supplier
     @rules = []
-    @used_categories = []
+    @used_categories = Set.new
     process_category(data, [])
+  end
+
+  def rules_count
+    @rules.length
   end
 
 private
@@ -57,7 +61,7 @@ private
 
   def cat(*cat)
     Proc.new do |record, match_category|
-      @used_categories << cat unless @used_categories.include?(cat)
+      @used_categories << cat # In proc to acount for supplier hiding
       [match_category] if record['supplier_categories'].find { |c| c[0...cat.length] == cat }
     end
   end

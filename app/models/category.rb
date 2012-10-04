@@ -58,8 +58,12 @@ class Category < ActiveRecord::Base
   :using => { :tsearch => { :dictionary => "english" } }
   
   def destroy_conditional
-    return nil unless products.count == 0
-    return nil unless !children or children.size == 0
+    logger.info("ProdEmp: #{products.empty?}")
+    logger.info("ChildEmp: #{children.empty?}")
+    return nil unless products.empty? and children.empty?
+    logger.info("Dest")
+
+    parent.destroy_conditional
     
     # Cleanup featured
     featured.find(:all).each do |product|
@@ -67,12 +71,11 @@ class Category < ActiveRecord::Base
       product.save!
     end
     
-    destroy
-    
     @@id_map.delete(id)
     parent.children.delete(self)
 
-    parent.destroy_conditional
+    destroy
+
     true
   end
 

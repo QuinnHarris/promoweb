@@ -1,19 +1,23 @@
 # -*- coding: utf-8 -*-
-
-class LeedsXLSDecorations
-
-end
-
 class PolyXLS < GenericImport
-  def initialize(name)
-    puts "Starting Fetch for #{name}"
-    time = Time.now - 1.day
-    @prod_files = [@prod_files].flatten.collect do |url|
-      WebFetch.new(url).get_path(time)
-    end
-    @dec_file = WebFetch.new(@dec_file).get_path(time)
-    @src_files = @prod_files + [@dec_file]
+  def initialize(name, options = {})
+    @options = options
     super name
+  end
+
+  def fetch_parse?
+    time = Time.now - 1.day
+    fetched = false
+    @prod_files = [@product_urls].flatten.collect do |url|
+      wf = WebFetch.new(url)
+      fetched = true if wf.fetch?(time)
+      wf.get_path
+    end
+    wf = WebFetch.new(@decoration_url)
+    fetched = true if wf.fetch?(time)
+    @dec_file = wf.get_path(time)
+    @src_files = @prod_files + [@dec_file]
+    fetched
   end
 
   def parse_products
@@ -125,8 +129,9 @@ class PolyXLS < GenericImport
             pricing.add(row["#{name}ColMinQty"], row["#{name}ColPriceUSD"])
           end
           pricing.eqp(0.4, true)
-          pricing.ltm_if(40.00)
-          pricing.maxqty(Integer(row['FifthColMaxQty'])+1)
+          pricing.ltm_if(40.00, 4) # LTM of 4 unless clearance
+          pricing.maxqty(row['FifthColMaxQty'] && (Integer(row['FifthColMaxQty'])+1))
+
           
           
           dimension = {}
@@ -149,17 +154,24 @@ class PolyXLS < GenericImport
           colors = row['Color'].to_s.split(/\s*(?:(?:\,|(?:\sor\s)|(?:\sand\s)|\&)\s*)+/).uniq
           colors = [''] if colors.empty?
         
-          color_image_map, color_num_map = match_colors(colors)
+          color_image_map, color_num_map = match_colors(colors, :prune_colors => @options[:prune_colors])
           #      puts "ColorMap: #{product_data['supplier_num']} #{color_image_map.inspect} #{color_num_map.inspect}"
           pd.images = color_image_map[nil]
           
+          postfixes = Set.new
           pd.variants = colors.collect do |color|
             postfix = color_num_map[color] #[@@color_map[color.downcase]].flatten.first
             unless postfix
-              postfix = color.split(/ |\//).collect { |c| [@@color_map[c.downcase]].flatten.first }.join
+              postfix = @@color_map[color.downcase]
+              postfix = color.split(/ |\//).collect { |c| [@@color_map[c.downcase]].flatten.first }.join unless postfix
               puts "NoPost: #{@supplier_num}: #{color} : #{postfix}"
             #          postfix = color[0...8]
             end
+
+            # Prevend duplicate postfix
+            postfix += 'X' while postfixes.include?(postfix)
+            postfixes << postfix
+
             VariantDesc.new(:supplier_num => "#{@supplier_num}#{postfix}",
                             :properties => {
                               'color' => color.strip.capitalize,
@@ -351,7 +363,7 @@ class PolyXLS < GenericImport
     'Color Fill Initials' => nil,
 
     'Color Stamp' => ['Stamp', 1],
-    'Color Stamp DB' => nil,
+    'Color Stamp DB' => ['Stamp', 1],
     'Color Stamp Name' => nil,
     'Color Stamp Initials' => nil,
 
@@ -368,6 +380,9 @@ class PolyXLS < GenericImport
     
     # Bullet
     'Silkscreened' => ['Screen Print',3],
+    'Silskcreened' => ['Screen Print',3],
     'Laser Engraved' => ['Laser Engrave',1],
+    'Engraving' => ['Laser Engrave',1],
+    'Engraved' => ['Laser Engrave',1],
   }
 end

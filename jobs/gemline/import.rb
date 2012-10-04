@@ -18,9 +18,8 @@ class GemlineXML < GenericImport
   def fetch_parse?
     return nil unless super
 
-    dst_path = File.join(JOBS_DATA_ROOT,'Gemline.xml')
-    if File.exists?(dst_path) and
-        File.mtime(dst_path) >= (Time.now - 1.day)
+    if File.exists?(@src_file) and
+        File.mtime(@src_file) >= (Time.now - 1.day)
       puts "File Fetched today"
       return
     end
@@ -49,7 +48,7 @@ class GemlineXML < GenericImport
     
     page.save_as path
     
-    FileUtils.ln_sf(name, dst_path)
+    FileUtils.ln_sf(name, @src_file)
     
     puts "Fetched"
 
