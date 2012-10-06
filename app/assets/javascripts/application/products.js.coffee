@@ -232,7 +232,7 @@ class window.ProductPricing extends PricingBase
   
       $.cookie('count', @params.dec_count)
 
-    $("#dec_desc").html(li.children('span').html())
+    $("#dec_desc").html(li.find('span').html())
 #    if @params.technique_id == 1
 #      $('#sample').show()
 #    else
