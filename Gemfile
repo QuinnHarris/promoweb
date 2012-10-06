@@ -5,7 +5,7 @@ end
 
 source 'http://rubygems.org'
 
-gem 'rails', '3.2.6'
+gem 'rails', '3.2.8'
 
 # Bundle edge Rails instead:
 # gem 'rails', :git => 'git://github.com/rails/rails.git'
@@ -55,7 +55,7 @@ gem 'activemerchant'
 gem 'foreigner'
 gem 'acts_as_tree'
 gem 'will_paginate'
-gem 'paperclip' #, "= 2.3.16"
+gem 'paperclip'
 gem 'rghost'
 gem 'exception_notification'
 #gem 'exifr'
