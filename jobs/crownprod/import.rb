@@ -242,7 +242,7 @@ class CrownProdXLS < GenericImport
           pd.images = [ImageNodeFetch.new('default',
                                           "http://www.crownprod.com/images/items/BRIGTEYE_CL_xl.jpg")]
         else
-          color_image_map, color_num_map = match_image_colors(images, colors, @supplier_num)
+          color_image_map, color_num_map = match_image_colors(images, colors, :prune_colors => true)
           pd.images = color_image_map[nil]
         end
         

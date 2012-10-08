@@ -111,7 +111,7 @@ class PolyXLS < GenericImport
                                          'height' => 'GIFTBOXED_Height' })
           
           pd.description = row['ItemDescription'].to_s.split(/[\r\n]+|(?:\. )\s*/).collect do |line|
-            line.strip
+            line.strip!
             next nil if line.empty?
             line.scan(/\(#(.+?)\)/).flatten.each do |num|
               #          puts "MATCHING: #{num.inspect}"
@@ -119,7 +119,7 @@ class PolyXLS < GenericImport
               unless line.sub!("#{product.name} (##{num})", "<a href='#{product.web_id}'>#{product.name}</a>")
                 line.sub!("(##{num})", "<a href='#{product.web_id}'>(M#{product.id})</a>")
               end
-          end
+          end.compact
             #        line.sub!('www.leedsworldrefill.com', "<a href='http://www.leedsworldrefill.com/'>www.leedsworldrefill.com</a>")
             [??,?!,?.].include?(line[-1]) ? line : "#{line}." 
           end.compact
