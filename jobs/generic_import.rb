@@ -229,7 +229,7 @@ module WebFetchCommon
     FileUtils.mkdir_p(File.split(path).first)
     
     begin
-      puts "Fetch: #{@uri}"
+      puts "Fetch: #{@uri} => #{path}"
       pbar = nil
       f = @uri.open(:content_length_proc => lambda {|t|
                       if t && 0 < t

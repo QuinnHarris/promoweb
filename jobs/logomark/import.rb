@@ -2,11 +2,22 @@ class LogomarkXLS < GenericImport
   def initialize
     time = Time.now - 1.day
     #%w(Data Data_Portfolio CloseoutsData ECOData)
-    @src_files = %w(Data).collect do |name|
-      WebFetch.new("http://www.logomark.com/Media/DistributorResources/Logomark#{name}.xls").
-        get_path(time)
+    @src_urls = %w(Data).collect do |name|
+      "http://www.logomark.com/Media/DistributorResources/Logomark#{name}.xls"
     end
+    
     super 'Logomark'
+  end
+
+  def fetch_parse?
+    time = Time.now - 1.day
+    fetched = false
+    @src_files = @src_urls.collect do |url|
+      wf = WebFetch.new(url)
+      fetched = true if wf.fetch?(time)
+      wf.get_path(time)
+    end
+    fetched
   end
 
   def parse_products
@@ -14,12 +25,55 @@ class LogomarkXLS < GenericImport
     common_columns = %w(Product\ Line Name Description Features Finish\ /\ Material IsAdvantage24 Categories Item\ Size Decoration\ Height Decoration\ Width LessThanMin1Qty LessThanMin1Charge End\ Column\ Price Box\ Weight Quantity\ Per\ Box Box\ Length Production\ Time) + (1..6).collect { |i| %w(Qty Price Code).collect { |s| "PricePoint#{i}#{s}" } }.flatten
 
     @src_files.each do |file|
-      product_merge = ProductRecordMerge.new(unique_columns, common_columns)
-
       puts "Processing: #{file}"
       ss = Spreadsheet.open(file)
 
+      # Decoration Charges
+      puts "Processing Decorations"
+      decorations = {}
+      ltm = {}
+      ws = ss.worksheet(2)
+      ws.use_header
+      ws.each(1) do |row|
+        next unless row['Product Line']
+        line = row['Product Line'].strip
+        case row['ChargeName']
+        when 'Less Than Minimum'
+          if /absolute minimum : (\d{2,3})/i === row['Description']
+            ltm[line] = Integer($1)
+          else
+            ltm[line] = Integer(row['Charge'])
+          end
+        when 'Setup'
+          decorations[line] ||= {}
+          decorations[line][row['Imprint Name']] ||= {}
+          decorations[line][row['Imprint Name']].merge!(:fixed => Float(row['Charge']))
+        when 'Second Location'
+          raise "Unknown Desc: #{row['Description']}" unless /^(.+?)\s+(?:per|each)/ === row['Description']
+          decorations[line] ||= {}
+          decorations[line][$1] ||= {}
+          decorations[line][$1].merge!(:marginal => Float(row['Charge']))
+        when 'Additional Run Charge'
+        when 'Repeat Setup'
+        when 'Art'
+        when 'Pre-Production Proof'
+        when 'Oxidation'
+        when 'Personalization'
+        when 'Custom Foam Die Charge'
+        when 'Color Fill'
+        else
+          raise "Unkonwn Charge: #{row['ChargeName']}"
+        end
+      end
+
+      puts "Decorations: "
+      decorations.each do |line, hash|
+        puts "  #{line}: #{hash.inspect}"
+      end
+      
+
       # ProductModelXRef
+      puts "Processing XRefs"
       model_product = {}
       ws = ss.worksheet(3)
       ws.use_header
@@ -29,6 +83,8 @@ class LogomarkXLS < GenericImport
 
 
       # Flat Data
+      puts "Processing Main List"
+      product_merge = ProductRecordMerge.new(unique_columns, common_columns)
       ws = ss.worksheet(0)
       ws.use_header
       ws.each(1) do |row|
