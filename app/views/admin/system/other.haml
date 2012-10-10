@@ -1,4 +1,21 @@
-%h2 Other Things
+%h2 Thunderbird Extension
+%ol
+  %li
+    Download
+    = link_to "Thunderbird Extension", "/thunderbird.xpi"
+    by Right Click link -> "Save Link As" -> save file
+  %li In Thunderbird "Tools" menu -> "Add Ons" -> "Install" button -> open saved file.
 
-= link_to "Thunderbird Extension", "/thunderbird.xpi"
-\- Right Click link -> "Save Link As" -> save file.  In Thunderbird "Tools" menu -> "Add Ons" -> "Install" button -> open saved file.
+%h2 Firefox Passwords
+%ol
+  %li
+    Install
+    = link_to "Password Exporter Extension", "https://addons.mozilla.org/firefox/downloads/latest/2848/addon-2848-latest.xpi?src=dp-btn-primary"
+  %li
+    Save
+    = link_to "Password File", "/Firefox_Passwords_Export_8fk217dnmfs.xml"
+  %li On Firefox: Edit -> Preferences
+  %li Click Security Section
+  %li Click "Import/Export Passwords"
+  %li Click "Import Passwords"
+  %li Select file saved in first step
