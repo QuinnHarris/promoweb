@@ -23,8 +23,8 @@
       %h2
         = link_to(supplier.name, admin_supplier_path(supplier))
         \:
-        - unless supplier.web.blank?
-          = link_to('Website', "http://#{supplier.web}")
+        - unless supplier.login_url.blank?
+          = link_to('Web Login', supplier.login_url)
         - if supplier.phone
           = format_phone(supplier.phone)
         - if supplier.fax
