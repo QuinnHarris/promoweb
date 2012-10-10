@@ -20,6 +20,19 @@ class LogomarkXLS < GenericImport
     fetched
   end
 
+  def set_decoration(line, type, aspect, value, warn = false)
+    @decorations[line] ||= {}
+    @decorations[line][type] ||= {}    
+
+    if (prev = @decorations[line][type][aspect]) and
+        (prev != value)
+      raise "Tried to overwrite #{line} #{type} #{aspect} #{prev.inspect} != #{value.inspect}" unless warn
+    end
+
+    @decorations[line][type][aspect] = value
+    puts "Set: #{line} #{@decorations[line].inspect}"
+  end
+
   def parse_products
     unique_columns = %w(SKU Item\ Color)
     common_columns = %w(Product\ Line Name Description Features Finish\ /\ Material IsAdvantage24 Categories Item\ Size Decoration\ Height Decoration\ Width LessThanMin1Qty LessThanMin1Charge End\ Column\ Price Box\ Weight Quantity\ Per\ Box Box\ Length Production\ Time) + (1..6).collect { |i| %w(Qty Price Code).collect { |s| "PricePoint#{i}#{s}" } }.flatten
@@ -30,7 +43,7 @@ class LogomarkXLS < GenericImport
 
       # Decoration Charges
       puts "Processing Decorations"
-      decorations = {}
+      @decorations = {}
       ltm = {}
       ws = ss.worksheet(2)
       ws.use_header
@@ -45,15 +58,22 @@ class LogomarkXLS < GenericImport
             ltm[line] = Integer(row['Charge'])
           end
         when 'Setup'
-          decorations[line] ||= {}
-          decorations[line][row['Imprint Name']] ||= {}
-          decorations[line][row['Imprint Name']].merge!(:fixed => Float(row['Charge']))
+          name = row['Imprint Name']
+          if name.blank?
+            next unless /^(.*?)(?:\s+|^)(?:per|each)/ === row['Description']
+            name = $1
+          end
+          set_decoration(line, row['Imprint Name'], :fixed, Float(row['Charge']))
         when 'Second Location'
-          raise "Unknown Desc: #{row['Description']}" unless /^(.+?)\s+(?:per|each)/ === row['Description']
-          decorations[line] ||= {}
-          decorations[line][$1] ||= {}
-          decorations[line][$1].merge!(:marginal => Float(row['Charge']))
+          raise "Unknown Desc: #{row['Description']}" unless /^(.*?)(?:\s+|^)(?:per|each)/ === row['Description']
+          set_decoration(line, $1, :marginal, Float(row['Charge']), true)
         when 'Additional Run Charge'
+          unless /^(.*?)(?:\s+|^)(?:per|each)/ === row['Description']
+            unless /^second (?:color|location) (\w+)/i === row['Description']
+              raise "Unknown Desc: #{row['Description']}" 
+            end
+          end
+          set_decoration(line, $1.capitalize, :marginal, Float(row['Charge']))
         when 'Repeat Setup'
         when 'Art'
         when 'Pre-Production Proof'
@@ -67,7 +87,7 @@ class LogomarkXLS < GenericImport
       end
 
       puts "Decorations: "
-      decorations.each do |line, hash|
+      @decorations.each do |line, hash|
         puts "  #{line}: #{hash.inspect}"
       end
       
