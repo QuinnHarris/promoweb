@@ -30,8 +30,22 @@ class LogomarkXLS < GenericImport
     end
 
     @decorations[line][type][aspect] = value
-    puts "Set: #{line} #{@decorations[line].inspect}"
+    puts "  Set: #{line} #{@decorations[line].inspect}"
   end
+
+  @@decoration_map = {
+    'Laser' => 'Laser Engrave',
+    'Print' => 'Screen Print',
+    'Deboss' => 'Deboss',
+    'Vinyl' => 'Dome',
+    'Oxidation' => 'Laser Engrave & Oxidation',
+    'Crystal etch' => 'Crystal Etch',
+  }
+
+  # insert into decoration_techniques (name) values ('Laser Engrave & Oxidation');
+  # insert into decoration_techniques (name) values ('Crystal Etch');
+  # alter TABLE decoration_techniques ALTER COLUMN name type varchar(64);
+
 
   def parse_products
     unique_columns = %w(SKU Item\ Color)
@@ -63,21 +77,34 @@ class LogomarkXLS < GenericImport
             next unless /^(.*?)(?:\s+|^)(?:per|each)/ === row['Description']
             name = $1
           end
-          set_decoration(line, row['Imprint Name'], :fixed, Float(row['Charge']))
+          puts "Setup Desc: #{row['Description']} => #{name}"
+          set_decoration(line, name, :fixed, Float(row['Charge']))
         when 'Second Location'
           raise "Unknown Desc: #{row['Description']}" unless /^(.*?)(?:\s+|^)(?:per|each)/ === row['Description']
+          puts "Sec Loc Desc: #{row['Description']}"
           set_decoration(line, $1, :marginal, Float(row['Charge']), true)
         when 'Additional Run Charge'
-          unless /^(.*?)(?:\s+|^)(?:per|each)/ === row['Description']
-            unless /^second (?:color|location) (\w+)/i === row['Description']
-              raise "Unknown Desc: #{row['Description']}" 
-            end
+          puts "Add Run Desc: #{row['Description']}"
+          if /^(.*?)(?:\s+|^)(?:per|each)/ === row['Description']
+            set_decoration(line, $1.capitalize, :marginal, Float(row['Charge']))
+            next
           end
-          set_decoration(line, $1.capitalize, :marginal, Float(row['Charge']))
+          if /^second (?:color|location) (.+)$/i === row['Description']
+            if $1 == 'etch/laser'
+              %w(Laser Crystal\ etch).each do |name|
+                set_decoration(line, name, :marginal, Float(row['Charge']))
+              end
+            else
+              set_decoration(line, $1.capitalize, :marginal, Float(row['Charge']))
+            end
+            next
+          end
+          raise "Unknown Desc: #{row['Description']}" 
         when 'Repeat Setup'
         when 'Art'
         when 'Pre-Production Proof'
         when 'Oxidation'
+          set_decoration(line, 'Oxidation', :marginal, Float(row['Charge']))
         when 'Personalization'
         when 'Custom Foam Die Charge'
         when 'Color Fill'
@@ -86,10 +113,47 @@ class LogomarkXLS < GenericImport
         end
       end
 
-      puts "Decorations: "
       @decorations.each do |line, hash|
-        puts "  #{line}: #{hash.inspect}"
+        next unless hash['Oxidation'] and hash['Laser']
+        hash['Oxidation'] = hash['Laser'].merge(:marginal => hash['Oxidation'][:marginal] + hash['Laser'][:marginal])
       end
+
+      cost_decorations = {}
+      Decoration.transaction do
+        @@decoration_map.each do |key, technique|
+          costs = {}
+          costs.default = []
+          @decorations.each { |line, h| costs[h[key]] += [line] if h[key] }
+          sorted = costs.to_a.sort_by { |h, l| l.length }
+          if sorted.length == 1 or sorted[-1].last.length != sorted[-2].last.length
+            default = sorted.pop.first.merge(:key => key)
+            cost_decorations[default] = get_decoration(technique, default[:fixed], default[:marginal], '')
+          end
+          sorted.each do |hash, list|
+            k = hash.merge(:key => key)
+            if k[:fixed] == default[:fixed] and !k[:marginal] and default[:marginal]
+              cost_decorations[k] = cost_decorations[default]
+            else
+              cost_decorations[k] = get_decoration(technique, hash[:fixed] || 0.0, hash[:marginal], list.join(', '))
+            end
+          end
+        end
+      end
+
+      puts "Decorations:"
+      @decorations.each do |line, hash|
+        puts "  #{line}:"
+        hash.each do |key, values|
+          unless @@decoration_map[key]
+            puts "    #{key}: #{hash[key].inspect}"
+            next
+          end
+          technique = cost_decorations[values.merge(:key => key)]
+          puts "    #{key}: #{hash[key].inspect} => #{technique.inspect}"
+          raise "unknown" unless hash[key] = technique
+        end
+      end
+
       
 
       # ProductModelXRef

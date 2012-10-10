@@ -1306,20 +1306,34 @@ private
     locations
   end
 
-  def get_decoration(technique, fixed, marginal)
+  def get_decoration(technique, fixed, marginal, postfix = nil)
     @decoration_set ||= Set.new
     fixed = Money.new(fixed)
-    name = "#{technique} @ #{fixed}"
     marginal = Money.new(marginal) if marginal
-    name += "/#{marginal}" if marginal
-    path = [technique, name]
+    path = nil
+    if postfix
+      if postfix.blank?
+        name = technique
+        path = [technique]
+      else
+        name = "#{technique} - #{postfix}"
+      end
+    else
+      name = "#{technique} @ #{fixed}"
+      name += "/#{marginal}" if marginal
+    end
+    path = [technique, name] unless path
     return path if @decoration_set.include?(path)
-    
-    base_tech = DecorationTechnique.find_by_name(technique)
-    raise "Unkown Technique: #{technique}" unless base_tech
-    unless tech = base_tech.children.find_by_name(name)
-      tech = base_tech.children.create(:name => name, :unit_name => base_tech.unit_name,
-                                       :unit_default => base_tech.unit_default)
+
+    tech = DecorationTechnique.find_by_name(path.first)
+    path[1..-1].each do |p|
+      unless t = tech.children.find_by_name(p)
+        raise "Unknown Technique: #{path}" if p != path.last
+        tech = tech.children.create(:name => name, :unit_name => tech.unit_name,
+                                    :unit_default => tech.unit_default)
+      else
+        tech = t
+      end
     end
 
     unless tech.price_groups.where(:supplier_id => @supplier_record.id).first
