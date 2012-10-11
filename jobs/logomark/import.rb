@@ -30,7 +30,7 @@ class LogomarkXLS < GenericImport
     end
 
     @decorations[line][type][aspect] = value
-    puts "  Set: #{line} #{@decorations[line].inspect}"
+#    puts "  Set: #{line} #{@decorations[line].inspect}"
   end
 
   @@decoration_map = {
@@ -38,7 +38,7 @@ class LogomarkXLS < GenericImport
     'Print' => 'Screen Print',
     'Deboss' => 'Deboss',
     'Vinyl' => 'Dome',
-    'Oxidation' => 'Laser Engrave & Oxidation',
+    'Laser & Oxidation' => 'Laser Engrave & Oxidation',
     'Crystal etch' => 'Crystal Etch',
   }
 
@@ -49,14 +49,13 @@ class LogomarkXLS < GenericImport
 
   def parse_products
     unique_columns = %w(SKU Item\ Color)
-    common_columns = %w(Product\ Line Name Description Features Finish\ /\ Material IsAdvantage24 Categories Item\ Size Decoration\ Height Decoration\ Width LessThanMin1Qty LessThanMin1Charge End\ Column\ Price Box\ Weight Quantity\ Per\ Box Box\ Length Production\ Time) + (1..6).collect { |i| %w(Qty Price Code).collect { |s| "PricePoint#{i}#{s}" } }.flatten
 
     @src_files.each do |file|
       puts "Processing: #{file}"
       ss = Spreadsheet.open(file)
 
       # Decoration Charges
-      puts "Processing Decorations"
+      puts "Processing Decorations:"
       @decorations = {}
       ltm = {}
       ws = ss.worksheet(2)
@@ -77,14 +76,14 @@ class LogomarkXLS < GenericImport
             next unless /^(.*?)(?:\s+|^)(?:per|each)/ === row['Description']
             name = $1
           end
-          puts "Setup Desc: #{row['Description']} => #{name}"
+#          puts "Setup Desc: #{row['Description']} => #{name}"
           set_decoration(line, name, :fixed, Float(row['Charge']))
         when 'Second Location'
           raise "Unknown Desc: #{row['Description']}" unless /^(.*?)(?:\s+|^)(?:per|each)/ === row['Description']
-          puts "Sec Loc Desc: #{row['Description']}"
+#          puts "Sec Loc Desc: #{row['Description']}"
           set_decoration(line, $1, :marginal, Float(row['Charge']), true)
         when 'Additional Run Charge'
-          puts "Add Run Desc: #{row['Description']}"
+#          puts "Add Run Desc: #{row['Description']}"
           if /^(.*?)(?:\s+|^)(?:per|each)/ === row['Description']
             set_decoration(line, $1.capitalize, :marginal, Float(row['Charge']))
             next
@@ -115,8 +114,10 @@ class LogomarkXLS < GenericImport
 
       @decorations.each do |line, hash|
         next unless hash['Oxidation'] and hash['Laser']
-        hash['Oxidation'] = hash['Laser'].merge(:marginal => hash['Oxidation'][:marginal] + hash['Laser'][:marginal])
+        hash['Laser & Oxidation'] = hash['Laser'].merge(:marginal => hash['Oxidation'][:marginal] + hash['Laser'][:marginal])
+        hash.delete('Oxidation')
       end
+      @decorations['Watch Creations'] = { 'Print' => { :fixed => 65.00, :marginal => 0 } }
 
       cost_decorations = {}
       Decoration.transaction do
@@ -140,7 +141,6 @@ class LogomarkXLS < GenericImport
         end
       end
 
-      puts "Decorations:"
       @decorations.each do |line, hash|
         puts "  #{line}:"
         hash.each do |key, values|
@@ -155,6 +155,7 @@ class LogomarkXLS < GenericImport
       end
 
       
+      
 
       # ProductModelXRef
       puts "Processing XRefs"
@@ -168,9 +169,9 @@ class LogomarkXLS < GenericImport
 
       # Flat Data
       puts "Processing Main List"
-      product_merge = ProductRecordMerge.new(unique_columns, common_columns)
       ws = ss.worksheet(0)
-      ws.use_header
+      columns = ws.use_header.keys
+      product_merge = ProductRecordMerge.new(unique_columns, columns - unique_columns)
       ws.each(1) do |row|
         next if row['SKU'].blank?
 #        raise "Unkown SKU: #{row['SKU'].inspect}" unless /^([A-Z]+\d*)([A-Z]*(?:-[\w-]+)?)$/ === row['SKU']
@@ -224,10 +225,11 @@ class LogomarkXLS < GenericImport
         next if %w(EK500 FLASH GR6140 VK3009).include?(supplier_num)
 
         ProductDesc.apply(self) do |pd|
-          pd.supplier_num = supplier_num
+          pd.supplier_num = @supplier_num = supplier_num
           pd.name = "#{common['Name'] || supplier_num} #{common['Description']}"
           pd.description = common['Features'] || ''
           pd.supplier_categories = (common['Categories'] || '').split(',').collect { |c| [c.strip] }
+          pd.tags = [] # FIX !!!
 
           pd.package.units = common['Quantity Per Box']
           pd.package.weight = common['Box Weight']
@@ -256,9 +258,23 @@ class LogomarkXLS < GenericImport
           unless common['LessThanMin1Qty'] == 0
             pricing.ltm_if(common['LessThanMin1Charge'], common['LessThanMin1Qty'])
           end
-        
-          pd.decorations = [DecorationDesc.none]
 
+          pd.decorations = [DecorationDesc.none]
+          dec_params = { :height => common['Decoration Height'] && parse_number(common['Decoration Height']),
+            :width => common['Decoration Width'] && parse_number(common['Decoration Width']) }
+          if !(hash = @decorations[common['Product Line']])
+            warning 'Unknown Decoration', common['Product Line']
+          elsif common['Decoration Methods']
+            pd.decorations += common['Decoration Methods'].split(',').collect { |n| n.strip }.uniq.collect do |tech|
+              unless hash[tech]
+                warning 'Unknown Technique', tech
+                next
+              end
+              DecorationDesc.new(dec_params.merge(:limit => tech == 'Print' ? 3 : 1,
+                                                  :location => '',
+                                                  :technique => hash[tech]))
+            end.compact
+          end
 
           pd.images = [ImageNodeFetch.new("Group/#{supplier_num}.jpg",
                                           "http://www.logomark.com/Image/Group/Group800/#{supplier_num}.jpg")]

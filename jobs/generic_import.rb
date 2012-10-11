@@ -703,7 +703,7 @@ class GenericImport
           else
             puts "    Items: #{list.join(', ')}"
           end
-          puts "  #{values[aspect].to_a.join(', ')}" unless values[aspect].blank?
+          puts "    Values: #{values[aspect].sort_by { |s, c| c }.reverse.collect { |s, c| "#{s}(#{c})" }.join(', ')}" unless values[aspect].blank?
         end
       end
 
@@ -770,15 +770,15 @@ class GenericImport
 
   def add_error(boom, id)
     @invalid_prods[boom.aspect] = (@invalid_prods[boom.aspect] || []) + [id]
-    @invalid_values[boom.aspect] ||= Set.new
-    @invalid_values[boom.aspect] << boom.value
+    @invalid_values[boom.aspect] ||= (h = {}; h.default = 0; h)
+    @invalid_values[boom.aspect][boom.value] += 1
   end
 
   def add_warning(boom, id)
     puts "* #{id}: #{boom}"  unless ARGV.include?('nowarn')
     @warning_prods[boom.aspect] = (@warning_prods[boom.aspect] || []) + [id]
-    @warning_values[boom.aspect] ||= Set.new
-    @warning_values[boom.aspect] << boom.value
+    @warning_values[boom.aspect] ||= (h = {}; h.default = 0; h)
+    @warning_values[boom.aspect][boom.value] += 1
   end
 
   def warning(aspect, description = nil)
@@ -898,35 +898,51 @@ private
         (?:(?: (?:^|\s+|-) (?<numer>\d{1,2}) )? \s*[\/∕]\s* (?<denom>\d{1,2}) ) |
         (?:(?:^|\s+) (?<sym>[⅛¼⅓⅜½⅝¾⅞]) ) |
         (?<=\d) )  # Postive lookbehind to match 'whole' alone
-     \s*[\"”]?\s*
-     (?<aspect>width|w|height|h|diameter|dia|square)?/xi
+     \s*[\"”]?\s*/xi
+
+  private
+  def number_from_regex(m)
+    num = 0.0
+    num = Float(m[:whole]) if m[:whole]
+    num += Float(m[:deci]) if m[:deci]
+    if m[:numer]
+      num += Float(m[:numer])/Float(m[:denom])
+    elsif m[:denom]
+      num /= Float(m[:denom])
+    end
+    num += case m[:sym]
+           when '⅛'; 0.125
+           when '¼'; 0.25
+           when '⅓'; 1.0/3.0
+           when '⅜'; 0.375
+           when '½'; 0.5
+           when '⅝'; 0.625
+           when '¾'; 0.75
+           when '⅞'; 0.875
+           end if m[:sym]
+    num
+  end
+  public
+
+  def parse_number(string)
+   unless m = /^#{@@component_regex}$/.match(string.strip)
+     warning 'Parse Number', "RegEx mismatch: #{string}"
+     return
+   end
+
+    number_from_regex(m)
+  end
 
   def parse_area_new(string)
     aspects = {}
     no_aspect = nil
     string.split(/x/i).each do |part|
-      unless m = /^#{@@component_regex}$/.match(part.strip)
+      unless m = /^#{@@component_regex}(?<aspect>width|w|height|h|diameter|dia|square)?$/.match(part.strip)
         warning 'Parse Area', "RegEx mismatch: #{part}"
         return
       end
-      num = 0.0
-      num = Float(m[:whole]) if m[:whole]
-      num += Float(m[:deci]) if m[:deci]
-      if m[:numer]
-        num += Float(m[:numer])/Float(m[:denom])
-      elsif m[:denom]
-        num /= Float(m[:denom])
-      end
-      num += case m[:sym]
-             when '⅛'; 0.125
-             when '¼'; 0.25
-             when '⅓'; 1.0/3.0
-             when '⅜'; 0.375
-             when '½'; 0.5
-             when '⅝'; 0.625
-             when '¾'; 0.75
-             when '⅞'; 0.875
-             end if m[:sym]
+
+      num = number_from_regex(m)
 
       aspect = case m[:aspect]
                when /^h/i;       :height
@@ -1334,6 +1350,17 @@ private
       else
         tech = t
       end
+    end
+    
+    node = DecorationTechnique
+    tech = nil
+    path.each do |p|
+      unless tech = node.find_by_name(p)
+        raise "Unknown Technique: #{path}" if path.length == 1 or p != path.last
+        tech = node.children.create(:name => name, :unit_name => tech.unit_name,
+                                    :unit_default => tech.unit_default)
+      end
+      node = tech.children
     end
 
     unless tech.price_groups.where(:supplier_id => @supplier_record.id).first
