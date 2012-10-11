@@ -9,17 +9,6 @@ class LogomarkXLS < GenericImport
     super 'Logomark'
   end
 
-  def fetch_parse?
-    time = Time.now - 1.day
-    fetched = false
-    @src_files = @src_urls.collect do |url|
-      wf = WebFetch.new(url)
-      fetched = true if wf.fetch?(time)
-      wf.get_path(time)
-    end
-    fetched
-  end
-
   def set_decoration(line, type, aspect, value, warn = false)
     @decorations[line] ||= {}
     @decorations[line][type] ||= {}    

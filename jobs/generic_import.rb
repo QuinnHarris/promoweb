@@ -624,7 +624,7 @@ class GenericImport
     @product_hash = nil # Don't need hash anymore
     mid_time = Time.now
     puts "#{@supplier_record.name} parse stop at #{mid_time} for #{mid_time - init_time}s #{@product_list.length}"     
-    @product_list.each do |pd|
+    @product_list.delete_if do |pd|
       begin
         pd.validate_after
       rescue => boom
@@ -635,6 +635,7 @@ class GenericImport
           raise
         end
       end
+      false
     end
 
     validate_interproduct
@@ -648,8 +649,19 @@ class GenericImport
   end
 
   def fetch_parse?
-    file_name = cache_file(parse_cache_filename)
-    !cache_exists(file_name) || (File.mtime(file_name) < (Time.now - 1.day))
+    if @src_urls
+      time = Time.now - 1.day
+      fetched = false
+      @src_files = @src_urls.collect do |url|
+        wf = WebFetch.new(url)
+        fetched = true if wf.fetch?(time)
+        wf.get_path(time)
+      end
+      fetched
+    else
+      file_name = cache_file(parse_cache_filename)
+      !cache_exists(file_name) || (File.mtime(file_name) < (Time.now - 1.day))
+    end
   end
   
   def run_parse_cache
@@ -769,6 +781,7 @@ class GenericImport
   end
 
   def add_error(boom, id)
+    puts "+ #{id}: #{boom}"  unless ARGV.include?('nowarn')
     @invalid_prods[boom.aspect] = (@invalid_prods[boom.aspect] || []) + [id]
     @invalid_values[boom.aspect] ||= (h = {}; h.default = 0; h)
     @invalid_values[boom.aspect][boom.value] += 1
@@ -782,7 +795,7 @@ class GenericImport
   end
 
   def warning(aspect, description = nil)
-    add_warning(ValidateError.new(aspect, description), @supplier_num)
+    add_warning(ValidateError.new(aspect, description), @supplier_num || @product_description.supplier_num)
   end
   
   def has_product?(supplier_num)
@@ -1104,7 +1117,7 @@ private
     end
   end
 
-  def match_colors(colors, options = {}, supplier_num = @supplier_num)
+  def match_colors(colors, options = {}, supplier_num = @supplier_num || @product_description.supplier_num)
     image_list = (@image_list[supplier_num] || []).collect do |image_id, url, suffix, tag|
       [ImageNodeFetch.new(image_id, url, tag), (suffix || '').split('_').first || '']
     end
@@ -1112,7 +1125,7 @@ private
     match_image_colors(image_list, colors, options, supplier_num)
   end
 
-  def match_image_colors(image_list, colors, options = {}, supplier_num = @supplier_num)
+  def match_image_colors(image_list, colors, options = {}, supplier_num = @supplier_num || @product_description.supplier_num)
 #    if colors.length == 1
 #      return { colors.first => image_list.collect { |image, suffix| image } }
 #    end
@@ -1135,7 +1148,8 @@ private
       end
       match_list = colors.zip(common_str, common_tok)
     else
-      match_list = colors.zip(colors, colors)
+      common_str = colors.collect { |c| [c] }
+      match_list = colors.zip(common_str, common_str)
     end
 
 
@@ -1188,7 +1202,7 @@ private
 
     if respond_to?(:color_map)      
       # Component Suffix Match
-      mapped = match_list.collect do |id, color|
+      mapped = match_list.collect do |id, color, tok|
         names = color_map.keys.find_all { |c| [c].flatten.find { |d| color.downcase.include?(d) } }
         names = names.find_all { |n| !names.find { |o| (o != n) and o.include?(n) } }
         names.sort_by! { |n| color.downcase.index(n) }
@@ -1223,7 +1237,7 @@ private
 
     image_list.each do |image, suffix|
       reg = Regexp.new(suffix.split('').collect { |s| [s, '.*'] }.flatten[0..-2].join, Regexp::IGNORECASE)
-      list = match_list.find_all do |id, color|
+      list = match_list.find_all do |id, color, tok|
         (reg === color)
       end.compact
 
