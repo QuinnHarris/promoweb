@@ -3,7 +3,9 @@ class MagnetGroupXLS < GenericImport
     super 'The Magnet Group'
   end
 
-  def fetch
+  def fetch_parse?
+    return false unless super
+
     puts "Starting Fetch"
     agent = Mechanize.new
     page = agent.get('http://transfer.themagnetgroup.com/TMG/HTCOMNET/')
@@ -16,27 +18,25 @@ class MagnetGroupXLS < GenericImport
     
     files = page.body.scan(/fil\(\d+,'.+?','.+?',\d+,\s'(.+?)',.+?\)/).flatten
 
-    xlss = files.find_all { |f| /^Product Pricing Extract - \d{6}\.xls$/ === f }
-    if xlss.length == 1
-      xls = xlss.first
-    else
-      raise "Wrong # of Files: #{xls.inspect} from #{files.inspect}"
-    end
+    xlss = files.collect { |f| /^Product Pricing Extract - (\d{2})(\d{2})(\d{2})\.xls$/ === f ? [f, Date.new(('20'+$3).to_i, $1.to_i, $2.to_i)] : nil }.compact
+    xls = xlss.sort_by { |f, d| d }.last.first
 
     @src_file = File.join(JOBS_DATA_ROOT, xls)
     if File.exists?(@src_file)
       puts "File already downloaded: #{@src_file}"
+      return false
     else
       puts "Starting Download"
       page = agent.get("http://transfer.themagnetgroup.com/TMG/HTCOMNET/getfile.aspx?file=#{xls}")
       page.save_as @src_file
       puts "Downloaded: #{@src_file}"
+      return true
     end
   end
 
   def parse_products
     #fetch
-    @src_file = File.join(JOBS_DATA_ROOT, 'Product Pricing Extract - 073112.xls')
+    @src_file = File.join(JOBS_DATA_ROOT, 'Product Pricing Extract - 092512.xls') unless @src_file
 
     unique_columns = %w(setupChargeDescription NetSetupCharge PrintMethod PriceMethod priceIncludesBrandNote priceIncludesItemNote priceIncludesCategoryNote AsLowAsCatalog AsLowAsNet) +
       %w(qty catalog net code AddColorPrice AddColorDiscountCode).map { |s| (1..10).map { |i| "#{s}#{i}" } }.flatten
@@ -56,129 +56,120 @@ class MagnetGroupXLS < GenericImport
     
     product_merge.each do |supplier_num, unique, common|
       next if %w(IC265 PUTAGBK).include?(supplier_num)
-      puts supplier_num
-      product_data = {
-        'supplier_num' => supplier_num,
-        'name' => common['ItemName'].strip,
-        'description' => common['description'] ? common['description'].gsub(/\.\s+/,".\n") : '',
-        'supplier_categories' => [[common['brandName'].strip, common['ProductCategoryName'].strip]],
-        'images' => []
-      }
+      ProductDesc.apply(self) do |pd|
+        pd.supplier_num = supplier_num
+        pd.name = common['ItemName'].strip
+        pd.description = common['description'] ? common['description'].gsub(/\.\s+/,".\n") : ''
+        pd.supplier_categories = [[common['brandName'].strip, common['ProductCategoryName'].strip]]
+        pd.images = []
 
-      common_properties = {
-        'size' => { 
-          'width' => 'w',
-          'height' => 'h',
-          'depth' => 'l' }.each_with_object({}) do |(col, key), size|
+        pd.properties = {
+          'size' => { 
+            'width' => 'w',
+            'height' => 'h',
+            'depth' => 'l' }.each_with_object({}) do |(col, key), size|
             size[key] = Float(common[col]) unless Float(common[col]) == 0.0
-        end,
-        'material' => common['PrimaryMaterial']
-      }
+          end,
+          'material' => common['PrimaryMaterial']
+        }
 
-      # Tags
-      product_data['tags'] = {
-        'newProduct' => 'New',
-        'priceBuster' => 'Special',
-        'thinkGreen' => 'Eco',
-        'closeout' => 'Closeout' }.collect do |col, tag|
-        common[col] == 'YES' ? tag : nil
-      end.compact
+        # Tags
+        pd.tags = {
+          'newProduct' => 'New',
+          'priceBuster' => 'Special',
+          'thinkGreen' => 'Eco',
+          'closeout' => 'Closeout' }.collect do |col, tag|
+          common[col] == 'YES' ? tag : nil
+        end.compact
 
-      # Shipping
-      unless common['ShipQty1'].blank?
-        product_data.merge!('package_units' => Integer(common['ShipQty1']),
-                            'package_weight' => Float(common['ShipWeightinLBs']))
-      end
-
-      unless common['ShipLength1'].blank? || common['ShipLength1'] == 'Custom Box'
-        %w(length width height).each do |dim|
-          product_data["pacakge_#{dim}"] = Float(common["Ship#{dim.capitalize}1"])
+        # Shipping
+        unless common['ShipQty1'].blank?
+          pd.package.merge_from_object(common, { 'units' => 'ShipQty1',
+                                         'weight' => 'ShipWeightinLBs'})
         end
-      end
 
-      # Leed Time
-      if /^(\d{1,2})-(\d{1,2}) working days$/ === common['standardProductionTime']
-        product_data.merge!('lead_time_normal_min' => Integer($1),
-                            'lead_time_normal_max' => Integer($2))
-        product_data['lead_time_rush'] = 1 if common['quickShip'] == 'YES'
-      else
-        puts "Unkown Production Time: #{common['standardProductionTime'].inspect}"
-      end
-
-
-
-      # Setup initial variant with colors
-      if common['itemHasVariations'] == 'YES' and common['Item_Variations']
-        variants = common['Item_Variations'].split(/\s*,\s*/)
-          .zip(common['AvailableColors'].split(/\s*,\s*/)).collect do |num, color|
-          { 'supplier_num' => num, 'properties' => { 'color' => color } }
+        unless common['ShipLength1'].blank? || common['ShipLength1'] == 'Custom Box'
+          mapping = %w(length width height).each_with_object({}) do |dim, hash|
+            hash[dim] = "Ship#{dim.capitalize}1"
+          end
+          pd.package.merge_from_object(common, mapping)
         end
-      else
-        variants = [{ 'supplier_num' => supplier_num, 'properties' => {} }]
-      end
 
-      # Add images to variants
-      variants = variants.each do |variant|
-        variant_num = variant['supplier_num']
-        variant['images'] =
-          [ImageNodeFetch.new("#{variant_num}HR.jpg",
-                              "http://www.themagnetgroup.com/images/product/HR/#{variant_num}HR.jpg")]
-      end
+        # Leed Time
+        if /^(\d{1,2})-(\d{1,2}) working days$/ === common['standardProductionTime']
+          pd.lead_time.normal_min = Integer($1)
+          pd.lead_time.normal_max = Integer($2)
+          pd.lead_time.rush = 1 if common['quickShip'] == 'YES'
+        else
+          puts "Unkown Production Time: #{common['standardProductionTime'].inspect}"
+        end
 
-      unique.each do |uniq|
-        uniq[:pricing] = PricingDesc.get do |pricing|
+        # Setup initial variant with colors
+        if common['itemHasVariations'] == 'YES' and common['Item_Variations']
+          variants = common['Item_Variations'].split(/\s*,\s*/)
+            .zip(common['AvailableColors'].split(/\s*,\s*/)).collect do |num, color|
+            VariantDesc.new(:supplier_num => num, :properties => { 'color' => color })
+          end
+        else
+          variants = [VariantDesc.new(:supplier_num => supplier_num, :properties => {})]
+        end
+
+        # Add images to variants
+        variants = variants.each do |variant|
+          variant.images =
+            [ImageNodeFetch.new("#{variant.supplier_num}HR.jpg",
+                                "http://www.themagnetgroup.com/images/product/HR/#{variant.supplier_num}HR.jpg")]
+        end
+
+        unique.each do |uniq|
+          pricing = PricingDesc.new
           (1..10).each do |i|
             next if (qty = uniq["qty#{i}"]).blank?
             pricing.add(qty, uniq["catalog#{i}"], uniq["net#{i}"])
           end
+          pricing.maxqty
+          pricing.ltm_if(40.0, common['MinimumQuantity'])
+          
+          uniq[:pricing] = pricing
         end
-      end
 
-      imprint_dim = common['imprintHeight'].blank? ? {} : {
-        'width' => Float(common['imprintHeight']),
-        'height' => Float(common['imprintWidth']) }
+        imprint_dim = common['imprintHeight'].blank? ? {} : {
+          :width => Float(common['imprintHeight']),
+          :height => Float(common['imprintWidth']) }
 
-      cnt = unique.count { |u| u['PriceMethod'] && u['PriceMethod'].include?('Thickness') }
-      if cnt == unique.length
-        # All Variants with Thickness
-        variants = unique.collect do |uniq|
-          raise "Unknown Tickness: #{uniq['PriceMethod'].inspect}" unless /^((?:\.\d{3})|(?:\d{2}[GPR])) Thickness$/ === uniq['PriceMethod']
-
-          variants.collect do |hash|
-            hash = hash.merge(uniq[:pricing])
-            puts "Thick: #{$1}"
-            hash['supplier_num'] += "-#{$1}"
-            hash['properties'] = hash['properties'].merge('thickness' => $1)
-            hash
+        cnt = unique.count { |u| u['PriceMethod'] && u['PriceMethod'].include?('Thickness') }
+        if cnt == unique.length
+          # All Variants with Thickness
+          pd.variants = unique.collect do |uniq|
+            raise "Unknown Tickness: #{uniq['PriceMethod'].inspect}" unless /^((?:\.\d{3})|(?:\d{2}[GPR])) Thickness$/ === uniq['PriceMethod']
+            
+            variants.collect do |variant|
+              variant = variant.dup
+              variant.pricing = uniq[:pricing]
+              puts "Thick: #{$1}"
+              variant.supplier_num += "-#{$1}"
+              variant.properties.merge!('thickness' => $1)
+              variant
+            end
+          end.flatten
+          
+          pd.decorations = [DecorationDesc.new({:technique => '4 Color Photographic',
+                                                 :location => '' }.merge(imprint_dim))]
+        else
+          puts "Mismatch #{supplier_num} #{unique.inspect}" unless cnt == 0
+          unique.each do |elem|
+            puts "  #{elem['PrintMethod']} #{elem['PriceMethod']}"
           end
-        end.flatten
-
-        decorations = [{
-                         'technique' => '4 Color Photographic',
-                         'location' => ''
-                       }.merge(imprint_dim)]
-      else
-        puts "Mismatch #{supplier_num} #{unique.inspect}" unless cnt == 0
-        unique.each do |elem|
-          puts "  #{elem['PrintMethod']} #{elem['PriceMethod']}"
+          uniq = unique.sort_by { |uniq| uniq[:pricing].prices.first[:marginal] }.last
+          pd.variants = variants.collect do |variant|
+            raise "Price" unless uniq[:pricing]
+            variant.pricing = uniq[:pricing]
+            variant
+          end
+          
+          pd.decorations = [DecorationDesc.none]
         end
-        uniq = unique.sort_by { |uniq| uniq[:pricing]['prices'].first[:marginal] }.last
-        variants.each do |hash|
-          hash.merge!(uniq[:pricing])
-        end
-
-       decorations = [{
-                         'technique' => 'None',
-                         'location' => ''
-                       }]
       end
-
-
-      product_data['decorations'] = decorations
-
-      product_data['variants'] = variants
-
-      add_product(product_data)
     end
   end
 end

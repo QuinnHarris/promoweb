@@ -279,11 +279,12 @@ class PricingDesc
     prices == right.prices && costs == right.costs
   end
 
-  def self.get
-    sp = new
-    yield sp
-    sp.to_hash
-  end
+#  Remove Sometime
+#  def self.get
+#    sp = new
+#    yield sp
+#    sp.to_hash
+#  end
 
   # Duplicated in GenericImport Remove from there eventually
   def convert_pricecode(comp)
