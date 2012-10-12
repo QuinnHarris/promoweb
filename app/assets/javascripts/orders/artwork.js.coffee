@@ -31,7 +31,7 @@ $(document).ready ->
   $('div.items')
     .on 'dragstart', 'div.item', (event) ->
       event.originalEvent.dataTransfer.effectAllowed = 'all'
-      uri = $(this).find('a').not('[rel="nofollow"')[0].href
+      uri = $(this).find('a').not('[rel="nofollow"]')[0].href
       event.originalEvent.dataTransfer.setData("text/uri-list", uri)
       event.originalEvent.dataTransfer.setData('text/plain', uri)
       event.originalEvent.dataTransfer.setData('text', event.target.id)
