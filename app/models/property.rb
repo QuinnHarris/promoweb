@@ -1,8 +1,36 @@
+# -*- coding: utf-8 -*-
 module Paperclip
   module Interpolations
     def name_value attachment, style_name
       "#{attachment.instance.name}_#{attachment.instance.value}"
     end
+  end
+end
+
+class Float
+  def to_perty
+    whole = Integer(self)
+    decimal = self - whole
+    tail = case decimal
+           when 0;       ''
+           when 0.125;   '⅛'
+           when 0.25;    '¼'
+           when 1.0/3.0; '⅓'
+           when 0.375;   '⅜'
+           when 0.5;     '½'
+           when 0.625;   '⅝'
+           when 0.75;    '¾'
+           when 0.875;   '⅞'
+           end
+    unless tail
+      nds = decimal * 32
+      if nds.round == nds
+        div = nds.to_i.gcd(32)
+        tail = " #{nds.to_i/div}/#{32/div}"
+      end
+    end
+    return self.to_s unless tail
+    (whole == 0 ? '' : whole.to_s) + tail
   end
 end
 
@@ -18,7 +46,7 @@ class Property < ActiveRecord::Base
         begin
           v.split(',').collect do |s|
             key, value = s.split(':')
-            value + '"' + key[0..0].upcase
+            Float(value).to_perty + '"' + key[0..0].upcase
           end.join(' x ')
         rescue
           v

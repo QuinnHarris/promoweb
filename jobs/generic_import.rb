@@ -436,10 +436,15 @@ class ProductApply
       variant_log << variant_record.set_images(vd.images)
           
       # Properties
-      current.properties.merge(vd.properties).each do |name, value|
+      properties = current.properties.merge(vd.properties)
+      properties.each do |name, value|
         next if name == 'swatch'
         value = nil if value.blank?
-        value = value.collect { |k, v| "#{k}:#{v}" }.sort.join(',') if value.is_a?(Hash)
+        if value.is_a?(Hash)
+          k = value.keys.collect { |s| s.to_s[0].upcase }
+          raise "Non Unique Key" unless k.length == k.uniq.length
+          value = value.collect { |k, v| "#{k.to_s[0].upcase}:#{v}" }.sort.join(',') 
+        end
         variant_record.set_property(name, value, variant_log)
       end
       
@@ -450,6 +455,9 @@ class ProductApply
           swatch_prop.save!
         end
       end
+
+      # Delete Properties
+      variant_record.delete_properties_except(properties.keys, variant_log)
           
       # Match groups to variant list.  Ensure cost and price lists match
       if pg = new_price_groups.zip(new_cost_groups).find do |(dp, vp), (dc, vc)|
@@ -946,21 +954,27 @@ private
     number_from_regex(m)
   end
 
-  def parse_area_new(string)
+  def parse_dimension(string)
     aspects = {}
     no_aspect = nil
     string.split(/x/i).each do |part|
-      unless m = /^#{@@component_regex}(?<aspect>width|w|height|h|diameter|dia|square)?$/.match(part.strip)
+      unless m = /^#{@@component_regex}(?<aspect>width|w|height|h|length|l|diameter|dia|square|d|depth)?$/i.match(part.strip)
         warning 'Parse Area', "RegEx mismatch: #{part}"
         return
       end
 
       num = number_from_regex(m)
+      if num == 0.0
+        warning 'Parse Area', 'zero'
+        next
+      end
 
       aspect = case m[:aspect]
-               when /^h/i;       :height
                when /^w/i;       :width
+               when /^h/i;       :height
+               when /^l/i;       :length
                when /^dia/i;     :diameter
+               when /^d/i;       :length
                when /^square$/i; :square
                end
       if aspect
@@ -979,7 +993,7 @@ private
           return
         end
         no_aspect = true
-        unless aspect = [:height, :width, :length].find { |s| !aspects.has_key?(s) }
+        unless aspect = [:width, :height, :length].find { |s| !aspects.has_key?(s) }
           warning 'Parse Area', "All aspects covered"
           return
         end
@@ -1004,20 +1018,20 @@ private
     aspects
   end
   
-  @@volume_reg = /^ *(\d{1,2}(?:\.\d{1,2})?[ -]?)?(?:(\d{1,2})\/(\d{1,2}))? ?"? ?([lwhd])?/i
-  def parse_volume(str)
-    res = {}
-    list = %w(l w h)
-    str.split('x').collect do |comp|
-      all, a, n, d, dim = @@volume_reg.match(comp).to_a
-      dim = list.shift if res.has_key?(dim) or !dim
-#      return nil if res.has_key?(dim)
-      res[dim] = (a ? a.to_f : 0.0) + (d ? (n.to_f/d.to_f) : 0.0)
-      list.delete_if { |x| x == dim }
-    end
-#    return nil unless res.size == 3
-    res
-  end
+#  @@volume_reg = /^ *(\d{1,2}(?:\.\d{1,2})?[ -]?)?(?:(\d{1,2})\/(\d{1,2}))? ?"? ?([lwhd])?/i
+#  def parse_volume(str)
+#    res = {}
+#    list = %w(l w h)
+#    str.split('x').collect do |comp|
+#      all, a, n, d, dim = @@volume_reg.match(comp).to_a
+#      dim = list.shift if res.has_key?(dim) or !dim
+##      return nil if res.has_key?(dim)
+#      res[dim] = (a ? a.to_f : 0.0) + (d ? (n.to_f/d.to_f) : 0.0)
+#      list.delete_if { |x| x == dim }
+#    end
+##    return nil unless res.size == 3
+#    res
+#  end
 
   def convert_pricecode(comp)
     comp = comp.upcase[0] if comp.is_a?(String)
@@ -1324,7 +1338,7 @@ private
           end
         end if respond_to?(:decoration_map)
         loc = block_given? ? yield(loc) : loc.join(', ')
-        if area = parse_area_new(dim)
+        if area = parse_dimension(dim)
           locations += [decoration].flatten.collect do |dec|
             { :technique => dec, :location => loc }.merge(area)
           end

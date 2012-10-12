@@ -62,7 +62,7 @@ class Variant < ActiveRecord::Base
   end
     
   def set_property(name, value, str)
-#   Load all properties
+    #   Load all properties
     prop = properties.to_a.find { |prop| prop.name == name }
     orig = nil
     if prop
@@ -76,6 +76,14 @@ class Variant < ActiveRecord::Base
     end
     str << "   #{name}: #{orig.inspect} => #{value.inspect}\n" if orig != value
     prop
+  end
+
+  def delete_properties_except(list, str)
+    properties.each do |prop|
+      next if list.include?(prop.name)
+      str << "    #{prop.name}: -\n"
+      properties.delete(prop)
+    end
   end
   
   def find_supplier_price

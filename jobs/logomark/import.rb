@@ -233,7 +233,7 @@ class LogomarkXLS < GenericImport
 
           pd.properties = {
             'material' => common['Finish / Material'],
-            'size' => common['Item Size'] && parse_volume(common['Item Size'])
+            'dimension' => common['Item Size'] && parse_dimension(common['Item Size'])
           }
 
 
