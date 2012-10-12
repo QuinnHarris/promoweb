@@ -319,7 +319,7 @@ class PricingDesc
     raise ValidateError.new("marginal price must be sequential", "#{@prices.last && @prices.last[:marginal]} < #{price} of #{@prices.inspect}") if last_price && last_price < price
 
     base = { :fixed => Money.new(0), :minimum => qty }
-    @prices << base.merge(:marginal => price) unless last_price && last_price == price
+    @prices << base.merge(:marginal => price) #unless last_price && last_price == price
 
     @max_qty = qty
 
