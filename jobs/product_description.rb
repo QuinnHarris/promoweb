@@ -266,6 +266,7 @@ class PricingDesc
   def initialize(prices = [], costs = [])
     @prices = prices
     @costs = costs
+    @max_qty = 0
   end
   # Temp?
   attr_accessor :prices, :costs
@@ -314,10 +315,13 @@ class PricingDesc
     raise ValidateError.new("minimums must be sequential", "#{@prices.last && @prices.last[:minimum]} >= #{qty}") if @prices.last && @prices.last[:minimum] >= qty
 
     price = parse_money(price)
-    raise ValidateError.new("marginal price must be sequential", "#{@prices.last && @prices.last[:marginal]} < #{price} of #{@prices.inspect}") if @prices.last && @prices.last[:marginal] < price
+    last_price = @prices.last && @prices.last[:marginal]
+    raise ValidateError.new("marginal price must be sequential", "#{@prices.last && @prices.last[:marginal]} < #{price} of #{@prices.inspect}") if last_price && last_price < price
 
     base = { :fixed => Money.new(0), :minimum => qty }
-    @prices << base.merge(:marginal => price)
+    @prices << base.merge(:marginal => price) unless last_price && last_price == price
+
+    @max_qty = qty
 
     if code
       discount = convert_pricecode(code)
@@ -327,8 +331,9 @@ class PricingDesc
         price = parse_money(code)
       end
       
-      raise ValidateError.new("marginal cost must be sequential", "#{@costs.last && @costs.last[:marginal]} < #{price} of #{@prices.inspect}") if @costs.last && @costs.last[:marginal] < price
-      @costs << base.merge(:marginal => price)
+      last_price = @costs.last && @costs.last[:marginal]
+      raise ValidateError.new("marginal cost must be sequential", "#{@costs.last && @costs.last[:marginal]} < #{price} of #{@prices.inspect}") if last_price && last_price < price
+      @costs << base.merge(:marginal => price) unless last_price && last_price == price
     end
   end
 
@@ -363,7 +368,7 @@ public
   def maxqty(qty = nil)
     validate # Validate costs and prices are present
     raise ValidateError, "maxqty can only be called once" unless @costs.last[:marginal]
-    @costs << { :minimum => qty ? parse_qty(qty) : [@prices.first[:minimum]*10,@costs.first[:minimum]*10,@prices.last[:minimum]*2, @costs.last[:minimum]*2].max } unless @costs.empty?
+    @costs << { :minimum => qty ? parse_qty(qty) : [@prices.first[:minimum]*10,@costs.first[:minimum]*10,@prices.last[:minimum]*2, @costs.last[:minimum]*2, @max_qty*2].max } unless @costs.empty?
   end
 
   def eqp(discount = 0.4, round = false)

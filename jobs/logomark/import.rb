@@ -215,7 +215,7 @@ class LogomarkXLS < GenericImport
 
         ProductDesc.apply(self) do |pd|
           pd.supplier_num = @supplier_num = supplier_num
-          pd.name = "#{common['Name'] || supplier_num} #{common['Description']}"
+          pd.name = "#{common['Name']} #{common['Description']}".strip
           pd.description = common['Features'] || ''
           pd.supplier_categories = (common['Categories'] || '').split(',').collect { |c| [c.strip] }
           pd.tags = [] # FIX !!!
