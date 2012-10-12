@@ -81,7 +81,7 @@ class Variant < ActiveRecord::Base
   def delete_properties_except(list, str)
     properties.each do |prop|
       next if list.include?(prop.name)
-      str << "    #{prop.name}: -\n"
+      str << "   #{prop.name}: nil\n"
       properties.delete(prop)
     end
   end

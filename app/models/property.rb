@@ -15,13 +15,19 @@ class Float
            when 0;       ''
            when 0.125;   '⅛'
            when 0.25;    '¼'
-           when 1.0/3.0; '⅓'
            when 0.375;   '⅜'
            when 0.5;     '½'
            when 0.625;   '⅝'
            when 0.75;    '¾'
            when 0.875;   '⅞'
            end
+    unless tail
+      if (decimal - 1.0/3.0).abs < 1e-10
+        tail = '⅓'
+      elsif (decimal - 2.0/3.0).abs < 1e-10
+        tail = '⅔'
+      end
+    end
     unless tail
       nds = decimal * 32
       if nds.round == nds
