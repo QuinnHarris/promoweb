@@ -59,12 +59,16 @@ class MagnetGroupXLS < GenericImport
       ProductDesc.apply(self) do |pd|
         pd.supplier_num = supplier_num
         pd.name = common['ItemName'].strip
-        pd.description = common['description'] ? common['description'].gsub(/\.\s+/,".\n") : ''
+        pd.description = common['description'] && common['description'].split(/\s*[.;][.; ]+/).collect do |s|
+          next if s.include?('Purchase order')
+          next if s.include?('See 24')
+          /[.?!]\s*/ === s ? s : "#{s}."
+        end.compact
         pd.supplier_categories = [[common['brandName'].strip, common['ProductCategoryName'].strip]]
         pd.images = []
 
         pd.properties = {
-          'size' => { 
+          'dimension' => { 
             'width' => 'w',
             'height' => 'h',
             'depth' => 'l' }.each_with_object({}) do |(col, key), size|

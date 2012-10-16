@@ -938,6 +938,7 @@ private
            when '⅜'; 0.375
            when '½'; 0.5
            when '⅝'; 0.625
+           when '⅔'; 2.0/3.0
            when '¾'; 0.75
            when '⅞'; 0.875
            end if m[:sym]

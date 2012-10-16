@@ -52,6 +52,16 @@ module PropertyObject
       merge!(hash) if hash
     end
 
+    def initialize_copy(source)
+      super
+      self.class.properties.each do |prop|
+        name = "@#{prop}"
+        if val = instance_variable_get(name)
+          instance_variable_set(name, val.dup)
+        end
+      end
+    end
+
     def [](key)
       return nil unless self.class.properties.include?(key.to_s)
       send(key.to_s)
