@@ -4,3 +4,5 @@ User-agent: *
 Disallow: /stats/
 Disallow: /admin/
 Disallow: /order/
+
+Sitemap: http://www.mountainofpromos.com/sitemaps
