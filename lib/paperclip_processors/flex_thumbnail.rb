@@ -79,7 +79,8 @@ module Paperclip
 
         success = convert(parameters, :source => "#{File.expand_path(src.path)}#{'[0]' unless animated?}", :dest => File.expand_path(dst.path))
       rescue Cocaine::ExitStatusError => e
-        raise Paperclip::Error, "There was an error processing the thumbnail for #{@basename}" if @whiny
+#        raise Paperclip::Error, "There was an error processing the thumbnail for #{@basename}" if @whiny
+        Rails.logger.info("There was an error processing the thumbnail for #{@basename}")
       rescue Cocaine::CommandNotFoundError => e
         raise Paperclip::Errors::CommandNotFoundError.new("Could not run the `convert` command. Please install ImageMagick.")
       end
