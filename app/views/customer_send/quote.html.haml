@@ -3,7 +3,7 @@
   %head{ :profile => "http://www.w3.org/2005/10/profile" }
     %base{ :href => url_for(:only_path => false, :controller => :categories, :action => :home) }
     %style{ :type => "text/css" }
-      = Promoweb::Application.assets['customer_send.css'].to_s
+      = Promoweb::Application.assets['customer_send.css'].to_s.gsub('}', "}\n")
   %body
     #header
       = link_to('/', :id => 'logo') do      
