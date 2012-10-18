@@ -632,21 +632,23 @@ class GenericImport
     @product_hash = nil # Don't need hash anymore
     mid_time = Time.now
     puts "#{@supplier_record.name} parse stop at #{mid_time} for #{mid_time - init_time}s #{@product_list.length}"     
-    @product_list.delete_if do |pd|
-      begin
-        pd.validate_after
-      rescue => boom
-        if boom.is_a?(ValidateError)
+    unless ARGV.include?('nopost')
+      @product_list.delete_if do |pd|
+        begin
+          pd.validate_after
+        rescue => boom
+          if boom.is_a?(ValidateError)
           add_error(boom, pd.supplier_num)
-          next true # Do Delete
-        else
-          raise
+            next true # Do Delete
+          else
+            raise
+          end
         end
+        false
       end
-      false
+      
+      validate_interproduct
     end
-
-    validate_interproduct
 
     stop_time = Time.now
     puts "#{@supplier_record.name} validate stop at #{stop_time} for #{stop_time - mid_time}s #{@product_list.length}"
@@ -913,14 +915,13 @@ private
   end
 
 
-  @@component_regex = 
+  @@number_regex = 
     /(?<whole>\d{1,2})?
      (?:(?<deci>\.\d{1,4}) |
         (?:(?: (?:^|\s+|-) (?<numer>\d{1,2}) )? \s*[\/∕]\s* (?<denom>\d{1,2}) ) |
         (?:(?:^|\s+) (?<sym>[⅛¼⅓⅜½⅝¾⅞]) ) |
         (?<=\d) )  # Postive lookbehind to match 'whole' alone
      \s*[\"”]?\s*/xi
-
   private
   def number_from_regex(m)
     num = 0.0
@@ -947,7 +948,7 @@ private
   public
 
   def parse_number(string)
-   unless m = /^#{@@component_regex}$/.match(string.strip)
+   unless m = /^#{@@number_regex}$/.match(string.strip)
      warning 'Parse Number', "RegEx mismatch: #{string}"
      return
    end
@@ -955,11 +956,12 @@ private
     number_from_regex(m)
   end
 
-  def parse_dimension(string)
+  @@component_regex = /#{@@number_regex}(?<aspect>width|w|height|h|length|l|diameter|dia|square|d|depth)?/i
+  def parse_dimension(string, pedantic = false)
     aspects = {}
     no_aspect = nil
     string.split(/x/i).each do |part|
-      unless m = /^#{@@component_regex}(?<aspect>width|w|height|h|length|l|diameter|dia|square|d|depth)?$/i.match(part.strip)
+      unless m = /^#{@@component_regex}$/.match(part.strip)
         warning 'Parse Area', "RegEx mismatch: #{part}"
         return
       end
@@ -1013,11 +1015,41 @@ private
     
     if (aspects[:height] || aspects[:width]) && (aspects[:height].nil? != aspects[:width].nil?)
       warning 'Parse Area', "Missing both aspects: #{string}"
-      return
+      return if pedantic
     end
     
     aspects
   end
+
+  crn = @@component_regex.to_s.gsub(/\?<.+?>/,'?:').gsub(/\)\?\)$/,'))')
+  @@multi_area_regex = /\s*(?:([A-Z\- ]+):)?\s*(?:([A-Z\- ]+):)?\s*(?:\((.+?)\):?)?\s*(#{crn}(?:\s*x\s*#{crn})?)\s{0,2}(?:\(?([A-Z0-9][A-Z0-9 ]*)(?:$|[.!?)]|(?:  )))?/i
+
+  def parse_areas(string, seperator = 'or')
+    return [] if string.blank?
+    locations = []
+    string.gsub(' ',' ').split(seperator).each do |str|
+      str.scan(@@multi_area_regex).each do |a, b, c, dim, d|
+        loc = [a, b, c, d].compact.collect { |s| s.strip }
+        decoration = nil
+        loc.delete_if do |str|
+          if dec = decoration_map[str.downcase]
+            warning "Duplicate decoration" if decoration
+            decoration = dec
+          end
+        end if respond_to?(:decoration_map)
+        loc = block_given? ? yield(loc) : loc.join(', ')
+        if area = parse_dimension(dim)
+          locations += [decoration].flatten.collect do |dec|
+            { :technique => dec, :location => loc }.merge(area)
+          end
+        else
+          warning "Unkown Decoration", "#{decoration.inspect}: #{area.inspect} (#{loc}) [#{dim.inspect} #{a.inspect} #{b.inspect} #{c.inspect}]"
+        end
+      end
+    end
+    locations
+  end
+
   
 #  @@volume_reg = /^ *(\d{1,2}(?:\.\d{1,2})?[ -]?)?(?:(\d{1,2})\/(\d{1,2}))? ?"? ?([lwhd])?/i
 #  def parse_volume(str)
@@ -1034,35 +1066,18 @@ private
 #    res
 #  end
 
-  def convert_pricecode(comp)
-    comp = comp.upcase[0] if comp.is_a?(String)
-    num = nil
-    num = comp.ord - ?A.ord if comp.ord >= ?A.ord and comp.ord <= ?G.ord
-    num = comp.ord - ?P.ord if comp.ord >= ?P.ord and comp.ord <= ?X.ord
-    
-    raise "Unknown PriceCode: #{comp}" unless num
-    
-    0.5 - (0.05 * num)
-  end
+#  def convert_pricecode(comp)
+#    comp = comp.upcase[0] if comp.is_a?(String)
+#    num = nil
+#    num = comp.ord - ?A.ord if comp.ord >= ?A.ord and comp.ord <= ?G.ord
+#    num = comp.ord - ?P.ord if comp.ord >= ?P.ord and comp.ord <= ?X.ord
+#    
+#    raise "Unknown PriceCode: #{comp}" unless num
+#    
+#    (50 - (5 * num)) / 100.0
+#  end
   
-  def convert_pricecodes(str)
-    count = 1
-    str.strip.upcase.unpack("C*").collect do |comp|
-      if comp.ord > ?0.ord and comp.ord <= ?9.ord
-        count = comp.ord - ?0.ord
-        next nil
-      end
-      
-      begin
-        num = convert_pricecode(comp)
-        ret = (0...count).collect { num }
-        count = 1
-        next ret
-      rescue
-        raise "Unknown PriceCodes: \"#{str}\""
-      end
-    end.compact.flatten
-  end
+#  def convert_pricecodes(str) # in product_description
   
   @@upcases = %w(AM FM MB GB USB)
   @@downcases = %w(in with)
@@ -1322,41 +1337,14 @@ private
     strings
   end
 
-  crn = @@component_regex.to_s.gsub(/\?<.+?>/,'?:').gsub(/\)\?\)$/,'))')
-  @@multi_area_regex = /\s*(?:([A-Z\- ]+):)?\s*(?:([A-Z\- ]+):)?\s*(?:\((.+?)\):?)?\s*(#{crn}(?:\s*x\s*#{crn})?)\s{0,2}(?:\(?([A-Z0-9][A-Z0-9 ]*)(?:$|[.!?)]|(?:  )))?/i
-
-  def parse_areas(string, seperator = 'or')
-    return [] if string.blank?
-    locations = []
-    string.gsub(' ',' ').split(seperator).each do |str|
-      str.scan(@@multi_area_regex).each do |a, b, c, dim, d|
-        loc = [a, b, c, d].compact.collect { |s| s.strip }
-        decoration = nil
-        loc.delete_if do |str|
-          if dec = decoration_map[str.downcase]
-            warning "Duplicate decoration" if decoration
-            decoration = dec
-          end
-        end if respond_to?(:decoration_map)
-        loc = block_given? ? yield(loc) : loc.join(', ')
-        if area = parse_dimension(dim)
-          locations += [decoration].flatten.collect do |dec|
-            { :technique => dec, :location => loc }.merge(area)
-          end
-        else
-          warning "Unkown Decoration", "#{decoration.inspect}: #{area.inspect} (#{loc}) [#{dim.inspect} #{a.inspect} #{b.inspect} #{c.inspect}]"
-        end
-      end
-    end
-    locations
-  end
-
-  def get_decoration(technique, fixed, marginal, postfix = nil)
+  # Magnetgroup has column extra color pricing, should implement
+  def get_decoration(technique, fixed, marginal, options = {})
     @decoration_set ||= Set.new
     fixed = Money.new(fixed)
     marginal = Money.new(marginal) if marginal
     path = nil
-    if postfix
+    discount = (options[:code] && PricingDesc.convert_pricecode(options[:code])) || 0.2
+    if postfix = options[:postfix]
       if postfix.blank?
         name = technique
         path = [technique]
@@ -1366,11 +1354,13 @@ private
     else
       name = "#{technique} @ #{fixed}"
       name += "/#{marginal}" if marginal
+      name += " (#{discount})" unless discount == 0.2
     end
     path = [technique, name] unless path
     return path if @decoration_set.include?(path)
 
     tech = DecorationTechnique.find_by_name(path.first)
+    raise "Unknown Technique: #{path.first}" unless tech
     path[1..-1].each do |p|
       unless t = tech.children.find_by_name(p)
         raise "Unknown Technique: #{path}" if p != path.last
@@ -1401,15 +1391,15 @@ private
                                    :fixed_price_marginal => Money.new(0),
                                    :fixed_price_fixed => fixed,
                                    :fixed => PriceGroup.create_prices([
-                                   {  :fixed => (fixed*0.8).round_cents,
+                                   {  :fixed => (fixed*(1.0 - discount)).round_cents,
                                       :marginal => Money.new(0), :minimum => 1 }]),
                                    :marginal_price_const => 0.0,
                                    :marginal_price_exp => 0.0,
                                    :marginal_price_marginal => marginal || Money.new(0),
                                    :marginal_price_fixed => fixed,
                                    :marginal => PriceGroup.create_prices([
-                                   {  :fixed => (fixed*0.8).round_cents,
-                                      :marginal => marginal ? (marginal*0.8).round_cents : Money.new(0), :minimum => 1 }]),
+                                   {  :fixed => (fixed*(1.0 - discount)).round_cents,
+                                      :marginal => marginal ? (marginal*(1.0-discount)).round_cents : Money.new(0), :minimum => 1 }]),
                                    )
 
         DecorationDesc.techniques[path] = tech

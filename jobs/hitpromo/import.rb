@@ -143,7 +143,7 @@ class HitPromoCSV < GenericImport
         # Prices
         price_string = unique.sort_by { |s| price_preference.index(s['postfix']) }.first
         pricing = PricingDesc.new
-        discounts = convert_pricecodes(price_string['discount_code'])
+        discounts = PricingDesc.convert_pricecodes(price_string['discount_code'])
         (1..8).each do |i|
           qty = price_string["quantity#{i}"]
           break if qty.blank?
@@ -162,7 +162,7 @@ class HitPromoCSV < GenericImport
         pricing.maxqty
 
         dimension = common['approximate_size'] || common['approximate_bag_size']
-        pd.properties['dimension'] = parse_volume(dimension) if dimension
+        pd.properties['dimension'] = parse_dimension(dimension) if dimension
 
 
         pd.images = [ImageNodeFetch.new(common['product_photo'],
@@ -174,13 +174,14 @@ class HitPromoCSV < GenericImport
 #          variations[name][value] = (variations[name][value] || []) + [pd.supplier_num]
 #        end
 
-#        puts "Area: #{common['imprint_area']}"
+        puts "Area: #{common['imprint_area']}"
         locations = parse_areas(common['imprint_area'], '•') do |locs|
+          puts "LOC: #{locs.inspect}"
           locs.find_all { |s| not (/(?:See)|(?:Must)/ === s) }.join(', ')
         end
-#        locations.each do |imprint|
-#          puts "  #{imprint.inspect}"
-#        end
+        locations.each do |imprint|
+          puts "  #{imprint.inspect}"
+        end
 
 #        puts "Setup: #{common['set_up_charge']}"
         setups = []

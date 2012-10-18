@@ -3,6 +3,10 @@ class MagnetGroupXLS < GenericImport
     super 'The Magnet Group'
   end
 
+  def imprint_colors
+    %w(Black 430 727 469 202 485 165 Yellow 347 349 320 Process\ Blue Reflex\ Blue 281 266 230 238)
+  end
+
   def fetch_parse?
     return false unless super
 
@@ -59,7 +63,8 @@ class MagnetGroupXLS < GenericImport
       ProductDesc.apply(self) do |pd|
         pd.supplier_num = supplier_num
         pd.name = common['ItemName'].strip
-        pd.description = common['description'] && common['description'].split(/\s*[.;][.; ]+/).collect do |s|
+        pd.description = ((common['description'] || '') + '.' + (common['productInfo'] || '')).split(/\s*[.;][.; ]+/).collect do |s|
+          next if s.blank?
           next if s.include?('Purchase order')
           next if s.include?('See 24')
           /[.?!]\s*/ === s ? s : "#{s}."
@@ -141,7 +146,11 @@ class MagnetGroupXLS < GenericImport
           :width => Float(common['imprintHeight']),
           :height => Float(common['imprintWidth']) }
 
-        cnt = unique.count { |u| u['PriceMethod'] && u['PriceMethod'].include?('Thickness') }
+
+        price_method = unique.collect { |e| e['PriceMethod'] }.compact
+        pd.decorations = [DecorationDesc.none] if price_method.include?('Blank') or price_method.include?('No Imprint')
+
+        cnt = price_method.count { |u| u.include?('Thickness') }
         if cnt == unique.length
           # All Variants with Thickness
           pd.variants = unique.collect do |uniq|
@@ -157,21 +166,40 @@ class MagnetGroupXLS < GenericImport
             end
           end.flatten
           
-          pd.decorations = [DecorationDesc.new({:technique => '4 Color Photographic',
-                                                 :location => '' }.merge(imprint_dim))]
+          pd.decorations << DecorationDesc.new({:technique => '4 Color Photographic',
+                                                 :location => '' }.merge(imprint_dim))
         else
-          puts "Mismatch #{supplier_num} #{unique.inspect}" unless cnt == 0
-          unique.each do |elem|
-            puts "  #{elem['PrintMethod']} #{elem['PriceMethod']}"
-          end
+          unique.each do |rec|
+            # insert into decoration_techniques (name) values ('Sand Etched');
+            # insert into decoration_techniques (name) values ('Jewelery Engrave');
+            no_engrave_setup = (rec['setupChargeDescription'] || '').include?('No setup for engraving')
+            { 'Imprinted' => ['Screen Print', 3, 50.0],
+              'Laser Engraved' => ['Laser Engrave', 1, no_engrave_setup ? 0 : 50.0],
+              'Debossed' => ['Deboss', 1, 50.0],
+              'Sand Etched' => ['Sand Etched', 1, 50.0],
+              'Jewelry Engraved' => ['Jewelery Engrave', 1, no_engrave_setup ? 0 : 50.0],
+              'Standard' => ['Color Process', 3, 50.0],
+              #          '4 Color Process' =>,
+            }.each do |str, (tech, limit, setup)|
+              next unless rec['PriceMethod'] == str
+              marginal = rec['AddColorPrice1'] && Float(rec['AddColorPrice1'])
+              marginal = nil if marginal == 0.0
+              puts "Marginal: #{marginal}" if marginal
+              dec = get_decoration(tech, setup, marginal, :code => rec['AddColorDiscountCode1'])
+              pd.decorations << DecorationDesc.new({ :technique => dec, :limit => marginal ? limit : 1,
+                                                     :location => ''}.merge(imprint_dim) )
+            end
+          end      
+#          puts "Mismatch #{supplier_num} #{unique.inspect}" unless cnt == 0
+#          unique.each do |elem|
+#            puts "  #{elem['PrintMethod']} #{elem['PriceMethod']}"
+#          end
           uniq = unique.sort_by { |uniq| uniq[:pricing].prices.first[:marginal] }.last
           pd.variants = variants.collect do |variant|
             raise "Price" unless uniq[:pricing]
             variant.pricing = uniq[:pricing]
             variant
           end
-          
-          pd.decorations = [DecorationDesc.none]
         end
       end
     end
