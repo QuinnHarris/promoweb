@@ -298,14 +298,32 @@ class PricingDesc
 #  end
 
   # Duplicated in GenericImport Remove from there eventually
-  def convert_pricecode(comp)
+  def self.convert_pricecode(comp)
     return comp if comp.is_a?(Float) && comp > 0.0 && comp < 0.9
-    return nil unless comp.is_a?(String) && /^[A-GP-X]$/i === comp
-    comp = comp.upcase[0]
+    if comp.is_a?(String)
+      return nil unless (/^[A-GP-X]$/i === comp)
+      comp = comp.upcase[0]
+    end
     num = comp.ord - ?A.ord if comp.ord >= ?A.ord and comp.ord <= ?G.ord
     num = comp.ord - ?P.ord if comp.ord >= ?P.ord and comp.ord <= ?X.ord
-        
-    0.5 - (0.05 * num)
+
+    (50 - (5 * num)) / 100.0
+  end
+
+  def self.convert_pricecodes(str)
+    count = 1
+    str.strip.upcase.unpack("C*").collect do |comp|
+      if comp.ord > ?0.ord and comp.ord <= ?9.ord
+        count = comp.ord - ?0.ord
+        next nil
+      end
+      
+      num = convert_pricecode(comp)
+      raise "Unknown PriceCodes: #{comp.inspect} of #{str.inspect} " unless num
+      ret = (0...count).collect { num }
+      count = 1
+      next ret
+    end.compact.flatten
   end
   
   def parse_qty(qty)
@@ -334,7 +352,7 @@ class PricingDesc
     @max_qty = qty
 
     if code
-      discount = convert_pricecode(code)
+      discount = self.class.convert_pricecode(code)
       if discount
         price *= 1.0 - discount
       else

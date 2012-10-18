@@ -117,14 +117,14 @@ class LogomarkXLS < GenericImport
           sorted = costs.to_a.sort_by { |h, l| l.length }
           if sorted.length == 1 or sorted[-1].last.length != sorted[-2].last.length
             default = sorted.pop.first.merge(:key => key)
-            cost_decorations[default] = get_decoration(technique, default[:fixed], default[:marginal], '')
+            cost_decorations[default] = get_decoration(technique, default[:fixed], default[:marginal], :postfix > '')
           end
           sorted.each do |hash, list|
             k = hash.merge(:key => key)
             if k[:fixed] == default[:fixed] and !k[:marginal] and default[:marginal]
               cost_decorations[k] = cost_decorations[default]
             else
-              cost_decorations[k] = get_decoration(technique, hash[:fixed] || 0.0, hash[:marginal], list.join(', '))
+              cost_decorations[k] = get_decoration(technique, hash[:fixed] || 0.0, hash[:marginal], :postfix => list.join(', '))
             end
           end
         end
