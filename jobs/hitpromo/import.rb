@@ -160,7 +160,8 @@ class HitPromoCSV < GenericImport
           pricing.ltm(40.0)
         end
         pricing.maxqty
-
+        
+        # Can list multiple dimensions e.g. "16" W x 14 ½" H • Pouch: 4 ½" W x 5" H"
         dimension = common['approximate_size'] || common['approximate_bag_size']
         pd.properties['dimension'] = parse_dimension(dimension) if dimension
 
@@ -174,14 +175,14 @@ class HitPromoCSV < GenericImport
 #          variations[name][value] = (variations[name][value] || []) + [pd.supplier_num]
 #        end
 
-        puts "Area: #{common['imprint_area']}"
-        locations = parse_areas(common['imprint_area'], '•') do |locs|
-          puts "LOC: #{locs.inspect}"
-          locs.find_all { |s| not (/(?:See)|(?:Must)/ === s) }.join(', ')
+#        puts "Area: #{common['imprint_area']}"
+#        locations = parse_areas(common['imprint_area'], '•') do |locs|
+#          puts "LOC: #{locs.inspect}"
+#          locs.find_all { |s| not (/(?:See)|(?:Must)/ === s) }.join(', ')
         end
-        locations.each do |imprint|
-          puts "  #{imprint.inspect}"
-        end
+#        locations.each do |imprint|
+#          puts "  #{imprint.inspect}"
+#        end
 
 #        puts "Setup: #{common['set_up_charge']}"
         setups = []
