@@ -76,7 +76,7 @@ public
   # The ruby way, show as mooolasis
   def home
     @title = "Mountain of Promotions - Custom imprinted Promotional Products, Advertising Specialties, Promotional Items"
-    @description = "Mountain of Promotions"
+    @description = "Custom imprinted Promotional Products, Advertising Specialties, Promotional Items"
 
     @per_page = @@columns * @@rows
 
@@ -167,17 +167,20 @@ private
     @per_page = @@columns * @@rows
     
     @direct_children = @category.children.sort { |l, r| l.name <=> r.name }
-    direct_children_names = @direct_children.collect { |c| c.name }.join(', ')
+    direct_children_names = @direct_children.collect { |c| c.name }
 
     @context[:children] = false
     
     @email_subject = @category.name
     
-    @description = "#{@category.name} including "
-    @description += direct_children_names
-    @description += ".  All products can be custom imprinted."
+    @description = "Custom printed #{@category.name} including "
+    direct_children_names.each do |name|
+      break if @description.length + name.length > 158
+      @description += name + ", "
+    end
+    @description = @description[0..-3]
     
-    @keywords = "#{@category.name} #{direct_children_names}"
+    @keywords = "#{@category.name} #{direct_children_names.join(' ')}"
   
     render :action => :categories
   end

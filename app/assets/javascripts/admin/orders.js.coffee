@@ -292,12 +292,12 @@ get_shipping = (s) ->
   s.load('/admin/orders/shipping_get',
          'item_id='+ table.id.split('-')[1])
 
-show = (name) ->
+window.show = (name) ->
   elem = $(name)
-  if elem.hasClassName("hide")
-    elem.removeClassName "hide"
+  if elem.hasClass("hide")
+    elem.removeClass "hide"
   else
-    elem.addClassName "hide"
+    elem.addClass "hide"
 
 apply_code = (code, target) ->
   cellIndex = target.parent()[0].cellIndex

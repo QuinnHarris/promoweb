@@ -26,7 +26,7 @@
         %th.admin{ :colspan => "3" } Cost (Purchase Order)
         - if item.our_notes.blank?
           %th{ :colspan => "2" }
-            %a{ :href => "javascript:show('notes-#{item.id}')" } Show Notes
+            %a{ :href => '#', :onclick => "window.show('#notes-#{item.id}')" } Show Notes
       %tr
         %td Description
         %td Unit
