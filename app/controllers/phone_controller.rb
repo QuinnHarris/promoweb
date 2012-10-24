@@ -250,6 +250,8 @@ class PhoneController < ActionController::Base
       attr[name] = Time.at(i/1000000.0)
     end
 
+    return unless attr['create_time'] # Return if no create_time
+
     %w(hangup resurrect transfer).each do |name|
       i = doc.at_xpath("/cdr/callflow/times/#{name}_time/text()").to_s.to_i
       next if i == 0
