@@ -161,8 +161,10 @@ class QbwcController < ActionController::Base
           str = render_to_string(:layout => false, :action => 'sendRequest')
         rescue => boom
           logger.error("BOOM: #{boom.inspect}")
-          logger.error(boom.backtrace)
-          raise e
+          boom.backtrace.each do |line|
+            logger.error("  #{line}")
+          end
+          raise boom
         end
         logger.info("Request Response: <<<")
         logger.info(str)
