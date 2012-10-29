@@ -157,7 +157,13 @@ class QbwcController < ActionController::Base
       unless list.empty?
         klass.update_all("quickbooks_at = 'infinity'", ["id IN (?)", list.collect { |r| r.id }])
         instance_variable_set("@#{klass.table_name}", list)
-        str = render_to_string(:layout => false, :action => 'sendRequest')
+        begin
+          str = render_to_string(:layout => false, :action => 'sendRequest')
+        rescue e
+          puts "BOOM: #{e.inspect}"
+          puts e.backtrace
+          raise e
+        end
         logger.info("Request Response: <<<")
         logger.info(str)
         logger.info("Request Response: >>>")
