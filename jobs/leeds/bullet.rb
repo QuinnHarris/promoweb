@@ -3,8 +3,8 @@ require './import'
 
 class BulletXLS < PolyXLS
   def initialize
-    @product_urls = 'http://www.bulletline.com/services/downloads/excel/Catalog.xls'
-    @decoration_url = 'http://www.bulletline.com/services/downloads/excel/WebDecorationMethodByItem.xls'
+    @src_urls = ['http://www.bulletline.com/services/downloads/excel/WebDecorationMethodByItem.xls']
+    @src_urls << 'http://www.bulletline.com/services/downloads/excel/Catalog.xls'
     @image_url = 'images.bulletline.com'
     super "Bullet Line", :prune_colors => true
   end

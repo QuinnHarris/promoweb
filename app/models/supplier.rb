@@ -31,7 +31,8 @@ class Supplier < ActiveRecord::Base
     prod = Product.find_by_supplier_id_and_supplier_num(id, num)
     prod = Product.new({
       :supplier => self,
-      :supplier_num => num
+      :supplier_num => num,
+      :quickbooks_id => 'BLOCKED'
     }) unless prod
     prod
   end

@@ -141,7 +141,7 @@ module PropertyObject
         value.each do |e|
           raise PropertyError.new("expected #{type} in Array got #{e.inspect}" + tail, name) unless e.is_a?(type.first)
         end
-        raise PropertyError.new("expected unique Array" + tail + ": #{value.collect { |v| v.respond_to?(:id) ? v.id : v.error_id }.inspect}", name) unless value.uniq.length == value.length
+        raise PropertyError.new("expected unique Array" + tail + ": #{value.collect { |v| v.respond_to?(:id) ? v.id : (v.respond_to?(:error_id) ? v.error_id : v) }.inspect}", name) unless value.uniq.length == value.length
       else
         raise PropertyError.new("expected #{type} got #{value.inspect}" + tail, name) unless value.is_a?(type) || (options[:nil] && value.nil?)
       end

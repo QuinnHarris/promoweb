@@ -210,13 +210,10 @@ module WebFetchCommon
 
   def fetch?(time = nil)
     if File.exists?(path)
-      if time
-        stat = File.stat(path)
-        if stat.file? and
-            (!time or stat.mtime > time)
-          return false
-        end
-      else
+      return false unless time
+
+      stat = File.stat(path)
+      if stat.file? and (stat.mtime > time)
         return false
       end
     end
@@ -1179,7 +1176,7 @@ private
       match_list = colors.zip(common_str, common_tok)
     else
       common_str = colors.collect { |c| [c] }
-      match_list = colors.zip(common_str, common_str)
+      match_list = colors.zip(colors, common_str)
     end
 
 
@@ -1192,7 +1189,7 @@ private
       end
       
       list = nil
-      list = match_list.find_all { |id, c| color_map[c.downcase] && [color_map[c.downcase]].flatten.include?(suffix) } if respond_to?(:color_map)
+      list = match_list.find_all { |id, c, t| color_map[c.downcase] && [color_map[c.downcase]].flatten.include?(suffix) } if respond_to?(:color_map)
       unless list
         hash = {}
         hash.default = []

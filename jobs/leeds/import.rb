@@ -5,21 +5,6 @@ class PolyXLS < GenericImport
     super name
   end
 
-  def fetch_parse?
-    time = Time.now - 1.day
-    fetched = false
-    @prod_files = [@product_urls].flatten.collect do |url|
-      wf = WebFetch.new(url)
-      fetched = true if wf.fetch?(time)
-      wf.get_path
-    end
-    wf = WebFetch.new(@decoration_url)
-    fetched = true if wf.fetch?(time)
-    @dec_file = wf.get_path(time)
-    @src_files = @prod_files + [@dec_file]
-    fetched
-  end
-
   def parse_products
     @image_list = get_ftp_images(@image_url) do |path, file|
       if /^((?:\d+|[A-Z]{2})-\d+)([A-Z]*).*\.(?:(?:tif)|(?:jpg))$/i === file
@@ -49,11 +34,14 @@ class PolyXLS < GenericImport
       end
     end
 
+    dec_file = @src_files.first
+    prod_files = @src_files[1..-1]
+
     puts "Loading Decorations"
     decoration_data = {}
     decoration_data.default = []
 
-    ws = Spreadsheet.open(@dec_file).worksheet(0)
+    ws = Spreadsheet.open(dec_file).worksheet(0)
     ws.use_header
     # supplier_num => technique => location : limit
     ws.each(1) do |row|
@@ -84,7 +72,7 @@ class PolyXLS < GenericImport
     end
 
 
-    @prod_files.each do |file|
+    prod_files.each do |file|
       ws = Spreadsheet.open(file).worksheet(0)
       ws.use_header
       ws.each(1) do |row|
