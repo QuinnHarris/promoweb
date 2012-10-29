@@ -159,9 +159,9 @@ class QbwcController < ActionController::Base
         instance_variable_set("@#{klass.table_name}", list)
         begin
           str = render_to_string(:layout => false, :action => 'sendRequest')
-        rescue e
-          logger.error("BOOM: #{e.inspect}")
-          logger.error(e.backtrace)
+        rescue => boom
+          logger.error("BOOM: #{boom.inspect}")
+          logger.error(boom.backtrace)
           raise e
         end
         logger.info("Request Response: <<<")
