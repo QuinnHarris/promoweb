@@ -365,6 +365,19 @@ class PricingDesc
     end
   end
 
+  def apply_code(code)
+    list = self.class.convert_pricecodes(code)
+    unless list.length == @prices.length
+      if list.uniq.length == 1 and list.length > @prices.length
+        puts "Corrected excessive price codes"
+      else
+        raise ValidateError.new("price code count must match prices", "#{code} => #{list.inspect}, #{list.length} != #{@prices.length} => #{@prices.inspect}")
+      end
+    end
+    raise ValidateError, "costs must be empty to apply code" unless @costs.empty?
+    @costs = @prices.zip(list).collect { |p, d| p.merge(:marginal => p[:marginal] * (1.0 - d)) }
+  end
+
 private
   def ltm_default_qty
     [((@costs.first[:minimum] + 0.5)/2).to_i, 1].max
