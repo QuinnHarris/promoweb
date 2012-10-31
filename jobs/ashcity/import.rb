@@ -63,69 +63,68 @@ class AshCityXLS < GenericImport
     end
 
     product_merge.each do |style, unique, common|
-      pd = ProductDesc.new
-      pd.supplier_num = style
-      pd.supplier_categories = [[common['Category'], common['Brand']].compact]
-      pd.images = []
-
-      
-      # Name
-      pd.name = common['Style Name'].gsub(/<\/?p>/, '').gsub('&nbsp;', ' ').strip
-      pd.tags = []
-      if pd.name.gsub!(/(?<tag><(?:strong|span)[^>]*>\s*(?:\g<tag>*|new)\s*<[^>]+>)\s*/i, '')
-        pd.tags << 'New'
-      end
-      pd.tags << 'Eco' if pd.name.include?('e.c.o')
-      # De capitalize
-      down_words = %w(and in with)
-      pd.name = pd.name.scan(/(.+?)(\s+|-|\/|(?:<.+?>)|$)/).collect do |str, gap|
-        [down_words.include?(str.downcase) ? str.downcase : str.capitalize, gap]
-      end.flatten.join
-
-      # Description
-      doc = Nokogiri::HTML(common['Style Des'])
-      pd.description = doc.root.search('ul/li').collect { |n| n.text.gsub(/\s+/, ' ').strip }
-
-      # Fabric
-      if common['Style Fabric'].include?('<ul>')
-        doc = Nokogiri::HTML(common['Style Fabric'])
-        list = doc.root.search('ul/li').collect { |n| n.text.gsub(/\s+/, ' ').strip }
-        pd.description += "\n" + list.join("\n")
-        pd.properties['material'] = list.first
-      elsif common['Style Fabric'].include?('br>')
-        list = common['Style Fabric'].split(/<\/?br>/).collect { |s| s.gsub(/\s+/, ' ').strip }
-        pd.description += "\n" + list.join("\n")
-        pd.properties['material'] = list.first
-      else
-        pd.properties['material'] = common['Style Fabric'].gsub(/<\/?p>/, '').strip
-      end
-
-      # Decorations
-      pd.decorations = [DecorationDesc.none,
-                        DecorationDesc.new(:technique => 'Heat Transfer (area)',
-                                           :location => '', :limit => 20),
-                        DecorationDesc.new(:technique => 'Embroidery',
-                                           :location => '', :limit => 25000) ]
-
-      pd.lead_time.normal_min = 5
-      pd.lead_time.normal_max = 7
-
-      pd.variants = unique.collect do |src|
-        vd = VariantDesc.new(:supplier_num => src['Product Code'] || style,
-                             :images => src['HImg'].downcase.include?('jpg') ? [ImageNodeFetch.new(src['HImg'].split('/').last, src['HImg'])] : [],
-                             :properties => {
-                               'color' => src['Color Name'].gsub(/\*?<.+?>.+?<\/.+?>/, '').strip,
-                               'size' => src['Size Name']
-                             })
-
-        [['1st', 12], ['2nd', 150], ['3rd', 300]].each do |num, min|
-          vd.pricing.add(min, src["US ASI #{num}"], src["US NET #{num}"])
+      ProductDesc.apply(self) do |pd|
+        pd.supplier_num = style
+        pd.supplier_categories = [[common['Category'], common['Brand']].compact]
+        pd.images = []
+        
+        
+        # Name
+        pd.name = common['Style Name'].gsub(/<\/?p>/, '').gsub('&nbsp;', ' ').strip
+        pd.tags = []
+        if pd.name.gsub!(/(?<tag><(?:strong|span)[^>]*>\s*(?:\g<tag>*|new)\s*<[^>]+>)\s*/i, '')
+          pd.tags << 'New'
         end
-        vd.pricing.maxqty
-        vd
-      end
+        pd.tags << 'Eco' if pd.name.include?('e.c.o')
+        # De capitalize
+        down_words = %w(and in with)
+        pd.name = pd.name.scan(/(.+?)(\s+|-|\/|(?:<.+?>)|$)/).collect do |str, gap|
+          [down_words.include?(str.downcase) ? str.downcase : str.capitalize, gap]
+        end.flatten.join
+        
+        # Description
+        doc = Nokogiri::HTML(common['Style Des'])
+        pd.description = doc.root.search('ul/li').collect { |n| n.text.gsub(/\s+/, ' ').strip }
 
-      add_product(pd)
+        # Fabric
+        if common['Style Fabric'].include?('<ul>')
+          doc = Nokogiri::HTML(common['Style Fabric'])
+          list = doc.root.search('ul/li').collect { |n| n.text.gsub(/\s+/, ' ').strip }
+          pd.description += "\n" + list.join("\n")
+          pd.properties['material'] = list.first
+        elsif common['Style Fabric'].include?('br>')
+          list = common['Style Fabric'].split(/<\/?br>/).collect { |s| s.gsub(/\s+/, ' ').strip }
+          pd.description += "\n" + list.join("\n")
+          pd.properties['material'] = list.first
+        else
+          pd.properties['material'] = common['Style Fabric'].gsub(/<\/?p>/, '').strip
+        end
+        
+        # Decorations
+        pd.decorations = [DecorationDesc.none,
+                          DecorationDesc.new(:technique => 'Heat Transfer (area)',
+                                             :location => '', :limit => 20),
+                          DecorationDesc.new(:technique => 'Embroidery',
+                                             :location => '', :limit => 25000) ]
+        
+        pd.lead_time.normal_min = 5
+        pd.lead_time.normal_max = 7
+        
+        pd.variants = unique.collect do |src|
+          vd = VariantDesc.new(:supplier_num => src['Product Code'] || style,
+                               :images => src['HImg'].downcase.include?('jpg') ? [ImageNodeFetch.new(src['HImg'].split('/').last, src['HImg'])] : [],
+                               :properties => {
+                                 'color' => src['Color Name'].gsub(/\*?<.+?>.+?<\/.+?>/, '').strip,
+                                 'size' => src['Size Name']
+                               })
+          
+          [['1st', 12], ['2nd', 150], ['3rd', 300]].each do |num, min|
+            vd.pricing.add(min, src["US ASI #{num}"], src["US NET #{num}"])
+          end
+          vd.pricing.maxqty
+          vd
+        end
+      end
     end 
   end
 end

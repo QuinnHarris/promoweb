@@ -19,38 +19,51 @@ apply_decorations('Ash City') do |gemline|
   # Heat Seal Transfer
   dec_grp = gemline.decoration_price_groups.create(
     { :technique => DecorationTechnique.find_by_name("Heat Transfer (area)") })
-    # <= 3
-    dec_grp.entries.create({ :minimum => 1,
-      :fixed_price_const => 0.73305128153624,
-      :fixed_price_exp => -0.24240404169298,
-      :fixed_price_marginal => Money.new(1.40),
+    # <= 6
+   dec_grp.entries.create({ :minimum => 1,
+      :fixed_price_const => 5.0,
+      :fixed_price_exp => -0.38194934467248,
+      :fixed_price_marginal => Money.new(1.25),
       :fixed_price_fixed => Money.new(50.00),
       :fixed => PriceGroup.create_prices([
-      { :fixed => Money.new(50.00),
+      { :fixed => Money.new(15.00),
+        :marginal => Money.new(6.00),
+        :minimum => 1 },
+      { :fixed => Money.new(15.00),
+        :marginal => Money.new(1.75),
+        :minimum => 6 },
+      { :fixed => Money.new(0),
+        :marginal => Money.new(1.75),
+        :minimum => 24 },
+      { :fixed => Money.new(0),
         :marginal => Money.new(1.50),
-        :minimum => 12 },
-      { :fixed => Money.new(50.00),
-        :marginal => Money.new(1.45),
         :minimum => 300 },
-      { :fixed => Money.new(50.00),
-        :marginal => Money.new(1.40),
+      { :fixed => Money.new(0),
+        :marginal => Money.new(1.25),
         :minimum => 1200 }]) })
             
-    # 5001 - 7500
-  dec_grp.entries.create({ :minimum => 3,
-      :fixed_price_const => 0.73305128153624,
-      :fixed_price_exp => -0.24240404169298,
-      :fixed_price_marginal => Money.new(1.40),
+            
+    # > 6
+  dec_grp.entries.create({ :minimum => 6,
+      :fixed_price_const => 5.0,
+      :fixed_price_exp => -0.38194934467248,
+      :fixed_price_marginal => Money.new(1.25),
       :fixed_price_fixed => Money.new(50.00),
       :fixed => PriceGroup.create_prices([
-      { :fixed => Money.new(50.00),
+      { :fixed => Money.new(15.00),
+        :marginal => Money.new(6.00),
+        :minimum => 1 },
+      { :fixed => Money.new(15.00),
+        :marginal => Money.new(1.75),
+        :minimum => 6 },
+      { :fixed => Money.new(0),
+        :marginal => Money.new(1.75),
+        :minimum => 24 },
+      { :fixed => Money.new(0),
         :marginal => Money.new(1.50),
-        :minimum => 12 },
-      { :fixed => Money.new(50.00),
-        :marginal => Money.new(1.45),
         :minimum => 300 },
-      { :fixed => Money.new(50.00),
-        :marginal => Money.new(1.40),
+      { :fixed => Money.new(0),
+        :marginal => Money.new(1.25),
         :minimum => 1200 }]),
       :fixed_divisor => 1,
       :fixed_offset => 2,
@@ -59,12 +72,12 @@ apply_decorations('Ash City') do |gemline|
        
       :marginal_price_const => 0.0,
       :marginal_price_exp => 0.0,
-      :marginal_price_marginal => Money.new(0.25),
+      :marginal_price_marginal => Money.new(0.12),
       :marginal_price_fixed => Money.new(0),
       :marginal => PriceGroup.create_prices([
       { :fixed => Money.new(0),
-        :marginal => Money.new(0.25),
-        :minimum => 12 }]) })
+        :marginal => Money.new(0.12),
+        :minimum => 1 }]) })
          
     
   # Embroidery
@@ -72,17 +85,17 @@ apply_decorations('Ash City') do |gemline|
     { :technique => DecorationTechnique.find_by_name("Embroidery") })
     # <= 5000
     dec_grp.entries.create({ :minimum => 1,
-      :fixed_price_const => 2.44120540950152,
-      :fixed_price_exp => -0.28082971064938,
+      :fixed_price_const => 5.0,
+      :fixed_price_exp => -0.38194934467248,
       :fixed_price_marginal => Money.new(1.25),
       :fixed_price_fixed => Money.new(50.00),
       :fixed => PriceGroup.create_prices([
       { :fixed => Money.new(30.00),
-        :marginal => Money.new(2.00),
-        :minimum => 12 },
+        :marginal => Money.new(6.00),
+        :minimum => 1 },
       { :fixed => Money.new(30.00),
         :marginal => Money.new(1.75),
-        :minimum => 150 },
+        :minimum => 6 },
       { :fixed => Money.new(30.00),
         :marginal => Money.new(1.50),
         :minimum => 300 },
@@ -91,18 +104,18 @@ apply_decorations('Ash City') do |gemline|
         :minimum => 1200 }]) })
             
     # 5001 - 7500
-  dec_grp.entries.create({ :minimum => 6000,
-      :fixed_price_const => 2.44120540950152,
-      :fixed_price_exp => -0.28082971064938,
+  dec_grp.entries.create({ :minimum => 10000,
+      :fixed_price_const => 5.0,
+      :fixed_price_exp => -0.38194934467248,
       :fixed_price_marginal => Money.new(1.25),
       :fixed_price_fixed => Money.new(50.00),
       :fixed => PriceGroup.create_prices([
       { :fixed => Money.new(30.00),
-        :marginal => Money.new(2.00),
-        :minimum => 12 },
+        :marginal => Money.new(6.00),
+        :minimum => 1 },
       { :fixed => Money.new(30.00),
         :marginal => Money.new(1.75),
-        :minimum => 150 },
+        :minimum => 6 },
       { :fixed => Money.new(30.00),
         :marginal => Money.new(1.50),
         :minimum => 300 },
@@ -110,9 +123,9 @@ apply_decorations('Ash City') do |gemline|
         :marginal => Money.new(1.25),
         :minimum => 1200 }]),
       :fixed_divisor => 1000,
-      :fixed_offset => 4000,
+      :fixed_offset => 9000,
       :marginal_divisor => 1000,
-      :marginal_offset => 4000,
+      :marginal_offset => 9000,
        
       :marginal_price_const => 0.0,
       :marginal_price_exp => 0.0,
