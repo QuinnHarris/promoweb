@@ -258,7 +258,7 @@ module QbwcHelper
     #xml.AltPhone
     #xml.Fax
     xml.Email customer.email_addresses.first.address if customer.email_addresses.first
-    xml.Contact customer.person_name[0...41]
+    xml.Contact encode(customer.person_name[0...41])
     #xml.AltContact
     #xml.CustomerTypeRef do
     #xml.TermsRef do

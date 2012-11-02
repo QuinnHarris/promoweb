@@ -76,7 +76,7 @@
                   - when 'ConfirmItemTask', 'ReceivedItemTask', 'AcceptedItemTask', 'ReconciledItemTask'
                     - if klass.allowed?(@permissions)
                       = submit_tag klass.status_name
-                      - if klass.instance_method_already_implemented?(:email_complete)
+                      - if klass.instance_method_names.include?('email_complete')
                         = submit_tag klass.status_name + ' (Without Email)'
                     - else
                       = klass.waiting_name
