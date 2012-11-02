@@ -413,12 +413,18 @@ public
   end
 
   def eqp(discount = 0.4, round = false)
-    raise ValidateError, "Expected no costs" unless @costs.empty?
     raise ValidateError, "Expected price" if @prices.empty?
+    raise ValidateError, "Expected no costs" unless @costs.empty?
     marginal = @prices.last[:marginal] * (1.0 - discount)
     marginal = marginal.round_cents if round
     @costs << { :minimum => @prices.first[:minimum],
       :fixed => Money.new(0), :marginal => marginal }
+  end
+
+  def eqp_costs
+    raise ValidateError, "Expected price" if @prices.empty?
+    raise ValidateError, "Expected costs" if @costs.empty?
+    @costs = [@costs.last]
   end
 
   def to_hash

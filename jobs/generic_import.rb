@@ -659,16 +659,16 @@ class GenericImport
     if @src_urls
       time = Time.now - 1.day
       fetched = false
-      @src_files = @src_urls.collect do |url|
+      @src_files = [@src_urls].flatten.collect do |url|
         wf = WebFetch.new(url)
         fetched = true if wf.fetch?(time)
         wf.get_path(time)
       end
-      fetched
-    else
-      file_name = cache_file(parse_cache_filename)
-      !cache_exists(file_name) || (File.mtime(file_name) < (Time.now - 1.day))
+      return true if fetched
     end
+
+    file_name = cache_file(parse_cache_filename)
+    !cache_exists(file_name) || (File.mtime(file_name) < (Time.now - 1.day))
   end
   
   def run_parse_cache
@@ -1010,8 +1010,8 @@ private
       aspects[:height] = aspects[:width] = aspects.delete(:square)
     end
     
-    if (aspects[:height] || aspects[:width]) && (aspects[:height].nil? != aspects[:width].nil?)
-      warning 'Parse Area', "Missing both aspects: #{string}"
+    if [:height, :width, :length].count { |a| aspects[a] } < 2
+      warning 'Parse Area', "Missing two aspects: #{string}"
       return if pedantic
     end
     
