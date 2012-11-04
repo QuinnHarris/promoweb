@@ -913,12 +913,12 @@ private
 
 
   @@number_regex = 
-    /(?<whole>\d{1,2})?
+    /(?<whole>\d{1,3})?
      (?:(?<deci>\.\d{1,4}) |
         (?:(?: (?:^|\s+|-) (?<numer>\d{1,2}) )? \s*[\/∕]\s* (?<denom>\d{1,2}) ) |
         (?:(?:^|\s+) (?<sym>[⅛¼⅓⅜½⅝¾⅞]) ) |
         (?<=\d) )  # Postive lookbehind to match 'whole' alone
-     \s*[\"”]?\s*/xi
+     \s*(?<dim>[\"”]|(?:yards?))?\s*/xi
   private
   def number_from_regex(m)
     num = 0.0
@@ -940,6 +940,10 @@ private
            when '¾'; 0.75
            when '⅞'; 0.875
            end if m[:sym]
+    case m[:dim]
+      when /^yard/
+      num *= 36
+    end
     num
   end
   public
@@ -953,13 +957,13 @@ private
     number_from_regex(m)
   end
 
-  @@component_regex = /#{@@number_regex}(?<aspect>width|w|height|h|length|l|diameter|dia|square|d|depth)?/i
+  @@component_regex = /#{@@number_regex}(?<aspect>width|w|height|h|length|l|diameter|dia|square|d|depth|round)?/i
   def parse_dimension(string, pedantic = false)
     aspects = {}
     no_aspect = nil
     string.split(/x/i).each do |part|
       unless m = /^#{@@component_regex}$/.match(part.strip)
-        warning 'Parse Area', "RegEx mismatch: #{part}"
+        warning 'Parse Area', "RegEx mismatch: #{part.inspect}"
         return
       end
 
@@ -974,7 +978,8 @@ private
                when /^h/i;       :height
                when /^l/i;       :length
                when /^dia/i;     :diameter
-               when /^d/i;       :length
+               when /^round/i;   :diameter
+               when /^d/i;       :depth
                when /^square$/i; :square
                end
       if aspect
@@ -997,8 +1002,9 @@ private
           warning 'Parse Area', "All aspects covered"
           return
         end
+        aspect = :length if num > 12.0 and !aspects.has_key?(:length)
       end
-      
+
       aspects[aspect] = num
     end
 
@@ -1008,6 +1014,30 @@ private
         return
       end
       aspects[:height] = aspects[:width] = aspects.delete(:square)
+
+      return aspects
+    end
+
+    if aspects[:diameter] 
+      if aspects.length != 1
+        warning 'Parse Area', "Didn't Expect other aspects on diameter: #{string}"
+        return
+      end
+
+      return aspects
+    end
+
+    if depth = aspects.delete(:depth)
+      warning 'Parse Area', 'Excessive aspects covered' if aspects.length > 3
+      if aspects.empty?
+        aspects[:diameter] = depth
+        return aspects
+      else
+        [:width, :height, :length].find do |a|
+          next if aspects[a]
+          aspects[a] = depth
+        end
+      end
     end
     
     if [:height, :width, :length].count { |a| aspects[a] } < 2

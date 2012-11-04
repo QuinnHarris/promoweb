@@ -368,8 +368,14 @@ class PricingDesc
   def apply_code(code)
     list = self.class.convert_pricecodes(code)
     unless list.length == @prices.length
-      if list.uniq.length == 1 and list.length > @prices.length
-        puts "Corrected excessive price codes"
+      if list.uniq.length == 1
+        if list.length > @prices.length
+          puts "Corrected excessive price codes"
+        else
+          raise ValidateError.new("price code count mismatch and not 0.4") unless list.first == 0.4
+          puts "Corrected insufficient price codes"
+          list = (1..@prices.length).collect { 0.4 }
+        end
       else
         raise ValidateError.new("price code count must match prices", "#{code} => #{list.inspect}, #{list.length} != #{@prices.length} => #{@prices.inspect}")
       end
@@ -424,7 +430,7 @@ public
   def eqp_costs
     raise ValidateError, "Expected price" if @prices.empty?
     raise ValidateError, "Expected costs" if @costs.empty?
-    @costs = [@costs.last]
+    @costs = [@costs.last.merge(:minimum => @costs.first[:minimum])]
   end
 
   def to_hash

@@ -1,11 +1,11 @@
 class LancoXLS < GenericImport
   def initialize
-    @image_list = {}
     super "Lanco"
 
     @decorations = {}
 
     @src_urls = 'http://www.lancopromo.com/downloads/LANCO-ProductData.zip'
+    @src_file = @src_file = File.join(JOBS_DATA_ROOT, "Lanco.xls")
   end
 
   def imprint_colors
@@ -15,14 +15,6 @@ class LancoXLS < GenericImport
   @@image_path = "http://www.lancopromo.com/images/products/"
   def image_path(web_id)
     "#{@@image_path}#{web_id.downcase}/"
-  end
-
-  def get_images(web_id)
-    return @image_list[web_id] if @image_list.has_key?(web_id)
-    puts "Getting Image List for #{web_id}"
-    uri = URI.parse(image_path(web_id))
-    txt = uri.open.read
-    @image_list[web_id] = txt.scan(/<a href="([\w-]+\.jpg)">/).flatten
   end
 
   @@fills = {
@@ -55,9 +47,25 @@ class LancoXLS < GenericImport
   def decorations(product)
     test_decorations(product)
 
-    sizes = [product['imprint_area']].uniq.collect do |str|
-      parse_dimension(str)
-    end.compact
+    sizes = [product['imprint_area']].uniq.collect do |string|
+      next unless string
+      string.split(/\s*[,;]\s*/).collect do |str|
+        hash = {}
+        case str
+        when 'Full Bleed'
+          next { :location => 'Full Bleed' }
+        when 'N/A'
+          next
+        when /^(.+?)- spot color$/
+          str = $1
+        when /^(.+?)\s*\((.+?)\)\s*$/
+          str = $1
+          hash = { :location => $2 }
+        end
+        dim = parse_dimension(str)
+        dim ? dim.merge(hash) : nil
+      end
+    end.flatten.compact
     sizes = [{}] if sizes.empty?
 
     product['Order_info'].gsub('&nbsp;', ' ').scan(/(?:\n)?([\w\s]+)::?\s*\s*(.+?)(?:\r|$)/im).each do |name, str|
@@ -107,7 +115,7 @@ class LancoXLS < GenericImport
     end
     pricing.apply_code(product['PriceCode'] || '5R')
     pricing.eqp_costs
-    pricing.maxqty    
+    pricing.maxqty #(pricing.prices.last[:minimum]*2)
     pricing.ltm_if(24.00, product['absoluteMin'])
     pricing
   end
@@ -132,23 +140,23 @@ class LancoXLS < GenericImport
     return nil, orig_list
   end
 
-  def unzip
+  def fetch_parse?
+    return false unless super or !File.exists?(@src_file)
+
+    FileUtils.rm_f(@src_file)
+
     puts "Unziping Data"
     path = @src_files.first
     dst_path = File.join(JOBS_DATA_ROOT,'lanco')
     out = `unzip -o #{path} -d #{dst_path}`
     list = out.scan(/inflating:\s+(.+?)\s*$/).flatten
     raise "More than one file" if list.length > 1
-    list.first
+    FileUtils.ln_sf(list.first, @src_file)
   end
 
   def parse_products
-    file_name = cache_file("Lanco_Images")
-    @image_list = cache_read(file_name) if cache_exists(file_name)
-
-    file = unzip
-    puts "Reading Excel: #{file}"
-    ws = Spreadsheet.open(file).worksheet(0)
+    puts "Reading Excel: #{@src_file}"
+    ws = Spreadsheet.open(@src_file).worksheet(0)
     ws.use_header
         
     products = []
@@ -162,6 +170,22 @@ class LancoXLS < GenericImport
       else
         products << data
       end
+    end
+
+    file_name = cache_file("Lanco_Images")
+    @image_list = cache_exists(file_name) ? cache_read(file_name) : {}
+    begin
+      puts "Fetching Image Lists:"
+      products.each do |product|
+        next if @image_list[web_id = product['ProductID']] or web_id.nil?
+        print " #{web_id}"
+        uri = URI.parse(image_path(web_id))
+        txt = uri.open.read
+        @image_list[web_id] = txt.scan(/<a href="([\w-]+\.jpg)">/).flatten
+      end
+      puts
+    ensure
+      cache_write(file_name, @image_list)
     end
 
     puts "Processing"
@@ -219,7 +243,7 @@ class LancoXLS < GenericImport
           end
         
         
-        image_list = get_images(pd.supplier_num)
+        image_list = @image_list[pd.supplier_num]
         image_list = image_list.collect { |img| ImageNodeFetch.new(img, "#{image_path(pd.supplier_num)}#{img}") }
         
         used_image_list = []
@@ -310,7 +334,5 @@ class LancoXLS < GenericImport
         end
       end
     end
-
-    cache_write(file_name, @image_list)
   end
 end

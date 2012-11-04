@@ -40,6 +40,11 @@ class Float
   end
 end
 
+class Integer
+  def to_perty; to_s; end
+end
+
+
 class Property < ActiveRecord::Base
   has_and_belongs_to_many :variants
   
@@ -52,7 +57,16 @@ class Property < ActiveRecord::Base
         begin
           v.split(',').collect do |s|
             key, value = s.split(':')
-            Float(value).to_perty + '"' + key[0..0].upcase
+            key = key[0..0].upcase
+            value = Float(value)
+            if value > 23.0
+              if value % 36 == 0
+                next "#{value / 36} yards #{key}"
+              else
+                next "#{Integer(value / 12)}' #{(value % 12).to_perty}\" #{key}"
+              end
+            end
+            "#{value.to_perty}\" #{key}"
           end.join(' x ')
         rescue
           v
