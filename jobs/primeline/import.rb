@@ -72,29 +72,32 @@ class PrimeLineWeb < GenericImport
     end
   end
   
-  def parse_web
-    @products = cache_marshal('Prime Line_pre') do
-      @tags = {}
-      @product_pages = {}
-      @product_pages.default = []
-      products_list('New').each { |p| @tags[p] = 'New' }
-      products_list('Specials').each { |p| @tags[p] = 'Special' }
-      products_list('HotDeals').each { |p| @tags[p] = 'Special' }
-      products_list('Closeouts').each { |p| @tags[p] = 'Closeout' }
-      products_list('nonstock').each { |p| @product_pages[p] = ['Overseas'] }
+  def parse_products
+    # Fetch all index pages
+    @tags = {}
+    @product_pages = {}
+    @product_pages.default = []
+    products_list('New').each { |p| @tags[p] = 'New' }
+    products_list('Specials').each { |p| @tags[p] = 'Special' }
+    products_list('HotDeals').each { |p| @tags[p] = 'Special' }
+    products_list('Closeouts').each { |p| @tags[p] = 'Closeout' }
+    products_list('nonstock').each { |p| @product_pages[p] = ['Overseas'] }
+    
+    process_root
 
-      process_root
 
-#      products_list('').each do |path|
-#        unless @product_pages[path]
-#          @product_pages[path] = ["UNKOWN"]
-#        end
-#      end
-      
-      puts "Processing #{@product_pages.length} products"
-      @product_pages.collect do |path, categories|
-        process_product(categories, "http://www.primeline.com/#{path}", @tags[path])
-      end.compact
+    # Fetch Images
+    image_paths = %w(BT LG LT PL).collect { |p| "product_imagesNoLogo/#{p}-BlankImages" }
+    image_paths += %w(BuiltImages LeemanImages LogoTec PL-0-3000 PL-3001-6000 PL-6001-9999).collect { |p| "product_images/#{p}/300dpi" }
+    @image_list = get_ftp_images('ftp.primeworld.com', image_paths) do |path, file|
+      (/^([A-Z]{2})(\d{4})(\w*)HIRES(\d?)\.jpg$/i === file) && 
+        ["#{path}/#{file}", "#{$1}-#{$2}", $3, path.include?('BlankImages') ? 'blank' : nil]
+    end
+
+  
+    puts "Processing #{@product_pages.length} products"
+    @product_pages.each do |path, categories|
+      process_product(categories, "http://www.primeline.com/#{path}", @tags[path])
     end
   end
 
@@ -147,259 +150,6 @@ class PrimeLineWeb < GenericImport
   end
   public
 
-  def process_product(categories, url, tag)
-    fetch = WebFetch.new(url)
-    doc = Nokogiri::HTML(open(fetch.get_path), 'ASCII')
-    return nil unless doc
-
-    prod_name = iconv(doc.xpath("//span[@id='ctl00_content_ProductName']").inner_html).split(' ').collect do |c|
-      @@upcases.index(c.upcase.gsub(/\d/,'')) ? c.upcase : c.capitalize
-    end.join(' ')
-
-    data = {
-      'supplier_num' => doc.xpath("//span[@id='ctl00_content_ProductCode']").inner_html,
-      'name' => prod_name
-    }
-    puts "Number: #{data['supplier_num']}"
-
-    main_img = doc.xpath("//img[@id='ctl00_content_PIM']").first['src']
-    log = []
-    return nil if main_img == "Product_Images/picturesoon.jpg"
-    
-    note = doc.xpath("//span[@id='ctl00_content_ProductClasstext']").to_a
-    return nil if note and note.first.inner_html == "Non-Stock"
-
-    properties = []
-    doc.xpath("//td[@id='ctl00_content_TableCell1']/span").each do |span|
-      raise "Unkonown prop" unless /^\s*<b>\s*(.+?)\s*:\s*<\/b>\s*(.+?)$/ =~ span.inner_html
-      name, value = $1.strip, iconv($2.strip)
-      puts "  - #{name.inspect} : #{value.inspect}"
-      properties << [name, value]
-    end    
-    data['properties'] = properties    
-    
-    # Features
-    features = doc.xpath("//img[@src='images/bulletArrow.gif']").collect do |img|
-      line = img.next_sibling.children.collect do |child|
-        next child.text.strip if child.text?
-        case child.name
-          when 'a'
-          unless child.attributes['href'] && 
-              (/\/Products\/ProductDetail\.aspx\?fpartno=(.+)$/ === child.attributes['href'].value)
-            puts "Unkown URL: #{data['supplier_num']} #{child.attributes['href'] && child.attributes['href'].value}"
-            next nil
-          end
-          product = get_product($1)
-          "<a href='#{product.web_id}'>#{child.inner_html.gsub($1,'').strip}</a>"
-
-          when 'font', 'b'
-          next nil if child.inner_html.downcase.include?('free ship') 
-          child.inner_html.strip
-
-          when 'img', 'br'
-          nil
-        else
-          raise "Unknown element #{data['supplier_num']} #{child.name}"
-        end
-      end.compact.collect { |s| s.encode('ISO-8859-1') }.join(' ')
-      line.blank? ? nil : line
-    end.compact
-#    log << " * NO FEATURES" if features.empty?
-    
-
-    price_no_special = nil
-    price_no_less = nil
-    price_note = doc.xpath("//span[@id='ctl00_content_PriceNote']").to_a.join.strip
-    unless price_note.empty?
-      price_note = price_note.downcase
-      price_no_special = true if price_note.index('special pricing') 
-      price_no_less = true if price_note.index('less than minimum')
-    end
-    
-    setup_price = doc.xpath("//span[@id='ctl00_content_SetupCostDesc']").first.inner_html
-    running_price = doc.xpath("//span[@id='ctl00_content_RunningCostDesc']").first
-    running_price = running_price.inner_html if running_price
-#    @decoration_costs << [setup_price ? setup_price.strip : nil, running_price ? running_price.strip : nil]
-    
-    variant_prices = {}
-    price_codes = {}
-    
-    # Price Code
-    price_list = (doc.xpath("//span[@id='ctl00_content_DiscountCode']") +
-                  doc.xpath("//span[@id='ctl00_content_DiscountCodeCloseout']")).first
-    if price_list
-      price_str = price_list.inner_html.strip.gsub(/<.+>/,'')
-      price_str += 'C' if price_str.length == 1 and price_str[0] > ?0 and price_str[0] <= ?9 #Kludge for 4 without C price
-      price_list = price_str.empty? ? nil : convert_pricecodes(price_str)
-    end
-    
-    price_rows = doc.xpath("//tr[@id='ctl00_content_RegularPriceRow']/td/table/tr/td") +
-                 doc.xpath("//tr[@id='ctl00_content_CloseoutPriceRow']/td/table/tr/td")
-    price_rows.each do |price_row|
-      rows = price_row.xpath("table/tr/td/table/tr[td/font]")
-      next unless rows and rows.length > 1
-      
-      minimums = rows.shift.xpath("//td[@align='right']/font/b").to_a.compact
-      next if minimums.empty?
-      minimums = minimums.collect { |m| m.inner_html.to_i }
-      
-      rows.each do |row|
-        head = row.xpath("td/span/font").first
-        head = head.inner_html.downcase if head
-        
-        list = row.xpath("td/font").collect { |e| e.inner_html.strip.empty? ? nil : e.inner_html }.compact
-        next nil if list.empty?
-        
-        variant_prices[head] = minimums.zip(list).collect do |min, price|
-          { :minimum => min.to_i,
-            :marginal => Money.new(price[1..-1].to_f).round_cents,
-            :fixed => Money.new(0) } if price and price[1..-1].to_f != 0.0
-        end.compact
-        price_codes[head] = price_list || (0...minimums.size).collect { 0.4 }
-      end
-    end
-
-    # Lead Times
-    if /(\d)-Day Rush/i === price_rows.to_s
-      data['lead_time_rush'] = $1.to_i
-    end
-    if /24 hour rush/i === price_rows.to_s
-      data['lead_time_rush'] = 1
-    end
-
-    if categories.include?('Overseas')
-      data['lead_time_normal_min'] = 20
-      data['lead_time_normal_max'] = 60
-    elsif it = doc.xpath("//table/tbody/tr/td/span[@class='black11']").last
-      data['lead_time_normal_min'], data['lead_time_normal_max'] = it.inner_html.scan(/(?:(?:(\d+)\s*-\s*)?(\d+) days)|(?:(?:(\d+)\s*-\s*)?(\d+) weeks)/).collect { |dl, dh, wl, wh| dh ? [dl ? dl.to_i : dh.to_i, dh.to_i] : [(wl ? wl.to_i : wh.to_i)*5, wh.to_i*5] }.max
-    else
-      data['lead_time_normal_min'] = 3
-      data['lead_time_normal_max'] = 5
-    end
-
-    variant_prices.delete_if { |k, v| v.empty? }
-
-    if variant_prices.empty?
-      puts "URL: #{url} (SKIPPED, NO PRICES)" 
-      puts log unless log.empty?
-      return nil
-    end
-
-    if variant_prices.values.flatten.compact.empty?
-      puts " * No price breaks"
-      return nil
-    end
-
-    special = true if price_rows.size > 1
-
-    begin
-      price_code = price_codes['now']
-      price_code = price_codes['standard'] unless price_code
-      price_code = price_codes[nil] if price_codes.has_key?(nil)
-      price_codes.default = price_code
-    end  
-    
-    maximum = variant_prices.values.collect { |prices| prices.last[:minimum] }.max
-    
-    standard_price = variant_prices.delete('now') 
-    standard_price = variant_prices.delete('standard') unless standard_price
-    standard_price = variant_prices.delete(nil) if variant_prices.has_key?(nil)
-    unless standard_price
-      puts " * No Price"
-      return nil
-    end
-
-    puts "Variant: #{variant_prices.inspect}"
-    puts "Code: #{price_codes.inspect}"
-    
-    # Colors (Variants)  
-    variants = []  
-    href_reg = /\(.*?,\"(.*?)\"/
-    num_reg = /\/(.*?)\./
-    color_list = doc.xpath("//span[@id='ctl00_content_ColorLinks']/a")
-    return nil if color_list.empty?
-    variants = color_list.collect do |a|
-      name = a.inner_html
-      img = href_reg.match(a['href']).to_a[1]
-      all, num = num_reg.match(img).to_a
-      prices = variant_prices.delete(name.downcase)
-      prices = standard_price unless prices
-      costs = nil
-      discounts = price_codes[name.downcase]
-      if price_no_special
-        price_code = price_codes[name.downcase]
-        price_code = ((0...prices.size).collect { price_code.first } + price_code)[0...prices.size]
-        costs = prices.zip(price_code).collect do |price, code|
-          { :fixed => Money.new(0),
-            :minimum => price[:minimum],
-            :marginal => (price[:marginal] * (1.0 - code)).round_cents }
-        end
-      else
-        costs = [{ :fixed => Money.new(0),
-                   :minimum => prices.first[:minimum],
-                   :marginal => (prices.last[:marginal] * (1.0 - discounts.last)).round_cents }]
-      end
-      
-      unless price_no_less
-        costs.unshift({ :fixed => Money.new(44.00),
-                        :minimum => (prices.first[:minimum] / 2.0).ceil,
-                        :marginal => (prices.first[:marginal] * (1.0 - discounts.first)).round_cents })
-      end
-      costs.push({ :minimum => (maximum * 1.5).to_i })
-      
-      { 'supplier_num' => num,
-        'prices' => prices,
-        'costs' => costs,
-        'color' => name
-      }
-    end
-        
-    data.merge!({
-      'description' => features ? features.join("\n").strip : '',
-      'decorations' => [], #decorations,
-      'variants' => variants,
-      'tags' => tag ? [tag] : (special ? ['Special'] : nil),
-                  'supplier_categories' => categories.collect { |c| [c] }
-    })
-    
-    
-    # Shipping
-    shipping = doc.xpath("//td[@id='ctl00_content_ShippingManualCell']/span/text()")
-    unless shipping.empty?
-      shipping = shipping.first.content 
-    
-      reg = /^(\d{1,4}) pieces per carton, (\d{1,3}(?:\.\d{1,2})?) lbs per carton, carton size (.*)$/
-      all, pkg_pieces, pkg_weight, pkg_size = reg.match(shipping).to_a
-      if all
-        dim = parse_volume(pkg_size)
-        
-        data = data.merge({
-          'package_weight' => Float(pkg_weight),
-          'package_units' => Integer(pkg_pieces),
-          'package_unit_weight' => 0.0,
-          'package_height' => dim['h'],
-          'package_width' => dim['w'],
-          'package_length' => dim['l']
-        })
-      else
-        puts "Unknown shipping: #{shipping.inspect}"
-      end
-    end
-
-    hi_res = doc.xpath("//span[@id='ctl00_content_HiReslink']/a")
-    unless hi_res.empty?
-      path = "http://www.primeline.com/#{hi_res.first['href']}"
-      data['images'] = [ImageNodeFetch.new(path.split('/').last, path)]
-    end
-       
-    unless log.empty?
-      puts "URL: #{url}"     
-      puts log.join("\n")
-    end
-
-    data
-  end
-
   @@decoration_replace = {
     'Silk Screened' => ['Screen Print', 5],
     'Silk-screened' => ['Screen Print', 5],
@@ -434,139 +184,282 @@ class PrimeLineWeb < GenericImport
     'up to four colors' => 4,
   }
 
-  cattr_reader :color_map
-  @@color_map = {  }
+  def process_product(categories, url, tag)
+    fetch = WebFetch.new(url)
+    doc = Nokogiri::HTML(open(fetch.get_path), 'ASCII')
+    return nil unless doc
 
-  def parse_products
-    image_paths = %w(BT LG LT PL).collect { |p| "product_imagesNoLogo/#{p}-BlankImages" }
-    image_paths += %w(BuiltImages LeemanImages LogoTec PL-0-3000 PL-3001-6000 PL-6001-9999).collect { |p| "product_images/#{p}/300dpi" }
-    @image_list = get_ftp_images('ftp.primeworld.com', image_paths) do |path, file|
-      (/^([A-Z]{2})(\d{4})(\w*)HIRES(\d?)\.jpg$/i === file) && 
-        ["#{path}/#{file}", "#{$1}-#{$2}", $3, path.include?('BlankImages') ? 'blank' : nil]
-    end
+    pd = ProductDesc.new
 
-    @products.each do |product|
-      log = []
+    pd.supplier_num = doc.xpath("//span[@id='ctl00_content_ProductCode']").inner_html.strip
+    pd.name = iconv(doc.xpath("//span[@id='ctl00_content_ProductName']").inner_html).split(' ').collect do |c|
+      @@upcases.index(c.upcase.gsub(/\d/,'')) ? c.upcase : c.capitalize
+    end.join(' ')
 
-      # Images
-      colors = product['variants'].collect { |v| v['color'] }
-      @supplier_num = product['supplier_num']
-      color_image_map, color_num_map = match_colors(colors)
-      color_image_map.each do |color, images|
-        if color
-          variant = product['variants'].find { |v| v['color'] == color }
-          variant['images'] = images
+
+    main_img = doc.xpath("//img[@id='ctl00_content_PIM']").first['src']
+    return nil if main_img == "Product_Images/picturesoon.jpg"
+    
+    note = doc.xpath("//span[@id='ctl00_content_ProductClasstext']").to_a
+    return nil if note and note.first.inner_html == "Non-Stock"
+
+
+    # Decorations
+    imprint_area = {}
+    imprint_area.default = []
+    imprint_method = {}
+    imprint_method.default = []
+
+    doc.xpath("//td[@id='ctl00_content_TableCell1']/span").each do |span|
+      raise "Unkonown prop" unless /^\s*<b>\s*(.+?)\s*:\s*<\/b>\s*(.+?)\s*$/ =~ span.inner_html
+      name, value = $1.strip.downcase, iconv($2.strip)
+      puts "  - #{name.inspect} : #{value.inspect}"
+
+      name, name_sub = name.split(/\s*,\s*/)
+
+      case name
+      when 'size'
+        warning 'Already has dimension', pd.properties['dimension'] if pd.properties['dimension']
+        pd.properties['dimension'] = parse_dimension(value)
+        
+      when 'imprint area'
+        if /^(.+?(?:(?:\"?h)|(?:sq\.)|(?:dia\.)|(?:triangle)))(.*)$/ =~ value
+          area_str, location = $1, $2.strip
+          location = nil if location and location.empty?
+          area = parse_dimension(area_str)
+          puts "  Area: #{name_sub}: #{area.inspect} #{location.inspect}"
+          
+          #            raise "Multiple imprint areas of type: #{name_sub_norm}" if imprint_area.has_key?(name_sub)
+          imprint_area[name_sub] += [[location, area]]
         else
-          product['images'] = images
+          puts "  * Area: #{value.inspect}"
         end
-      end
-
-      # Decorations
-      size = nil
-      imprint_area = {}
-      imprint_area.default = []
-      imprint_method = {}
-      imprint_method.default = []
-
-#      puts "test: #{product['properties']}"
-
-      product.delete('properties').each do |name, value|
-        name, name_sub = name.split(',')
-#        value, post = value.tr("\302\240",'').tr("\n",'').tr("\r",'').split(/\t|(?:   )/).collect { |e| e unless e.empty? }.compact
-        name_sub = name_sub && name_sub.strip.downcase
-
-        case name.strip.downcase
-        when 'size'
-          log << "  * Already has size" if size
-          size = parse_volume(value)
-          log << "  Size: #{size.inspect}"
+        
+      when 'imprint method'
+        /^(.+?)(\s+(?:–|-|(?:on))\s+.+?)?(?:\.\s*(.+))?$/ =~ value
+        technique, tail, comment = $1, $2, $3
+        if tail
+          /(\s+(?:–|-)\s+(.+))/ =~ tail
+          modify_all, modify = $1, $2
+          /(\s+on\s+(.+))/ =~ tail
+          location_all, location = $1, $2
+          location = nil if location and location.empty?
           
-        when 'imprint area'
-          if /^(.+?(?:(?:\"?h)|(?:sq\.)|(?:dia\.)|(?:triangle)))(.*)$/ =~ value
-            area_str, location = $1, $2.strip
-            location = nil if location and location.empty?
-            area = parse_area(area_str)
-            log << "  Area: #{name_sub}: #{area.inspect} #{location.inspect}"
-
-#            raise "Multiple imprint areas of type: #{name_sub_norm}" if imprint_area.has_key?(name_sub)
-            imprint_area[name_sub] += [[location, area]]
-          else
-            log << "  * Area: #{value.inspect}"
+          if modify_all and location_all
+            modify = modify[0...modify.index(location_all)].strip if modify.include?(location_all)
+            location = location[0...location.index(modify_all)].strip if location.include?(modify_all)
           end
-          
-        when 'imprint method'
-          /^(.+?)(\s+(?:–|-|(?:on))\s+.+?)?(?:\.\s*(.+))?$/ =~ value
-          technique, tail, comment = $1, $2, $3
-          if tail
-            /(\s+(?:–|-)\s+(.+))/ =~ tail
-            modify_all, modify = $1, $2
-            /(\s+on\s+(.+))/ =~ tail
-            location_all, location = $1, $2
-            location = nil if location and location.empty?
-            
-            if modify_all and location_all
-              modify = modify[0...modify.index(location_all)].strip if modify.include?(location_all)
-              location = location[0...location.index(modify_all)].strip if location.include?(modify_all)
-            end
-          end
-
-          technique, limit = @@decoration_replace[technique]
-          
-          if modify
-            it = @@decoration_limit[modify]
-            limit = it if it
-#            modify = it ? it : "X(#{modify})"
-          end
-          
-#          raise "Multiple imprint methods of type: #{name_sub}" if imprint_method.has_key?(name_sub)
-          imprint_method[name_sub] += [[technique, limit, location]]
-          log << "  Method: #{name_sub}: #{value.inspect} => #{technique.inspect} : #{limit.inspect} #{location.inspect} : #{comment.inspect}"
-          
-#        when 'packaging options'
-          # Ignore
-          # 
+        end
+        
+        technique, limit = @@decoration_replace[technique]
+        
+        if modify
+          it = @@decoration_limit[modify]
+          limit = it if it
+          #            modify = it ? it : "X(#{modify})"
+        end
+        
+        #          raise "Multiple imprint methods of type: #{name_sub}" if imprint_method.has_key?(name_sub)
+        imprint_method[name_sub] += [[technique, limit, location]]
+        puts "  Method: #{name_sub}: #{value.inspect} => #{technique.inspect} : #{limit.inspect} #{location.inspect} : #{comment.inspect}"
+        
+        #        when 'packaging options'
+        # Ignore
+        # 
 #        when 'packaging'
-#          puts "Packaging: #{value.inspect}"
+        #          puts "Packaging: #{value.inspect}"
         
-#        when 'ink cartridge'
+        #        when 'ink cartridge'
         
-        else
-          log << "  * #{name.inspect}, #{name_sub.inspect}: #{value.inspect}"
-        end
+      else
+        puts "  * #{name.inspect}, #{name_sub.inspect}: #{value.inspect}"
       end
-
-      decorations = []
-
-      (imprint_area.keys + imprint_method.keys).uniq.each do |name|
-        imprint_method[name].each do |technique, limit, method_location|
-          imprint_area[name].each do |area_location, area|
-            decorations << {
-              'technique' => technique,
-              'limit' => limit,
-              'location' => area_location || method_location}.merge(area || {})
-          end
-        end
-      end
-      
-      log << "  * NO Decorations" if decorations.empty?
-      
-      decorations.unshift({
-                            'technique' => 'None',
-                            'location' => ''
-                          })
-
-      product['variants'].each { |v| v['dimension'] = size }
-      product['decorations'] = decorations
-
-      unless log.empty?
-        puts "Product: #{product['supplier_num']}"     
-        puts log.join("\n")
-      end
-
-#      puts "Dec: #{decorations.inspect}"
-      puts "Lead: #{product['lead_time_rush']}"
-
-      add_product(product)
     end
+
+    pd.decorations = [DecorationDesc.none]
+    
+    (imprint_area.keys + imprint_method.keys).uniq.each do |name|
+      imprint_method[name].each do |technique, limit, method_location|
+        imprint_area[name].each do |area_location, area|
+          dec = DecorationDesc.new(:technique => technique,
+                                   :limit => limit,
+                                   :location => area_location || method_location)
+          dec.merge!(area)
+          pd.decorations << dec
+        end
+      end
+    end
+    
+    
+    # Features
+    pd.description = doc.xpath("//img[@src='images/bulletArrow.gif']").collect do |img|
+      line = img.next_sibling.children.collect do |child|
+        next child.text.strip if child.text?
+        case child.name
+          when 'a'
+          unless child.attributes['href'] && 
+              (/\/Products\/ProductDetail\.aspx\?fpartno=(.+)$/ === child.attributes['href'].value)
+            puts "Unkown URL: #{data['supplier_num']} #{child.attributes['href'] && child.attributes['href'].value}"
+            next nil
+          end
+          product = get_product($1)
+          "<a href='#{product.web_id}'>#{child.inner_html.gsub($1,'').strip}</a>"
+
+          when 'font', 'b'
+          next nil if child.inner_html.downcase.include?('free ship') 
+          child.inner_html.strip
+
+          when 'img', 'br'
+          nil
+        else
+          raise "Unknown element #{data['supplier_num']} #{child.name}"
+        end
+      end.compact.collect { |s| s.encode('ISO-8859-1') }.join(' ')
+      line.blank? ? nil : line
+    end.compact
+
+
+    # Lead Times
+    case price_rows.to_s
+    when /(\d)-Day Rush/i
+      pd.lead_time.rush = $1.to_i
+    when /24 hour rush/i
+      pd.lead_time_rush = 1
+    end
+
+    if categories.include?('Overseas')
+      pd.lead_time.normal_min = 20
+      pd.lead_time.normal_max = 60
+    elsif it = doc.xpath("//table/tbody/tr/td/span[@class='black11']").last
+      pd.lead_time.normal_min, pd.lead_time.normal_max = it.inner_html.scan(/(?:(?:(\d+)\s*-\s*)?(\d+) days)|(?:(?:(\d+)\s*-\s*)?(\d+) weeks)/).collect { |dl, dh, wl, wh| dh ? [dl ? dl.to_i : dh.to_i, dh.to_i] : [(wl ? wl.to_i : wh.to_i)*5, wh.to_i*5] }.max
+    else
+      pd.lead_time.normal_min, pd.lead_time.normal_max = 3, 5
+    end
+
+    pd.supplier_categories = categories.collect { |c| [c] }
+
+    price_no_special = nil
+    price_no_less = nil
+    price_note = doc.xpath("//span[@id='ctl00_content_PriceNote']").to_a.join.strip
+    unless price_note.empty?
+      price_note = price_note.downcase
+      price_no_special = true if price_note.index('special pricing') 
+      price_no_less = true if price_note.index('less than minimum')
+    end
+    
+    setup_price = doc.xpath("//span[@id='ctl00_content_SetupCostDesc']").first.inner_html
+    running_price = doc.xpath("//span[@id='ctl00_content_RunningCostDesc']").first
+    running_price = running_price.inner_html if running_price
+#    @decoration_costs << [setup_price ? setup_price.strip : nil, running_price ? running_price.strip : nil]
+    
+    variant_pricing = {}
+    
+    # Price Code
+    if price_list = (doc.xpath("//span[@id='ctl00_content_DiscountCode']") +
+                     doc.xpath("//span[@id='ctl00_content_DiscountCodeCloseout']")).first
+      price_str = price_list.inner_html.strip.gsub(/<.+>/,'')
+      price_str += 'C' if price_str.length == 1 and price_str[0] > ?0 and price_str[0] <= ?9 #Kludge for 4 without C price
+      price_str = nil if price_str.empty?
+    end
+    
+    price_rows = doc.xpath("//tr[@id='ctl00_content_RegularPriceRow']/td/table/tr/td") +
+                 doc.xpath("//tr[@id='ctl00_content_CloseoutPriceRow']/td/table/tr/td")
+    pd.tags << 'Special' if price_rows.size > 1
+    price_rows.each do |price_row|
+      rows = price_row.xpath("table/tr/td/table/tr[td/font]")
+      next unless rows and rows.length > 1
+      
+      minimums = rows.shift.xpath("//td[@align='right']/font/b").to_a.compact
+      next if minimums.empty?
+      minimums = minimums.collect { |m| m.inner_html.to_i }
+      
+      rows.each do |row|
+        head = row.xpath("td/span/font").first
+        head = head.inner_html.downcase if head
+        
+        list = row.xpath("td/font").collect { |e| e.inner_html.strip.empty? ? nil : e.inner_html }.compact
+        next nil if list.empty?
+
+        pricing = PricingDesc.new
+        minimums.zip(list).each do |min, price|
+          next unless price
+          next if (val = price[1..-1].to_f) == 0.0
+          pricing.add(min, val)
+        end
+        pricing.apply_code(price_str || '5R')
+        pricing.eqp_costs unless price_no_special
+        pricing.ltm(44.00) unless price_no_less
+        pricing.maxqty
+        variant_pricing[head] = pricing
+      end
+    end
+
+    if variant_pricing.empty?
+      puts "URL: #{url} (SKIPPED, NO PRICES)" 
+      return nil
+    end
+
+    unless variant_pricing.default = [nil, 'now', 'standard'].collect { |k| variant_pricing[k] }.compact.first
+      puts " * No Price"
+      return nil
+    end
+   
+
+    puts "Variant: #{variant_prices.inspect}"
+    puts "Code: #{price_codes.inspect}"
+    
+    # Colors (Variants)
+    product_list = []
+    color_list = []
+    doc.xpath("//span[@id='ctl00_content_ColorLinks']/a").collect do |a|
+      raise "Unknown HREF: #{a['href']}" unless /\(.*?,\"(.*?)\"/ === a['href']
+      img = $1
+      raise "Unknown Num: #{img}" unless /\/(.*?)\./ === img
+      product_list << $1
+      color_list << a.inner_html.strip
+    end
+    if color_list.empty?
+      puts 'No Colors'
+      return nil
+    end
+
+    color_image_map, color_num_map = match_colors(color_list)
+    pd.images = color_image_map[nil]
+    
+    pd.variants = product_list.zip(color_list).collect do |prod, color|
+      VariantDesc.new(:supplier_num => prod,
+                      :properties => { 'color' => color },
+                      :pricing => variant_pricing[color.downcase],
+                      :images => color_image_map[color] || [])
+    end
+    
+    
+    # Shipping
+    shipping = doc.xpath("//td[@id='ctl00_content_ShippingManualCell']/span/text()")
+    unless shipping.empty?
+      shipping = shipping.first.content 
+    
+      reg = /^(\d{1,4}) pieces per carton, (\d{1,3}(?:\.\d{1,2})?) lbs per carton, carton size (.*)$/
+      all, pkg_pieces, pkg_weight, pkg_size = reg.match(shipping).to_a
+      if all
+        dim = parse_dimension(pkg_size)
+        
+        pd.package.weight = Float(pkg_weight)
+        pd.package.units = Integer(pkg_pieces)
+        pd.package.height = dim['h']
+        pd.package.width = dim['w']
+        pd.package.length = dim['l']
+      else
+        puts "Unknown shipping: #{shipping.inspect}"
+      end
+    end
+
+    hi_res = doc.xpath("//span[@id='ctl00_content_HiReslink']/a")
+    unless hi_res.empty?
+      path = "http://www.primeline.com/#{hi_res.first['href']}"
+      pd.images = [ImageNodeFetch.new(path.split('/').last, path)]
+    end
+    
+    pd
   end
 end

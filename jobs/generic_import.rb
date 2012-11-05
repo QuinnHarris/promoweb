@@ -957,7 +957,7 @@ private
     number_from_regex(m)
   end
 
-  @@component_regex = /#{@@number_regex}(?<aspect>width|w|height|h|length|l|diameter|dia|square|d|depth|round)?/i
+  @@component_regex = /#{@@number_regex}(?<aspect>width|w|height|h|length|l|diameter|dia\.?|square|d|depth|round)?/i
   def parse_dimension(string, pedantic = false)
     aspects = {}
     no_aspect = nil
@@ -1142,10 +1142,10 @@ private
 
       paths = [paths].flatten
       paths.each do |path|
-        #puts "Fetching Image List: ftp://#{host}/#{path}"
         if @directory[path]
           list = @directory[path]
         else
+          puts "  ftp://#{host}/#{path}"
           ftp.chdir('/'+path) if path
           list = @directory[path] = ftp.list
         end
@@ -1158,7 +1158,7 @@ private
             if prod_id
               products[prod_id] += [[img_id, url, var_id, tag]]
             else
-              puts "Unknown file: #{url}"
+              puts "    Unknown: #{url}"
             end          
           else
             paths << "#{path}/#{entry.basename}" if recursive and ((recursive == true) or (recursive === (path+'/'+entry.basename)))
@@ -1191,6 +1191,8 @@ private
     image_map.default = []
 
     supplier_map = {}
+
+    return [image_map, supplier_map] if colors.empty?
 
     multiple_map = {}
     multiple_map.default = []

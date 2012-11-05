@@ -207,6 +207,9 @@ class DecorationDesc
     h[key.reverse] = i
   end
   cattr_reader :techniques
+  def self.technique?(name)
+    @@techniques.keys.find { |l| l.first == name }
+  end
 
   property :technique, Array[String], :no_pre => true do |s|
     s = [s].flatten

@@ -117,7 +117,7 @@ class LogomarkXLS < GenericImport
           sorted = costs.to_a.sort_by { |h, l| l.length }
           if sorted.length == 1 or sorted[-1].last.length != sorted[-2].last.length
             default = sorted.pop.first.merge(:key => key)
-            cost_decorations[default] = get_decoration(technique, default[:fixed], default[:marginal], :postfix > '')
+            cost_decorations[default] = get_decoration(technique, default[:fixed], default[:marginal], :postfix => '')
           end
           sorted.each do |hash, list|
             k = hash.merge(:key => key)
@@ -177,37 +177,39 @@ class LogomarkXLS < GenericImport
       file_name = cache_file("Logomark_images")
       images_valid = cache_exists(file_name) ? cache_read(file_name) : {}
 
-      Net::HTTP.start('www.logomark.com') do |http|
-        product_merge.each do |supplier_num, unique, common|
-          unique.each do |uniq|
-            variant_num = uniq['SKU']
-            list = ["/Image/Model/Model800/#{variant_num}.jpg"] +
-              (1..8).collect { |i| "/Image/Model/Model800/#{variant_num}_a#{i}.jpg" }
-            count = 0
-            list.each do |path|
-              if images_valid.has_key?(path)
-                valid = images_valid[path]
-              else
-                valid = (http.head(path).content_type == 'image/jpeg')
-                images_valid[path] = valid
-              end
-
-              if valid
-                uniq['images'] = (uniq['images'] || []) + 
-                  [ImageNodeFetch.new("Model/#{path.split('/').last}",
-                                      "http://www.logomark.com#{path}")]
-                count = 0
-              else
-                count += 1
-                break if count >= 2
+      begin
+        Net::HTTP.start('www.logomark.com') do |http|
+          product_merge.each do |supplier_num, unique, common|
+            unique.each do |uniq|
+              variant_num = uniq['SKU']
+              list = ["/Image/Model/Model800/#{variant_num}.jpg"] +
+                (1..8).collect { |i| "/Image/Model/Model800/#{variant_num}_a#{i}.jpg" }
+              count = 0
+              list.each do |path|
+                if images_valid.has_key?(path)
+                  valid = images_valid[path]
+                else
+                  valid = (http.head(path).content_type == 'image/jpeg')
+                  puts "  #{path} : #{valid}"
+                  images_valid[path] = valid
+                end
+                
+                if valid
+                  uniq['images'] = (uniq['images'] || []) + 
+                    [ImageNodeFetch.new("Model/#{path.split('/').last}",
+                                        "http://www.logomark.com#{path}")]
+                  count = 0
+                else
+                  count += 1
+                  break if count >= 2
+                end
               end
             end
           end
         end
+      ensure
+        cache_write(file_name, images_valid)
       end
-
-      cache_write(file_name, images_valid)
-
       puts "Stop Image Find"
 
       product_merge.each do |supplier_num, unique, common|

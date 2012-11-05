@@ -3,23 +3,23 @@ class NorwoodAll < GenericImport
     @year = (Date.today + 7).year
     @colors = %w(Black White 186 202 208 205 211 1345 172 Process\ Yellow 116 327 316 355 341 Process\ Blue 293 Reflex\ Blue 281 2587 1545 424 872 876 877)
     @list =
-[['AUTO', 'Barlow'],
- ['AWARD', 'Jaffa'],
- ['BAG', 'AirTex'],
- ['CALENDAR', 'TRIUMPH', %w(Reflex\ Blue Process\ Blue 032 185 193 431 208 281 354 349 145 469 109 Process\ Yellow 165)],
- ['DRINK', 'RCC'],
- ['GOLF', 'TeeOff'],
- ['GV', 'GOODVALU'],
- ['HEALTH', 'Pillow'],
- ['OFFICE', 'EOL'],
- ['WRITE', 'Souvenir', @colors + %w(569 7468 7433)],
- ['FUN', 'Fun'],
- ['HOUSEWARES', 'Housewares'],
- ['MEETING', 'Meeting'],
- ['TECHNOLOGY', 'Technology'],
- ['OUTDOOR', 'Outdoor'],
- ['TRAVEL', 'Travel'],
-]
+      [['AUTO', 'Barlow'],
+       ['AWARD', 'Jaffa'],
+       ['BAG', 'AirTex'],
+       ['CALENDAR', 'TRIUMPH', %w(Reflex\ Blue Process\ Blue 032 185 193 431 208 281 354 349 145 469 109 Process\ Yellow 165)],
+       ['DRINK', 'RCC'],
+       ['GOLF', 'TeeOff'],
+       ['GV', 'GOODVALU'],
+       ['HEALTH', 'Pillow'],
+       ['OFFICE', 'EOL'],
+       ['WRITE', 'Souvenir', @colors + %w(569 7468 7433)],
+       ['FUN', 'Fun'],
+       ['HOUSEWARES', 'Housewares'],
+       ['MEETING', 'Meeting'],
+       ['TECHNOLOGY', 'Technology'],
+       ['OUTDOOR', 'Outdoor'],
+       ['TRAVEL', 'Travel'],
+      ]
     super 'Norwood'
   end
 
@@ -41,15 +41,17 @@ class NorwoodAll < GenericImport
     # Get Image List
     directory_list = %w(2012_Hardgoods_Hi_Res_Imprint_Images 2012_NPS3_Hi-Res_Images 2013_Calendars_Hi_Res_Imprint_Images 2012_Hardgoods_Hi_Res_Blank_Images 2013_Calendars_Hi_Res_Blank_Images 2012_Lifestyle_Images/2012_High_Res_Images).collect { |p| "Norwood 2012 Product Images/#{p}" }
 
-    @image_list = get_ftp_images({ :server => 'library.norwood.com',
-                                  :login => 'images', :password => 'norwood' },
-                                directory_list, /Hi[-_]Res/i) do |path, file|
-      next nil if file.include?('\\') # kludge to deal with \ in file name causing bad URI
-      if /\/([A-Z]{2}?\d{4,5})(?:_13)?(?:\/|$)/ === path
-        product = $1
-        if /^([A-Z]{2}?\d{4,5})(?:_(.+))?\.jpg$/i === file && $1 == product
-          [path.split('/')[1..-1].join('/')+'/'+file, product, $2, (/blank/i === path) ? 'blank' : nil]
-         end
+    @image_list = cache_marshal('Norwood_imagelist') do
+      get_ftp_images({ :server => 'library.norwood.com',
+                       :login => 'images', :password => 'norwood' },
+                     directory_list, /Hi[-_]Res/i) do |path, file|
+        next nil if file.include?('\\') # kludge to deal with \ in file name causing bad URI
+        if /\/([A-Z]{2}?\d{4,5})(?:_13)?(?:\/|$)/ === path
+          product = $1
+          if /^([A-Z]{2}?\d{4,5})(?:_(.+))?\.jpg$/i === file && $1 == product
+            [path.split('/')[1..-1].join('/')+'/'+file, product, $2, (/blank/i === path) ? 'blank' : nil]
+          end
+        end
       end
     end
   end
@@ -109,164 +111,147 @@ class NorwoodCSV < GenericImport
 
   }
 
-  cattr_reader :color_map
-  @@color_map = {}
-
   def parse_products
     puts "Reading: #{@file_name}"
 
     CSV.foreach(File.join(JOBS_DATA_ROOT,@file_name), :headers => :first_row) do |row|
-      product_data = {
-        'supplier_num' => @supplier_num = row['Product ID'],
-        'name' => row['Product Name'],
-        'description' => row['Product Description'],
-        'supplier_categories' => [%w(Category Sub-Taxonomy).collect { |n| row[n] }]
-        }
+      ProductDesc.apply(self) do |pd|
+        pd.supplier_num = @supplier_num = row['Product ID']
+        pd.name = row['Product Name']
+        pd.description = row['Product Description']
+        pd.supplier_categories = [%w(Category Sub-Taxonomy).collect { |n| row[n] }]
 
-      # Calendar Kludge
-      if sufix = @@sufixes[product_data['supplier_categories'].first]
-        unless product_data['name'].downcase.include?(sufix.downcase)
-          product_data['name'] << " #{sufix}"
-          puts "Append: #{product_data['supplier_num']}: #{product_data['name']}"
+
+        # Calendar Kludge
+        if sufix = @@sufixes[pd.supplier_categories.first]
+          unless pd.name.downcase.include?(sufix.downcase)
+            pd.name << " #{sufix}"
+            puts "Append: #{pd.supplier_num}: #{product_data['name']}"
+          end
         end
-      end
-
-      if row['Country of Origin'] == 'United States'
-        product_data['tags'] = %w(MadeInUSA)
-      end
-
-      # PAckage
-      product_data['package_units'] = Integer(row['Pack Size'])
-      unless row['Pack Weight'].blank? or (row['Pack Weight'] == 'NA')
-        raise "Unkown weight: #{row['Pack Weight']}" unless /^(\d+(?:\.\d)?) ?(?:((?:lbs?)|(?:oz))\.?)?$/ === row['Pack Weight']
-        product_data['package_weight'] = Float($1) * (($2 == 'oz') ? (1.0/16.0) : 1.0)
-      end
-                  
-      unless (leadtime = row['Lead Time']).blank?
-        product_data['lead_time_normal_min'] = product_data['lead_time_normal_max'] = Integer(leadtime)
-      end
-      unless (leadtime = row['Rush Lead Time']).blank?
-        product_data['lead_time_rush'] = Integer(leadtime)
-      end
-
-
-      # Imprint
-      decorations = [{
-          'technique' => 'None',
-          'location' => ''
-        }]
-      (1..6).each do |num|
-        break if (technique = row["Imprint Method#{num}"]).blank?
-        technique = @@technique_replace[technique] if @@technique_replace.has_key?(technique)
         
-        location_str = row["Imprint Location#{num}"]
-        raise "Unknown location: #{location_str}" unless /^(.+?):\s*(.+?)(?:,\s*(.+?))?\s*$/ === location_str
-        location, area, limit = $1, $2, $3
+        if row['Country of Origin'] == 'United States'
+          pd.tags = %w(MadeInUSA)
+        end
+
+        # Package
+        pd.package.units = Integer(row['Pack Size'])
+        unless row['Pack Weight'].blank? or (row['Pack Weight'] == 'NA')
+          raise "Unkown weight: #{row['Pack Weight']}" unless /^(\d+(?:\.\d)?) ?(?:((?:lbs?)|(?:oz))\.?)?$/ === row['Pack Weight']
+          pd.package.weight = Float($1) * (($2 == 'oz') ? (1.0/16.0) : 1.0)
+        end
         
-        area = parse_area(area) if area
-        colors = row["Imprint Colors#{num}"]  # UNUSED!!!
+        unless (leadtime = row['Lead Time']).blank?
+          pd.lead_time.normal_min = pd.lead_time.normal_max = Integer(leadtime)
+        end
+        unless (leadtime = row['Rush Lead Time']).blank?
+          pd.lead_time_rush = Integer(leadtime)
+        end
         
-        decorations << {
-          'technique' => technique,
-          'location' => location,
-          'limit' => limit && limit.to_i
-        }.merge(area || {})
-      end
-      product_data['decorations'] = decorations
+        
+        # Imprint
+        pd.decorations = [DecorationDesc.none]
+        (1..6).each do |num|
+          dec = DecorationDesc.new
+          break if (technique = row["Imprint Method#{num}"]).blank?
+          if @@technique_replace.has_key?(technique)
+            dec.technique = @@technique_replace[technique]
+          else
+            if DecorationDesc.technique?(technique)
+              dec.technique = technique
+            else
+              warning "Unknown Technique", technique
+              next
+            end
+          end
+        
+          location_str = row["Imprint Location#{num}"]
+          raise "Unknown location: #{location_str}" unless /^(.+?):\s*(.+?)(?:,\s*(.+?))?\s*$/ === location_str
+          dec.location = $1
+          area = $2
+          dec.limit = $3.to_i
+          dec.limit = 1 if dec.limit == 0
+        
+          area = parse_dimension(area) if area
+          dec.merge!(area) if area
+          pd.decorations << dec
+        end
       
       
-      # Price/Cost
-      pre = ''
-      if !(late_date = row['Late Pricing Start Date']).blank? and
-          (Date.today > Date.parse(late_date))
-        pre = 'Late '
-      end
-      prices = []
-      costs = []
-      (1..10).each do |num|
-        break if row["#{pre}Price#{num}"].blank?
-        price = Money.new(Float(row["#{pre}Price#{num}"]))
-        discount = convert_pricecode(row["#{pre}Code#{num}"])
-        quantity = Integer(row["#{pre}Quantity#{num}"])
-        
-        prices << { :marginal => price,
-          :fixed => Money.new(0),
-          :minimum => quantity }
-        costs << prices.last.merge(:marginal => price * (1.0 - discount))
-      end
+        # Price/Cost
+        pre = ''
+        if !(late_date = row['Late Pricing Start Date']).blank? and
+            (Date.today > Date.parse(late_date))
+          pre = 'Late '
+        end
+        pricing = PricingDesc.new
+        (1..10).each do |num|
+          break if row["#{pre}Price#{num}"].blank?
+          pricing.add(row["#{pre}Quantity#{num}"],
+                      Float(row["#{pre}Price#{num}"]),
+                      row["#{pre}Code#{num}"])
+        end
+        pricing.maxqty
 
-      # Less than minimum
-      unless costs.empty?
-        costs.push({ :minimum => [(costs.last[:minimum] * (costs.length == 1 ? 4 : 2)), 100].max })
-        
         ltm_price = 40.0
         if /Less Than Minimum \$(\d{2,3}\.\d{2})/ === row['Optional Charges']
           ltm_price = Float($1)*0.8
         end
-        costs.unshift({ :fixed => Money.new(ltm_price),
-                        :marginal => costs.first[:marginal],
-                        :minimum => costs.first[:minimum] / 2
-                      }) unless costs.first[:minimum] <= 1
-      end
+        pricing.ltm_if(ltm_price)
 
-      common_properties = {}
-      common_properties['material'] = row['Material'] unless row['Material'].blank?
 
-      if size1 = row['Sizes']
-        common_properties['dimension'] = parse_volume(size1) || size1
-      end
+        pd.properties['material'] = row['Material'] unless row['Material'].blank?
+        size = row['Sizes']
+        pd.properties['dimension'] = parse_dimension(size) || size if size
 
-      # Get all properties (usually color)
-      props = (1..4).each_with_object({}) do |num, hash|
-        name = row["Item Type#{num}"]
-        next if name.empty?
-        values = row["Item Colors#{num}"].split('|')
-        hash[name] = values
-      end
 
-      color_keys = props.keys.find_all { |k| k.downcase.include?('color') }
-      colors = props[color_key = color_keys.first] || []
-      if color_keys.length == 1
-        # Force to 'color' property if only one color key exists
-        color_key = 'color'
-        props = props.each_with_object({}) do |(k, v), hash|
-          hash[k.downcase.include?('color') ? 'color' : k] = v
+        # Get all properties (usually color)
+        props = (1..4).each_with_object({}) do |num, hash|
+          name = row["Item Type#{num}"]
+          next if name.empty?
+          values = row["Item Colors#{num}"].split('|')
+          hash[name] = values
+        end
+        
+        color_keys = props.keys.find_all { |k| k.downcase.include?('color') }
+        colors = props[color_key = color_keys.first] || []
+        if color_keys.length == 1
+          # Force to 'color' property if only one color key exists
+          color_key = 'color'
+          props = props.each_with_object({}) do |(k, v), hash|
+            hash[k.downcase.include?('color') ? 'color' : k] = v
+          end
+        end
+        
+        variants = [{}]
+        count = 1
+        props.each do |name, values|
+          count *= values.length
+          break if count > 50
+
+          variants = variants.collect do |prop|
+            values.collect { |v| prop.merge(name => v) }
+          end.flatten
+        end
+        
+
+        color_image_map, color_num_map = match_colors(colors)
+
+        if color_image_map.empty?
+          pd.images = [ImageNodeFetch.new("#{@supplier_num}_Z.jpg",
+                                          "http://norwood.com/images/products/zoom/#{@supplier_num}_Z.jpg")]
+        else
+          pd.images = color_image_map[nil]
+        end
+
+        pd.variants = variants.collect do |properties|
+          num_w = (32 - @supplier_num.length-properties.length) / [properties.length,1].max
+          num_suf = properties.keys.sort.collect { |k| '-' + properties[k].reverse[0...num_w].reverse.strip }.join
+          VariantDesc.new(:supplier_num => @supplier_num + num_suf,
+                          :pricing => pricing, :properties => properties,
+                          :images => properties[color_key] && color_image_map[properties[color_key]])
         end
       end
-
-      variants = [{}]
-      count = 1
-      props.each do |name, values|
-        count *= values.length
-        break if count > 50
-
-        variants = variants.collect do |prop|
-          values.collect { |v| prop.merge(name => v) }
-        end.flatten
-      end
-
-
-      color_image_map, color_num_map = match_colors(colors)
-
-      if color_image_map.empty?
-        product_data['images'] = [ImageNodeFetch.new("#{@supplier_num}_Z.jpg",
-                                                     "http://norwood.com/images/products/zoom/#{@supplier_num}_Z.jpg")]
-      else
-        product_data['images'] = color_image_map[nil]
-      end
-
-      product_data['variants'] = variants.collect do |properties|
-        num_w = (32 - @supplier_num.length-properties.length) / [properties.length,1].max
-        num_suf = properties.keys.sort.collect { |k| '-' + properties[k].reverse[0...num_w].reverse.strip }.join
-        { 'supplier_num' => @supplier_num + num_suf,
-          'prices' => prices,
-          'costs' => costs,
-          'properties' => properties.merge(common_properties),
-          'images' => properties[color_key] && color_image_map[properties[color_key]]
-        }
-      end
-      
-      add_product(product_data)
     end
   end
 end
