@@ -106,7 +106,7 @@ class PrimeLineWeb < GenericImport
     fetch = WebFetch.new(url)
     return unless path = fetch.get_path
     count = 0
-    Nokogiri::HTML(open(path)).xpath("//table[@id='Table4']/tr/td/div/a").each do |a|
+    Nokogiri::HTML(open(path)).xpath("//table/tr/td/div/a").each do |a|
       next unless a['href'].index('ProductDetail')
       path = a['href'].strip.gsub(/^\.\.\//, '')
 #      puts "Product: #{path} : #{category}"
