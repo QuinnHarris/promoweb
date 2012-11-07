@@ -52,13 +52,16 @@ class HighCaliberLine < GenericImport
     ws = Spreadsheet.open(File.join(JOBS_DATA_ROOT, file)).worksheet(ws_num)
     puts ws.use_header(1).inspect
     ws.each(2) do |row|
+      if row['Description'].include?('Texas')
+        puts "Excluding Product: #{row['Product ID']}"
+        next
+      end
+
       ProductDesc.apply(self) do |pd|
         pd.merge_from_object(row, {
                                'supplier_num' => 'Product ID',
                                'name' => 'Product Name' })
-      
-#        next if %w(S-606 T-818 K-175 A7250).include?(pd.supplier_num)
-        
+             
         puts "Product: #{pd.supplier_num}"
         
         pd.name.gsub!(/\s+/, ' ')
@@ -76,23 +79,21 @@ class HighCaliberLine < GenericImport
         rescue Spreadsheet::Excel::Row::NoHeader
           pd.supplier_categories = [[]]
         end
-        
-        overseas = nil
-        pd.tags = ([tags].flatten + pd.supplier_categories.flatten.collect do |category|
-          case category
-          when /Eco Friendly/i
-            'Eco'
-          when /New/i
-            'New'
-          when /Made In USA/i
-            'MadeInUSA'
-          when /Overseas/i, /Factory Direct/i
-            overseas = true
-            nil
-          end
-        end).compact.uniq
-        pd.decorations = [] # Suppress Decoration error
-        pd.decorations << DecorationDesc.none unless overseas
+
+        tags = []
+        if ws.header_map['Features'] and row['Features']
+          tags << 'New' if row['Features'].include?('New')
+          tags << 'Eco' if row['Features'].include?('Bio')
+          tags << 'MadeInUSA' if row['Features'].include?('usa')
+        end
+
+        cat_string = pd.supplier_categories.join.downcase
+        tags << 'Eco' if cat_string.include?('eco')
+        tags << 'MadeInUSA' if cat_string.include?('usa')
+        pd.tags = tags.uniq
+
+        overseas = (/(?:Overseas)|(?:Factory)/i === cat_string)
+
 
         if prod = @product_list.find { |p| p.supplier_num == pd.supplier_num }
           prod.supplier_categories = (prod.supplier_categories + pd.supplier_categories).uniq
@@ -109,6 +110,7 @@ class HighCaliberLine < GenericImport
         
 
         # Decorations
+        pd.decorations = overseas ? [] : [DecorationDesc.none]
         if imprint_str = row['Imprint Size']
           laser = ws.header_map['Features'] && row['Features'].to_s.include?('Laser Engrav')
 
@@ -117,7 +119,7 @@ class HighCaliberLine < GenericImport
               puts "Imprintt: #{imprint_str.inspect}"
             end
             location, qualify = $1, $3
-            imprint_area = $2 && parse_area2($2.strip.gsub('”', '"').gsub('&quot;', '"'))
+            imprint_area = $2 && parse_dimension($2)
             puts "Imprint: #{imprint_str.inspect} => #{imprint_area.inspect}" unless imprint_area
             if imprint_area
               pd.decorations << DecorationDesc.new(:technique => 'Screen Print',

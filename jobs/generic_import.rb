@@ -918,7 +918,7 @@ private
         (?:(?: (?:^|\s+|-) (?<numer>\d{1,2}) )? \s*[\/∕]\s* (?<denom>\d{1,2}) ) |
         (?:(?:^|\s+) (?<sym>[⅛¼⅓⅜½⅝¾⅞]) ) |
         (?<=\d) )  # Postive lookbehind to match 'whole' alone
-     \s*(?<dim>[\"”]|(?:yards?))?\s*/xi
+     \s*(?<dim>[\"”]|(?:\&quot;)|(?:yards?))?\s*/xi
   private
   def number_from_regex(m)
     num = 0.0
@@ -957,7 +957,7 @@ private
     number_from_regex(m)
   end
 
-  @@component_regex = /#{@@number_regex}(?<aspect>width|w|height|h|length|l|diameter|dia\.?|square|d|depth|round)?/i
+  @@component_regex = /#{@@number_regex}(?<aspect>width|w|height|h|length|l|diameter|diam?\.?|square|d|depth|round)?/i
   def parse_dimension(string, pedantic = false)
     aspects = {}
     no_aspect = nil
