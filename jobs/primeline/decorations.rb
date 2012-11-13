@@ -117,7 +117,7 @@ apply_decorations('Prime Line') do |primeline|
 
   # Four Color
     dec_grp = primeline.decoration_price_groups.create(
-      { :technique => DecorationTechnique.find_by_name("Four Color") })
+      { :technique => DecorationTechnique.find_by_name("4 Color Photographic") })
       dec_grp.entries.create({ :minimum => 1,
         :fixed_price_const => 0.0,
         :fixed_price_exp => 0.0,

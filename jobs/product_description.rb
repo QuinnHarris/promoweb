@@ -337,7 +337,9 @@ class PricingDesc
   def parse_money(val)
     return val if val.is_a?(Money)
     return Money.new(val) if val.is_a?(Float)
-    Money.new(Float(val.gsub(/^\$/, '')))
+    raise PropertyError, "money type not recognized" unless val.is_a?(String)
+    raise PropertyError, "money format unknown" unless /$?\d+(\,\d{3})*(\.\d{2})?/ === val
+    Money.new(Float(val.gsub(/^[$,]/, '')))
   end
 
   def add(qty, price, code = nil)
