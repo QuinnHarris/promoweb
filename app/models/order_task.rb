@@ -528,8 +528,9 @@ I hope we have served you well and look forward to working with you again!)
   end
 
   def execute_duration
-    5.day
-  end  
+    return 5.day if object.items.find { |i| !i.task_completed?(AcceptedItemTask) }
+    0
+  end
 end
 
 class ReviewOrderTask < OrderTask
