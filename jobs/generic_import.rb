@@ -1188,11 +1188,11 @@ private
 #    end
 
     image_map = {}
-    image_map.default = []
-
     supplier_map = {}
 
     return [image_map, supplier_map] if colors.empty?
+
+    image_map.default = []
 
     multiple_map = {}
     multiple_map.default = []
@@ -1333,6 +1333,8 @@ private
         end
       end
     end
+
+    image_map.default = nil
 
     [image_map, supplier_map]
   end

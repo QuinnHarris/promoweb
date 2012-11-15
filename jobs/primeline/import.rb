@@ -92,8 +92,8 @@ class PrimeLineWeb < GenericImport
     image_paths = %w(BT LG LT PL).collect { |p| "product_imagesNoLogo/#{p}-BlankImages" }
     image_paths += %w(BuiltImages LeemanImages LogoTec PL-0-3000 PL-3001-6000 PL-6001-9999).collect { |p| "product_images/#{p}/300dpi" }
     @image_list = get_ftp_images('ftp.primeworld.com', image_paths) do |path, file|
-      (/^([A-Z]{2})(\d{4})(\w*)HIRES(\d?)\.jpg$/i === file) && 
-        ["#{path}/#{file}", "#{$1}-#{$2}", $3, path.include?('BlankImages') ? 'blank' : nil]
+      (/^([A-Z]{2})(\d{3,4})(\w*)HIRES(\d?)\.{1,2}jpg$/i === file) && 
+        ["#{path}/#{file}", "#{$1}-#{"%04d" % $2.to_i}", $3, path.include?('BlankImages') ? 'blank' : nil]
     end
 
   
@@ -137,30 +137,6 @@ class PrimeLineWeb < GenericImport
   end
   public
 
-  @@decoration_replace = {
-    'Silk Screened' => 'Screen Print',
-    'Silk Screnned' => 'Screen Print',
-    'silk screened' => 'Screen Print',
-    "Silk screened" => 'Screen Print',
-    "Silk Screened via PermaPrime" => 'Screen Print',
-    'Pad Printed' => 'Pad Print',
-    'Pad Print' => 'Pad Print',
-    'Pad Printing' => 'Pad Print',
-    "Pad Printed." => 'Pad Print',
-    "pad printed" => 'Pad Print',
-    "Pad printed" => 'Pad Print',
-    "Image Bonding" => 'Image Bond',
-    "Image Bonding\303\242\204\242" => 'Image Bond',
-    "Image Bonding\303\242\204\242. " => 'Image Bond',
-    "Image Bonding\256" => 'Image Bond',
-    "Image Bonding on black case" => 'Image Bond',
-    "Laser Engraved. Please note: Laser Engraving color may vary." => 'Laser Engrave',
-    "Laser Engraved only. Please note: Laser Engraving color may vary." => 'Laser Engrave',
-    "Laser Engraved with oxidation. Please note: Laser Engraving color may vary." => 'Laser Engrave',
-    "Laser engraved. Please note: Laser Engraving color may vary." => 'Laser Engrave',
-    "Laser Engraved" => 'Laser Engrave'
-    
-  }
   
   @@decoration_modifiers = {
     'up to 4 colors' => 4,
@@ -257,7 +233,9 @@ class PrimeLineWeb < GenericImport
       price_rows = doc.xpath("//tr[@id='ctl00_content_RegularPriceRow']/td/table/tr/td") +
         doc.xpath("//tr[@id='ctl00_content_CloseoutPriceRow']/td/table/tr/td")
 
-      pd.tags << 'Special' if price_rows.size > 1
+      pd.tags = []
+      pd.tags << tag if tag
+#      pd.tags << 'Special' if price_rows.size > 1
       
       # Lead Times
       case price_rows.to_s
@@ -267,7 +245,7 @@ class PrimeLineWeb < GenericImport
         pd.lead_time.rush = 1
       end
       
-      if categories.include?('Overseas')
+      if categories.find { |c| c.downcase.include?('overseas') }
         pd.lead_time.normal_min = 20
         pd.lead_time.normal_max = 60
       elsif it = doc.xpath("//table/tbody/tr/td/span[@class='black11']").last
@@ -292,19 +270,16 @@ class PrimeLineWeb < GenericImport
       running_price = running_price.inner_html if running_price
       #    @decoration_costs << [setup_price ? setup_price.strip : nil, running_price ? running_price.strip : nil]
       
-      variant_pricing = {}
 
 
-      
+      variant_pricing = {}      
       doc.xpath("//tr[@id='ctl00_content_RegularPriceRow' or @id='ctl00_content_CloseoutPriceRow']/td/table/tr").each do |tr|
-        price_row = tr.children[0]
-
         price_str = tr.children[1].at_xpath('span/text()').to_s
         price_str += 'C' if price_str.length == 1 and price_str[0] > ?0 and price_str[0] <= ?9 #Kludge for 4 without C price
         price_str = nil if price_str.empty?
  
 
-        rows = price_row.xpath("table/tr/td/table/tr[td/font]")
+        rows = tr.children[0].xpath("table/tr/td/table/tr[td/font]")
         next unless rows and rows.length > 1
         
         minimums = rows.shift.xpath("//td[@align='right']/font/b").to_a.compact
@@ -314,21 +289,21 @@ class PrimeLineWeb < GenericImport
         rows.each do |row|
           head = row.xpath("td/span/font").first
           head = head.inner_html.downcase if head
+          puts "HEAD: #{head}"
           
           list = row.xpath("td/font").collect { |e| e.inner_html.strip.empty? ? nil : e.inner_html }.compact
           next nil if list.empty?
           
           begin
-            pricing = PricingDesc.new
+            pricing = variant_pricing[head] = PricingDesc.new
             minimums.zip(list).each do |min, price|
               next unless price
               pricing.add(min, price)
             end
-            pricing.apply_code(price_str || '5R')
+            pricing.apply_code(price_str || '5R', true)
             pricing.eqp_costs unless price_no_special
             pricing.ltm(44.00) unless price_no_less
             pricing.maxqty
-            variant_pricing[head] = pricing
           rescue PropertyError
             puts " Price Row Error: #{minimums.inspect} #{list.inspect}"
           end
@@ -449,41 +424,37 @@ class PrimeLineWeb < GenericImport
 
       
       color_image_map, color_num_map = match_colors(color_list)
-      pd.images = color_image_map[nil]
-      
+      puts "Color Map: #{color_image_map.inspect} #{color_image_map.default.inspect}"
+      pd.images = color_image_map[nil] || []
+
       pd.variants = product_list.zip(color_list).collect do |prod, color|
         VariantDesc.new(:supplier_num => prod,
                         :properties => { 'color' => color },
                         :pricing => variant_pricing[color.downcase],
                         :images => color_image_map[color] || [])
       end
-      
+
+
+      if hi_res = doc.at_xpath("//span[@id='ctl00_content_HiReslink']/a")
+        path = "http://www.primeline.com/#{hi_res['href']}"
+        pd.images << ImageNodeFetch.new(path.split('/').last, path)
+      end
+
       
       # Shipping
-      shipping = doc.xpath("//td[@id='ctl00_content_ShippingManualCell']/span/text()")
-      unless shipping.empty?
-        shipping = shipping.first.content 
-        
-        reg = /^(\d{1,4}) pieces per carton, (\d{1,3}(?:\.\d{1,2})?) lbs per carton, carton size (.*)$/
-        all, pkg_pieces, pkg_weight, pkg_size = reg.match(shipping).to_a
-        if all
-          dim = parse_dimension(pkg_size)
-          
-          pd.package.weight = Float(pkg_weight)
-          pd.package.units = Integer(pkg_pieces)
-          pd.package.height = dim['h']
-          pd.package.width = dim['w']
-          pd.package.length = dim['l']
+      if shipping = doc.at_xpath("//td[@id='ctl00_content_ShippingManualCell']/span/text()")
+        if /^(?<units>\d{1,4}) pieces per carton, (?<weight>\d{1,3}(?:\.\d{1,2})?) lbs per carton, carton size (?<size>.*)$/ =~ shipping.to_s
+          pd.package.weight = Float(weight)
+          pd.package.units = Integer(units)
+          pd.package.merge!(parse_dimension(size))
         else
-          puts "Unknown shipping: #{shipping.inspect}"
+          warning "Unknown Shipping", shipping.inspect
         end
+      else
+        warning 'No Shipping'
       end
-      
-      hi_res = doc.xpath("//span[@id='ctl00_content_HiReslink']/a")
-      unless hi_res.empty?
-        path = "http://www.primeline.com/#{hi_res.first['href']}"
-        pd.images = [ImageNodeFetch.new(path.split('/').last, path)]
-      end
-    end
-  end
+
+    end # ProductDesc.apply
+  end # process_product
 end
+#PL-2535

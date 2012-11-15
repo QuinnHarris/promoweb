@@ -342,7 +342,7 @@ class PricingDesc
     Money.new(Float(val.gsub(/^[$,]/, '')))
   end
 
-  def add(qty, price, code = nil)
+  def add(qty, price, code = nil, round = false)
     qty = parse_qty(qty)
     raise PropertyError, "qty must be positive" unless qty > 0
     raise ValidateError.new("minimums must be sequential", "#{@prices.last && @prices.last[:minimum]} >= #{qty}") if @prices.last && @prices.last[:minimum] >= qty
@@ -360,6 +360,7 @@ class PricingDesc
       discount = self.class.convert_pricecode(code)
       if discount
         price *= 1.0 - discount
+        price = price.round_cents if round
       else
         price = parse_money(code)
       end
@@ -370,7 +371,7 @@ class PricingDesc
     end
   end
 
-  def apply_code(code)
+  def apply_code(code, round = false)
     list = self.class.convert_pricecodes(code)
     unless list.length == @prices.length
       if list.uniq.length == 1
@@ -386,7 +387,11 @@ class PricingDesc
       end
     end
     raise ValidateError, "costs must be empty to apply code" unless @costs.empty?
-    @costs = @prices.zip(list).collect { |p, d| p.merge(:marginal => p[:marginal] * (1.0 - d)) }
+    @costs = @prices.zip(list).collect do |p, d|
+      marginal = p[:marginal] * (1.0 - d)
+      marginal = marginal.round_cents if round
+      p.merge(:marginal => marginal)
+    end
   end
 
 private
@@ -432,7 +437,7 @@ public
       :fixed => Money.new(0), :marginal => marginal }
   end
 
-  def eqp_costs
+  def eqp_costs(round = false)
     raise ValidateError, "Expected price" if @prices.empty?
     raise ValidateError, "Expected costs" if @costs.empty?
     @costs = [@costs.last.merge(:minimum => @costs.first[:minimum])]
@@ -676,7 +681,7 @@ class ProductDesc
     context.instance_variable_set("@product_description", desc)
     begin
       r = yield desc
-      context.add_product(desc) unless r == false
+      context.add_product(desc) unless false == r
     rescue ValidateError => boom
       boom.mark_duplicate! if context.has_product?(desc.supplier_num)
       puts "- Validate Error: #{desc.error_id}: #{boom}"
