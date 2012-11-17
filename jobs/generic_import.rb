@@ -861,57 +861,6 @@ class GenericImport
   end
   
 private
-  @@hw_reg  = /^(?:([a-z ]+)[:;]? *)?(\d{1,2}(?:\.\d{1,2})?[^\/])?(?:(\d{1,2})\/(\d{1,2}))? ?"? ?w? +x +(\d{1,2}(?:\.\d{1,2})?[^\/])?(?:(\d{1,2})\/(\d{1,2}))? ?"? ?h?\.? ?([a-z]*)$/i
-  @@single_reg = /^(?:([a-z ]+)[:;]? *)?(\d{1,2}(?:\.\d{1,2})?[ "])?(?:(\d{1,2})\/(\d{1,2}))? ?"? *([^0-9]*)/i
-
-  def parse_area_xxx(str)
-    all, pre, w_a, w_n, w_d, h_a, h_n, h_d, post = @@hw_reg.match(str).to_a
-    if all
-      width = w_a ? w_a.to_f : 0.0
-      width += w_d ? w_n.to_f / w_d.to_f : 0.0
-      height = h_a ? h_a.to_f : 0.0
-      height += h_d ? h_n.to_f / h_d.to_f : 0.0
-      { 'width' => width, 'height' => height }
-    else
-      all, pre, a, n, d, post = @@single_reg.match(str).to_a
-      val = (a ? a.to_f : 0.0) + (d ? (n.to_f/d.to_f) : 0.0)
-      if all
-        case post.downcase
-          when /^ *sq/
-            { 'width' => val, 'height' => val }
-          when /^ *dia/
-            { 'diameter' => val }
-          when /^ *equilateral triangle/
-            { 'triangle' => val }
-          else
-            nil
-        end
-      else
-        nil
-      end
-    end  
-  end
-
-  def parse_area2_xxx(string)
-    if /^(?:(\d{1,2})[- ])?(\d{1,2})(?:\/(\d{1,2}))?\"\s*(H|W)\s*x?\s*(?:(\d{1,2})[- ])?(\d{1,2})(?:\/(\d{1,2}))?\"\s*(W|H)\s*$/i === string
-      if $4 == $8
-        puts "Duplicate #{$4}"
-        return nil
-      end
-      return {
-        (($4.upcase == 'H') ? 'height' : 'width') => $1.to_f + $2.to_f / ($3 || 1).to_f,
-        (($8.upcase == 'H') ? 'height' : 'width') => $5.to_f + $6.to_f / ($7 || 1).to_f
-      }
-    end
-
-    if /^(?:(\d{1,2})[- ])?(\d{1,2})(?:\/(\d{1,2}))?\"\s*dia/i === string
-      return { 'diameter' => $1.to_f + $2.to_f / ($3 || 1).to_f }
-    end
-
-    nil
-  end
-
-
   @@number_regex = 
     /(?<whole>\d{1,3})?
      (?:(?<deci>\.\d{1,4}) |
@@ -1076,35 +1025,6 @@ private
     end
     locations
   end
-
-  
-#  @@volume_reg = /^ *(\d{1,2}(?:\.\d{1,2})?[ -]?)?(?:(\d{1,2})\/(\d{1,2}))? ?"? ?([lwhd])?/i
-#  def parse_volume(str)
-#    res = {}
-#    list = %w(l w h)
-#    str.split('x').collect do |comp|
-#      all, a, n, d, dim = @@volume_reg.match(comp).to_a
-#      dim = list.shift if res.has_key?(dim) or !dim
-##      return nil if res.has_key?(dim)
-#      res[dim] = (a ? a.to_f : 0.0) + (d ? (n.to_f/d.to_f) : 0.0)
-#      list.delete_if { |x| x == dim }
-#    end
-##    return nil unless res.size == 3
-#    res
-#  end
-
-#  def convert_pricecode(comp)
-#    comp = comp.upcase[0] if comp.is_a?(String)
-#    num = nil
-#    num = comp.ord - ?A.ord if comp.ord >= ?A.ord and comp.ord <= ?G.ord
-#    num = comp.ord - ?P.ord if comp.ord >= ?P.ord and comp.ord <= ?X.ord
-#    
-#    raise "Unknown PriceCode: #{comp}" unless num
-#    
-#    (50 - (5 * num)) / 100.0
-#  end
-  
-#  def convert_pricecodes(str) # in product_description
   
   @@upcases = %w(AM FM MB GB USB)
   @@downcases = %w(in with)
