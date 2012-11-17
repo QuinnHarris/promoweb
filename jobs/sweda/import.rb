@@ -86,12 +86,12 @@ class SwedaXML < GenericImport
      
         colors = unique.collect { |u| u['ColorCode'] }
         color_image_map, color_num_map = match_image_colors(images.uniq, colors, :prune_colors => true)
-        pd.images = color_image_map[nil]
+        pd.images = color_image_map[nil] || []
 
         pd.variants = unique.collect do |uniq|
           VariantDesc.new(:supplier_num => uniq['Sku'],
                           :properties => { 'color' => uniq['ColorDesc'].blank? ? nil : uniq['ColorDesc'].strip },
-                          :images => color_image_map[uniq['ColorCode']],
+                          :images => color_image_map[uniq['ColorCode']] || [],
                           :pricing => pricing)
         end
       end
