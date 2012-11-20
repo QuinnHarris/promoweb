@@ -144,7 +144,7 @@ class PolyXLS < GenericImport
         
           color_image_map, color_num_map = match_colors(colors, :prune_colors => @options[:prune_colors])
           #      puts "ColorMap: #{pd.supplier_num} #{color_image_map.inspect} #{color_num_map.inspect}"
-          pd.images = color_image_map[nil]
+          pd.images = color_image_map[nil] || []
           
           postfixes = Set.new
           pd.variants = colors.collect do |color|
@@ -165,7 +165,7 @@ class PolyXLS < GenericImport
                               'color' => color.strip.capitalize,
                             },
                             :pricing => pricing,
-                            :images => color_image_map[color])
+                            :images => color_image_map[color] || [])
           end
         end
       end

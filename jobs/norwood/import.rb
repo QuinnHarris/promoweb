@@ -241,7 +241,7 @@ class NorwoodCSV < GenericImport
           pd.images = [ImageNodeFetch.new("#{@supplier_num}_Z.jpg",
                                           "http://norwood.com/images/products/zoom/#{@supplier_num}_Z.jpg")]
         else
-          pd.images = color_image_map[nil]
+          pd.images = color_image_map[nil] || []
         end
 
         pd.variants = variants.collect do |properties|
@@ -249,7 +249,7 @@ class NorwoodCSV < GenericImport
           num_suf = properties.keys.sort.collect { |k| '-' + properties[k].reverse[0...num_w].reverse.strip }.join
           VariantDesc.new(:supplier_num => @supplier_num + num_suf,
                           :pricing => pricing, :properties => properties,
-                          :images => properties[color_key] && color_image_map[properties[color_key]])
+                          :images => properties[color_key] && (color_image_map[properties[color_key]] || []))
         end
       end
     end

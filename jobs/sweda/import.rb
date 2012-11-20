@@ -52,11 +52,11 @@ class SwedaXML < GenericImport
         pricing.maxqty
         # LTM?
 
-#      str = common['Specification'].gsub('&nbsp;', ' ').strip
-#      puts "Orig: #{supplier_num} #{str.inspect}"
-#      str.scan(/^\s*([\w\s]+?)\s*:\s*(.+?)\s*$/).each do |key, value|
-#        puts "  #{key}: #{value}"
-#      end
+      str = common['Specification'].gsub('&nbsp;', ' ').strip
+      puts "Orig: #{supplier_num} #{str.inspect}"
+      str.scan(/^\s*([\w\s]+?)\s*:\s*(.+?)\s*$/m).each do |key, value|
+        puts "  #{key}: #{value}"
+      end
 
         pd.decorations = [DecorationDesc.none]
 

@@ -243,7 +243,7 @@ class CrownProdXLS < GenericImport
                                           "http://www.crownprod.com/images/items/BRIGTEYE_CL_xl.jpg")]
         else
           color_image_map, color_num_map = match_image_colors(images, colors, :prune_colors => true)
-          pd.images = color_image_map[nil]
+          pd.images = color_image_map[nil] || []
         end
         
         pd.variants = colors.collect do |color|
