@@ -1,1 +1,318 @@
-= render "show_product"
+- setup_main if @user
+- cache(:id => @product.id) do
+  - setup_main unless @user
+  #prod_img
+    - images = @product.product_images.to_a
+    - if images.length > 6 && images.reject { |i| i.tag == 'blank' }.length > 1
+      - images.delete_if { |i| i.tag == 'blank' } if images.length > 6
+    %ul#main_imgs
+      - images.each_with_index do |image, idx|
+        %li{ :style => (idx == 0 ? nil : 'display: none;')}= image_tag(image.image.url(:medium), :alt => @product.name, :itemprop => 'image' )
+    %br
+    - unless images.empty?
+      = link_to "Large Image", images.first.image.url(:large), :rel => 'external'
+
+    #navv
+
+    #thumbs
+      - if images.length > 1
+        - for group in images.in_groups_of(3)
+          %ul
+            - for images in group.compact                  
+              %li.active{ 'data-variants' => images.variants.collect { |v| v.id }.join(' ') }= image_tag images.image.url(:thumb)          
+
+  - unless @properties.empty?
+    #variants.box
+      - index = -1
+      - for names, properties in @properties
+        %dl
+          %dt
+            %a{ :href => "#" }
+              - reset_cycle
+              - for name in names
+                %span{ :class => cycle('odd', 'even') }= "#{name.capitalize}:"
+          %dd
+            %ul{ :id => "group-#{index += 1}" }
+              - for props, variants in properties
+                %li{ :id => props.compact.first && "prop-#{props.compact.first.id}", 'data-variants' => variants.collect { |v| v.id }.join(' ') }
+                  %a{ :href => "#", :title => props.first && "Click to select #{props.first.translate}" }
+                    - reset_cycle
+                    - for prop in props
+                      %span{ :class => cycle('odd', 'even') }
+                        != prop ? (prop.is_image? ? image_tag(prop.translate) : prop.translate) : 'NA'
+
+  - unless @locations.empty?
+    #decorations.box
+      %dl#dechead
+        %dt>
+          %span Decoration:
+        %dd#techniques
+          %ul
+            - for tech in @techniques
+              %li{ :class => (tech == @techniques.first) && 'sel', :id => "tech-#{tech.id}" }
+                %a{ :href => "#", :title => "Click to select #{tech.name}" }
+                  %span= tech.friendly_name
+
+      %dl
+        - display = @techniques.first.unit_name
+        %dt{ :style => !display && 'display:none;' }>
+          %span Number of #{display && @techniques.first.unit_name.capitalize}(s):
+          %dd{ :style => !display && 'display:none;' }>
+            %input#unit_value{ :name => "unit_value", :type => "text", :value => @techniques.first.unit_default, :size => "6" }
+      %dl
+        - display = @techniques.first.name != "None"
+        %dt{ :style => !display && 'display:none;' }>
+          %span Location:
+        %dd{ :style => !display && 'display:none;' }>
+          %ul#locations
+            - for dec in @decorations.find_all { |d| d.technique == @techniques.first }
+              %li{ :id => "dec-#{dec.id}" }
+                %a{ :href => '#' }
+                  %span= dec.display
+                  
+  - unless false #@product.deleted
+    %meta{ :itemprop => 'condition', :content => 'new' }
+    #prices.box{ :itemprop => 'offers', :itemscope => true, :itemtype => 'http://schema.org/Offer' }
+      = form_tag(add_orders_url(:protocol => Rails.env.production? ? 'https://' : nil), {:name => "productform", :class => 'noauto' }) do
+        %p
+          = hidden_field_tag "product", @product.id
+          = hidden_field_tag "price_group", @prices.price_sets.first && @prices.price_sets.first.group.id
+          = hidden_field_tag "variants", ''
+          = hidden_field_tag "technique", @techniques.first ? @techniques.first.id : ''
+          = hidden_field_tag "decoration", ''
+          = hidden_field_tag "unit_count", (@techniques.first and @techniques.first.unit_name) ? @techniques.first.unit_default : ''
+          = hidden_field_tag "disposition", ''
+
+          %table#price_calc
+            %tr
+              %td
+                Quantity:
+                %input#quantity{ :name => "quantity", :size => "4", :type => "text" }
+              %td.num
+                &times;
+                %span#item_unit_price
+                  $??.??
+              %td =
+              %td.num#item_total_price
+                $???.??
+              %td#addtoorder{ :rowspan => 4 }
+                %a.submit{ :href => '#', :title => "Click to Get Quote or Order" }
+                  Get
+                  %span Quote
+                  %br
+                  or
+                  %span Order
+                %a.submit#sample{ :href => '#', :title => "Click for sample with quote" }
+                  with
+                  %span Sample
+            %tr.dec
+              %td#dec_desc{ :rowspan => '2'} JavaScript Required
+              %td.num
+                %span#dec_unit_price
+                  $??.??
+              %td =
+              %td.num#dec_total_price
+                $???.??
+            %tr.dec
+              %td.num Setup
+              %td
+              %td.num#dec_fixed_price $???.??
+            %tr#total
+              %th{ :colspan => 2 } Total:
+              %td{ :colspan => 2 }
+                %span.num#total_price $????.??
+            %tr
+              %td{ :colspan => 5 }
+                #info
+                  - if @product.tag_names.include?('Closeout')
+                    %div
+                      %strong
+                        Quantities limited on
+                        %br
+                        this closeout product!
+                - if @locations.empty?
+                  %strong
+                    Additional setup charges WILL
+                    %br
+                    apply for decoration options.
+                - else
+                  Additional charges may apply.                       
+                
+
+        - unless @prices.price_sets.empty? or @prices.price_sets.first.breaks.first.marginal.nil?
+          %meta{ :itemprop => 'priceCurrency', :content => 'USD' }
+          %table#price_list
+            %thead
+              %tr#qty_row<
+                %th> Quantity
+                - for qty in @minimums
+                  %td>= qty
+            %tbody
+              %tr#price_row<
+                %th> Unit Price
+                - for qty in @minimums
+                  %td{ :itemprop => 'price' }>= @prices.price_range(qty).to_perty
+
+  :javascript
+    new window.ProductPricing(#{ {
+     :groups => @prices.price_sets.collect do |set|
+       { :id => set.group.id,
+         :constant => set.const.to_i,
+         :exp => set.exp,
+         :breaks => set.breaks.collect do |brk|
+           { :minimum => brk.minimum,
+             :fixed => brk.fixed.to_i,
+             :marginal => brk.marginal.to_i }
+          end,
+          :variants => set.group.variants.collect { |v| v.id }
+       }
+     end,
+     :decorations => @techniques.collect do |tech|
+        price_group = @product.supplier.find_decoration_price_group(tech)
+        { :id => tech.id,
+          :unit_name => tech.unit_name && tech.unit_name.capitalize,
+          :unit_default => tech.unit_default,
+          :locations => @decorations.collect do |dec|
+            next unless dec.technique == tech and !dec.display.blank?
+            { :id => dec.id, :display => dec.display, :limit => dec.limit }
+          end.compact,
+          :entries => price_group && price_group.entries.reverse.collect do |entry|
+            { :minimum => entry.minimum }.merge(
+                %w(fixed marginal).inject({}) do |hash, aspect|
+                  hash[aspect] = %w(price_fixed price_const price_exp price_marginal divisor offset).inject({}) do |h, prop|
+                    h[prop] = entry["#{aspect}_#{prop}"]
+                    h
+                  end
+                  hash
+                end)
+          end
+        }
+      end,
+      :minimums => @minimums}.to_json});
+
+  #static
+    - if @product.lead_time_normal_min
+      .desc#leadtime
+        %h2 Production Time
+        %dl
+          %dt Normal:
+          %dd
+            = [@product.lead_time_normal_min, @product.lead_time_normal_max].uniq.collect { |d| format_leed_time(d) }.join(' to ')
+        - if @product.lead_time_rush
+          %dl
+            %dt Rush:
+            %dd
+              = format_leed_time(@product.lead_time_rush)
+              = @product.lead_time_rush_charge ? '(Additional Charges)' : '(No Charge, Some Restrictions)'
+
+    - unless @common_properties.empty?
+      .desc#attributes
+        %h2 Attributes
+        - for prop in @common_properties
+          %dl
+            %dt= "#{prop.name.capitalize}:"
+            %dd!= prop.is_image? ? image_tag(prop.translate) : prop.translate
+
+    - unless @product.description.nil? or @product.description.empty?
+      .desc#features
+        %h2 Features
+        %ul#description{ :itemprop => 'description' }
+          - for desc in @product.description.split("\n")
+            %li!= desc
+
+- if @user
+  - content_for(:tail) do
+    .admin
+      = form_for @product, { :url => product_add_admin_categories_path(:product_id => @product) } do |prod|
+        = autocomplete_field :path, {} , auto_complete_for_path_admin_categories_path
+        = submit_tag 'Add to Category'
+      = link_to "Edit Product", edit_product_path(@product)
+      %hr
+      - unless @sessions.empty?
+        %table#access
+          %thead
+            %tr
+              %td Time
+              %td Address
+              %td Order(s)
+              %td State
+              %td City
+              %td Zipcode
+              %td Areacode
+          %tbody
+            - for session in @sessions
+              %tr
+                %td= format_time(session.pages.last.created_at)
+                %td= link_to session.pages.last.address, admin_access_paths_path(:session_id => session.id)
+                %td!= session.orders.collect { |o| link_to o.order_id, items_admin_order_path(o.order_id) }.join(', ')
+                - if gi = GEOIP.look_up(session.pages.last.address)
+                  %td= gi[:region] && gi[:region].force_encoding("UTF-8")
+                  %td= gi[:city] && gi[:city].force_encoding("UTF-8")
+                  %td= gi[:postal_code]
+                  %td= gi[:area_code]
+                - else
+                  %td{ :colspan => 4 } Unkown
+      %hr
+
+      - unless @customers.empty?
+        %table#orders
+          %thead
+            %tr
+              %td Order
+              %td Company
+              %td Person
+              %td Phone
+              %td Email
+          %tbody
+            - for customer in @customers
+              %tr
+                %td!= customer.orders.collect { |o| link_to o.id, status_order_path(o) }.join(', ')
+                %td= customer.company_name
+                %td= customer.person_name
+                %td
+                  - for pn in customer.phone_numbers
+                    %div= pn.number_string
+                %td
+                  - for email in customer.email_addresses
+                    %div= mail_to email.address
+        %hr
+
+      %table
+        %thead
+          %tr
+            %td Quantity
+            - for min in @prices.all_minimums
+              %td= min
+        %tbody
+          %tr
+            %th Our Price
+            - for min in @prices.all_minimums
+              %td= @prices.price_range(min)
+
+          - for group in @prices.cost_groups + @prices.supplier_groups + @prices.price_groups
+            - name = (group.source_id ? group.source.name : 'Cost') + ' ' + group.variants.collect { |v| v.supplier_num }.join(', ')
+            %tr
+              %th= group.uri ? link_to(name, group.uri) : name
+              - for min in @prices.all_minimums
+                %td
+                  - e = group.price_entries.to_a.find { |v| v.minimum == min }
+                  = e ? (e.marginal.to_s + ((!e.fixed or e.fixed.zero?) ? '' : " (#{e.fixed})")) : nil
+
+      = link_to 'Price Chart', chart_product_path(@product)
+
+      - if @page_products and !@page_products.empty?
+        %hr
+        %table
+          %thead
+            %tr
+              %td Name
+              %td Score
+              %td Match
+              %td URL
+          %tbody
+            - for pp in @page_products
+              %tr
+                %td= pp.page.site.url
+                %td= pp.score
+                %td= pp.correct
+                %td= link_to pp.page.request_uri, pp.page.url

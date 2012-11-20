@@ -24,6 +24,7 @@ ActiveRecord::Base.observers << :product_sweeper unless Rails.env.development?
 
 class ProductsController < ApplicationController
 #  cache_sweeper :product_sweeper
+  layout 'product'
 
   before_filter :setup_context
 

@@ -1,1 +1,10 @@
-= render "show_product"
+= javascript_include_tag "/gallery/jquery-1.7.2.min.js","/gallery/jquery-ui-1.8.21.custom.min.js","/gallery/jquery.easing.1.3.js","/gallery/jquery.mousewheel.min.js","/gallery/jquery.lhpMegaImgViewer.min.js","/gallery/swfobject.js"
+= stylesheet_link_tag "/gallery/main.css","/gallery/custom-theme/jquery-ui-1.8.21.custom.css","/gallery/lhp_miv.css"
+
+#galleryThumbImg
+  - images = @product.product_images.to_a
+  - if images.length > 1
+    - for image in images
+      %a{:href => image.image.url(:large)}
+        = image_tag image.image.url(:thumb) 
+#myDiv
