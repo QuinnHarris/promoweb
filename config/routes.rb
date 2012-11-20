@@ -63,6 +63,7 @@ Promoweb::Application.routes.draw do
   match 'products/admin/autocomplete_supplier_name' => 'admin::Products#autocomplete_supplier_name'
 
   match 'products/:id(.:format)' => 'products#show'
+  match 'products/:id(.:format)/images' => 'products#images', :as => 'images_project'
   match 'products/main/:iid' => redirect('/products/%{iid}')
 
   match 'admin' => 'admin::Users#login', :via => :get, :as => 'admin_login'

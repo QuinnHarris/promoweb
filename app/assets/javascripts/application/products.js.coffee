@@ -407,40 +407,86 @@ class window.ProductPricing extends PricingBase
 # CategoryPricing = Class.create(PricingBase, {})
 
 $(document).ready ->
-  $('#main_imgs').cycle(
-        pagerEvent: 'mouseover',
-        pager: '#thumbs',
-        deactive: [],
-        pagerAnchorBuilder: (idx, slide) ->
-                $('#thumbs li')[idx]
-        updateActivePagerLink: (pager, currSlide, clsName) ->
-                count = 0
-                while this.deactive[this.nextSlide] and count < this.elements.length
-                        this.nextSlide = this.nextSlide + 1
-                        this.nextSlide = 0 if this.nextSlide == this.elements.length
-                        count = count + 1
+  if $('#main_imgs').length > 0
+    $('#main_imgs').cycle(
+          pagerEvent: 'mouseover',
+          pager: '#thumbs',
+          deactive: [],
+          pagerAnchorBuilder: (idx, slide) ->
+                  $('#thumbs li')[idx]
+          updateActivePagerLink: (pager, currSlide, clsName) ->
+                  count = 0
+                  while this.deactive[this.nextSlide] and count < this.elements.length
+                          this.nextSlide = this.nextSlide + 1
+                          this.nextSlide = 0 if this.nextSlide == this.elements.length
+                          count = count + 1
 
-                $(pager).each ()->
-                        $('li', this).removeClass(clsName).eq(currSlide).addClass(clsName);
-        timeout: 6000,
-        setVariants: (variants) ->
-          count = 0
-          $('#thumbs li').each (i, v) =>
-            for str in v.getAttribute("data-variants").split(' ')
-              if (this.deactive[i] = (if variants then !(parseInt(str) in variants) else false))
-                $(v).removeClass('active')
-              else
-                $('#main_imgs').cycle(i) if count == 0
-                count++
-                $(v).addClass('active')
-          $('#main_imgs').cycle(if count <= 1 then 'pause' else 'resume')
+                  $(pager).each ()->
+                          $('li', this).removeClass(clsName).eq(currSlide).addClass(clsName);
+          timeout: 6000,
+          setVariants: (variants) ->
+            count = 0
+            $('#thumbs li').each (i, v) =>
+              for str in v.getAttribute("data-variants").split(' ')
+                if (this.deactive[i] = (if variants then !(parseInt(str) in variants) else false))
+                  $(v).removeClass('active')
+                else
+                  $('#main_imgs').cycle(i) if count == 0
+                  count++
+                  $(v).addClass('active')
+            $('#main_imgs').cycle(if count <= 1 then 'pause' else 'resume')
 
-#        onPagerEvent: (i, e) ->
-#                m = $('#main_imgs')
-#                if m.data('cycle.opts').deactive[i]
-#                        m.cycle('resume')
+  #        onPagerEvent: (i, e) ->
+  #                m = $('#main_imgs')
+  #                if m.data('cycle.opts').deactive[i]
+  #                        m.cycle('resume')
 
-        )
+          )
+  if $('#myDiv').length > 0  
+    settings =
+      viewportWidth: "100%"
+      viewportHeight: "100%"
+      fitToViewportShortSide: false
+      contentSizeOver100: false
+      startScale: 1
+      startX: 0
+      startY: 0
+      animTime: 500
+      draggInertia: 10
+      contentUrl: ""
+      intNavEnable: true
+      intNavPos: "B"
+      intNavAutoHide: false
+      intNavMoveDownBtt: true
+      intNavMoveUpBtt: true
+      intNavMoveRightBtt: true
+      intNavMoveLeftBtt: true
+      intNavZoomBtt: true
+      intNavUnzoomBtt: true
+      intNavFitToViewportBtt: true
+      intNavFullSizeBtt: true
+      mapEnable: true
+      mapThumb: ""
+      mapPos: "BL"
+      popupShowAction: "click"
+      testMode: false 
+      
+    $("#myDiv").lhpMegaImgViewer settings
+    $("#galleryThumbImg a").each (index) ->
+      $(this).click (e) ->
+        e.preventDefault()
+        settings.contentUrl = $(this).attr("href")
+        settings.mapThumb = $(this).find("img").attr("src")
+        $("#myDiv").lhpMegaImgViewer "destroy"
+        $("#myDiv").lhpMegaImgViewer settings
+
+
+    $("#galleryThumbImg a:first").trigger "click"
+    $("#galleryThumbImg img").each (index) ->
+      $(this).hover (->
+        $(this).stop(true, true).animate opacity: .4
+      ), ->
+        $(this).stop(true, true).animate opacity: 1         
 
 
 set_layout = ->

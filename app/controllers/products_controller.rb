@@ -152,6 +152,15 @@ public
   end
 
   def show
+     show_content
+  end
+
+  def images
+      show_content
+  end  
+
+protected
+  def show_content
     id = params[:id] && params[:id].split('-').first
     @product = Product.find(id)
 
@@ -223,6 +232,6 @@ public
       #render :layout => 'simple' if params[:layout] == 'false'
       #only place simple layout is used?
     end
-  end
+  end  
 
 end
