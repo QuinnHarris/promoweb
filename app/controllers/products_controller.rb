@@ -97,38 +97,7 @@ public
     
     redirect_to action
   end
-  
-#  def prices
-#    id = params[:id]
-#    @product = Product.find(id)
-#    
-#    # Prices
-#    prices = PriceSetter.new(@product.id)
-#      
-#    @minimums = prices.minimums
-#    @price_func = prices.price_func
-#    
-#    @decoration_price_groups = DecorationPriceGroup.find(:all,
-#      :conditions => "supplier_id = #{@product.supplier.id} AND product_id = #{@product.id}",
-#      :include => [:technique => :decorations])    
-#  end
-#  
-#  def decorations
-#    id = params[:id]
-#    @product = Product.find(id)
-#    
-#    # Decorations
-#    @decorations = @product.decorations.find(:all, :include => [:technique])
-#    decorations = @decorations.find_all { |x| x.technique.name != 'None' }
-#    
-#    @techniques = decorations.collect { |dec| dec.technique }.uniq.sort
-#    @locations = decorations.collect { |dec| dec.location }.uniq
-#
-#    @decoration_hash = decorations.inject({}) do |hash, dec|
-#      hash[[dec.location, dec.technique]] = dec
-#      hash
-#    end
-#  end
+
 
   # Expects @category
   def list_sub
@@ -152,16 +121,9 @@ public
     end
   end
 
-  def show
-     show_content
-  end
-
-  def images
-      show_content
-  end  
-
 protected
-  def show_content
+  # Common to all product info pages (could be done with before_filter)
+  def common
     id = params[:id] && params[:id].split('-').first
     @product = Product.find(id)
 
@@ -214,25 +176,65 @@ protected
 #      @description += ", Customize with #{@techniques.collect { |t| t.name }.join(', ')}"  
     
       @keywords = "Custom Imprinted #{@product.name} #{@product.supplier.name} #{@product.supplier_num}"
-      
-      if @user
-        @page_products = [] #PageProduct.find_all_by_product_id(@product.id, :include => [:page => :site])
-
-        @sessions = SessionAccess.find(:all, :include => [:pages], :limit => 20,
-                                       :conditions => "user_id IS NULL AND " +
-                                       "access.page_accesses.controller = 'products' AND " +
-                                       "access.page_accesses.action = 'show' AND " +
-                                       "access.page_accesses.action_id = #{@product.id} AND " +
-                                       "access.page_accesses.created_at > NOW() - '3 month'::interval",
-                                       :order => "access.page_accesses.id DESC")
-
-        @customers = Customer.find(:all, :include => { :orders => :items}, :limit => 20,
-                             :conditions => "order_items.product_id = #{@product.id}")
-      end
-      
-      #render :layout => 'simple' if params[:layout] == 'false'
-      #only place simple layout is used?
     end
+  end
+public
+
+  # Product Info Pages
+  def show
+    common
+
+    if @user
+      @page_products = [] #PageProduct.find_all_by_product_id(@product.id, :include => [:page => :site])
+      
+      @sessions = SessionAccess.find(:all, :include => [:pages], :limit => 20,
+                                     :conditions => "user_id IS NULL AND " +
+                                     "access.page_accesses.controller = 'products' AND " +
+                                     "access.page_accesses.action = 'show' AND " +
+                                     "access.page_accesses.action_id = #{@product.id} AND " +
+                                     "access.page_accesses.created_at > NOW() - '3 month'::interval",
+                                     :order => "access.page_accesses.id DESC")
+      
+      @customers = Customer.find(:all, :include => { :orders => :items}, :limit => 20,
+                                 :conditions => "order_items.product_id = #{@product.id}")
+    end
+  end
+
+  def images
+    common
   end  
+
+  # TODO
+#  def prices
+#    id = params[:id]
+#    @product = Product.find(id)
+#    
+#    # Prices
+#    prices = PriceSetter.new(@product.id)
+#      
+#    @minimums = prices.minimums
+#    @price_func = prices.price_func
+#    
+#    @decoration_price_groups = DecorationPriceGroup.find(:all,
+#      :conditions => "supplier_id = #{@product.supplier.id} AND product_id = #{@product.id}",
+#      :include => [:technique => :decorations])    
+#  end
+#  
+#  def decorations
+#    id = params[:id]
+#    @product = Product.find(id)
+#    
+#    # Decorations
+#    @decorations = @product.decorations.find(:all, :include => [:technique])
+#    decorations = @decorations.find_all { |x| x.technique.name != 'None' }
+#    
+#    @techniques = decorations.collect { |dec| dec.technique }.uniq.sort
+#    @locations = decorations.collect { |dec| dec.location }.uniq
+#
+#    @decoration_hash = decorations.inject({}) do |hash, dec|
+#      hash[[dec.location, dec.technique]] = dec
+#      hash
+#    end
+#  end
 
 end
