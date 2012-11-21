@@ -1,0 +1,56 @@
+- content_for(:content) do
+  - if @product.deleted
+    %h1#path !!! PRODUCT NO LONGER AVAILIBLE !!!
+  - else
+    != path_text
+
+  %table.layout
+    %tr
+      - if @link_context
+        %td#prod_nav.nav
+          #order
+            %span Order by:
+            - for sort in Category.order_list.find_all { |o| o != @context[:sort] }
+              %span= link_to sort.capitalize, @context.merge({ :category => @category, :sort => sort })
+          #prod_list
+            - for prod in @products
+              %div{ :class => (prod == @product) && 'current' }
+                = render :partial => 'categories/thumb', :locals => { :product => prod, :category => @category, :context => @context }
+
+      %td.layout
+        #prod{ :itemscope => true, :itemtype => 'http://schema.org/Product' }
+          #prod_title
+            %span#prod_num{ :itemprop => "identifier", :content => "mpn:#{@product.supplier_num}" }
+              %em= link_to_if(@product.supplier_url, "#{@product.supplier.name}: #{@product.supplier_num}", @product.supplier_url)
+              %strong= "(M#{@product.id})"
+            %span#share
+              %div{ :class => "addthis_toolbox addthis_default_style" }
+                %a{ :href => "//www.addthis.com/bookmark.php?v=250&amp;username=mountainxpress", :class => "addthis_button_compact" }
+                  Share
+                %span{ :class => "addthis_separator"} |
+                %a{ :class => "addthis_button_preferred_1" }
+                %a{ :class => "addthis_button_preferred_2" }
+                %a{ :class => "addthis_button_preferred_3" }
+                %a{ :class => "addthis_button_preferred_4" }
+              :javascript
+                var addthis_config = {"data_track_clickback":true};
+              %script{ :type => "text/javascript", :src => "//s7.addthis.com/js/250/addthis_widget.js#username=mountainxpress" }
+
+            %h1{ :itemprop => 'name' }!= @product.name
+          
+            - unless @product.tags.empty?
+              .tags
+                - for tag in @product.tags
+                  %span= image_tag("tags/#{tag.name.downcase}.png") + "#{tag.name}"
+              
+            != path_tail_list
+
+          - if @message
+            #message= @message
+
+          = yield
+
+        - if content_for?(:tail)
+          = yield(:tail)
+
+= render :file => 'layouts/global'
