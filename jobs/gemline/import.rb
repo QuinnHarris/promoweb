@@ -77,8 +77,6 @@ class GemlineXML < GenericImport
     puts "Reading XML"  
     doc = File.open(@src_file) { |f| Nokogiri::XML(f) }
     
-    decoration_reg = /^([A-Za-z0-9 \(\),]+?) ?(?:(?:([0-9\.]+)"?W? ?x? ?([0-9\.]+)"?H?)|(?:([0-9\.]+)"? *(?:(?:dia.?)|(?:diameter))))?$/
-
     doc.xpath('/xml/gemlineproductdata/product').each do |product|
       ProductDesc.apply(self) do |pd|
         prod_log_str = ''
@@ -95,101 +93,82 @@ class GemlineXML < GenericImport
         pd.lead_time.rush = 1
         
         pd.package.merge_from_object(product,
-                                     { 'units' => 'products_per_box',
+                                     { 'units'  => 'products_per_box',
                                        'weight' => 'box_weight',
                                        'height' => 'box_height_inches',
-                                       'width' => 'box_width_inches',
+                                       'width'  => 'box_width_inches',
                                        'length' => 'box_length_inches' })
         
-        dimension = {}
-        %w(diameter length height width).each { |n| dimension[n] = product[n].to_f if product[n] and product[n].to_f != 0.0 }
-        dimension = nil if dimension.empty?
+        dimension = %w(diameter length height width).each_with_object({}) do |n, hash|
+          hash[n] = product[n].to_f if product[n] and product[n].to_f != 0.0
+        end
+        pd.properties['dimension'] = dimension unless dimension.empty?
         
         # Decorations
-        begin
-          list = [DecorationDesc.none]
-          
-          product.xpath('decorations/decoration').each do |decoration|
-            technique = decoration["technique"]
-            if @@decoration_replace[technique]
+        pd.decorations = [DecorationDesc.none]         
+        product.xpath('decorations/decoration').each do |decoration|
+          technique = decoration["technique"]
+          if @@decoration_replace[technique]
             technique, limit = @@decoration_replace[technique]
-            else
-              puts "!!!! UNKNOWN DECORATION: #{technique}"
-            end
-            
-            decoration.elements.each do |location|
-              s = location.text.strip
-              full, name, width, height, diameter = decoration_reg.match(s).to_a
+          else
+            warning 'UNKNOWN DECORATION', technique
+          end
+          
+          decoration.elements.each do |location|
+            s = location.text.strip
+            # This should probably be changed to use parse_dimension
+            if /^(?<name>[A-Za-z0-9 \(\),]+?) ?(?:(?:(?<width>[0-9\.]+)"?W? ?x? ?(?<height>[0-9\.]+)"?H?)|(?:(?<diameter>[0-9\.]+)"? *(?:(?:dia.?)|(?:diameter))))?$/ =~ s
+              puts "#{pd.supplier_num}: #{name}" if name.split(' ').size == 2 and !name.index('panel')
+              dd = DecorationDesc.new(:technique => technique,
+                                      :location => name.strip.gsub(/\s+/, ' ').capitalize,
+                                      :limit => limit)
+              dd.width = width if width
+              dd.height = height if height
+              dd.diameter = diameter if diameter
               
-              if full
-                puts "#{pd.supplier_num}: #{name}" if name.split(' ').size == 2 and !name.index('panel')
-                dd = DecorationDesc.new(:technique => technique,
-                                        :location => name.strip.gsub(/\s+/, ' ').capitalize,
-                                        :limit => limit)
-                dd.width = width if width
-                dd.height = height if height
-                dd.diameter = diameter if diameter
-                
-                list << dd
-              else
-                prod_log_str << " * Unknown decoration: #{s}\n"
-              end
+              pd.decorations << dd
+            else
+              warning 'Unknown location', s
+            end
           end
-          end
-          pd.decorations = list
         end
         
-        # related-products
-        #prods = []
-        #related = product.get_elements('related-products').first
-        #related.each_element do |rel_prod|
-        #  prods << @@product_prefix + rel_prod.attributes['mainstyle']
-        #end
-        #prod['related'] = prods
+        # related-products?
   
         prod_categories = nil
         
         # items
         xml_items = product.xpath('items/item')
-        material = xml_items.first && xml_items.first['fabric'] # Kludge to assume same material for all variants
+        pd.properties['material'] = xml_items.first && xml_items.first['fabric'] # Kludge to assume same material for all variants
         
-        items = xml_items.collect do |item|
-          val = {
-            'num' => item['style'],
-            'color' => item['color'],
-            'material' => material
-          }
+        pd.variants = xml_items.collect do |item|
+          vd = VariantDesc.new(:supplier_num => item['style'])
+          vd.properties['color'] = item['color']
           
           if swatch_node = item.at_xpath('swatches/image')
-            val['swatch'] = ImageNodeFetch.new(swatch_node['name'].split('.').first, "#{swatch_node['path']}#{swatch_node['name']}")
+            vd.properties['swatch'] = ImageNodeFetch.new(swatch_node['name'].split('.').first, "#{swatch_node['path']}#{swatch_node['name']}")
           end
           
           if image_node = item.at_xpath('images/zoomed')
-            val['images'] = [ImageNodeFetch.new(image_node['name'], "#{image_node['path']}#{image_node['name']}")]
+            vd.images = [ImageNodeFetch.new(image_node['name'], "#{image_node['path']}#{image_node['name']}")]
             
             item.at_xpath('images/alternate-images').elements.each do |alt|
               if /zoomed(\d)/ === alt.name
-                val['images'] << ImageNodeFetch.new("alts/#{alt['name']}", "#{alt['path']}#{alt['name']}".gsub('\\','/'))
+                vd.images << ImageNodeFetch.new("alts/#{alt['name']}", "#{alt['path']}#{alt['name']}".gsub('\\','/'))
               end
             end
-            val['images'].uniq!
+            vd.images.uniq!
           end
           
-          prices = []
           last_max = nil
           item.xpath("pricing[@type='US']/price").each do |price|
-            br = /(\d+)[-+](\d+)?/.match(price['break'])
-            prod_log_str << " * Non contigious prices" if last_max and br[1].to_i != last_max + 1
-            last_max = br[2] ? br[2].to_i : nil
-            price_val = price.text[1..-1].to_f
-            next if prices.last and prices.last[1] == price_val
-            prices << [ br[1].to_i, price_val, convert_pricecode(price['code']) ]
+            /(?<min>\d+)[-+](?<max>\d+)?/ =~ price['break']
+            prod_log_str << " * Non contigious prices" if last_max and min.to_i != last_max + 1
+            last_max = max && max.to_i
+            vd.pricing.add(min, price.text, price['code'], true)
           end
-          if prices.empty?
-            puts "NO PRICES: #{val['num']}"
-            next
-          end
-          val['prices'] = prices
+          vd.pricing.eqp_costs
+          vd.pricing.ltm(60.00)
           
           categories = parse_categories(item.at_xpath('categories'))
           collections = item.at_xpath('collections')
@@ -202,17 +181,19 @@ class GemlineXML < GenericImport
             prod_categories = categories.uniq
           end
           
-          val
+          vd
         end.compact
+      
         
+        # Apply uses in XML as category
         prod_categories ||= []
-        
         if uses = product.xpath('product-uses/uses')
           prod_categories += uses.collect { |use| ['Uses', use['name']] }
         end
-        
+               
+
         pd.tags = [] # Suppress tag warning
-        
+
         # Turn closeout/new category to tag
         prod_categories.delete_if do |category|
           delete = nil
@@ -227,47 +208,17 @@ class GemlineXML < GenericImport
           delete
         end
         pd.supplier_categories = prod_categories
-        
-        
-        hash = {}
-        hash.default = []
-        maximum = items.collect do |item|
-          hash[prices = item.delete('prices')] += [item]
-          [prices.first.first * 10, prices.last.first].max
-        end.max
-        
-        pd.variants = hash.collect do |prices, list|
-          marginal = Money.new((prices.last[1] * (1.0 - prices.last[2]))).round_cents
-          if prices.length == 1 and !pd.tags.include?('Closeout')
-            pd.tags << 'Special'
-          end
-          costs = [
-                   { :fixed => Money.new(60.00),
-                     :minimum => (prices.first[0] / 2.0).ceil,
-                     :marginal => marginal,
-                   },
-                   { :fixed => Money.new(0),
-                     :minimum => prices.first.first.to_i,
-                     :marginal => marginal,
-                   },
-                   { :minimum => (maximum * 1.5).to_i }
-                  ]
-          
-          prices = prices.collect { |p| {:minimum => p[0], :marginal => Money.new(p[1]).round_cents, :fixed => Money.new(0)} }
-          
-          list.collect do |variant|
-            vd = VariantDesc.new(:supplier_num => variant['num'])
-            vd.properties = { 
-              'material' => variant['material'],
-              'dimension' => dimension,
-              'color' => variant['color'],
-              'swatch' => variant['swatch']
-            }
-            vd.images = variant['images']
-            vd.pricing = PricingDesc.new(prices, costs)
-            vd
-          end
-        end.flatten # hash.each
+
+        # Set as special if one of the variants only has one price
+        if !pd.tags.include?('Closeout') and
+            pd.variants.find { |vd| vd.pricing.prices.length == 1 }
+          pd.tags << 'Special'
+        end
+
+        # Set max based on max of all variants
+        maximum = pd.variants.collect { |vd| vd.pricing.max_default_qty }.max
+        pd.variants.each { |vd| vd.pricing.maxqty(maximum)}
+    
       end # ProductDesc
     end # gemroot.each_element
   end

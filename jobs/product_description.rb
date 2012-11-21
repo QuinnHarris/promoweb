@@ -422,12 +422,17 @@ public
     ltm_common(charge, qty) if qty > 0 && qty < @costs.first[:minimum]
   end
 
+  def max_default_qty
+    [@prices.first[:minimum]*10,@costs.first[:minimum]*10,@prices.last[:minimum]*2, @costs.last[:minimum]*2, @max_qty*2].max
+  end
+
   def maxqty(qty = nil)
     validate # Validate costs and prices are present
     raise ValidateError, "maxqty can only be called once" unless @costs.last[:marginal]
-    @costs << { :minimum => qty ? parse_qty(qty) : [@prices.first[:minimum]*10,@costs.first[:minimum]*10,@prices.last[:minimum]*2, @costs.last[:minimum]*2, @max_qty*2].max } unless @costs.empty?
+    @costs << { :minimum => qty ? parse_qty(qty) : max_default_qty } unless @costs.empty?
   end
 
+  # End Quantity Pricing
   def eqp(discount = 0.4, round = false)
     raise ValidateError, "Expected price" if @prices.empty?
     raise ValidateError, "Expected no costs" unless @costs.empty?
@@ -437,7 +442,7 @@ public
       :fixed => Money.new(0), :marginal => marginal }
   end
 
-  def eqp_costs(round = false)
+  def eqp_costs
     raise ValidateError, "Expected price" if @prices.empty?
     raise ValidateError, "Expected costs" if @costs.empty?
     @costs = [@costs.last.merge(:minimum => @costs.first[:minimum])]
