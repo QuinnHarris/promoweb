@@ -1,0 +1,12 @@
+Most product data is imported from data provided by various suppliers.  Each supplier requires its own import driveras each supplier provides data in a different format.  Supplier import drivers takes data in the supplier format and converts it to an internal format that is then used to update the product database.
+
+An import driver is a class that inherits the GenericImport class.  This new class will have a few methods that are called by the code in GenericImport
+
+The import process goes in a few stages.
+
+1. Fetch the appropriate files if necissary.  Either a @src_urls is specified in initialize or the fetch_parse? method is overriden for a custom method to fetch the necissary files.
+2. The availible data is processed in parse_products to produce a list of ProductDesc objects representing each product from that supplier.  The results of this step can be cached but the "parse" command line option will force this stage to run even if there is a cache file.
+3. Each ProductDesc object is processed in categories.rb.  This consists of a set of rules to set the categories property of the ProductDesc object.  Typical rule would be something like if the product name contains the word 'tote' place in the 'Tote Bags' category.  
+4. The list of ProductDesc objects is compared against a cached list that has been applied to the database if availible.  What products changed is determined and if there are many changes the code aborts because this could be an indicator that something is wrong.  The abort can be avoided with the "override" comman line option.  If there is no database cache this will assume every product has changed.
+5. The list of ProductDesc objects are individually applied to the database.  This produces a text log describing what has changed.
+
