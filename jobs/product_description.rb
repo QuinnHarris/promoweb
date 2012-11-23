@@ -681,8 +681,9 @@ class ProductDesc
     merge(hash) if hash
   end
 
-  def self.apply(context)
-    desc = self.new
+  def self.apply(context, object = nil)
+    raise "Expected ProductDesc" unless object.nil? or object.is_a?(ProductDesc)
+    desc = object || self.new
     context.instance_variable_set("@product_description", desc)
     begin
       r = yield desc

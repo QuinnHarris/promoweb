@@ -253,6 +253,10 @@ module WebFetchCommon
 
     path
   end
+
+  def get_doc
+    Nokogiri::HTML(open(get_path))
+  end
 end
 
 class ImageNodeFetch < ImageNode
