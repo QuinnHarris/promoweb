@@ -13,7 +13,7 @@ class CrownProdXLS < GenericImport
 
   def fetch_parse?
     if File.exists?(@src_file) and
-        File.mtime(@src_file) >= (Time.now - 7.day)
+        File.mtime(@src_file) >= (Time.now - 14.day)
       puts "File Fetched today"
       return false
     end
@@ -93,14 +93,15 @@ class CrownProdXLS < GenericImport
     ws = ss.worksheet(2)
     ws.use_header
     sales = {}
-    ws.each(1) do |row|
-      next unless row['Sale?'] == 'Y'
-      next unless Float(row['Sale Qty']) > 0.0
-      pricing = PricingDesc.new
-      pricing.add(row['Sale Qty'], row['Sale Price'], row['Sale Code'])
-      sup_num = row['Item# (SKU)'].to_s.strip
-      sales[sup_num] = pricing
-    end
+    # Sale column no longer around.  Probably bug on Crowns side
+#    ws.each(1) do |row|
+#      next unless row['Sale?'] == 'Y'
+#      next unless Float(row['Sale Qty']) > 0.0
+#      pricing = PricingDesc.new
+#      pricing.add(row['Sale Qty'], row['Sale Price'], row['Sale Code'])
+#      sup_num = row['Item# (SKU)'].to_s.strip
+#      sales[sup_num] = pricing
+#    end
 
     variations = {}
     variations['info_list'] = {}
@@ -145,7 +146,7 @@ class CrownProdXLS < GenericImport
         if pricing = sales[@supplier_num]
           pd.tags << 'Special'
           e = (1..5).collect { |i| row["Pricing-Qty#{i}"] && Integer(row["Pricing-Qty#{i}"]) }.compact.max
-          pricing.maxqty(e*2)
+          pricing.maxqty(e && e*2)
         else
           pricing = PricingDesc.new
           (1..5).each do |i|
@@ -166,6 +167,7 @@ class CrownProdXLS < GenericImport
 
         puts "Area: #{row['Imprint Area']}"
         locations = parse_areas(row['Imprint Area'])
+        locations.delete_if { |loc| [:height, :width].find { |a| loc[a].nil? } }
         locations.each do |imprint|
           puts "  #{imprint.inspect}"
         end
