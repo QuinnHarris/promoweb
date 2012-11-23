@@ -15,7 +15,6 @@ class Starline < GenericImport
   # Called to do the actual work
   def parse_products
     product_list = []
-
     # Fetch First level categories
     puts 'Fetching Product List'
     get_method('getCategories').xpath('//newdataset/category').each do |cat|
@@ -40,7 +39,7 @@ class Starline < GenericImport
     end
 
     puts "Product Count: #{product_list.length}"
-
+    
     product_list.each do |pd|
       ProductDesc.apply(self, pd) do |pd|
         id = pd.data[:id]
@@ -48,10 +47,42 @@ class Starline < GenericImport
           get_method('getProductDescription', 'ItemNo' => id)
           .xpath('//desc/description/text()').collect { |t| t.to_s }
 
-        # Complete calls to these methods
-        #getProductShippingInfo 
+        #getProductShippingInfo  
+        proshiping = get_method('getProductShippingInfo', 'ItemNo' => id)
+        pd.package.length = proshiping.at_xpath('//shippinginfo/length/text()').to_s.to_f
+        pd.package.width = proshiping.at_xpath('//shippinginfo/width/text()').to_s.to_f
+        pd.package.height = proshiping.at_xpath('//shippinginfo/height/text()').to_s.to_f
+        pd.package.units = proshiping.at_xpath('//shippinginfo/pcbx/text()').to_s.to_i
+        pd.package.weight = proshiping.at_xpath('//shippinginfo/lbs_bx/text()').to_s.to_f
         #getCodedPriceChartUS
-        #getSpefs 
+        pricechart = get_method('getCodedPriceChartUS', 'ItemNo' => id).xpath("//newdataset/chart")
+        (1..4).each do |i|
+         pricing = PricingDesc.new 
+         qty = pricechart.at_xpath("nqty#{i}/text()").to_s.to_i
+         price = pricechart.at_xpath("nprice#{i}/text()").to_s
+         pricing.add(qty, price)
+        end
+
+        spefs_hash = {}
+        get_method('getSpefs', 'ItemNo' => id).xpath('//newdataset/spef').each do |spec|
+          name = spec.at_xpath('specification/text()').to_s
+          data = spec.at_xpath('specificationdata/text()').to_s
+          spefs_hash[name] = data
+        end  
+        pd.properties = {
+          'dimension' => parse_dimension(spefs_hash['Product Size']) 
+        }
+        puts "Area: #{spefs_hash['Imprint Area(s)']}"
+        locations = parse_areas(spefs_hash['Imprint Area(s)'])
+        locations.each do |imprint|
+          puts "  #{imprint.inspect}"
+        end
+        # Imprint method(s) 
+        spefs_hash['Imprint Area(s)'].split(",").each do |technique|
+          dec = DecorationDesc.new(:technique => technique,:location => "",:limit => "")
+          pd.decorations << dec
+        end
+        
         #getGroupSpefs
       end
     end
