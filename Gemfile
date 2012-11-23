@@ -69,6 +69,7 @@ gem 'fast_xs'
 gem 'rails_autolink'
 gem 'rails3-jquery-autocomplete'
 #gem 'jquery-fileupload-rails'
+gem 'rubyXL'
 
 #gem 'actionwebservice', :git => 'https://github.com/jlecard/actionwebservice.git'
 
