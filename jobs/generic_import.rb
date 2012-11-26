@@ -340,7 +340,7 @@ class ProductApply
 
     @changed = ProductDesc.properties
     @changed = @changed.find_all do |prop|
-      current.send(prop) != previous.send(prop)
+      current.instance_variable_get("@#{prop}") != previous.instance_variable_get("@#{prop}")
     end if previous
 
     product_new = nil
@@ -350,7 +350,9 @@ class ProductApply
         product_new = record.new_record?
 
         @changed.each do |prop|
-          product_log += send("apply_#{prop}", current.send(prop), previous && previous.send(prop))
+          product_log += send("apply_#{prop}",
+                              current.instance_variable_get("@#{prop}"),
+                              previous && previous.instance_variable_get("@#{prop}"))
         end
         
         unless product_log.empty?
@@ -386,7 +388,7 @@ class ProductApply
     properties = Kernel.const_get("#{name.classify}Desc").properties
     define_method "apply_#{name}" do |curr, prev|
       properties.collect do |prop|
-        val = curr.send(prop)
+        val = curr && curr.send(prop)
         unless (prev && val == prev.send(prop)) ||
             ((old = record["#{name}_#{prop}"]) == val)
           record["#{name}_#{prop}"] = val unless val.nil?
@@ -421,6 +423,7 @@ class ProductApply
     @changed << 'variants' unless @changed.include?('variants')
     ''
   end
+  alias_method :apply_pricing, :apply_properties
 
   def apply_variants(curr, prev)
     new_price_groups, new_cost_groups = [], []
@@ -438,7 +441,7 @@ class ProductApply
       variant_log << variant_record.set_images(vd.images)
           
       # Properties
-      properties = current.properties.merge(vd.properties)
+      properties = (current.instance_variable_get('@properties') || {}).merge(vd.properties)
       properties.each do |name, value|
         next if name == 'swatch'
         value = nil if value.blank?
@@ -462,14 +465,15 @@ class ProductApply
       variant_record.delete_properties_except(properties.keys, variant_log)
           
       # Match groups to variant list.  Ensure cost and price lists match
+      pricing = current.instance_variable_get('@pricing') || vd.pricing
       if pg = new_price_groups.zip(new_cost_groups).find do |(dp, vp), (dc, vc)|
-          dp == vd.pricing.prices and dc == vd.pricing.costs
+          dp == pricing.prices and dc == pricing.costs
         end
         pg[0][1] << variant_record
         pg[1][1] << variant_record
       else
-        new_price_groups << [vd.pricing.prices, [variant_record]]
-        new_cost_groups << [vd.pricing.costs, [variant_record]]
+        new_price_groups << [pricing.prices, [variant_record]]
+        new_cost_groups << [pricing.costs, [variant_record]]
       end
 
       # Log it
@@ -824,7 +828,7 @@ class GenericImport
       pd.validate(self)
       if prev = @product_hash[pd.supplier_num]
         changed = ProductDesc.properties.find_all do |prop|
-          pd.send(prop) != prev.send(prop)
+          pd.instance_variable_get("@#{prop}") != prev.instance_variable_get("@#{prop}")
         end
         if changed.delete('supplier_categories')
           pd.supplier_categories += prev.supplier_categories
@@ -845,9 +849,8 @@ class GenericImport
             puts "  #{prop}: #{l} != #{r}"
           end
         end
-      else
-        @product_hash[pd.supplier_num] = pd
       end
+      @product_hash[pd.supplier_num] = pd
     rescue => boom
       puts "+ Validate Error: #{pd && pd.supplier_num}: #{boom}"
       if boom.is_a?(ValidateError)

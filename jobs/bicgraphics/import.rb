@@ -161,13 +161,14 @@ class BicGraphics < GenericImport
         pd.images = [ImageNodeFetch.new(file = "#{base_num}_phto_lrg.jpg",
                                         "http://www.bicgraphic.com/images/large/#{file}")] +
           color_image_map[nil]
+
+        pd.pricing = product_prices[pd.supplier_num]
         
         pd.variants = variants.collect do |properties|
           postfix = differ_prop.map { |p| "-#{properties[p]}" }.join
           VariantDesc.new(:supplier_num => (pd.supplier_num + postfix)[0..63],
                           :properties => properties,
-                          :images => properties['color'] && color_image_map[properties['color']] || [],
-                          :pricing => product_prices[pd.supplier_num])
+                          :images => properties['color'] && color_image_map[properties['color']] || [])
         end
       end
     end

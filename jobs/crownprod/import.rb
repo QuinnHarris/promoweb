@@ -143,20 +143,20 @@ class CrownProdXLS < GenericImport
         end
 
 
-        if pricing = sales[@supplier_num]
+        if sales[@supplier_num]
+          pd.pricing = sales[@supplier_num]
           pd.tags << 'Special'
           e = (1..5).collect { |i| row["Pricing-Qty#{i}"] && Integer(row["Pricing-Qty#{i}"]) }.compact.max
           pricing.maxqty(e && e*2)
         else
-          pricing = PricingDesc.new
           (1..5).each do |i|
             break if (qty = row["Pricing-Qty#{i}"]).blank?
-            pricing.add(qty, row["Pricing-Price#{i}"], row["Pricing-Code#{i}"])
+            pd.pricing.add(qty, row["Pricing-Price#{i}"], row["Pricing-Code#{i}"])
           end
-          pricing.maxqty
+          pd.pricing.maxqty
         end
         info_list.delete(e) if e = info_list.find { |e| /Less than.+not avalable/i === e }
-        pricing.ltm(40.0, 1) unless e
+        pd.pricing.ltm(40.0, 1) unless e
 
         info_list.delete_if do |s|
           next true if s.include?('on PO')
@@ -251,8 +251,7 @@ class CrownProdXLS < GenericImport
         pd.variants = colors.collect do |color|
           VariantDesc.new(:supplier_num => "#{@supplier_num}-#{color}",
                           :properties => { 'color' => color },
-                          :images => color_image_map[color] || [],
-                          :pricing => pricing)
+                          :images => color_image_map[color] || [])
         end
       end
     end

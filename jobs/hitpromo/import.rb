@@ -142,24 +142,17 @@ class HitPromoCSV < GenericImport
 
         # Prices
         price_string = unique.sort_by { |s| price_preference.index(s['postfix']) }.first
-        pricing = PricingDesc.new
-        discounts = PricingDesc.convert_pricecodes(price_string['discount_code'])
         (1..8).each do |i|
           qty = price_string["quantity#{i}"]
-          break if qty.blank?
-          unless discounts.first
-            puts "Extra Column: #{supplier_num}"
-            break
-          end
-          
-          pricing.add(qty, price_string["price#{i}"], discounts.shift)
+          break if qty.blank? or qty == '--'
+          pd.pricing.add(qty, price_string["price#{i}"])
         end
-        raise "Discount doesn't match: #{supplier_num} #{discounts.inspect}" unless discounts.empty?
+        pd.pricing.apply_code(price_string['discount_code'])
         unless pd.supplier_categories.flatten.include?('Ceramics') or
             common['embroidery_information']
-          pricing.ltm(40.0)
+          pd.pricing.ltm(40.0)
         end
-        pricing.maxqty
+        pd.pricing.maxqty
         
         # Can list multiple dimensions e.g. "16" W x 14 ½" H • Pouch: 4 ½" W x 5" H"
         dimension = common['approximate_size'] || common['approximate_bag_size']
@@ -175,14 +168,14 @@ class HitPromoCSV < GenericImport
 #          variations[name][value] = (variations[name][value] || []) + [pd.supplier_num]
 #        end
 
-#        puts "Area: #{common['imprint_area']}"
-#        locations = parse_areas(common['imprint_area'], '•') do |locs|
-#          puts "LOC: #{locs.inspect}"
-#          locs.find_all { |s| not (/(?:See)|(?:Must)/ === s) }.join(', ')
+        puts "Area: #{common['imprint_area']}"
+        locations = parse_areas(common['imprint_area'], '•') do |locs|
+          puts "LOC: #{locs.inspect}"
+          locs.find_all { |s| not (/(?:See)|(?:Must)/ === s) }.join(', ')
         end
-#        locations.each do |imprint|
-#          puts "  #{imprint.inspect}"
-#        end
+        locations.each do |imprint|
+          puts "  #{imprint.inspect}"
+        end
 
 #        puts "Setup: #{common['set_up_charge']}"
         setups = []
@@ -274,7 +267,7 @@ class HitPromoCSV < GenericImport
         
         pd.variants = colors.collect do |color|
           VariantDesc.new( :supplier_num => "#{supplier_num}-#{color.gsub(' ', '')}"[0..63],
-                           :pricing => pricing, :properties => { 'color' => color},
+                           :properties => { 'color' => color},
                            :images => [])
         end
       end

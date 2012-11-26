@@ -40,23 +40,22 @@ class SwedaXML < GenericImport
         pd.lead_time.normal_max = max || min
 
 
-        pricing = PricingDesc.new
         (1..6).each do |i|
           qty = common["Qty_Point#{i}"]
           break if qty.blank? or qty == '0'
           if (price = Float(common["Qty_Special#{i}"])) == 0.0
             price = common["Qty_Price#{i}"]
           end
-          pricing.add(qty, price, 'R')
+          pd.pricing.add(qty, price, 'R')
         end
-        pricing.maxqty
+        pd.pricing.maxqty
         # LTM?
 
-      str = common['Specification'].gsub('&nbsp;', ' ').strip
-      puts "Orig: #{supplier_num} #{str.inspect}"
-      str.scan(/^\s*([\w\s]+?)\s*:\s*(.+?)\s*$/m).each do |key, value|
-        puts "  #{key}: #{value}"
-      end
+        str = common['Specification'].gsub('&nbsp;', ' ').strip
+        puts "Orig: #{supplier_num} #{str.inspect}"
+        str.scan(/^\s*([\w\s]+?)\s*:\s*(.+?)\s*$/m).each do |key, value|
+          puts "  #{key}: #{value}"
+        end
 
         pd.decorations = [DecorationDesc.none]
 
@@ -91,8 +90,7 @@ class SwedaXML < GenericImport
         pd.variants = unique.collect do |uniq|
           VariantDesc.new(:supplier_num => uniq['Sku'],
                           :properties => { 'color' => uniq['ColorDesc'].blank? ? nil : uniq['ColorDesc'].strip },
-                          :images => color_image_map[uniq['ColorCode']] || [],
-                          :pricing => pricing)
+                          :images => color_image_map[uniq['ColorCode']] || [])
         end
       end
     end

@@ -466,7 +466,7 @@ class VariantDesc
   property :properties, Hash
   property :images, Array[ImageNodeFetch], :warn => true
 
-  property :pricing, PricingDesc, :block => true
+  property :pricing, PricingDesc, :no_check => true, :block => true
 
   def merge(hash)
     hash.each do |key, value|
@@ -532,6 +532,8 @@ class ProductDesc
   property :categories, Array, :nil => true
 
   property :images, Array[ImageNodeFetch], :warn => true
+
+  property :pricing, PricingDesc, :no_check => true, :block => true
 
   property :decorations, Array[DecorationDesc]
 
@@ -624,6 +626,18 @@ class ProductDesc
 #        prop_hash.keys.each_with_object({}) { |k, hash| hash[k] = p[k] }
 #      end
       import.add_warning(ValidateError.new("Variants not orthoginal", "Expected: #{expected} Got: #{variants.length}"), supplier_num)
+    end
+
+    # check pricing
+#    puts variants.collect { |v| v.instance_variable_get('@pricing') }.inspect
+    if @pricing
+      if variants.find { |v| v.instance_variable_get('@pricing') }
+        raise ValidateError.new("Product Data pricing and variant pricing")
+      end
+    else
+      if variants.find { |v| not v.instance_variable_get('@pricing') }
+        raise ValidateError.new("Missing pricing for variant")
+      end
     end
 
     # check images

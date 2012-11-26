@@ -112,13 +112,12 @@ class PolyXLS < GenericImport
             [??,?!,?.].include?(line[-1]) ? line : "#{line}." 
           end.compact
           
-          pricing = PricingDesc.new
           %w(First Second Third Fourth Fifth).each do |name|
-            pricing.add(row["#{name}ColMinQty"], row["#{name}ColPriceUSD"])
+            pd.pricing.add(row["#{name}ColMinQty"], row["#{name}ColPriceUSD"])
           end
-          pricing.eqp(0.4, true)
-          pricing.ltm_if(40.00, 4) # LTM of 4 unless clearance
-          pricing.maxqty(row['FifthColMaxQty'] && (Integer(row['FifthColMaxQty'])+1))
+          pd.pricing.eqp(0.4, true)
+          pd.pricing.ltm_if(40.00, 4) # LTM of 4 unless clearance
+          pd.pricing.maxqty(row['FifthColMaxQty'] && (Integer(row['FifthColMaxQty'])+1))
 
           
           
@@ -164,7 +163,6 @@ class PolyXLS < GenericImport
                             :properties => {
                               'color' => color.strip.capitalize,
                             },
-                            :pricing => pricing,
                             :images => color_image_map[color] || [])
           end
         end

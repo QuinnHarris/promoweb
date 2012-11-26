@@ -62,20 +62,27 @@ class NewSupplier < GenericImport
       # You can specify any property name and value string
       pd.properties['dimension'] = parse_dimension(dimension_string)
 
+
+      # PricingDesc object representing the price of this product.
+      # Either use pd.pricing for set the pricing for each variant but not both
+      pd.pricing 
+
+      # Use this to add a price column to the pricing object
+      pd.pricing.add(quantity, price, optional_code, optional_rounding_if_code) 
+      pd.pricing.apply_code(code) # Generate costs from a multi column discount code
+      pd.pricing.ltm(charge, optional_quantity) # Set less than miniumum charge and quantity
+      pd.pricing.maxqty(optional_quantity) # Set the maximum quantity
+      pd.pricing.eqp(optional_discount, optional_round) # Set costs as end quantity pricing from the price data
+      pd.pricing.eqp_costs # Set costs as end quantity pricing from the cost data.
+      
+
       # pd.variants is a list of VariantDesc object describing each product variant (typically different colors)
       pd.variants = object.collect do |obj|
         vd = VariantDesc.new(:supplier_num => variant_supplier_num)
         vd.images = [] # List of ImageNodeFetch objects specific to this variant just like pd.images
         vd.properties['color'] = color # Hash of properties specific to this variant just like pd.properties
-        vd.pricing # PricingDesc object representing the price of this variant.
 
-        # Use this to add a price column to the pricing object
-        vd.pricing.add(quantity, price, optional_code, optional_rounding_if_code) 
-        vd.pricing.apply_code(code) # Generate costs from a multi column discount code
-        vd.pricing.ltm(charge, optional_quantity) # Set less than miniumum charge and quantity
-        vd.pricing.maxqty(optional_quantity) # Set the maximum quantity
-        vd.pricing.eqp(optional_discount, optional_round) # Set costs as end quantity pricing from the price data
-        vd.pricing.eqp_costs # Set costs as end quantity pricing from the cost data.
+        vd.pricing # Optional.  Either use variant pricing or product pricing but not both
       end
     end
   end

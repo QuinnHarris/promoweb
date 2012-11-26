@@ -184,20 +184,19 @@ class NorwoodCSV < GenericImport
             (Date.today > Date.parse(late_date))
           pre = 'Late '
         end
-        pricing = PricingDesc.new
         (1..10).each do |num|
           break if row["#{pre}Price#{num}"].blank?
-          pricing.add(row["#{pre}Quantity#{num}"],
-                      Float(row["#{pre}Price#{num}"]),
-                      row["#{pre}Code#{num}"])
+          pd.pricing.add(row["#{pre}Quantity#{num}"],
+                         Float(row["#{pre}Price#{num}"]),
+                         row["#{pre}Code#{num}"])
         end
-        pricing.maxqty
+        pd.pricing.maxqty
 
         ltm_price = 40.0
         if /Less Than Minimum \$(\d{2,3}\.\d{2})/ === row['Optional Charges']
           ltm_price = Float($1)*0.8
         end
-        pricing.ltm_if(ltm_price)
+        pd.pricing.ltm_if(ltm_price)
 
 
         pd.properties['material'] = row['Material'] unless row['Material'].blank?
@@ -248,7 +247,7 @@ class NorwoodCSV < GenericImport
           num_w = (32 - @supplier_num.length-properties.length) / [properties.length,1].max
           num_suf = properties.keys.sort.collect { |k| '-' + properties[k].reverse[0...num_w].reverse.strip }.join
           VariantDesc.new(:supplier_num => @supplier_num + num_suf,
-                          :pricing => pricing, :properties => properties,
+                          :properties => properties,
                           :images => properties[color_key] && (color_image_map[properties[color_key]] || []))
         end
       end

@@ -239,15 +239,14 @@ class LogomarkXLS < GenericImport
           }
 
 
-          pricing = PricingDesc.new
           (1..6).each do |i|
             qty = common["PricePoint#{i}Qty"]
             next if qty.blank? or Integer(qty) < 1
-            pricing.add(qty, common["PricePoint#{i}Price"], common["PricePoint#{i}Code"])
+            pd.pricing.add(qty, common["PricePoint#{i}Price"], common["PricePoint#{i}Code"])
           end
-          pricing.maxqty
+          pd.pricing.maxqty
           unless common['LessThanMin1Qty'] == 0
-            pricing.ltm_if(common['LessThanMin1Charge'], common['LessThanMin1Qty'])
+            pd.pricing.ltm_if(common['LessThanMin1Charge'], common['LessThanMin1Qty'])
           end
 
           pd.decorations = [DecorationDesc.none]
@@ -272,7 +271,7 @@ class LogomarkXLS < GenericImport
           
           pd.variants = unique.collect do |uniq|
             VariantDesc.new(:supplier_num => uniq['SKU'],
-                            :images => uniq['images'] || [], :pricing => pricing,
+                            :images => uniq['images'] || [],
                             :properties => { 'color' => uniq['Item Color'].strip } )
           end
         end

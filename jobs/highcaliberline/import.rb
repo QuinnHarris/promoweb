@@ -146,8 +146,7 @@ class HighCaliberLine < GenericImport
           pd.package[name] = val unless val == 0.0
         end
       
-        pricing = PricingDesc.new     
-        
+
         # Price Info (common to all variants)
         if ws.header_map['Minimum Qty']
           #        qty = row["Minimum Qty"]
@@ -161,13 +160,13 @@ class HighCaliberLine < GenericImport
             qty = row["Qty #{num}"]
             next if qty.blank?
             qty = qty.gsub(/[^0-9]+$/, '') if qty.is_a?(String)
-          pricing.add(qty, row["Price #{num}"])
+          pd.pricing.add(qty, row["Price #{num}"])
           end
         end
         
-        pricing.eqp
-        pricing.maxqty
-        pricing.ltm(25.00) unless overseas
+        pd.pricing.eqp
+        pd.pricing.maxqty
+        pd.pricing.ltm(25.00) unless overseas
         
 
         # Leed Time
@@ -218,7 +217,7 @@ class HighCaliberLine < GenericImport
         
         pd.variants = color_list.uniq.collect do |id, name, swatch|
           VariantDesc.new(:supplier_num => (pd.supplier_num + (id ? "-#{id}" : ''))[0..63],
-                          :pricing => pricing, :images => [],
+                          :images => [],
                           :properties => { 'color' => name || id, 'swatch' => swatch })
         end
       end

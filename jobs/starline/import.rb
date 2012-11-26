@@ -47,20 +47,20 @@ class Starline < GenericImport
           get_method('getProductDescription', 'ItemNo' => id)
           .xpath('//desc/description/text()').collect { |t| t.to_s }
 
-        #getProductShippingInfo  
+        #getProductShippingInfo : Good and complete
         proshiping = get_method('getProductShippingInfo', 'ItemNo' => id)
         pd.package.length = proshiping.at_xpath('//shippinginfo/length/text()').to_s.to_f
         pd.package.width = proshiping.at_xpath('//shippinginfo/width/text()').to_s.to_f
         pd.package.height = proshiping.at_xpath('//shippinginfo/height/text()').to_s.to_f
         pd.package.units = proshiping.at_xpath('//shippinginfo/pcbx/text()').to_s.to_i
         pd.package.weight = proshiping.at_xpath('//shippinginfo/lbs_bx/text()').to_s.to_f
+
         #getCodedPriceChartUS
         pricechart = get_method('getCodedPriceChartUS', 'ItemNo' => id).xpath("//newdataset/chart")
         (1..4).each do |i|
-         pricing = PricingDesc.new 
          qty = pricechart.at_xpath("nqty#{i}/text()").to_s.to_i
          price = pricechart.at_xpath("nprice#{i}/text()").to_s
-         pricing.add(qty, price)
+         pd.pricing.add(qty, price)
         end
 
         spefs_hash = {}
