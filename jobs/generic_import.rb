@@ -256,7 +256,8 @@ module WebFetchCommon
   end
 
   def get_doc
-    Nokogiri::HTML(open(get_path))
+    return nil unless path = get_path
+    Nokogiri::HTML(open(path))
   end
 end
 
@@ -400,7 +401,7 @@ class ProductApply
 
   def apply_tags(curr, prev)
     record.save! if record.new_record? # Allocate ID
-    record.set_tags(curr)
+    record.set_tags(curr || [])
   end
 
   def apply_decorations(curr, prev)

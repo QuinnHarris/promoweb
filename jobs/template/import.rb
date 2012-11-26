@@ -20,6 +20,10 @@ class NewSupplier < GenericImport
     # This next method should be called for each product from the supplier
     # This block is used to improve error messages.  When you set pd.supplier_num, if there is an error anywhere in the block the message will include the supplier_num
     ProductDesc.apply(self) do |pd|
+      # Any ValidateError raised in the ProductDesc.apply block will be caught and added to a list of errors
+      # A summary of all errors will be given after this method is complete
+      # you can also use warning('name', 'data') which will also be summarised in the same way.
+
       pd.supplier_num = nil # Required - string.  Unique product identifier provided by the supplier
       pd.name = nil         # Required - string.  Name of the product
       pd.description = []   # Required - string or array.  If this is an array it will be turned into a string separated by \n newlines.
