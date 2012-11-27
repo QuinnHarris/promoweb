@@ -34,20 +34,19 @@ class AdbagProdXLS < GenericImport
     setups = {}
     setups.default = []
     running = {}
-    ws.sheet_data.each do |row|
-      next if row[1].datatype.nil? 
-      next if row[1].value == "PRODUCT NAME"
+    ws.rows.each do |row|
+      debugger
       ProductDesc.apply(self) do |pd|
-        pd.supplier_num = row[0].value
-        pd.name = row[1].value
-        pd.description = row[2].value+" "+row[3].value
-        pd.supplier_categories = [row[5].value]
-        pd.package.weight =  Float(row[28].value)
-        pd.package.units =  row[27].value
-        pd.package.height =  Float(row[31].value)
-        pd.package.length = row[29].value.to_i
-        pd.package.width = row[30].value.to_i
-        pd.lead_time = row[32].value.to_i
+        pd.supplier_num = row["ITEMNO"]
+        pd.name = row["PRODUCT NAME"]
+        # pd.description = row[2].value+" "+row[3].value
+        # pd.supplier_categories = [row[5].value]
+        pd.package.weight =  Float(row["PACK WEIGHT"])
+        pd.package.units =  row["PACK SIZE"]
+        pd.package.height =  Float(row["PACK HEIGHT"])
+        pd.package.length = row["PACK LENGTH"].value.to_i
+        pd.package.width = row["PACK WIDTH"].value.to_i
+        pd.lead_time = row["LEAD TIME"].value.to_i
         pd.tags = []
       end
     end  

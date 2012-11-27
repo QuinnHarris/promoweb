@@ -1,6 +1,13 @@
 # Starline API documented at http://www.starline.com/WebService/Catalog.asmx
 
 class Starline < GenericImport
+  @@decoration_replace = { 'Silkscreen' => 'Screen Print',
+  'Embroidery' => 'Embroidery',
+  'Embroider' => 'Embroidery',
+  'Pad Print' => 'Pad Printing',
+  'Deboss' => 'Deboss',
+  'Laser Engraving' => 'Laser Engrave'}
+
   def initialize
     super "Starline"
   end
@@ -42,7 +49,7 @@ class Starline < GenericImport
 
     puts "Product Count: #{product_list.length}"
     
-    product_list.each do |pd|
+    product_list.each_with_index do |pd,index|
       ProductDesc.apply(self, pd) do |pd|
         id = pd.data[:id]
         pd.description =
@@ -94,6 +101,12 @@ class Starline < GenericImport
             when 'Imprint Area(s)'
             imprint_areas = data.split(/\s*,\s*/).collect { |a| parse_dimension(a) }.compact
 
+            when 'Packaging'
+             pd.properties[name] = data
+
+            when 'Note'
+             pd.description = pd.description.to_s + data.to_s 
+
             else
             # Warnings will be summarised at the end.  Quick way to determine all unknown properties
             warning 'Unknown Spec', name
@@ -101,17 +114,27 @@ class Starline < GenericImport
 
           spefs_hash[name] = data
         end
-
         #getAddons
         #getGroupSpefs
 
         pd.decorations = [DecorationDesc.none]
+        pd.tags = []
 
         # Complete by adding a DecoratonDesc object for each combination of "Imprint Method(s)" and "Imprint Area(s)"
 
+        imprint_methods.each do |method|
+          if @@decoration_replace[method]
+             technique = @@decoration_replace[method]
+             dd = DecorationDesc.new({:technique => technique,:location=>''}.merge!(imprint_areas.first))
+             pd.decorations << dd
+          else
+              warning 'UNKNOWN DECORATION', technique
+          end  
+        end  
+
         pd.variants = colors.collect do |color|
-          VariantDesc.new(:supplier_num => pd.supplier_num + color,
-                          :properties => { 'color' => color })
+           VariantDesc.new(:supplier_num => pd.supplier_num + color,
+                          :properties => { 'color' => color },:images=>[])
         end
         
       end

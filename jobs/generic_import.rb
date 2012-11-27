@@ -59,6 +59,42 @@ class Spreadsheet::Excel::Row
   end
 end
 
+
+class RubyXL::Worksheet
+  attr_reader :header_map ,:sheet_row
+  def use_header(idx = 0)
+    @header_map = []
+    @sheet_data[idx].each do |cell|
+      next if cell.value.blank?
+      cell = cell.value.strip.to_s
+      if header_map.include?(cell)
+        # "DUPLICATE HEADER: #{idx} #{cell}"
+        (1..9).find do |i|
+          cell = "#{cell} #{i}" if !header_map.include?("#{cell} #{i}")
+        end
+      end
+      header_map.push(cell)
+    end
+    @header_map
+  end
+  
+
+  def rows
+      use_header
+      @sheet_row = []
+       @sheet_data.each do |row|
+          next if row[1].datatype.nil? 
+          next if @header_map.include?(row[1].value)
+          row_hash = {}
+          row.each_with_index do |cell,index|
+            row_hash[@header_map[index]] = cell.nil? || cell.datatype.blank? ? "" : cell.value
+          end 
+          @sheet_row.push(row_hash)
+       end  
+      @sheet_row
+  end 
+end
+
 class Spreadsheet::Excel::Worksheet
   attr_reader :header_map
   def use_header(idx = 0)
@@ -685,7 +721,7 @@ class GenericImport
     file_name = cache_file(parse_cache_filename)
     if fetch_parse? or ARGV.include?('parse') or !cache_exists(file_name)
       run_parse
-      cache_write(file_name, @product_list)
+      #cache_write(file_name, @product_list)
     else
       @product_list = cache_read(file_name)
     end
