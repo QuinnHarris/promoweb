@@ -5,6 +5,17 @@ class PolyXLS < GenericImport
     super name
   end
 
+  @@color_override = {
+    'SM-4050' => ['black with gold trim',
+                  'black with silver trim',
+                  'blue with gold trim',
+                  'blue with silver trim',
+                  'green with silver trim',
+                  'pearlescent with gold trim',
+                  'silver with silver trim',
+                  'wine red with silver trim']
+  }
+
   def parse_products
     @image_list = get_ftp_images(@image_url) do |path, file|
       if /^((?:\d+|[A-Z]{2})-\d+)([A-Z]*).*\.(?:(?:tif)|(?:jpg))$/i === file
@@ -140,6 +151,7 @@ class PolyXLS < GenericImport
                     
           colors = row['Color'].to_s.split(/\s*(?:(?:\,|(?:\sor\s)|(?:\sand\s)|\&)\s*)+/).uniq
           colors = [''] if colors.empty?
+          colors = @@color_override[pd.supplier_num] if @@color_override.has_key?(pd.supplier_num)
         
           color_image_map, color_num_map = match_colors(colors, :prune_colors => @options[:prune_colors])
           #      puts "ColorMap: #{pd.supplier_num} #{color_image_map.inspect} #{color_num_map.inspect}"
