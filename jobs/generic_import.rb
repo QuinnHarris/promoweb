@@ -915,16 +915,53 @@ private
     number_from_regex(m)
   end
 
+
   @@component_regex = /#{@@number_regex}(?<aspect>width|w|height|h|length|l|diameter|diam?\.?|square|d|depth|round)?/i
   def parse_dimension(string, pedantic = false)
-    aspects = {}
-    no_aspect = nil
-    string.split(/x/i).each do |part|
+    list = string.split(/x/i).collect do |part|
       unless m = /^#{@@component_regex}$/.match(part.strip)
-        warning 'Parse Area', "RegEx mismatch: #{part.inspect}"
+        warning 'Parse Dimension', "RegEx mismatch: #{part.inspect}"
         return
       end
+      m
+    end.compact
+    aspects = parse_aspects(list, string, pedantic)
+    if [:height, :width, :length].count { |a| aspects[a] } < 2
+      warning 'Parse Area', "Missing two aspects: #{string}"
+      return if pedantic
+    end
+    aspects
+  end
 
+  l = @@component_regex.to_s.gsub(/\?<(.+?)>/,'?<l_\1>')
+  r = @@component_regex.to_s.gsub(/\?<(.+?)>/,'?<r_\1>')
+  @@area_regex = /^(?<left>.*?)\s*#{l}(?:\s*x?\s*#{r})?\s*(?<right>.*)$/i
+  def parse_area(string, pedantic = false)
+    unless m = @@area_regex.match(string.strip)
+      warning 'Parse Area', string.inspect
+      return
+    end
+    parts = {}
+    other = {}
+    m.names.each do |name|
+      first, second = name.split('_')
+      next unless val = m[name]
+      if second 
+        parts[first] ||= {}
+        parts[first][second.to_sym] = val
+      else
+        other[name.to_sym] = val
+      end
+    end
+    aspects = parse_aspects([parts['l'], parts['r']].compact, string, pedantic)
+    aspects.merge!(other) if aspects
+    aspects
+  end
+
+  def parse_aspects(list, string, pedantic = false)
+    aspects = {}
+    no_aspect = nil
+    list.each do |m|
       num = number_from_regex(m)
       if num == 0.0
         warning 'Parse Area', 'zero'
@@ -942,18 +979,23 @@ private
                end
       if aspect
         if no_aspect
-          warning 'Parse Area', "With and without aspect: #{string}"
-          return
+          warning 'Parse Area', "Without and With aspect: #{string}"
+          return if pedantic
         end
         no_aspect = false
         if aspects.has_key?(aspect)
-          warning 'Parse Area', "Duplicate Aspect: #{string}" 
-          return
+          warning 'Parse Area', "Duplicate Aspect: #{string}"
+          return if pedantic
+
+          unless aspect = [:width, :height, :length].find { |s| !aspects.has_key?(s) }
+            warning 'Parse Area', "All aspects covered on duplicate"
+            return
+          end
         end
       else
         if no_aspect == false
-          warning 'Parse Area', "Without and With aspect: #{string}"
-          return
+          warning 'Parse Area', "With and Without aspect: #{string}"
+          return if pedantic
         end
         no_aspect = true
         unless aspect = [:width, :height, :length].find { |s| !aspects.has_key?(s) }
@@ -996,11 +1038,6 @@ private
           aspects[a] = depth
         end
       end
-    end
-    
-    if [:height, :width, :length].count { |a| aspects[a] } < 2
-      warning 'Parse Area', "Missing two aspects: #{string}"
-      return if pedantic
     end
     
     aspects

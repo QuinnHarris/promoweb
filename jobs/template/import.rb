@@ -52,7 +52,10 @@ class NewSupplier < GenericImport
       # This is only used when the decoration price is specified for each product.  Many times the price for a decoration will be the same for all products and not in the product data.
       pd.decorations << DecorationDesc.new(:technique => get_decoration(technique, fixed_price, marginal_price),
                                            :location => location,
-                                           :limit => limit)
+                                           :limit => limit,
+                                           :height => height,
+                                           :width => width,
+                                           )
 
       # List of ImageNodeFetch objects representing all the images for this product that are not specific to a product variant
       pd.images = [ImageNodeFetch.new(unique_image_identifier, image_url, optional_image_tag)]

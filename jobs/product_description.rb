@@ -73,7 +73,7 @@ module PropertyObject
 
     def ==(right)
       not self.class.properties.find do |key|
-        not send(key) == right.send(key)
+        not instance_variable_get("@#{key}") == right.instance_variable_get("@#{key}")
       end
     end
     def !=(right)
@@ -290,6 +290,7 @@ class PricingDesc
   end
 
   def ==(right)
+    return false unless right.is_a?(PricingDesc)
     prices == right.prices && costs == right.costs
   end
 

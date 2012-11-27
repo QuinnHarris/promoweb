@@ -85,11 +85,12 @@ class GemlineXML < GenericImport
         pd.supplier_num = product['mainstyle']
         pd.name = product['name']
         pd.description = product['description'].split('^')
-        pd.data = { :id => product['Id'] }
+        pd.data = { :id => product['Id'] }  # ID used by the website to identify products, needed to provide link to website.
         pd.images = [] # Suppress warnings, all images in variants
         
-        pd.lead_time.normal_min = 3
-        pd.lead_time.normal_max = 5
+        # From http://www.gemline.com/Gemline/services/index.aspx?id=140
+        pd.lead_time.normal_min = 4
+        pd.lead_time.normal_max = 7
         pd.lead_time.rush = 1
         
         pd.package.merge_from_object(product,
@@ -116,15 +117,11 @@ class GemlineXML < GenericImport
           
           decoration.elements.each do |location|
             s = location.text.strip
-            # This should probably be changed to use parse_dimension
-            if /^(?<name>[A-Za-z0-9 \(\),]+?) ?(?:(?:(?<width>[0-9\.]+)"?W? ?x? ?(?<height>[0-9\.]+)"?H?)|(?:(?<diameter>[0-9\.]+)"? *(?:(?:dia.?)|(?:diameter))))?$/ =~ s
-              puts "#{pd.supplier_num}: #{name}" if name.split(' ').size == 2 and !name.index('panel')
+            if area = parse_area(location.text.strip)
               dd = DecorationDesc.new(:technique => technique,
-                                      :location => name.strip.gsub(/\s+/, ' ').capitalize,
                                       :limit => limit)
-              dd.width = width if width
-              dd.height = height if height
-              dd.diameter = diameter if diameter
+              dd.location = area.delete(:left) + ' ' + area.delete(:right)
+              dd.merge!(area)
               
               pd.decorations << dd
             else
@@ -167,8 +164,8 @@ class GemlineXML < GenericImport
             last_max = max && max.to_i
             vd.pricing.add(min, price.text, price['code'], true)
           end
-          vd.pricing.eqp_costs
-          vd.pricing.ltm(60.00)
+          vd.pricing.eqp_costs  # We have end quantity pricing with this supplier
+          vd.pricing.ltm(60.00) # http://www.gemline.com/Gemline/services/index.aspx?id=140  $75(G) cost is $75*0.8=$60
           
           categories = parse_categories(item.at_xpath('categories'))
           collections = item.at_xpath('collections')
@@ -215,7 +212,7 @@ class GemlineXML < GenericImport
           pd.tags << 'Special'
         end
 
-        # Set max based on max of all variants
+        # Set maximum quantity based on max of all variants
         maximum = pd.variants.collect { |vd| vd.pricing.max_default_qty }.max
         pd.variants.each { |vd| vd.pricing.maxqty(maximum)}
     
