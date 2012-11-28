@@ -1,7 +1,6 @@
 # Starline API documented at http://www.starline.com/WebService/Catalog.asmx
 
 class Starline < GenericImport
-  include HTTParty
   @@decoration_replace = { 'Silkscreen' => 'Screen Print',
   'Embroidery' => 'Embroidery',
   'Embroider' => 'Embroidery',
@@ -47,35 +46,35 @@ class Starline < GenericImport
     end
 
     puts "Product Count: #{product_list.length}"
-    product_list.each_with_index do |pd,index|
+    product_list.each do |pd|
       ProductDesc.apply(self, pd) do |pd|
         id = pd.data[:id]
-        response = HTTParty.get("http://us.starline.com/translations/catalog/products/en-us/us/#{id}.json")  
+        file = WebFetch.new("http://us.starline.com/translations/catalog/products/en-us/us/#{id}.json").get
+        next unless file
+        response = MultiJson.load(file)
         
-        pd.description = response['description'].join("\n")
+        pd.description = response['description']        
 
-        images = []
-
-        images << "lg_#{id}.jpg"
-        pd.images = [ImageNodeFetch.new('main', "http://us.starline.com/content/image/product/lg_#{id}.jpg")]
-        
-        #getProductShippingInfo : Good and complete
-        shippingInfo = response['shippingInfo']
-        pd.package.length = shippingInfo['length'].to_f  
-        pd.package.width  = shippingInfo['width'].to_f
-        pd.package.height = shippingInfo['height'].to_f  
-        pd.package.units  = shippingInfo['piecesPerBox'].to_f  
-        pd.package.weight = shippingInfo['weightPerBox'].to_f 
-        
-        #getCodedPriceChartUS
-        printed = response['printed']
-        printed['qty'].each_with_index do |qty,index|
-          pd.pricing.add(qty.to_f, printed['price'][index].to_f)
+        # Shipping Info
+        if shippingInfo = response['shippingInfo']
+          pd.package.length = shippingInfo['length']
+          pd.package.width  = shippingInfo['width']
+          pd.package.height = shippingInfo['height']
+          pd.package.units  = shippingInfo['piecesPerBox']
+          pd.package.weight = shippingInfo['weightPerBox']
         end
-        pd.pricing.apply_code(response['priceCode'].to_s) # Added to use 
-        pd.pricing.ltm(32.0) # Less than minimum charge, had to look up in PDF catalog on website
-        pd.pricing.maxqty # Should apply to most pricing
-
+        
+        # Pricing (What about magnet pricing)
+        if printed = response['printed']
+          printed['qty'].zip(printed['price']).each do |qty, cost|
+            # the price field is actually the cost of the item
+            pd.pricing.add(qty, nil, cost)
+          end
+          pd.pricing.apply_code(response['priceCode'], :reverse => true, :fill => true) # :reve
+          pd.pricing.ltm(32.0) # Less than minimum charge, had to look up in PDF catalog on website
+          pd.pricing.maxqty # Should apply to most pricing
+        end
+          
         pd.properties['dimension'] = response['size']
 
         
@@ -83,57 +82,70 @@ class Starline < GenericImport
         # Complete by adding a DecoratonDesc object for each combination of "Imprint Method(s)"
         pd.decorations = [DecorationDesc.none]
         response["imprints"].each do |imprint_method|
-          if @@decoration_replace[imprint_method['name']]
-             technique = @@decoration_replace[imprint_method['name']]
-             imprint_method["location"].each do |method|
-                 dd = DecorationDesc.new({:technique => technique,:location=>method["name"].to_s,:height=>method["height"],:width=>method["width"]})
-               pd.decorations << dd
-             end
+          if technique = @@decoration_replace[imprint_method['name']]
+            imprint_method["location"].each do |method|
+              pd.decorations << DecorationDesc.new(:technique => technique,
+                                                   :location => method["name"],
+                                                   :height => method["height"],
+                                                   :width => method["width"])
+            end
           else
-              warning 'UNKNOWN DECORATION', technique
-          end  
-        end   
+            warning 'UNKNOWN DECORATION', technique
+          end
+        end
 
-        pd.tags = []  
+        pd.tags = []
+        pd.tags << 'Closeout' if response['closeout']
+
+        # All product image file names
+        image_files = response['carouselImages'].collect do |file|
+          file.gsub(/^cs_/, 'lg_')
+        end
 
         response['colors'].each do |color|
-           image_node = "lg_#{id}_#{color['code']}.jpg"
-           vd = VariantDesc.new(:supplier_num => pd.supplier_num + color['name'],
-                :properties => { 'color' => color['name'] },:images=>[ImageNodeFetch.new('main', "http://us.starline.com/content/image/product/#{image_node}")])
-           pd.variants << vd
-           images << image_node 
+          images = image_files.find_all { |f| f.include?("_#{color['code']}") }
+          image_files -= images
+
+          vd = VariantDesc.new(:supplier_num => pd.supplier_num + color['name'],
+                               :properties => { 'color' => color['name'] },
+                               :images => images.collect { |f| ImageNodeFetch.new(f, "http://us.starline.com/content/image/product/#{f}") })
+          pd.variants << vd
         end  
+
+        pd.images = image_files.collect { |f| ImageNodeFetch.new(f, "http://us.starline.com/content/image/product/#{f}") }
 
 
         response["specs"].each do |specs|
-            name = specs["header"]
-            case name
-              when 'Packaging'
-              when 'Price'
-              when 'Set-Up Charge' 
-              when 'More Info' 
-              when 'Oxidation'
-              when 'Insulation Type' 
-              when 'Mug Liner' 
-                puts "specification : #{name} " 
-                pd.properties[name] = specs["text"] 
-              when 'Band Colors'
-                band_colors = []
-                band_colors = specs["text"].split(",") 
-                response["carouselImages"].each_with_index do |image_small,index|
-                  image_large = image_small.gsub!("cs","lg")
-                  if !images.include?(image_large) && !band_colors[index].nil?
-                    vd = VariantDesc.new(:supplier_num => pd.supplier_num + image_large ,:properties => { 'color' =>band_colors[index]  },:images=>[ImageNodeFetch.new('main', "http://us.starline.com/content/image/product/#{image_large}")])
-                    pd.variants << vd
-                    images << image_large
-                  end
-                end
-              else
-              # Warnings will be summarised at the end.  Quick way to determine all unknown properties
+          name = specs['header']
+          text = specs['text']
+          case name
+          when 'Packaging', 'Insulation Type'
+            pd.properties[name] = text.gsub(/<.+?\/?>/, '')
+          when 'Price'
+          when 'Set-Up Charge' 
+          when 'More Info' 
+          when 'Oxidation'
+          when 'Mug Liner' 
+            puts "specification : #{name} " 
+            pd.properties[name] = specs["text"] 
+#          when 'Band Colors'
+#            band_colors = []
+#            band_colors = specs["text"].split(",") 
+#            response["carouselImages"].each_with_index do |image_small,index|
+#              image_large = image_small.gsub!("cs","lg")
+#              if !images.include?(image_large) && !band_colors[index].nil?
+#                vd = VariantDesc.new(:supplier_num => pd.supplier_num + image_large ,:properties => { 'color' =>band_colors[index]  },:images=>[ImageNodeFetch.new('main', "http://us.starline.com/content/image/product/#{image_large}")])
+#                pd.variants << vd
+#              end
+#                end
+          else
+            # Warnings will be summarised at the end.  Quick way to determine all unknown properties
               warning 'Unknown Spec', specs["header"]
-            end
+          end
+
         end
-      end
-    end
-  end
+
+      end # ProductDesc.apply
+    end # product_list.each
+  end # parse_products
 end

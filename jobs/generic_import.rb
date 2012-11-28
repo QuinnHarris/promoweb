@@ -196,7 +196,8 @@ module FileCommon
   end
 
   def get(time = nil)
-    File.open(get_path(time))
+    return nil unless p = get_path(time)
+    File.open(p)
   end
 
   def size(time = nil)

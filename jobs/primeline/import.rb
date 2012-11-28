@@ -300,7 +300,7 @@ class PrimeLineWeb < GenericImport
               next unless price
               pricing.add(min, price)
             end
-            pricing.apply_code(price_str || '5R', true)
+            pricing.apply_code(price_str || '5R', :round => true)
             pricing.eqp_costs unless price_no_special
             pricing.ltm(44.00) unless price_no_less
             pricing.maxqty
