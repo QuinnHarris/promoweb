@@ -1,10 +1,11 @@
 # Starline API documented at http://www.starline.com/WebService/Catalog.asmx
 
 class Starline < GenericImport
+  include HTTParty
   @@decoration_replace = { 'Silkscreen' => 'Screen Print',
   'Embroidery' => 'Embroidery',
   'Embroider' => 'Embroidery',
-  'Pad Print' => 'Pad Printing',
+  'Pad Printing' => 'Pad Print',
   'Deboss' => 'Deboss',
   'Laser Engraving' => 'Laser Engrave'}
 
@@ -36,10 +37,8 @@ class Starline < GenericImport
         subcat_id = cat.at_xpath('subcategoryid/text()').to_s
         subcat_name = cat.at_xpath('subcategory/text()').to_s
         puts "    #{subcat_name} : #{subcat_id}"
-
-        # Fetch each product in the subcategory and place associated ProductDesc object in product_list
         get_method('getProducts', 'SubCategoryID' => subcat_id).xpath('//newdataset/product').each do |prod|
-          product_list << ProductDesc.new(:supplier_num => prod.at_xpath('productid/text()').to_s,
+            product_list << ProductDesc.new(:supplier_num => prod.at_xpath('productid/text()').to_s,
                                           :data => { :id => prod.at_xpath('itemno/text()').to_s.to_i },
                                           :name => prod.at_xpath('product/text()').to_s,
                                           :supplier_categories => [[cat_name, subcat_name]])
@@ -48,95 +47,92 @@ class Starline < GenericImport
     end
 
     puts "Product Count: #{product_list.length}"
-    
     product_list.each_with_index do |pd,index|
       ProductDesc.apply(self, pd) do |pd|
         id = pd.data[:id]
-        pd.description =
-          get_method('getProductDescription', 'ItemNo' => id)
-          .xpath('//desc/description/text()').collect { |t| t.to_s }
+        response = HTTParty.get("http://us.starline.com/translations/catalog/products/en-us/us/#{id}.json")  
+        
+        pd.description = response['description'].join("\n")
 
+        images = []
+
+        images << "lg_#{id}.jpg"
         pd.images = [ImageNodeFetch.new('main', "http://us.starline.com/content/image/product/lg_#{id}.jpg")]
         
         #getProductShippingInfo : Good and complete
-        proshiping = get_method('getProductShippingInfo', 'ItemNo' => id)
-        pd.package.length = proshiping.at_xpath('//shippinginfo/length/text()').to_s.to_f
-        pd.package.width = proshiping.at_xpath('//shippinginfo/width/text()').to_s.to_f
-        pd.package.height = proshiping.at_xpath('//shippinginfo/height/text()').to_s.to_f
-        pd.package.units = proshiping.at_xpath('//shippinginfo/pcbx/text()').to_s.to_i
-        pd.package.weight = proshiping.at_xpath('//shippinginfo/lbs_bx/text()').to_s.to_f
+        shippingInfo = response['shippingInfo']
+        pd.package.length = shippingInfo['length'].to_f  
+        pd.package.width  = shippingInfo['width'].to_f
+        pd.package.height = shippingInfo['height'].to_f  
+        pd.package.units  = shippingInfo['piecesPerBox'].to_f  
+        pd.package.weight = shippingInfo['weightPerBox'].to_f 
         
         #getCodedPriceChartUS
-        pricechart = get_method('getCodedPriceChartUS', 'ItemNo' => id).xpath("//newdataset/chart")
-        (1..4).each do |i|
-          qty = pricechart.at_xpath("nqty#{i}/text()").to_s.to_i
-          price = pricechart.at_xpath("nprice#{i}/text()").to_s
-          pd.pricing.add(qty, price)
+        printed = response['printed']
+        printed['qty'].each_with_index do |qty,index|
+          pd.pricing.add(qty.to_f, printed['price'][index].to_f)
         end
-        pd.pricing.apply_code(pricechart.at_xpath('pricecode/text()').to_s) # Added to use 
+        pd.pricing.apply_code(response['priceCode'].to_s) # Added to use 
         pd.pricing.ltm(32.0) # Less than minimum charge, had to look up in PDF catalog on website
         pd.pricing.maxqty # Should apply to most pricing
 
-        colors = [nil]
-        imprint_methods = imprint_areas = []
-        spefs_hash = {}
-        get_method('getSpefs', 'ItemNo' => id).xpath('//newdataset/spef').each do |spec|
-          name = spec.at_xpath('specification/text()').to_s
-          data = spec.at_xpath('specificationdata/text()').to_s
+        pd.properties['dimension'] = response['size']
 
-          case name
-            when 'Product Color'
-            colors = data.split(/\s*,\s*/)
-            
-            when 'Product Size'
-            pd.properties['dimension'] = parse_dimension(data)
-            
-            when 'Imprint Method(s)'
-            # data is starlines own techniques.
-            imprint_methods = data.split(/\s*,\s*/)
-            imprint_methods.each do |method|
-              warning "Unknown method", method
-            end
-            
-            when 'Imprint Area(s)'
-            imprint_areas = data.split(/\s*,\s*/).collect { |a| parse_dimension(a) }.compact
+        
 
-            when 'Packaging'
-             pd.properties[name] = data
-
-            when 'Note'
-             pd.description = pd.description.to_s + data.to_s 
-
-            else
-            # Warnings will be summarised at the end.  Quick way to determine all unknown properties
-            warning 'Unknown Spec', name
-          end
-
-          spefs_hash[name] = data
-        end
-        #getAddons
-        #getGroupSpefs
-
+        # Complete by adding a DecoratonDesc object for each combination of "Imprint Method(s)"
         pd.decorations = [DecorationDesc.none]
-        pd.tags = []
-
-        # Complete by adding a DecoratonDesc object for each combination of "Imprint Method(s)" and "Imprint Area(s)"
-
-        imprint_methods.each do |method|
-          if @@decoration_replace[method]
-             technique = @@decoration_replace[method]
-             dd = DecorationDesc.new({:technique => technique,:location=>''}.merge!(imprint_areas.first))
-             pd.decorations << dd
+        response["imprints"].each do |imprint_method|
+          if @@decoration_replace[imprint_method['name']]
+             technique = @@decoration_replace[imprint_method['name']]
+             imprint_method["location"].each do |method|
+                 dd = DecorationDesc.new({:technique => technique,:location=>method["name"].to_s,:height=>method["height"],:width=>method["width"]})
+               pd.decorations << dd
+             end
           else
               warning 'UNKNOWN DECORATION', technique
           end  
+        end   
+
+        pd.tags = []  
+
+        response['colors'].each do |color|
+           image_node = "lg_#{id}_#{color['code']}.jpg"
+           vd = VariantDesc.new(:supplier_num => pd.supplier_num + color['name'],
+                :properties => { 'color' => color['name'] },:images=>[ImageNodeFetch.new('main', "http://us.starline.com/content/image/product/#{image_node}")])
+           pd.variants << vd
+           images << image_node 
         end  
 
-        pd.variants = colors.collect do |color|
-           VariantDesc.new(:supplier_num => pd.supplier_num + color,
-                          :properties => { 'color' => color },:images=>[])
+
+        response["specs"].each do |specs|
+            name = specs["header"]
+            case name
+              when 'Packaging'
+              when 'Price'
+              when 'Set-Up Charge' 
+              when 'More Info' 
+              when 'Oxidation'
+              when 'Insulation Type' 
+              when 'Mug Liner' 
+                puts "specification : #{name} " 
+                pd.properties[name] = specs["text"] 
+              when 'Band Colors'
+                band_colors = []
+                band_colors = specs["text"].split(",") 
+                response["carouselImages"].each_with_index do |image_small,index|
+                  image_large = image_small.gsub!("cs","lg")
+                  if !images.include?(image_large) && !band_colors[index].nil?
+                    vd = VariantDesc.new(:supplier_num => pd.supplier_num + image_large ,:properties => { 'color' =>band_colors[index]  },:images=>[ImageNodeFetch.new('main', "http://us.starline.com/content/image/product/#{image_large}")])
+                    pd.variants << vd
+                    images << image_large
+                  end
+                end
+              else
+              # Warnings will be summarised at the end.  Quick way to determine all unknown properties
+              warning 'Unknown Spec', specs["header"]
+            end
         end
-        
       end
     end
   end
