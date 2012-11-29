@@ -1,12 +1,14 @@
 # Starline API documented at http://www.starline.com/WebService/Catalog.asmx
 
 class Starline < GenericImport
-  @@decoration_replace = { 'Silkscreen' => 'Screen Print',
-  'Embroidery' => 'Embroidery',
-  'Embroider' => 'Embroidery',
-  'Pad Printing' => 'Pad Print',
-  'Deboss' => 'Deboss',
-  'Laser Engraving' => 'Laser Engrave'}
+  @@decoration_replace = {
+    'Silkscreen' => 'Screen Print',
+    'Embroidery' => 'Embroidery',
+    'Embroider' => 'Embroidery',
+    'Pad Printing' => 'Pad Print',
+    'Deboss' => 'Deboss',
+    'Laser Engraving' => 'Laser Engrave'
+  }
 
   def initialize
     super "Starline"
@@ -63,23 +65,14 @@ class Starline < GenericImport
           pd.package.units  = shippingInfo['piecesPerBox']
           pd.package.weight = shippingInfo['weightPerBox']
         end
-        
-        # Pricing (What about magnet pricing)
-        if printed = response['printed']
-          printed['qty'].zip(printed['price']).each do |qty, cost|
-            # the price field is actually the cost of the item
-            pd.pricing.add(qty, nil, cost)
-          end
-          pd.pricing.apply_code(response['priceCode'], :reverse => true, :fill => true) # :reve
-          pd.pricing.ltm(32.0) # Less than minimum charge, had to look up in PDF catalog on website
-          pd.pricing.maxqty # Should apply to most pricing
-        end
-          
-        pd.properties['dimension'] = response['size']
+                  
+        # Dimension
+        dimension = response['size']
+        dimension.delete_if { |k, v| v == 0.0 }
+        pd.properties['dimension'] = dimension.empty? ? nil : dimension
 
-        
 
-        # Complete by adding a DecoratonDesc object for each combination of "Imprint Method(s)"
+        # Decorations (needs pricing)
         pd.decorations = [DecorationDesc.none]
         response["imprints"].each do |imprint_method|
           if technique = @@decoration_replace[imprint_method['name']]
@@ -90,27 +83,82 @@ class Starline < GenericImport
                                                    :width => method["width"])
             end
           else
-            warning 'UNKNOWN DECORATION', technique
+            warning 'Unknown Decoration', imprint_method['name']
           end
         end
 
+
+        # Tags
         pd.tags = []
         pd.tags << 'Closeout' if response['closeout']
+        if response['types'] && response['types'].find { |h| h['name'].include?('New') } or
+            response['logos'] && response['logos'].find { |h| h['name'] == '119' }
+          pd.tags << 'New'
+        end
+
 
         # All product image file names
         image_files = response['carouselImages'].collect do |file|
           file.gsub(/^cs_/, 'lg_')
         end
 
-        response['colors'].each do |color|
-          images = image_files.find_all { |f| f.include?("_#{color['code']}") }
-          image_files -= images
+        # Pricing
+        if pri = response['printed']
+          # Pricing
+          pri['qty'].zip(pri['price']).each do |qty, cost|
+            # the price field is actually the cost of the item
+            pd.pricing.add(qty, nil, cost)
+          end
+          pd.pricing.apply_code(response['priceCode'], :reverse => true, :fill => true)
+          pd.pricing.ltm(32.0) # Less than minimum charge, had to look up in PDF catalog on website
+          pd.pricing.maxqty # Should apply to most pricing
 
-          vd = VariantDesc.new(:supplier_num => pd.supplier_num + color['name'],
-                               :properties => { 'color' => color['name'] },
-                               :images => images.collect { |f| ImageNodeFetch.new(f, "http://us.starline.com/content/image/product/#{f}") })
-          pd.variants << vd
-        end  
+          # Variants
+          colors = response['colors']
+          if colors.empty?
+            pd.variants = [VariantDesc.new(:supplier_num => pd.supplier_num, :properties => {}, :images => [])]
+          else
+            colors.each do |color|
+              if pd.variants.find { |vd| vd.properties['color'] == color['name'] }
+                warning 'Duplicate Color', color['name']
+                next
+              end
+
+              # Find matching images and place in this variant
+              images = image_files.find_all { |f| f.include?("_#{color['code']}") }
+              image_files -= images
+              
+              pd.variants <<
+                VariantDesc.new(:supplier_num => pd.supplier_num + color['name'],
+                                :properties => { 'color' => color['name'] },
+                                :images => images.collect { |f| ImageNodeFetch.new(f, "http://us.starline.com/content/image/product/#{f}") })
+            end
+          end
+        elsif list = response['magnetPricing']
+          raise "Unexpected colors" unless response['colors'].empty?
+
+          list.each do |hash|
+            properties = { 'size' => hash['size'], 'type' => hash['type'] }
+            if pd.variants.find { |vd| vd.properties == properties }
+              warning 'Duplicate Magnet', properties.inspect
+              next
+            end
+
+            vd = VariantDesc.new(:supplier_num => hash['code'],
+                                 :properties => properties,
+                                 :images => [])
+            (1..4).each do |n|
+              vd.pricing.add(hash["qty#{n}"], nil, hash["price#{n}"])
+            end
+            vd.pricing.apply_code(response['priceCode'], :reverse => true, :fill => true)
+            vd.pricing.ltm(32.0)
+            vd.pricing.maxqty
+            pd.variants << vd
+          end
+        else
+          raise ValidateError, 'No Pricing'
+        end
+
 
         pd.images = image_files.collect { |f| ImageNodeFetch.new(f, "http://us.starline.com/content/image/product/#{f}") }
 
@@ -119,25 +167,21 @@ class Starline < GenericImport
           name = specs['header']
           text = specs['text']
           case name
-          when 'Packaging', 'Insulation Type'
-            pd.properties[name] = text.gsub(/<.+?\/?>/, '')
-          when 'Price'
-          when 'Set-Up Charge' 
-          when 'More Info' 
-          when 'Oxidation'
-          when 'Mug Liner' 
-            puts "specification : #{name} " 
-            pd.properties[name] = specs["text"] 
-#          when 'Band Colors'
-#            band_colors = []
-#            band_colors = specs["text"].split(",") 
-#            response["carouselImages"].each_with_index do |image_small,index|
-#              image_large = image_small.gsub!("cs","lg")
-#              if !images.include?(image_large) && !band_colors[index].nil?
-#                vd = VariantDesc.new(:supplier_num => pd.supplier_num + image_large ,:properties => { 'color' =>band_colors[index]  },:images=>[ImageNodeFetch.new('main', "http://us.starline.com/content/image/product/#{image_large}")])
-#                pd.variants << vd
-#              end
-#                end
+          when 'Packaging', 'Insulation Type', 'Mug Liner' 
+            pd.properties[name] = text.gsub(/<.+?\/?>/, '').strip
+
+          when 'Band Colors'
+            pd.variants = pd.variants.collect do |vd|
+              text.split(/\s*,\s*/).collect do |color|
+                vd = vd.dup
+                vd.supplier_num = pd.supplier_num + color
+                vd.properties[name] = color
+                vd
+              end
+
+            end.flatten
+          when 'Price', 'Set-Up Charge', 'More Info', 'Oxidation'
+
           else
             # Warnings will be summarised at the end.  Quick way to determine all unknown properties
               warning 'Unknown Spec', specs["header"]
