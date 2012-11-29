@@ -93,7 +93,12 @@ class RubyXL::Worksheet
        end  
       @sheet_row
   end 
+  
+  def next_row(idx=1)
+      @sheet_row[idx]
+  end  
 end
+
 
 class Spreadsheet::Excel::Worksheet
   attr_reader :header_map
@@ -722,7 +727,7 @@ class GenericImport
     file_name = cache_file(parse_cache_filename)
     if fetch_parse? or ARGV.include?('parse') or !cache_exists(file_name)
       run_parse
-      #cache_write(file_name, @product_list)
+      cache_write(file_name, @product_list)
     else
       @product_list = cache_read(file_name)
     end

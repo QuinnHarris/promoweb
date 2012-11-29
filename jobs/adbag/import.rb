@@ -1,6 +1,5 @@
 # ToDO
 # Quantity on decoration pricing
-/^(?<min>\d)\s*(-\s*(?<max>\d)\s*)? WORKING DAYS$/ =~ string
 
 class AdbagProdXLS < GenericImport
   def initialize
@@ -32,27 +31,39 @@ class AdbagProdXLS < GenericImport
   def parse_products
     wksheets = RubyXL::Parser.parse(@src_file)
     ws = wksheets[0]
-    ws.rows.each do |row|
+    @dup_product = []
+    ws.rows.each_with_index do |row,index|
+      @dup_product.include?(row["PRODUCT NAME"]) ? next : @dup_product << row["PRODUCT NAME"] 
       ProductDesc.apply(self) do |pd|
-        
         pd.supplier_num = row["ITEMNO"]
         pd.name = row["PRODUCT NAME"]
         pd.description = row["DESCRIPTION 1"]+ " " + row["DESCRIPTION 2"]
-        
-        pd.supplier_categories = [row["CATEGORY"]]
-
+        pd.supplier_categories = [[row["CATEGORY"]]]
         pd.properties['dimension'] = parse_dimension(row["PRODUCT DIMENSIONS"])
-        
-        pd.package.weight =  Float(row["PACK WEIGHT"].gsub!("","LBS"))
-        pd.package.units =  row["PACK SIZE"]
-        pd.package.height =  Float(row["PACK HEIGHT"])
+        pd.package.weight =  Float(row["PACK WEIGHT"].gsub!("LBS",""))
+       # pd.package.units =  parse_dimension(row["PACK SIZE"])
+        pd.package.height =  row["PACK HEIGHT"].to_f 
         pd.package.length = row["PACK LENGTH"].to_i
         pd.package.width = row["PACK WIDTH"].to_i
         
         /^(?<min>\d)\s*(-\s*(?<max>\d)\s*)? WORKING DAYS$/ =~ row["LEAD TIME"].to_s
         pd.lead_time.normal_min = min
         pd.lead_time.normal_max = max || min
-        
+
+        colors = []
+        colors << row["COLOR"]
+        begin
+         index+=1
+         next_row = ws.next_row(index)
+         colors << next_row["COLOR"] unless colors.include?(next_row["COLOR"])
+        end while next_row["ITEMNO"] == row["ITEMNO"]  
+        pricing = []
+        (1..6).each do |n|
+           pricing << [row["QTY BREAK #{n}"],row["SELL/COST #{n}"]]
+        end
+        debugger
+
+
         pd.tags = []
 
       end
