@@ -951,12 +951,11 @@ private
      warning 'Parse Number', "RegEx mismatch: #{string}"
      return
    end
-
     number_from_regex(m)
   end
 
 
-  @@component_regex = /#{@@number_regex}(?<aspect>width|w|height|h|length|l|diameter|diam?\.?|square|d|depth|round)?/i
+  @@component_regex = /#{@@number_regex}(?<aspect>g|high|wide|width|w|height|h|length|l|diameter|diam?\.?|square|d|depth|round)?/i
   def parse_dimension(string, pedantic = false)
     list = string.split(/x/i).collect do |part|
       unless m = /^#{@@component_regex}$/.match(part.strip)
@@ -996,6 +995,9 @@ private
     aspects = parse_aspects([parts['l'], parts['r']].compact, string, pedantic)
     aspects.merge!(other) if aspects
     aspects
+  end
+
+  def parse_location(string)
   end
 
   def parse_aspects(list, string, pedantic = false)

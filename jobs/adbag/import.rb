@@ -2,36 +2,25 @@
 # Quantity on decoration pricing
 
 class AdbagProdXLS < GenericImport
+  @@decoration_replace = {
+    'SILK SCREEN' => 'Screen Print',
+    'FLEXOGRAPHIC' => 'FLEXOGRAPHIC',
+    'COLOR EVOLUTION' => 'COLOR EVOLUTION',
+    'HOT STAMP' => 'HOT STAMP',
+    'Laser Engraving' => 'Laser Engrave',
+    'DIGITAL' => 'DIGITAL'
+  }
+
   def initialize
     @src_file = File.join(JOBS_DATA_ROOT, '2012AABCATALOG.xlsx')
     super 'American Ad Bag'
   end
 
 
-  def fetch_parse?
-    # if File.exists?(@src_file) and
-    #     File.mtime(@src_file) >= (Time.now - 7.day)
-    #   puts "File Fetched today"
-    #   return false
-    # end
-    
-    # puts "Starting Fetch"
-    
-    # agent = Mechanize.new
-    # page = agent.get('http://crownprod.com/includes/productdata.php')
-    # form = page.forms.first
-    # form.action = '/' + form.action
-    # page = agent.submit(form)
-    
-    # page.save_as @src_file
-    
-    # puts "Fetched"
-    # true
-  end
   def parse_products
     wksheets = RubyXL::Parser.parse(@src_file)
     ws = wksheets[0]
-    @dup_product = []
+    @dup_product = Array.new
     ws.rows.each_with_index do |row,index|
       @dup_product.include?(row["PRODUCT NAME"]) ? next : @dup_product << row["PRODUCT NAME"] 
       ProductDesc.apply(self) do |pd|
@@ -41,7 +30,7 @@ class AdbagProdXLS < GenericImport
         pd.supplier_categories = [[row["CATEGORY"]]]
         pd.properties['dimension'] = parse_dimension(row["PRODUCT DIMENSIONS"])
         pd.package.weight =  Float(row["PACK WEIGHT"].gsub!("LBS",""))
-       # pd.package.units =  parse_dimension(row["PACK SIZE"])
+        pd.package.units =  row["PACK SIZE"].to_i
         pd.package.height =  row["PACK HEIGHT"].to_f 
         pd.package.length = row["PACK LENGTH"].to_i
         pd.package.width = row["PACK WIDTH"].to_i
@@ -50,20 +39,70 @@ class AdbagProdXLS < GenericImport
         pd.lead_time.normal_min = min
         pd.lead_time.normal_max = max || min
 
-        colors = []
-        colors << row["COLOR"]
+        
+      
+        imprints = []
+        c = row["COLOR"]
+        colors = c.scan(c)
+        imprints << [row["PRINT METHOD"],row["PRINT LOCATION"],row["PRINT SIZE"]].to_a
+        
+
+        
         begin
          index+=1
          next_row = ws.next_row(index)
          colors << next_row["COLOR"] unless colors.include?(next_row["COLOR"])
+         imprints << [next_row["PRINT METHOD"],next_row["PRINT LOCATION"],next_row["PRINT SIZE"]] unless imprints.include?([next_row["PRINT METHOD"],next_row["PRINT LOCATION"],next_row["PRINT SIZE"]])
         end while next_row["ITEMNO"] == row["ITEMNO"]  
-        pricing = []
-        (1..6).each do |n|
-           pricing << [row["QTY BREAK #{n}"],row["SELL/COST #{n}"]]
+
+        # decorations
+        pd.decorations = [DecorationDesc.none]
+
+        imprints.each do |method,location,size|
+          asd = parse_area(location)
+          if technique = @@decoration_replace[method]
+           pd.decorations << DecorationDesc.new({:technique => method,:location => location}.merge(parse_dimension(size)))
+          else
+            warning 'Unknown Decoration', method
+          end  
         end
-        debugger
+       
+
+        #variants
+
+        if colors.empty?
+            pd.variants = [VariantDesc.new(:supplier_num => pd.supplier_num, :properties => {}, :images => [])]
+        else
+            colors.each do |color|
+               pd.variants << VariantDesc.new(:supplier_num => pd.supplier_num + color.to_s,:properties => { 'color' => color },:images => [] )
+                                                #ImageNodeFetch.new("main", "http://www.adbag.com/Images/Products/#{color}.jpg")
+            end
+        end
 
 
+        # princing
+        pricing = []
+        pricing_check = false
+        (1..6).each do |n|
+            pricing << [row["QTY BREAK #{n}"],row["SELL/COST #{n}"]]
+        end
+
+        
+        pricing.each do |qty,cost|
+          /^(?<qty_min>\d*)\s*-\s*(?<qty_max>\d*)$/ =~ qty.to_s
+          qty_1,qty_2 = cost.split("/") 
+          next unless qty_2.to_f != 0.0 && qty_min.to_i != 0
+          pd.pricing.add(qty_min.to_i, qty_1.to_f, qty_2.to_f) 
+          pricing_check = true
+        end 
+
+        
+        if pricing_check
+         # pd.pricing.apply_code(row["PRICE CODES"], :reverse => true, :fill => true)
+          pd.pricing.ltm(32.0)
+          pd.pricing.maxqty
+        end
+        
         pd.tags = []
 
       end
