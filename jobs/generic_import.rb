@@ -80,18 +80,16 @@ class RubyXL::Worksheet
   
 
   def rows
-      use_header
-      @sheet_row = []
-       @sheet_data.each do |row|
-          next if row[1].datatype.nil? 
-          next if @header_map.include?(row[1].value)
-          row_hash = {}
-          row.each_with_index do |cell,index|
-            row_hash[@header_map[index]] = cell.nil? || cell.datatype.blank? ? "" : cell.value
-          end 
-          @sheet_row.push(row_hash)
-       end  
-      @sheet_row
+    use_header
+    @sheet_row = @sheet_data.collect do |row|
+      next if row[1].datatype.nil? 
+      next if @header_map.include?(row[1].value)
+      row_hash = {}
+      row.each_with_index do |cell,index|
+        row_hash[@header_map[index]] = cell.nil? || cell.datatype.blank? ? "" : cell.value
+      end 
+      row_hash
+    end.compact
   end 
   
   def next_row(idx=1)

@@ -4,7 +4,6 @@ class Starline < GenericImport
   @@decoration_replace = {
     'Silkscreen' => 'Screen Print',
     'Embroidery' => 'Embroidery',
-    'Embroider' => 'Embroidery',
     'Pad Printing' => 'Pad Print',
     'Deboss' => 'Deboss',
     'Laser Engraving' => 'Laser Engrave'
@@ -39,7 +38,7 @@ class Starline < GenericImport
         subcat_name = cat.at_xpath('subcategory/text()').to_s
         puts "    #{subcat_name} : #{subcat_id}"
         get_method('getProducts', 'SubCategoryID' => subcat_id).xpath('//newdataset/product').each do |prod|
-            product_list << ProductDesc.new(:supplier_num => prod.at_xpath('productid/text()').to_s,
+          product_list << ProductDesc.new(:supplier_num => prod.at_xpath('productid/text()').to_s,
                                           :data => { :id => prod.at_xpath('itemno/text()').to_s.to_i },
                                           :name => prod.at_xpath('product/text()').to_s,
                                           :supplier_categories => [[cat_name, subcat_name]])
@@ -104,14 +103,21 @@ class Starline < GenericImport
 
         # Pricing
         if pri = response['printed']
+          if response['types'] && response['types'].find { |h| h['name'] == 'Special Printed' }
+            pd.tags << 'Special' unless pd.tags.include?('New')
+            pri = response['specialPrinted']
+          end
+
           # Pricing
           pri['qty'].zip(pri['price']).each do |qty, cost|
+            next if cost.nil? or cost == 0.0
+            
             # the price field is actually the cost of the item
             pd.pricing.add(qty, nil, cost)
           end
           pd.pricing.apply_code(response['priceCode'], :reverse => true, :fill => true)
-          pd.pricing.ltm(32.0) # Less than minimum charge, had to look up in PDF catalog on website
-          pd.pricing.maxqty # Should apply to most pricing
+          pd.pricing.ltm(32.0)
+          pd.pricing.maxqty
 
           # Variants
           colors = response['colors']
@@ -178,13 +184,12 @@ class Starline < GenericImport
                 vd.properties[name] = color
                 vd
               end
-
+              
             end.flatten
           when 'Price', 'Set-Up Charge', 'More Info', 'Oxidation'
 
           else
-            # Warnings will be summarised at the end.  Quick way to determine all unknown properties
-              warning 'Unknown Spec', specs["header"]
+            warning 'Unknown Spec', specs["header"]
           end
 
         end
