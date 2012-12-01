@@ -22,6 +22,7 @@ class AdbagProdXLS < GenericImport
     ws = wksheets[0]
     @dup_product = Array.new
     ws.rows.each_with_index do |row,index|
+      
       @dup_product.include?(row["PRODUCT NAME"]) ? next : @dup_product << row["PRODUCT NAME"] 
       ProductDesc.apply(self) do |pd|
         pd.supplier_num = row["ITEMNO"]
@@ -44,13 +45,13 @@ class AdbagProdXLS < GenericImport
         imprints = []
         c = row["COLOR"]
         colors = c.scan(c)
-        imprints << [row["PRINT METHOD"],row["PRINT LOCATION"],row["PRINT SIZE"]].to_a
+        imprints << [row["PRINT METHOD"],row["PRINT LOCATION"],row["PRINT SIZE"]]
         
 
-        
         begin
          index+=1
          next_row = ws.next_row(index)
+         break unless next_row
          colors << next_row["COLOR"] unless colors.include?(next_row["COLOR"])
          imprints << [next_row["PRINT METHOD"],next_row["PRINT LOCATION"],next_row["PRINT SIZE"]] unless imprints.include?([next_row["PRINT METHOD"],next_row["PRINT LOCATION"],next_row["PRINT SIZE"]])
         end while next_row["ITEMNO"] == row["ITEMNO"]  
@@ -59,13 +60,13 @@ class AdbagProdXLS < GenericImport
         pd.decorations = [DecorationDesc.none]
 
         imprints.each do |method,location,size|
-          asd = parse_area(location)
           if technique = @@decoration_replace[method]
-           pd.decorations << DecorationDesc.new({:technique => method,:location => location}.merge(parse_dimension(size)))
+           pd.decorations << DecorationDesc.new({:technique => technique,:location => location}.merge(parse_dimension(size)))
           else
             warning 'Unknown Decoration', method
           end  
         end
+
        
 
         #variants
