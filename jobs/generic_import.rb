@@ -80,20 +80,23 @@ class RubyXL::Worksheet
   
 
   def rows
-      use_header
-      @sheet_row = []
-       @sheet_data.each do |row|
-          next if row[1].datatype.nil? 
-          next if @header_map.include?(row[1].value)
-          row_hash = {}
-          row.each_with_index do |cell,index|
-            row_hash[@header_map[index]] = cell.nil? || cell.datatype.blank? ? "" : cell.value
-          end 
-          @sheet_row.push(row_hash)
-       end  
-      @sheet_row
+    use_header
+    @sheet_row = @sheet_data.collect do |row|
+      next if row[1].datatype.nil? 
+      next if @header_map.include?(row[1].value)
+      row_hash = {}
+      row.each_with_index do |cell,index|
+        row_hash[@header_map[index]] = cell.nil? || cell.datatype.blank? ? "" : cell.value
+      end 
+      row_hash
+    end.compact
   end 
+  
+  def next_row(idx=1)
+      @sheet_row[idx]
+  end  
 end
+
 
 class Spreadsheet::Excel::Worksheet
   attr_reader :header_map
@@ -196,7 +199,8 @@ module FileCommon
   end
 
   def get(time = nil)
-    File.open(get_path(time))
+    return nil unless p = get_path(time)
+    File.open(p)
   end
 
   def size(time = nil)
@@ -721,7 +725,7 @@ class GenericImport
     file_name = cache_file(parse_cache_filename)
     if fetch_parse? or ARGV.include?('parse') or !cache_exists(file_name)
       run_parse
-      #cache_write(file_name, @product_list)
+      cache_write(file_name, @product_list)
     else
       @product_list = cache_read(file_name)
     end
@@ -947,12 +951,11 @@ private
      warning 'Parse Number', "RegEx mismatch: #{string}"
      return
    end
-
     number_from_regex(m)
   end
 
-
-  @@component_regex = /#{@@number_regex}(?<aspect>width|w|height|h|length|l|diameter|diam?\.?|square|d|depth|round)?/i
+  # g for gussetted in adbag?
+  @@component_regex = /#{@@number_regex}(?<aspect>wide|width|w|high|height|h|long|length|l|diameter|diam?\.?|square|d|depth|round)?/i
   def parse_dimension(string, pedantic = false)
     list = string.split(/x/i).collect do |part|
       unless m = /^#{@@component_regex}$/.match(part.strip)
@@ -992,6 +995,9 @@ private
     aspects = parse_aspects([parts['l'], parts['r']].compact, string, pedantic)
     aspects.merge!(other) if aspects
     aspects
+  end
+
+  def parse_location(string)
   end
 
   def parse_aspects(list, string, pedantic = false)

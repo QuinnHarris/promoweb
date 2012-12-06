@@ -1,3 +1,15 @@
+- if @user
+  #actions.admin
+    Add to
+    - if @order && @order.task_completed?(AcknowledgeOrderTask)
+      (Not Current Order: Acknowledged)
+    - else
+      %a.submit#exist{ :href => '#' } Current Order
+    or
+    %a.submit#order{ :href => '#' } New Order
+    or
+    %a.submit#customer{ :href => '#' } New Customer
+
 - setup_main if @user
 - cache(:id => @product.id) do
   - setup_main unless @user

@@ -303,10 +303,14 @@ class PricingDesc
 
   # Duplicated in GenericImport Remove from there eventually
   def self.convert_pricecode(comp)
-    return comp if comp.is_a?(Float) && comp > 0.0 && comp < 0.9
+#    return comp if comp.is_a?(Float) && comp > 0.0 && comp < 0.9
     if comp.is_a?(String)
       return nil unless (/^[A-GP-X]$/i === comp)
       comp = comp.upcase[0]
+    elsif comp.is_a?(Integer)
+      return nil if comp < ?A.ord or comp > ?X.ord or (comp > ?G.ord and comp < ?P.ord)
+    else
+      return nil
     end
     num = comp.ord - ?A.ord if comp.ord >= ?A.ord and comp.ord <= ?G.ord
     num = comp.ord - ?P.ord if comp.ord >= ?P.ord and comp.ord <= ?X.ord
@@ -343,56 +347,80 @@ class PricingDesc
     Money.new(Float(val.gsub(/^[$,]/, '')))
   end
 
-  def add(qty, price, code = nil, round = false)
+  # Add price column
+  # qty - minimum quantity for column
+  # price - price for column
+  # code_cost - either a string discount code or a cost
+  # round - round calculated cost
+  def add(qty, price, code_cost = nil, round = false)
     qty = parse_qty(qty)
     raise PropertyError, "qty must be positive" unless qty > 0
-    raise ValidateError.new("minimums must be sequential", "#{@prices.last && @prices.last[:minimum]} >= #{qty}") if @prices.last && @prices.last[:minimum] >= qty
-
-    price = parse_money(price)
-    last_price = @prices.last && @prices.last[:marginal]
-    raise ValidateError.new("marginal price must be sequential", "#{@prices.last && @prices.last[:marginal]} < #{price} of #{@prices.inspect}") if last_price && last_price < price
+    max = [@max_qty, @prices.last && @prices.last[:minimum] || 0, @costs.last && @costs.last[:minimum] || 0].max
+    raise ValidateError.new("minimums must be sequential", "#{max} >= #{qty}") if max && max >= qty
 
     base = { :fixed => Money.new(0), :minimum => qty }
-    @prices << base.merge(:marginal => price) #unless last_price && last_price == price
 
-    @max_qty = qty
+    if price
+      price = parse_money(price)
+      last_price = @prices.last && @prices.last[:marginal]
+      raise ValidateError.new("marginal price must be sequential", "#{@prices.last && @prices.last[:marginal]} < #{price} of #{@prices.inspect}") if last_price && last_price < price
+      @prices << base.merge(:marginal => price) #unless last_price && last_price == price
+    else
+      raise "Must have cost if no price" unless code_cost
+    end
 
-    if code
-      discount = self.class.convert_pricecode(code)
+    if code_cost
+      discount = self.class.convert_pricecode(code_cost)
       if discount
-        price *= 1.0 - discount
-        price = price.round_cents if round
+        cost = price * (1.0 - discount)
+        cost = cost.round_cents if round
       else
-        price = parse_money(code)
+        cost = parse_money(code_cost)
       end
       
-      last_price = @costs.last && @costs.last[:marginal]
-      raise ValidateError.new("marginal cost must be sequential", "#{@costs.last && @costs.last[:marginal]} < #{price} of #{@prices.inspect}") if last_price && last_price < price
-      @costs << base.merge(:marginal => price) unless last_price && last_price == price
+      last_cost = @costs.last && @costs.last[:marginal]
+      raise ValidateError.new("marginal cost must be sequential", "#{@costs.last && @costs.last[:marginal]} < #{cost} of #{@costs.inspect}") if last_cost && last_cost < cost
+      @costs << base.merge(:marginal => cost) unless last_cost && last_cost == cost
     end
+
+    @max_qty = qty
   end
 
-  def apply_code(code, round = false)
+  # Apply a multi column discount code
+  # code - string of code
+  # options
+  #   :reverse - calculate costs from price and code instead of the costs from the price and code
+  #   :round - round the result
+  def apply_code(code, options = {})
     list = self.class.convert_pricecodes(code)
-    unless list.length == @prices.length
-      if list.uniq.length == 1
-        if list.length > @prices.length
+
+    src = options[:reverse] ? @costs : @prices
+
+    unless list.length == src.length
+      if list.length < src.length and options[:fill]
+        puts "Assuming #{list.last} for end columns"
+        list += (list.length...src.length).collect { list.last }
+      elsif list.uniq.length == 1
+        if list.length > src.length
           puts "Corrected excessive price codes"
         else
           raise ValidateError.new("price code count mismatch and not 0.4") unless list.first == 0.4
           puts "Corrected insufficient price codes"
-          list = (1..@prices.length).collect { 0.4 }
+          list = (1..src.length).collect { 0.4 }
         end
       else
-        raise ValidateError.new("price code count must match prices", "#{code} => #{list.inspect}, #{list.length} != #{@prices.length} => #{@prices.inspect}")
+        raise ValidateError.new("price code count must match prices", "#{code} => #{list.inspect}, #{list.length} != #{src.length} => #{src.inspect}")
       end
     end
-    raise ValidateError, "costs must be empty to apply code" unless @costs.empty?
-    @costs = @prices.zip(list).collect do |p, d|
-      marginal = p[:marginal] * (1.0 - d)
-      marginal = marginal.round_cents if round
+
+    dst_str = options[:reverse] ? '@prices' : '@costs'
+    raise ValidateError, "costs must be empty to apply code" unless instance_variable_get(dst_str).empty?
+    result = src.zip(list).collect do |p, d|
+      marginal = options[:reverse] ? (p[:marginal] / (1.0 - d)) : (p[:marginal] * (1.0 - d))
+      marginal = marginal.round_cents if options[:round]
       p.merge(:marginal => marginal)
     end
+    instance_variable_set(dst_str, result)
   end
 
 private

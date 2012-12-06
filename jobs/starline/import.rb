@@ -1,12 +1,13 @@
 # Starline API documented at http://www.starline.com/WebService/Catalog.asmx
 
 class Starline < GenericImport
-  @@decoration_replace = { 'Silkscreen' => 'Screen Print',
-  'Embroidery' => 'Embroidery',
-  'Embroider' => 'Embroidery',
-  'Pad Print' => 'Pad Printing',
-  'Deboss' => 'Deboss',
-  'Laser Engraving' => 'Laser Engrave'}
+  @@decoration_replace = {
+    'Silkscreen' => 'Screen Print',
+    'Embroidery' => 'Embroidery',
+    'Pad Printing' => 'Pad Print',
+    'Deboss' => 'Deboss',
+    'Laser Engraving' => 'Laser Engrave'
+  }
 
   def initialize
     super "Starline"
@@ -36,8 +37,6 @@ class Starline < GenericImport
         subcat_id = cat.at_xpath('subcategoryid/text()').to_s
         subcat_name = cat.at_xpath('subcategory/text()').to_s
         puts "    #{subcat_name} : #{subcat_id}"
-
-        # Fetch each product in the subcategory and place associated ProductDesc object in product_list
         get_method('getProducts', 'SubCategoryID' => subcat_id).xpath('//newdataset/product').each do |prod|
           product_list << ProductDesc.new(:supplier_num => prod.at_xpath('productid/text()').to_s,
                                           :data => { :id => prod.at_xpath('itemno/text()').to_s.to_i },
@@ -48,96 +47,154 @@ class Starline < GenericImport
     end
 
     puts "Product Count: #{product_list.length}"
-    
-    product_list.each_with_index do |pd,index|
+    product_list.each do |pd|
       ProductDesc.apply(self, pd) do |pd|
         id = pd.data[:id]
-        pd.description =
-          get_method('getProductDescription', 'ItemNo' => id)
-          .xpath('//desc/description/text()').collect { |t| t.to_s }
+        file = WebFetch.new("http://us.starline.com/translations/catalog/products/en-us/us/#{id}.json").get
+        next unless file
+        response = MultiJson.load(file)
+        
+        pd.description = response['description']        
 
-        pd.images = [ImageNodeFetch.new('main', "http://us.starline.com/content/image/product/lg_#{id}.jpg")]
-        
-        #getProductShippingInfo : Good and complete
-        proshiping = get_method('getProductShippingInfo', 'ItemNo' => id)
-        pd.package.length = proshiping.at_xpath('//shippinginfo/length/text()').to_s.to_f
-        pd.package.width = proshiping.at_xpath('//shippinginfo/width/text()').to_s.to_f
-        pd.package.height = proshiping.at_xpath('//shippinginfo/height/text()').to_s.to_f
-        pd.package.units = proshiping.at_xpath('//shippinginfo/pcbx/text()').to_s.to_i
-        pd.package.weight = proshiping.at_xpath('//shippinginfo/lbs_bx/text()').to_s.to_f
-        
-        #getCodedPriceChartUS
-        pricechart = get_method('getCodedPriceChartUS', 'ItemNo' => id).xpath("//newdataset/chart")
-        (1..4).each do |i|
-          qty = pricechart.at_xpath("nqty#{i}/text()").to_s.to_i
-          price = pricechart.at_xpath("nprice#{i}/text()").to_s
-          pd.pricing.add(qty, price)
+        # Shipping Info
+        if shippingInfo = response['shippingInfo']
+          pd.package.length = shippingInfo['length']
+          pd.package.width  = shippingInfo['width']
+          pd.package.height = shippingInfo['height']
+          pd.package.units  = shippingInfo['piecesPerBox']
+          pd.package.weight = shippingInfo['weightPerBox']
         end
-        pd.pricing.apply_code(pricechart.at_xpath('pricecode/text()').to_s) # Added to use 
-        pd.pricing.ltm(32.0) # Less than minimum charge, had to look up in PDF catalog on website
-        pd.pricing.maxqty # Should apply to most pricing
+                  
+        # Dimension
+        dimension = response['size']
+        dimension.delete_if { |k, v| v == 0.0 }
+        pd.properties['dimension'] = dimension.empty? ? nil : dimension
 
-        colors = [nil]
-        imprint_methods = imprint_areas = []
-        spefs_hash = {}
-        get_method('getSpefs', 'ItemNo' => id).xpath('//newdataset/spef').each do |spec|
-          name = spec.at_xpath('specification/text()').to_s
-          data = spec.at_xpath('specificationdata/text()').to_s
 
-          case name
-            when 'Product Color'
-            colors = data.split(/\s*,\s*/)
-            
-            when 'Product Size'
-            pd.properties['dimension'] = parse_dimension(data)
-            
-            when 'Imprint Method(s)'
-            # data is starlines own techniques.
-            imprint_methods = data.split(/\s*,\s*/)
-            imprint_methods.each do |method|
-              warning "Unknown method", method
+        # Decorations (needs pricing)
+        pd.decorations = [DecorationDesc.none]
+        response["imprints"].each do |imprint_method|
+          if technique = @@decoration_replace[imprint_method['name']]
+            imprint_method["location"].each do |method|
+              pd.decorations << DecorationDesc.new(:technique => technique,
+                                                   :location => method["name"],
+                                                   :height => method["height"],
+                                                   :width => method["width"])
             end
-            
-            when 'Imprint Area(s)'
-            imprint_areas = data.split(/\s*,\s*/).collect { |a| parse_dimension(a) }.compact
+          else
+            warning 'Unknown Decoration', imprint_method['name']
+          end
+        end
 
-            when 'Packaging'
-             pd.properties[name] = data
 
-            when 'Note'
-             pd.description = pd.description.to_s + data.to_s 
+        # Tags
+        pd.tags = []
+        pd.tags << 'Closeout' if response['closeout']
+        if response['types'] && response['types'].find { |h| h['name'].include?('New') } or
+            response['logos'] && response['logos'].find { |h| h['name'] == '119' }
+          pd.tags << 'New'
+        end
 
-            else
-            # Warnings will be summarised at the end.  Quick way to determine all unknown properties
-            warning 'Unknown Spec', name
+
+        # All product image file names
+        image_files = response['carouselImages'].collect do |file|
+          file.gsub(/^cs_/, 'lg_')
+        end
+
+        # Pricing
+        if pri = response['printed']
+          if response['types'] && response['types'].find { |h| h['name'] == 'Special Printed' }
+            pd.tags << 'Special' unless pd.tags.include?('New')
+            pri = response['specialPrinted']
           end
 
-          spefs_hash[name] = data
-        end
-        #getAddons
-        #getGroupSpefs
+          # Pricing
+          pri['qty'].zip(pri['price']).each do |qty, cost|
+            next if cost.nil? or cost == 0.0
+            
+            # the price field is actually the cost of the item
+            pd.pricing.add(qty, nil, cost)
+          end
+          pd.pricing.apply_code(response['priceCode'], :reverse => true, :fill => true)
+          pd.pricing.ltm(32.0)
+          pd.pricing.maxqty
 
-        pd.decorations = [DecorationDesc.none]
-        pd.tags = []
-
-        # Complete by adding a DecoratonDesc object for each combination of "Imprint Method(s)" and "Imprint Area(s)"
-
-        imprint_methods.each do |method|
-          if @@decoration_replace[method]
-             technique = @@decoration_replace[method]
-             dd = DecorationDesc.new({:technique => technique,:location=>''}.merge!(imprint_areas.first))
-             pd.decorations << dd
+          # Variants
+          colors = response['colors']
+          if colors.empty?
+            pd.variants = [VariantDesc.new(:supplier_num => pd.supplier_num, :properties => {}, :images => [])]
           else
-              warning 'UNKNOWN DECORATION', technique
-          end  
-        end  
+            colors.each do |color|
+              if pd.variants.find { |vd| vd.properties['color'] == color['name'] }
+                warning 'Duplicate Color', color['name']
+                next
+              end
 
-        pd.variants = colors.collect do |color|
-           VariantDesc.new(:supplier_num => pd.supplier_num + color,
-                          :properties => { 'color' => color },:images=>[])
+              # Find matching images and place in this variant
+              images = image_files.find_all { |f| f.include?("_#{color['code']}") }
+              image_files -= images
+              
+              pd.variants <<
+                VariantDesc.new(:supplier_num => pd.supplier_num + color['name'],
+                                :properties => { 'color' => color['name'] },
+                                :images => images.collect { |f| ImageNodeFetch.new(f, "http://us.starline.com/content/image/product/#{f}") })
+            end
+          end
+        elsif list = response['magnetPricing']
+          raise "Unexpected colors" unless response['colors'].empty?
+
+          list.each do |hash|
+            properties = { 'size' => hash['size'], 'type' => hash['type'] }
+            if pd.variants.find { |vd| vd.properties == properties }
+              warning 'Duplicate Magnet', properties.inspect
+              next
+            end
+
+            vd = VariantDesc.new(:supplier_num => hash['code'],
+                                 :properties => properties,
+                                 :images => [])
+            (1..4).each do |n|
+              vd.pricing.add(hash["qty#{n}"], nil, hash["price#{n}"])
+            end
+            vd.pricing.apply_code(response['priceCode'], :reverse => true, :fill => true)
+            vd.pricing.ltm(32.0)
+            vd.pricing.maxqty
+            pd.variants << vd
+          end
+        else
+          raise ValidateError, 'No Pricing'
         end
-        
-      end
-    end
-  end
+
+
+        pd.images = image_files.collect { |f| ImageNodeFetch.new(f, "http://us.starline.com/content/image/product/#{f}") }
+
+
+        response["specs"].each do |specs|
+          name = specs['header']
+          text = specs['text']
+          case name
+          when 'Packaging', 'Insulation Type', 'Mug Liner' 
+            pd.properties[name] = text.gsub(/<.+?\/?>/, '').strip
+
+          when 'Band Colors'
+            pd.variants = pd.variants.collect do |vd|
+              text.split(/\s*,\s*/).collect do |color|
+                vd = vd.dup
+                vd.supplier_num = pd.supplier_num + color
+                vd.properties[name] = color
+                vd
+              end
+              
+            end.flatten
+          when 'Price', 'Set-Up Charge', 'More Info', 'Oxidation'
+
+          else
+            warning 'Unknown Spec', specs["header"]
+          end
+
+        end
+
+      end # ProductDesc.apply
+    end # product_list.each
+  end # parse_products
 end

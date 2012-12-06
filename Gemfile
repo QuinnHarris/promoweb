@@ -70,6 +70,9 @@ gem 'rails_autolink'
 gem 'rails3-jquery-autocomplete'
 #gem 'jquery-fileupload-rails'
 #gem 'rubyXL' # this should not be included in the webserver production environment as its not needed.  Need to create profile for import driver gems
+#gem 'rubyzip', :require => 'zip/zip' # Dependency for rubyXl
+
+#gem 'httparty' # for json parsing
 
 #gem 'actionwebservice', :git => 'https://github.com/jlecard/actionwebservice.git'
 
