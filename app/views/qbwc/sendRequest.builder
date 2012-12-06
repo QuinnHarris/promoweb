@@ -3,8 +3,8 @@ xml.instruct! :qbxml, :version=> '7.0'
 xml.QBXML do
   xml.QBXMLMsgsRq :onError => 'continueOnError' do
     items(xml, @suppliers, 'Vendor') do |supplier, new_item|
-      xml.Name supplier.name
-      xml.CompanyName supplier.name
+      xml.Name supplier.name[0...41]
+      xml.CompanyName supplier.name[0...41]
 
       xml.VendorAddress do
         generic_address(xml, supplier.address)
@@ -189,7 +189,7 @@ xml.QBXML do
         # Using ListID on Bills causes Quickbooks to crash for some reason QBBUG!
         #xml.ListID purchase.supplier.quickbooks_id
 	supplier = purchase.supplier.attributes['quickbooks_id'] ? purchase.supplier : purchase.supplier.parent
-        xml.FullName supplier.attributes['name']
+        xml.FullName supplier.attributes['name'][0...41]
       end
 
       xml.RefNumber((bill.quickbooks_ref.nil? or bill.quickbooks_ref.strip.empty?) ? purchase.purchase_order.quickbooks_ref : bill.quickbooks_ref)

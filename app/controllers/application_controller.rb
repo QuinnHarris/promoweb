@@ -81,7 +81,7 @@ public
         end
       end
 
-      parameters.delete(:artwork) # Kludge to remove artwork upload info
+      [:artwork, :utf8, :authenticity_token, :product_image].each { |k| parameters.delete(k) }
 
       access_attributes[:params] = parameters.to_hash unless parameters.empty?
       PageAccess.create(access_attributes)
