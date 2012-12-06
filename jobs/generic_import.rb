@@ -954,8 +954,8 @@ private
     number_from_regex(m)
   end
 
-
-  @@component_regex = /#{@@number_regex}(?<aspect>g|high|wide|width|w|height|h|length|l|diameter|diam?\.?|square|d|depth|round)?/i
+  # g for gussetted in adbag?
+  @@component_regex = /#{@@number_regex}(?<aspect>wide|width|w|high|height|h|long|length|l|diameter|diam?\.?|square|d|depth|round)?/i
   def parse_dimension(string, pedantic = false)
     list = string.split(/x/i).collect do |part|
       unless m = /^#{@@component_regex}$/.match(part.strip)

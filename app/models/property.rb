@@ -66,7 +66,7 @@ class Property < ActiveRecord::Base
                 next "#{Integer(value / 12)}' #{(value % 12).to_perty}\" #{key}"
               end
             end
-            "#{value.to_perty}\" #{key}"
+            "#{value.to_perty}\"#{key}"
           end.join(' x ')
         rescue
           v
