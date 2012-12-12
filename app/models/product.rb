@@ -540,7 +540,7 @@ class Product < ActiveRecord::Base
   
   has_many :page_products
 
-  has_many :product_images
+  has_many :product_images, :order => 'id'
  
   composed_of :price_min_cache, :class_name => 'Money', :mapping => %w(price_min_cache units), :allow_nil => true
   composed_of :price_comp_cache, :class_name => 'Money', :mapping => %w(price_comp_cache units), :allow_nil => true

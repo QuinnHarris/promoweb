@@ -564,7 +564,8 @@ private
        sup('Norwood', cat('BAG', 'DUFFELS')),
        sup('Bullet Line', cat('Bags', 'Duffels') ),
        sup('Logomark', cat('Duffel Bags') ),
-       sup('Sweda', cat('Bags', 'Duffels') )
+       sup('Sweda', cat('Bags', 'Duffels') ),
+       sup('Starline', cat('Bags', 'Duffels') ),
       ],[
          ['Executive Duffel Bags',
           [sup('Leeds', cat('Duffels', 'Executive') ) ]],
@@ -643,7 +644,8 @@ private
        sup('Bullet Line', cat('Bags', 'Totes') ),
        sup('Logomark', cat('Tote and Shoppers') ),
        sup('Sweda', cat('Bags', 'Totes') ),
-       sup('The Magnet Group', cat('Bag Factory', 'Totes') )
+       sup('The Magnet Group', cat('Bag Factory', 'Totes') ),
+       sup('Starline', cat('Bags', 'Totes') ),
       ],[
          ['Business & Meeting Totes',
           [match(%w(name description), %w(business meeting computer laptop), 1),
@@ -1203,28 +1205,45 @@ private
              match('supplier_num', /^MG[EJ]?BC/) ),
          sup('The Magnet Group',
              cat('Magnets', 'Business Card Magnets'),
-             cat('Magnets', 'Business Card Magnets - Unique') )
+             cat('Magnets', 'Business Card Magnets - Unique') ),
+         sup('Starline',
+             cat('Magnets & Tags', 'Business Cards') )
         ]],
        ['Stock Shape Magnets',
         [sup('Bic Graphics',
-             match('supplier_num', /^MGSS/) ) ]],
+             match('supplier_num', /^MGSS/) ),
+         sup('Starline',
+             cat('Magnets & Tags', 'Stock Shapes') )
+        ]],
+       ['States and Countries',
+        [sup('Starline',
+             cat('Magnets & Tags', 'States and Countries') )
+        ]],
        ['Custom Shape Magnets',
         [sup('Bic Graphics',
-             match('supplier_num', /^MG((CS)|(SE))/) ) ]],
+             match('supplier_num', /^MG((CS)|(SE))/) ),
+         sup('Starline',
+             cat('Magnets & Tags', 'Custom Shapes') )
+        ]],
        ['Dry Erase Magnets',
         [sup('Bic Graphics',
              match('supplier_num', /^MG[DS]E/) ) ]],
        ['Picture Frame Magnets',
         [sup('Bic Graphics',
              match('supplier_num', /^MGSPF/) ),
-         sup('The Magnet Group', cat('Magnets', 'Picture Frames') )
+         sup('The Magnet Group', cat('Magnets', 'Picture Frames') ),
+         sup('Starline',
+             cat('Magnets & Tags', 'Picture Frames') )
         ]],
        ['Calendar & Schedule Magnets',
         [sup('Bic Graphics',
              match('supplier_num', /^MG((CL)|(SCH))/) ),
          sup('The Magnet Group',
              cat('Magnets', 'Calendars'),
-             cat('Magnets', 'Schedule Magnets') )
+             cat('Magnets', 'Schedule Magnets') ),
+         sup('Starline',
+             cat('Magnets & Tags', 'Calendars'),
+             cat('Magnets & Tags', 'Schedules'),)
         ]], 
        ['Mood Magnets',
         [sup('Bic Graphics',
@@ -1874,7 +1893,8 @@ private
            exclude(match('name', 'limelight')),
            sup('Leeds', cat('Keychains, Keylights & Carabiners', 'Keylights') ),
            sup('Bullet Line', cat('Lighting', 'Key Lights') ),
-           sup('The Magnet Group', cat('Innovations', 'Key Lights') )
+           sup('The Magnet Group', cat('Innovations', 'Key Lights') ),
+           sup('Starline', cat('Flashlights', 'LED Keylights') ),
           ] ],
          ['Flash Drive Key Chains',
           [sup('LogoIncluded', match(%w(name description), ['key chain', 'keychain', 'key holder']))]],
@@ -2146,9 +2166,13 @@ private
            sup('Sweda', cat('Flashlights', 'Dynamos') )
           ] ],
          ['LED Flashlights',
-          [match('name', /(^|\s+)L\.?E\.?D\.?(\s+|$)/, 1) ]],
+          [match('name', /(^|\s+)L\.?E\.?D\.?(\s+|$)/, 1),
+           sup('Starline', cat('Flashlights', 'LED Flashlights') )
+          ]],
          ['Specialty Flashlights',
           [sup('Leeds', cat('Flashlights', 'Specialty') ) ]],
+         ['Lanterns',
+          [cat('Starline', sup('Flashlights', 'Lanterns') ) ] ]
         ] ],
      ['Knives',
       [match(%w(name description), %w(knive knife cutter)),
@@ -2437,7 +2461,8 @@ private
        sup('Prime Line', cat('Blankets') ),
        sup('Logomark', cat('Blankets') ),
        sup('Sweda', cat('Blankets') ),
-       sup('The Magnet Group', cat('Bag Factory', 'Blankets') )
+       sup('The Magnet Group', cat('Bag Factory', 'Blankets') ),
+       sup('Starline', cat('Lifestyles and Golf', 'Blankets') ),
       ] ],
      ['Combo Products',
       [sup('Prime Line', cat('Combos') ) ]],
