@@ -1,4 +1,4 @@
-require File.dirname(__FILE__) + '/../config/environment'
+require File.dirname(__FILE__) + '/../../config/environment'
 
 def add_sub(root, left)
   puts "#{root.name}: (#{left})"

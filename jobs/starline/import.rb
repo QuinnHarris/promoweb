@@ -4,7 +4,7 @@ class Starline < GenericImport
   @@decoration_replace = {
     'Silkscreen' => 'Screen Print',
     'Embroidery' => 'Embroidery',
-    'Pad Printing' => 'Pad Print',
+#    'Pad Printing' => 'Pad Print',
     'Deboss' => 'Deboss',
     'Laser Engraving' => 'Laser Engrave'
   }
@@ -71,6 +71,73 @@ class Starline < GenericImport
         pd.properties['dimension'] = dimension.empty? ? nil : dimension
 
 
+        # Properties
+        colors = response['colors']
+        magnets_dimension = nil
+        color_limit = nil
+
+        response["specs"].each do |specs|
+          name = specs['header']
+          text = specs['text']
+          case name
+#          when 'Product Color'
+#            colors_prop = text.split(/\s*,\s*/)
+#            raise "Already have colors: #{colors.inspect} : #{text.inspect}" unless colors.blank?
+          when 'Additional Color'
+            if text.include?('Additional Color Pricing')
+              color_limit = 4
+            elsif text.include?('$0.50')
+              color_limit = 2
+            else
+              color_limit = 1
+            end
+          when 'Laser Engraving'
+            # Should parse as small number of products arn't $1.20
+          when 'Video'
+            # Do something with this
+          when 'Packaging', 'Mug Liner', 'Storage Capacity', /Material$/, /Type$/
+            pd.properties[name] = text.gsub(/<.+?\/?>/, '').strip
+
+          when 'Magnet Packaging'
+            pd.properties['Packaging'] = text.gsub(/<.+?\/?>/, '').strip
+
+          when 'Magnet Sizes'
+            raise "Already has size" if pd.properties['dimension']
+            puts "Magnet Sizes: #{text.inspect}"
+            magnets_dimension = text.split(';').each_with_object({}) do |str, hash|
+              unless area = parse_area(str)
+                warning 'Unknown Area', str
+                next
+              end
+              unless area.delete(:right).blank?
+                warning 'Right unexpected', area[:right].inspect
+                next
+              end
+              id = area.delete(:left).gsub(':', '').strip
+              hash[id] = area
+            end
+
+          when 'Band Colors'
+            pd.variants = pd.variants.collect do |vd|
+              text.split(/\s*,\s*/).collect do |color|
+                vd = vd.dup
+                vd.supplier_num = pd.supplier_num + color
+                vd.properties[name] = color
+                vd
+              end
+              
+            end.flatten
+          when 'Price', 'Set-Up Charge', 'More Info', 'Oxidation'
+
+          when 'Production Time'
+            warning 'Unknown Production Time', text
+
+          else
+            warning 'Unknown Spec', name
+          end
+        end
+
+
         # Decorations (needs pricing)
         pd.decorations = [DecorationDesc.none]
         response["imprints"].each do |imprint_method|
@@ -79,7 +146,9 @@ class Starline < GenericImport
               pd.decorations << DecorationDesc.new(:technique => technique,
                                                    :location => method["name"],
                                                    :height => method["height"],
-                                                   :width => method["width"])
+                                                   :width => method["width"],
+                                                   :limit => technique == 'Screen Print' ? color_limit : nil
+                                                   )
             end
           else
             warning 'Unknown Decoration', imprint_method['name']
@@ -120,7 +189,6 @@ class Starline < GenericImport
           pd.pricing.maxqty
 
           # Variants
-          colors = response['colors']
           if colors.empty?
             pd.variants = [VariantDesc.new(:supplier_num => pd.supplier_num, :properties => {}, :images => [])]
           else
@@ -143,8 +211,17 @@ class Starline < GenericImport
         elsif list = response['magnetPricing']
           raise "Unexpected colors" unless response['colors'].empty?
 
+          if magnets_dimension and list.find { |h| not magnets_dimension.keys.include?(h['size']) }
+            warning 'Missing Magnet Dimension', magnets_dimension.inspect
+            magnets_dimension = nil
+          end
+
           list.each do |hash|
             properties = { 'size' => hash['size'], 'type' => hash['type'] }
+            if magnets_dimension and magnets_dimension[hash['size']]
+              properties['dimension'] = magnets_dimension[hash['size']]
+            end
+
             if pd.variants.find { |vd| vd.properties == properties }
               warning 'Duplicate Magnet', properties.inspect
               next
@@ -168,31 +245,6 @@ class Starline < GenericImport
 
         pd.images = image_files.collect { |f| ImageNodeFetch.new(f, "http://us.starline.com/content/image/product/#{f}") }
 
-
-        response["specs"].each do |specs|
-          name = specs['header']
-          text = specs['text']
-          case name
-          when 'Packaging', 'Insulation Type', 'Mug Liner' 
-            pd.properties[name] = text.gsub(/<.+?\/?>/, '').strip
-
-          when 'Band Colors'
-            pd.variants = pd.variants.collect do |vd|
-              text.split(/\s*,\s*/).collect do |color|
-                vd = vd.dup
-                vd.supplier_num = pd.supplier_num + color
-                vd.properties[name] = color
-                vd
-              end
-              
-            end.flatten
-          when 'Price', 'Set-Up Charge', 'More Info', 'Oxidation'
-
-          else
-            warning 'Unknown Spec', specs["header"]
-          end
-
-        end
 
       end # ProductDesc.apply
     end # product_list.each
