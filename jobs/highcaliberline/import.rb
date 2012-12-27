@@ -187,14 +187,14 @@ class HighCaliberLine < GenericImport
         end
       
         if dimension = row['Size']
-          pd.properties['dimension'] = dimension.gsub(/\(.+?\)/,'').gsub('&quot;','"')
+          pd.properties['dimension'] = parse_dimension(dimension) || dimension.gsub(/\(.+?\)/,'').gsub('&quot;','"')
         end
       
         if color_str = row['Colors']
-          if /Standard Lanyard Material colors\.?(?:&lt;br&gt;)?(.*)/i === color_str
+          if /Standard Lanyard.+colors\.?(?:&lt;br&gt;)?(.*)/i === color_str
             pd.description += "\n#{$1}" unless $1.blank?
             color_list = lanyard_color_list
-          elsif pd.description.downcase.include?('neoprene')
+          elsif pd.description.downcase.include?('neoprene') and color_str.include?('19')
             color_list = neoprene_color_list
           else
             if color_str.include?('and') and color_str.include?('or')
