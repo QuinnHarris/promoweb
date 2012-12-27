@@ -2,7 +2,7 @@
 
 require 'rubygems'
 #require 'RMagick'
-require 'rubyXL'
+#require 'rubyXL'
 require File.dirname(__FILE__) + '/../config/environment'
 require 'open-uri'
 require File.dirname(__FILE__) + '/progressbar'
@@ -60,42 +60,41 @@ class Spreadsheet::Excel::Row
 end
 
 
-class RubyXL::Worksheet
-  attr_reader :header_map ,:sheet_row
-  def use_header(idx = 0)
-    @header_map = []
-    @sheet_data[idx].each do |cell|
-      next if cell.value.blank?
-      cell = cell.value.strip.to_s
-      if header_map.include?(cell)
-        # "DUPLICATE HEADER: #{idx} #{cell}"
-        (1..9).find do |i|
-          cell = "#{cell} #{i}" if !header_map.include?("#{cell} #{i}")
-        end
-      end
-      header_map.push(cell)
-    end
-    @header_map
-  end
+#class RubyXL::Worksheet
+#  attr_reader :header_map ,:sheet_row
+#  def use_header(idx = 0)
+#    @header_map = []
+#    @sheet_data[idx].each do |cell|
+#      next if cell.value.blank?
+#      cell = cell.value.strip.to_s
+#      if header_map.include?(cell)
+#        # "DUPLICATE HEADER: #{idx} #{cell}"
+#        (1..9).find do |i|
+#          cell = "#{cell} #{i}" if !header_map.include?("#{cell} #{i}")
+#        end
+#      end
+#      header_map.push(cell)
+#    end
+#    @header_map
+#  end
   
-
-  def rows
-    use_header
-    @sheet_row = @sheet_data.collect do |row|
-      next if row[1].datatype.nil? 
-      next if @header_map.include?(row[1].value)
-      row_hash = {}
-      row.each_with_index do |cell,index|
-        row_hash[@header_map[index]] = cell.nil? || cell.datatype.blank? ? "" : cell.value
-      end 
-      row_hash
-    end.compact
-  end 
-  
-  def next_row(idx=1)
-      @sheet_row[idx]
-  end  
-end
+#  def rows
+#    use_header
+#    @sheet_row = @sheet_data.collect do |row|
+#      next if row[1].datatype.nil? 
+#      next if @header_map.include?(row[1].value)
+#      row_hash = {}
+#      row.each_with_index do |cell,index|
+#        row_hash[@header_map[index]] = cell.nil? || cell.datatype.blank? ? "" : cell.value
+#      end 
+#      row_hash
+#    end.compact
+#  end 
+#  
+#  def next_row(idx=1)
+#      @sheet_row[idx]
+#  end  
+#end
 
 
 class Spreadsheet::Excel::Worksheet
