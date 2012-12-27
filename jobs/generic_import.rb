@@ -965,6 +965,7 @@ private
       m
     end.compact
     aspects = parse_aspects(list, string, pedantic)
+    return nil unless aspects
     if [:height, :width, :length].count { |a| aspects[a] } < 2
       warning 'Parse Area', "Missing two aspects: #{string}"
       return if pedantic
