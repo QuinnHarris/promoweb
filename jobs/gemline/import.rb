@@ -116,17 +116,18 @@ class GemlineXML < GenericImport
           end
           
           decoration.elements.each do |location|
-            s = location.text.strip
-            if area = parse_area(location.text.strip)
-              dd = DecorationDesc.new(:technique => technique,
-                                      :limit => limit)
+            dd = DecorationDesc.new(:technique => technique,
+                                    :limit => limit)
+            
+            if area = parse_area(s = location.text.strip)
               dd.location = area.delete(:left) + ' ' + area.delete(:right)
               dd.merge!(area)
-              
-              pd.decorations << dd
             else
+              dd.location = s
               warning 'Unknown location', s
             end
+
+            pd.decorations << dd
           end
         end
         
