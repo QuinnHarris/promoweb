@@ -778,14 +778,18 @@ class GenericImport
       
       common_count = 0
       delete_id_list = []
+      delete_sup_list = []
       current_id_list = @supplier_record.products.select([:id, :supplier_num]).collect do |p|
         if supplier_num_set.delete?(p.supplier_num)
           common_count += 1
         elsif !(Rails.env.production? && @invalid_prods.values.flatten.index(p.supplier_num))
           delete_id_list << p.id 
+          delete_sup_list << p.supplier_num
         end
         p.id
       end
+
+      puts "Deleted Products: #{delete_sup_list.join(', ')}"
 
       total = @product_list.length
       puts "Update Stats:"
@@ -911,7 +915,7 @@ class GenericImport
 private
   @@number_regex = 
     /(?<whole>\d{1,3})?
-     (?:(?<deci>\.\d{1,4}) |
+     (?:(?<deci>\.\d{1,16}) |
         (?:(?: (?:^|\s+|-) (?<numer>\d{1,2}) )? \s*[\/∕]\s* (?<denom>\d{1,2}) ) |
         (?:(?:^|\s+) (?<sym>[⅛¼⅓⅜½⅝¾⅞]) ) |
         (?<=\d) )  # Postive lookbehind to match 'whole' alone

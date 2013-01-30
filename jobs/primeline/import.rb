@@ -220,10 +220,10 @@ class PrimeLineWeb < GenericImport
             next nil if child.inner_html.downcase.include?('free ship') 
             child.inner_html.strip
             
-          when 'img', 'br'
+          when 'img', 'br', 'span'
             nil
           else
-            raise "Unknown element #{data['supplier_num']} #{child.name}"
+            raise "Unknown element #{pd.supplier_num} #{child.name}"
           end
         end.compact.collect { |s| s.encode('ISO-8859-1') }.join(' ')
         line.blank? ? nil : line

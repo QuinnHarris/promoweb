@@ -87,7 +87,7 @@ class NorwoodAll < GenericImport
        ['HEALTH', 'Pillow'],
        ['OFFICE', 'EOL'],
        ['WRITE', 'Souvenir', @colors + %w(569 7468 7433)],
-       ['FUN', 'Fun'],
+#       ['FUN', 'Fun'],
        ['HOUSEWARES', 'Housewares'],
        ['MEETING', 'Meeting'],
        ['TECHNOLOGY', 'Technology'],

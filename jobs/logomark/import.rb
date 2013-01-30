@@ -45,6 +45,7 @@ class LogomarkXLS < GenericImport
 
       # Decoration Charges
       puts "Processing Decorations:"
+      @supplier_num = 'DEC'
       @decorations = {}
       ltm = {}
       ws = ss.worksheet(2)
@@ -68,7 +69,7 @@ class LogomarkXLS < GenericImport
 #          puts "Setup Desc: #{row['Description']} => #{name}"
           set_decoration(line, name, :fixed, Float(row['Charge']))
         when 'Second Location'
-          raise "Unknown Desc: #{row['Description']}" unless /^(.*?)(?:\s+|^)(?:per|each)/ === row['Description']
+          warning "Unknown Desc", row['Description'] unless /^(.*?)(?:\s+|^)(?:per|each)/ === row['Description']
 #          puts "Sec Loc Desc: #{row['Description']}"
           set_decoration(line, $1, :marginal, Float(row['Charge']), true)
         when 'Additional Run Charge'
@@ -87,7 +88,7 @@ class LogomarkXLS < GenericImport
             end
             next
           end
-          raise "Unknown Desc: #{row['Description']}" 
+          warning "Unknown Add Run Charge Desc", row['Description']
         when 'Repeat Setup'
         when 'Art'
         when 'Pre-Production Proof'
@@ -97,7 +98,7 @@ class LogomarkXLS < GenericImport
         when 'Custom Foam Die Charge'
         when 'Color Fill'
         else
-          raise "Unkonwn Charge: #{row['ChargeName']}"
+          warning "Unkonwn Charge", row['ChargeName']
         end
       end
 
@@ -213,7 +214,7 @@ class LogomarkXLS < GenericImport
       puts "Stop Image Find"
 
       product_merge.each do |supplier_num, unique, common|
-        next if %w(EK500 FLASH GR6140 VK3009).include?(supplier_num)
+        next if %w(EK500 FLASH GR6140 VK3009 KT6500).include?(supplier_num)
 
         ProductDesc.apply(self) do |pd|
           pd.supplier_num = @supplier_num = supplier_num
@@ -246,7 +247,7 @@ class LogomarkXLS < GenericImport
           end
           pd.pricing.maxqty
           unless common['LessThanMin1Qty'] == 0
-            pd.pricing.ltm_if(common['LessThanMin1Charge'], common['LessThanMin1Qty'])
+            pd.pricing.ltm_if([PricingDesc.parse_money(common['LessThanMin1Charge']), Money.new(40.0)].max, common['LessThanMin1Qty'])
           end
 
           pd.decorations = [DecorationDesc.none]

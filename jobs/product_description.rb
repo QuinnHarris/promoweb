@@ -339,7 +339,7 @@ class PricingDesc
     Integer(qty.to_s.gsub(/(,(?=\d{3}(,|.|$)))|(\.0+$)/, ''))
   end
 
-  def parse_money(val)
+  def self.parse_money(val)
     return val if val.is_a?(Money)
     return Money.new(val) if val.is_a?(Float)
     raise PropertyError, "money type not recognized" unless val.is_a?(String)
@@ -361,7 +361,7 @@ class PricingDesc
     base = { :fixed => Money.new(0), :minimum => qty }
 
     if price
-      price = parse_money(price)
+      price = self.class.parse_money(price)
       last_price = @prices.last && @prices.last[:marginal]
       raise ValidateError.new("marginal price must be sequential", "#{@prices.last && @prices.last[:marginal]} < #{price} of #{@prices.inspect}") if last_price && last_price < price
       @prices << base.merge(:marginal => price) #unless last_price && last_price == price
@@ -375,7 +375,7 @@ class PricingDesc
         cost = price * (1.0 - discount)
         cost = cost.round_cents if round
       else
-        cost = parse_money(code_cost)
+        cost = self.class.parse_money(code_cost)
       end
       
       last_cost = @costs.last && @costs.last[:marginal]
@@ -430,7 +430,7 @@ private
   
   def ltm_common(charge, qty)
     raise ValidateError, "First Costs minimum must be > 1" unless @costs.first[:minimum] > 1
-    @costs.unshift({ :fixed => parse_money(charge),
+    @costs.unshift({ :fixed => self.class.parse_money(charge),
                     :marginal => @costs.first[:marginal],
                     :minimum => qty })
   end
