@@ -90,14 +90,14 @@ class Admin::OrdersController < Admin::BaseController
 
         case params[:commit]
         when 'Authorize'
-          transaction = payment_method.authorize(@order, amount, params[:transaction][:comment])
+          transaction, response = payment_method.authorize(@order, amount, params[:transaction][:comment])
           if !transaction.is_a?(PaymentError) and
               @order.task_ready?(FirstPaymentOrderTask)
             task_complete({}, FirstPaymentOrderTask)
           end
 
         when 'Charge'
-          transaction = payment_method.charge(@order, amount, params[:transaction][:comment])
+          transaction, response = payment_method.charge(@order, amount, params[:transaction][:comment])
           if !transaction.is_a?(PaymentError)
             @order.save_invoice!
 
@@ -124,7 +124,7 @@ class Admin::OrdersController < Admin::BaseController
           charge_transaction = PaymentTransaction.find(params[:txn_id])
           payment_method.credit_to(charge_transaction)
         end
-        transaction = payment_method.credit(@order, amount, params[:transaction][:comment], charge_transaction)
+        transaction, response = payment_method.credit(@order, amount, params[:transaction][:comment], charge_transaction)
         @order.save_invoice! unless transaction.is_a?(PaymentError)
       end
     end
