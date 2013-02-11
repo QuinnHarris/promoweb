@@ -25,7 +25,7 @@ group :assets do
   gem 'therubyracer'
 end
 
-gem 'jquery-rails'
+gem 'jquery-rails', '~> 2.1.3'
 
 # Deploy with Capistrano
 # gem 'capistrano'
