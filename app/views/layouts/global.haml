@@ -142,12 +142,6 @@
                     = content_tag('li', link_to(name, { :controller => '/static', :action => action }, :rel => 'nofollow'), :class => (params[:controller] == 'static' and params[:action] == action) ? 'sel' : nil)
           #badges
             - if !@user and Rails.env.production?
-              - unless @no_truste
-                %div
-                  %a{ :href => "//privacy-policy.truste.com/click-to-verify/www.mountainofpromos.com",
-                      :title => "Privacy Policy by TRUSTe", :target => '_blank' }
-                    %img{ :alt => "Privacy Policy by TRUSTe",
-                          :src => "//privacy-policy.truste.com/verified-seal/www.mountainofpromos.com/green/h.png" }
               %div
                 :plain
                   <a href="http://www.shopperapproved.com/certificates/www.mountainofpromos.com/" onclick="var nonwin=navigator.appName!='Microsoft Internet Explorer'?'yes':'no'; var certheight=screen.availHeight-90; window.open(this.href,'shopperapproved','location='+nonwin+',scrollbars=yes,width=620,height='+certheight+',menubar=no,toolbar=no'); return false;"><img src="https://c683207.ssl.cf2.rackcdn.com/3559-r.gif" style="border: 0" alt="" oncontextmenu="var d = new Date(); alert('Copying Prohibited by Law - This image and all included logos are copyrighted by shopperapproved \251 '+d.getFullYear()+'.'); return false;" /></a>

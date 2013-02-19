@@ -1,5 +1,5 @@
 %p
-  We will not contact you or send you an email for any reason not directly related to an order unless you select to be added to our email list.  More information on how we use your information can be found on our TRUSTe verified
+  We will not contact you or send you an email for any reason not directly related to an order unless you select to be added to our email list.  More information on how we use your information can be found on our
   = link_to 'privacy policy.', :controller => '/static', :action => :privacy
 
 = error_messages_for 'customer', :object => ([@customer, @default_address, @ship_address] + @customer.email_addresses + @customer.phone_numbers)
