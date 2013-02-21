@@ -8,7 +8,8 @@ require 'csv'
 
 class HitPromoCSV < GenericImport  
 
-  def initialize(year)
+  def initialize
+    year = Time.now.year
     puts "Starting Fetch for #{year}"
     @src_files = 
       ["http://www.hitpromo.net/fs/documents/hit_product_data_#{year}.csv",
@@ -254,10 +255,10 @@ class HitPromoCSV < GenericImport
         pd.decorations = decorations_from_parts([locations, setups, running], techniques)
 
         colors = common['colors_available']
-          .scan(/(?:\s*([^,:]+?)(:|(?:\s*with)))?\s*(.+?)(?:\s*(?:(?:all)|(?:both))\s*with\s*(.+?))?(?:\.|$)/)
+          .scan(/(?:\s*([^,:]+?)(:|(?:\s*with)))?\s*(.+?)(?:\s*(?:(?:all)|(?:both))\s*with\s*(.+?))?(?:\.|$)/i)
           .collect do |left, split, list, right|\
           
-          list = list.split(/,|(?:\s+or\s+)/)
+          list = list.split(/,|(?:\s+or\s+)|\|/)
           split = split.include?(':') ? ' ' : " #{split.strip} " if split
           right = " with #{right}" if right
           list.collect { |e| (right && e.include?('with')) ? e : "#{left}#{split}#{e.strip}#{right}".strip }
