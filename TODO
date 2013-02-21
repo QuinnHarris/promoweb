@@ -1,0 +1,14 @@
+Fix fasttrack lead time on PO - Q4465
+Fix Leeds and other outstanding import
+Clean up CSS including email artwork
+Implement FedEx
+Implement Bitcoin
+Webcrawl pricing
+
+Clean/simplify order page.
+Fix secure cookie bug.
+Fix up notify email processing
+Redo Categorizing
+Fix Pricing on Schema
+Overhaul of product navigation
+Online chat
