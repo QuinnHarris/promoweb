@@ -80,11 +80,11 @@ class HitPromoCSV < GenericImport
      [closeout_file, true]
     ].each do |file, closeout|
       CSV.foreach(file, :headers => :first_row, :col_sep => ' ', :quote_char => "'") do |row|
-        unless /^(.+?)([BELST])?$/ === row['product_sku']
+        unless /^(.+?)((B Blank)|(E Embroidered)|(D .*Debossed)|(L Laser Engrave)|(S .*Silk-Screen)|(S Pad-Print)|(T Transfer))?$/ === row['product_sku']
           raise "Bad Reg"
         end
         supplier_num = $1.strip
-        postfix = $2
+        postfix = $2 && $2[0]
 
         if closeout and product_merge.include?(supplier_num)
           puts "CLOSEOUT MATCHING: #{supplier_num}"
@@ -96,7 +96,7 @@ class HitPromoCSV < GenericImport
       end
     end
 
-    price_preference = %w(L S T E B)
+    price_preference = %w(L S D T E B)
     
 #    variations = {}
 
