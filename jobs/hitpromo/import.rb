@@ -80,7 +80,7 @@ class HitPromoCSV < GenericImport
      [closeout_file, true]
     ].each do |file, closeout|
       CSV.foreach(file, :headers => :first_row, :col_sep => ' ', :quote_char => "'") do |row|
-        unless /^(.+?)((B Blank)|(E Embroidered)|(D .*Debossed)|(L Laser Engrave)|(S .*Silk-Screen)|(S Pad-Print)|(T Transfer))?$/ === row['product_sku']
+        unless /^(.+?)((B( Blank)?)|(E( Embroidered)?)|(D( .*Debossed)?)|(L( Laser Engrave)?)|(S( .*Silk-Screen)?)|(S( Pad-Print)?)|(T( Transfer)?))?$/ === row['product_sku']
           raise "Bad Reg"
         end
         supplier_num = $1.strip
