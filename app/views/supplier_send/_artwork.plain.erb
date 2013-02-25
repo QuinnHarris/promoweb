@@ -13,7 +13,7 @@ Desc: <%= group.description %>
    Imprint Colors: <%= variants.length == 1 ? variants.first.imprint_colors : variants.collect { |v| "#{v.variant.supplier_num}: #{v.imprint_colors}" }.join(', ') %>
 <% if decoration.decoration -%>
    Location: <%= decoration.decoration.location %>
-   Imprint Size: <%= decoration.decoration.dimension_s %>
+   Imprint Area: <%= decoration.decoration.dimension_s %>
 <% end -%>
 <% if decoration.our_notes and !decoration.our_notes.empty? -%>
    Notes: <%= decoration.our_notes %>
