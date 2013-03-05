@@ -78,9 +78,7 @@ class GemlineXML < GenericImport
     doc = File.open(@src_file) { |f| Nokogiri::XML(f) }
     
     doc.xpath('/xml/gemlineproductdata/product').each do |product|
-      ProductDesc.apply(self) do |pd|
-        prod_log_str = ''
-        
+      ProductDesc.apply(self) do |pd|       
         # Product Record
         pd.supplier_num = product['mainstyle']
         pd.name = product['name']
@@ -160,8 +158,11 @@ class GemlineXML < GenericImport
           
           last_max = nil
           item.xpath("pricing[@type='US']/price").each do |price|
-            /(?<min>\d+)[-+](?<max>\d+)?/ =~ price['break']
-            prod_log_str << " * Non contigious prices" if last_max and min.to_i != last_max + 1
+            puts "Break: #{price['break']}"
+            unless /^(?<min>\d+)[-+](?<max>\d+)?$/ =~ price['break']
+              raise PropertyError.new('Unknown break', price['break'])
+            end
+            warning 'Non contigious prices' if last_max and min.to_i != last_max + 1
             last_max = max && max.to_i
             vd.pricing.add(min, price.text, price['code'], true)
           end

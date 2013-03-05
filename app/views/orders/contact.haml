@@ -30,8 +30,12 @@
       %br
       = link_to "OOPS Go back and don't associate", { :customer_id => nil }
 
-
 = form_for @customer, :url => contact_order_path(@order), :html => { :method => :post } do |cust|
+  - if @user
+    .admin
+      %h2 Our Notes
+      = text_area :customer, :our_notes, :rows => [(@customer.our_notes || '').lines.count, 2].max
+  
   = hidden_field_tag 'customer_id', @customer.id
   %table.form
     %caption
@@ -99,3 +103,4 @@
       
   - unless @reassoc
     != submit_options !@static
+    
