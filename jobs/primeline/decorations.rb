@@ -21,18 +21,18 @@ apply_decorations('Prime Line') do |primeline|
         :fixed_price_const => 0.0,
         :fixed_price_exp => 0.0,
         :fixed_price_marginal => Money.new(0),
-        :fixed_price_fixed => Money.new(55.00),
+        :fixed_price_fixed => Money.new(56.00),
         :fixed => PriceGroup.create_prices([
-        { :fixed => Money.new(44.00),
+        { :fixed => Money.new(44.80),
           :marginal => Money.new(0),
           :minimum => 1 }]),
           
         :marginal_price_const => 0.0,
         :marginal_price_exp => 0.0,
         :marginal_price_marginal => Money.new(0.55),
-        :marginal_price_fixed => Money.new(55.00),
+        :marginal_price_fixed => Money.new(56.00),
         :marginal => PriceGroup.create_prices([
-        { :fixed => Money.new(44.00),
+        { :fixed => Money.new(44.80),
           :marginal => Money.new(0.55*0.8),
           :minimum => 1 }]) })
 
