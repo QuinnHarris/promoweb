@@ -919,7 +919,7 @@ private
         (?:(?: (?:^|\s+|-) (?<numer>\d{1,2}) )? \s*[\/∕]\s* (?<denom>\d{1,2}) ) |
         (?:(?:^|\s+) (?<sym>[⅛¼⅓⅜½⅝¾⅞]) ) |
         (?<=\d) )  # Postive lookbehind to match 'whole' alone
-     \s*(?<dim>[\"”]|(?:\&quot;)|(?:yards?))?\s*/xi
+     \s*(?<dim>[\"”]|(?:\&quot;)|(?:yards?)|(?:mm))?\s*/xi
   private
   def number_from_regex(m)
     num = 0.0
@@ -944,6 +944,8 @@ private
     case m[:dim]
       when /^yard/
       num *= 36
+      when /^mm/
+      num *= 0.0393701
     end
     num
   end
@@ -960,7 +962,7 @@ private
   # g for gussetted in adbag?
   @@component_regex = /#{@@number_regex}(?<aspect>wide|width|w|high|height|h|long|length|l|diameter|diam?\.?|square|d|depth|round)?/i
   def parse_dimension(string, pedantic = false)
-    list = string.split(/x/i).collect do |part|
+    list = string.strip.split(/x/i).collect do |part|
       unless m = /^#{@@component_regex}$/.match(part.strip)
         warning 'Parse Dimension', "RegEx mismatch: #{part.inspect}"
         return

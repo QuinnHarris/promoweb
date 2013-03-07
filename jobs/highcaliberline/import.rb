@@ -53,13 +53,13 @@ class HighCaliberLine < GenericImport
     puts ws.use_header(1).inspect
     ws.each(2) do |row|
       if row['Description'].include?('Texas')
-        puts "Excluding Product: #{row['Product ID']}"
+        puts "Excluding Product: #{row['Product Code']}"
         next
       end
 
       ProductDesc.apply(self) do |pd|
         pd.merge_from_object(row, {
-                               'supplier_num' => 'Product ID',
+                               'supplier_num' => 'Product Code',
                                'name' => 'Product Name' })
              
         puts "Product: #{pd.supplier_num}"
@@ -67,12 +67,12 @@ class HighCaliberLine < GenericImport
         pd.name.gsub!(/\s+/, ' ')
       
         if description = row['Description']
-          pd.description = description.gsub(/\s+/,' ').gsub(/\s?\.\s/,"\n").gsub(/\s?•\s/,"\n").strip
+          pd.description = description.gsub("\uFEFF", '').gsub(/\s+/,' ').gsub(/\s?\.\s/,"\n").gsub(/\s?•\s/,"\n").strip
         end
 
         # Categories
         begin
-          pd.supplier_categories = [%w(Category Sub-Categories).collect do |catname|
+          pd.supplier_categories = [%w(Category Sub\ Category).collect do |catname|
             str = row[catname]
             str && str.strip.gsub('&amp;','&').gsub(/\s+/, ' ')
           end.compact]
@@ -80,20 +80,32 @@ class HighCaliberLine < GenericImport
           pd.supplier_categories = [[]]
         end
 
-        tags = []
-        if ws.header_map['Features'] and row['Features']
-          tags << 'New' if row['Features'].include?('New')
-          tags << 'Eco' if row['Features'].include?('Bio')
-          tags << 'MadeInUSA' if row['Features'].include?('usa')
+        pd.tags = [tags].flatten
+        laser_engrave = wow_product = nil
+        if highlight = row['Highlightimage']
+          highlight.split(/\s*,\s*/).each do |elem|
+            case elem
+            when 'New'
+              pd.tags << 'New'
+            when 'Made In USA', 'USA'
+              pd.tags << 'MadeInUSA'
+            when 'Green'
+              pd.tags << 'Eco'
+            when 'Laser Engraving', 'Standard Laser Engraving', 'Free Optional Laser Engraving'
+              laser_engrave = true
+            when '24 Hours'
+              pd.lead_time.rush = 1
+            when 'WOW'
+              wow_product = true
+            else
+              warning 'Unknown Highlight', elem
+            end
+          end
         end
 
         cat_string = pd.supplier_categories.join.downcase
-        tags << 'Eco' if cat_string.include?('eco')
-        tags << 'MadeInUSA' if cat_string.include?('usa')
-        pd.tags = tags.uniq
-
         overseas = (/(?:Overseas)|(?:Factory)/i === cat_string)
-
+        a_to_z_product = (/A to Z Line/i === cat_string)
 
         if prod = @product_list.find { |p| p.supplier_num == pd.supplier_num }
           prod.supplier_categories = (prod.supplier_categories + pd.supplier_categories).uniq
@@ -112,41 +124,41 @@ class HighCaliberLine < GenericImport
         # Decorations
         pd.decorations = overseas ? [] : [DecorationDesc.none]
         if imprint_str = row['Imprint Size']
-          laser = ws.header_map['Features'] && row['Features'].to_s.include?('Laser Engrav')
-
           imprint_str.split(/,|(?:\s{2,3})/).each do |imprint_part|
             unless /^(?:(.+?):)?\s*(.+?)(?:(.+?)\))?$/ === imprint_part
               puts "Imprintt: #{imprint_str.inspect}"
             end
             location, qualify = $1, $3
-            imprint_area = $2 && parse_dimension($2)
-            puts "Imprint: #{imprint_str.inspect} => #{imprint_area.inspect}" unless imprint_area
+            imprint_area = $2 && parse_area($2)
             if imprint_area
-              pd.decorations << DecorationDesc.new(:technique => 'Screen Print',
-                                                   :limit => 4, :location => location || '')
-                .merge!(imprint_area)
-              pd.decorations << DecorationDesc.new(:technique => 'Laser Engrave',
-                                                   :limit => 4, :location => location || '')
-                .merge!(imprint_area) if laser
+              if imprint_area.include?(:length)
+                warning 'Imprint Area has Length', imprint_str
+              else
+                imprint_area.delete(:left); imprint_area.delete(:right)
+                pd.decorations << DecorationDesc.new(:technique => 'Screen Print',
+                                                     :limit => 4, :location => location || '')
+                  .merge!(imprint_area)
+                pd.decorations << DecorationDesc.new(:technique => 'Laser Engrave',
+                                                     :limit => 4, :location => location || '')
+                  .merge!(imprint_area) if laser_engrave
+              end
             end
           end
         end
         
       
         # Package Info
-        if weight_str = row['Weight']
-          unless /^\s*(\d+)\s*lbs\s*\/\s*(\d+)\s*pcs?/ === weight_str
-            puts  " !!! Unknown Weight: #{weight_str.inspect}"
-          end
-          pd.package.weight = $1.to_f
-          pd.package.units = $2 && $2.gsub(',','').to_i
+        if weight = Float(row['Carton Weight lbs']) and weight != 0.0
+          pd.package.weight = weight
         end
-        %w(height width length).each do |name|
-          val = Float(row["#{name.capitalize} (Inch)"])
-          pd.package[name] = val unless val == 0.0
+        if units = Integer(row['Carton Weight Pcs']) and units != 0
+          pd.package.units = units
         end
+        pd.package.merge_from_object(row, { 'height' => 'Height',
+                                       'width' => 'Width',
+                                       'length' => 'Depth' } )
       
-
+        
         # Price Info (common to all variants)
         if ws.header_map['Minimum Qty']
           #        qty = row["Minimum Qty"]
@@ -160,18 +172,26 @@ class HighCaliberLine < GenericImport
             qty = row["Qty #{num}"]
             next if qty.blank?
             qty = qty.gsub(/[^0-9]+$/, '') if qty.is_a?(String)
-          pd.pricing.add(qty, row["Price #{num}"])
+            pd.pricing.add(qty, row["Price #{num}"], 'R')
           end
         end
         
-        pd.pricing.eqp
+        if overseas
+          pd.pricing.costs.shift # Remove first column
+        else
+          pd.pricing.eqp_costs
+          pd.pricing.ltm(25.00)
+
+          unless a_to_z_product or wow_product or tags.include?('Closeout')
+            pd.pricing.costs.last[:marginal] *= 0.95
+          end
+        end
         pd.pricing.maxqty
-        pd.pricing.ltm(25.00) unless overseas
         
 
         # Leed Time
         begin
-          case production_time = row['Production Time'].strip
+          case production_time = row['Standard Service'].strip
           when /(\d{1,2})(?:-(\d{1,2}))?\s*(Day|Week)/i
             mult = ($3.downcase == 'day') ? 1 : 5
             min, max = Integer($1)*mult, Integer($2 || $1)*mult
@@ -187,10 +207,11 @@ class HighCaliberLine < GenericImport
         end
       
         if dimension = row['Size']
-          pd.properties['dimension'] = parse_dimension(dimension) || dimension.gsub(/\(.+?\)/,'').gsub('&quot;','"')
+          pd.properties['dimension'] = parse_dimension(dimension) || dimension.strip.gsub(/\(.+?\)/,'').gsub('&quot;','"')
         end
       
-        if color_str = row['Colors']
+        if color_str = row['Color Description']
+          color_str = color_str.gsub("\uFEFF", '').strip
           if /Standard Lanyard.+colors\.?(?:&lt;br&gt;)?(.*)/i === color_str
             pd.description += "\n#{$1}" unless $1.blank?
             color_list = lanyard_color_list

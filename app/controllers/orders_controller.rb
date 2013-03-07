@@ -740,7 +740,7 @@ public
   end
    
   def_tasked_action :acknowledge_order, AcknowledgeOrderTask do
-    @static = true
+    @static = !@user
     @order_task = OrderTask.new(params[:order_task])
 
     next unless params[:commit]

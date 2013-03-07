@@ -550,7 +550,7 @@ class ProductDesc
   property :supplier_categories, Array do |v|
     v.each do |e|
       raise PropertyError, "expected Array of Array" unless e.is_a?(Array)
-      riase PropertyError, "expected Array of non empty Array" if e.empty?
+      raise PropertyError, "expected Array of non empty Array" if e.empty?
       e.each do |s|
         raise PropertyError, "expected Array of Array of String got #{v.inspect}" unless s.is_a?(String)
       end
