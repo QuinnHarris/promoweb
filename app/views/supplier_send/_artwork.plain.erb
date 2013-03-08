@@ -19,6 +19,9 @@ Desc: <%= group.description %>
    Notes: <%= decoration.our_notes %>
 <% end -%>
 <%   end %>
+
+DO NOT RESIZE ART!!!  Please contact us if art needs to be resized.
+
 <% artworks = group.artworks.find_all { |a| a.has_tag?('supplier') } -%>
   File(s):  <%= artworks.collect { |a| a.art.original_filename }.join(', ') %>
   URL(s): <%= artworks.collect { |a| "http://www.mountainofpromos.com#{a.art.url.gsub(' ', '%20')}" }.join(', ') %>

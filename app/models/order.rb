@@ -158,7 +158,7 @@ class Order < ActiveRecord::Base
 
   def payment_authorizes
     # Authorization logic also in payment_method.rb:charge
-    payment_transactions.joins(:method).where("payment_transactions.type = 'PaymentAuthorize' AND payment_transactions.amount > 1000 AND payment_transactions.created_at > (NOW() - CASE sub_type WHEN 'american_express' THEN '30d' ELSE '14d' END)")
+    payment_transactions.joins(:method).where("payment_transactions.type = 'PaymentAuthorize' AND payment_transactions.amount > 1000 AND payment_transactions.created_at > (NOW() - (CASE sub_type WHEN 'american_express' THEN '30d' ELSE '14d' END)::interval)")
   end
 
   %w(charge authorize).each do |aspect|
