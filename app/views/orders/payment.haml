@@ -105,8 +105,11 @@
                           .admin= submit_tag 'Charge'
                       - when :charge
                         = submit_tag 'Charge'
-                      - when :charge_super
-                        .admin= submit_tag 'Charge'
+                      - when :already_auth
+                        - if @order.task_ready?(FirstPaymentOrderTask)
+                          = submit_tag 'Accept Existing as Payment'
+                        - if allowed?
+                          .admin= submit_tag 'Charge'
                 - for transaction in method.transactions.order('id DESC')
                   %tr
                     %td= transaction.created_at.strftime("%Y-%m-%d")

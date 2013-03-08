@@ -587,8 +587,8 @@ public
         @amount = [Money.new(0), @order.total_authorizeable].max
         if !@amount.zero?
           @mode = :authorize
-        elsif @permissions.include?('Super')
-          @mode = :charge_super
+        else
+          @mode = :already_auth
           @amount = @order.total_chargeable
         end
       end

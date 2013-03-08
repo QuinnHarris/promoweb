@@ -126,6 +126,9 @@ class Admin::OrdersController < Admin::BaseController
         end
         transaction, response = payment_method.credit(@order, amount, params[:transaction][:comment], charge_transaction)
         @order.save_invoice! unless transaction.is_a?(PaymentError)
+
+      else params[:commit].include?('Accept')
+        task_complete({}, FirstPaymentOrderTask)
       end
     end
     
