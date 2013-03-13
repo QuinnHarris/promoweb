@@ -87,29 +87,54 @@ class PolyXLS < GenericImport
       ws = Spreadsheet.open(file).worksheet(0)
       puts "Header: #{ws.use_header.inspect}"
       ws.each(1) do |row|
-        next unless row['ItemNo']
-        @supplier_num = row['ItemNo'].strip
+        next unless @supplier_num = row[%w(ItemNo ItemNumber)]
+        @supplier_num.strip!
 
         ProductDesc.apply(self) do |pd|
           pd.supplier_num = @supplier_num
-          pd.name = row['ItemName']
+          pd.name = row[%w(ItemName ProductName)]
           pd.lead_time.normal_min = 3
           pd.lead_time.normal_max = 5
           pd.lead_time.rush = 1
           pd.supplier_categories = [[row['Category'], row['SubCategory']]]
           
           pd.tags = []
-#          pd.tags << 'New' if row['NewItem'] == 'NEW'
+          if row.header?('Feature_1')
+            # new format
+            (1..5).collect { |i| row["Feature_#{i}"] }.compact.each do |feature|
+              case feature
+              when 'New.eps'
+                pd.tags << 'New'
+              when 'Made in the USA.eps'
+                pd.tags << 'USA'
+              when 'Eco Friendly.eps'
+                pd.tags << 'Eco'
+              when 'Exclusive Design.eps'
+              when 'Blue Ink.eps'
+              when 'Black Ink.eps'
+              when 'iPad.eps'
+              when /^1\d Laptop\.eps/
+              when 'TSA Compliant.eps'
+              else
+                warning 'Unknown Feature', feature
+              end
+            end
+          else
+            pd.tags << 'New' if row['NewItem'] == 'NEW' if row.header?('NewItem')
+          end
 #          pd.tags << 'Eco' if row['Category'] == 'EcoSmart'
           
           pd.package.merge_from_object(row,
-                                       { 'units' => 'Carton Quantity',
-                                         'weight' => 'Carton Weight',
-                                         'width' => 'Carton Width',
-                                         'length' => 'Carton Depth',
-                                         'height' => 'Carton Height' })
-          
-          pd.description = row['CatalogDescPackaging'].to_s.split(/[\r\n]+|(?:\. )\s*/).collect do |line|
+                                       { 'units' => ['Carton Quantity', 'CartonPackQTY'],
+                                         'weight' => ['Carton Weight', 'CartonWeight'] })
+
+          if row.header?('Carton Width') # Only in new format
+            pd.package.merge_from_object(row,
+                                         { 'width' => 'Carton Width',
+                                           'length' => 'Carton Depth',
+                                           'height' => 'Carton Height' })
+          end
+          pd.description = row[%w(CatalogDescPackaging ItemDescription)].to_s.split(/[\r\n]+|(?:\. )\s*/).collect do |line|
             line.strip!
             next nil if line.empty?
             line.scan(/\(#(.+?)\)/).flatten.each do |num|
@@ -123,16 +148,34 @@ class PolyXLS < GenericImport
             [??,?!,?.].include?(line[-1]) ? line : "#{line}." 
           end.compact
           
-          (1..5).each do |idx|
-            break if (qty = row["PriceQtyCol#{idx}"]).blank?
-            pd.pricing.add(qty, row["PriceUSCol#{idx}"])
+          if row.header?('PriceQtyCol1')
+            # new format
+            (1..5).each do |idx|
+              break if (qty = row["PriceQtyCol#{idx}"]).blank?
+              pd.pricing.add(qty, row["PriceUSCol#{idx}"])
+            end
+          else
+            %w(First Second Third Fourth Fifth).each do |name|
+              pd.pricing.add(row["#{name}ColMinQty"], row["#{name}ColPriceUSD"])
+            end
           end
           pd.pricing.eqp(0.4, true)
           pd.pricing.ltm_if(40.00, 4) # LTM of 4 unless clearance
           pd.pricing.maxqty
 
           
-          pd.properties['dimension'] = parse_dimension(row['CatalogSize']) || row['CatalogSize'] unless row['CatalogSize'].blank?
+          if row.header?('CatalogSize')
+            pd.properties['dimension'] = parse_dimension(row['CatalogSize']) || row['CatalogSize'] unless row['CatalogSize'].blank?
+          else
+            dimension = {}
+            { 'ItemLength'=> 'length', 
+              'ItemWidth' => 'width',
+              'ItemHeight' => 'height' }.each do |src, dst|
+              num = row[src].to_s.gsub('\'','').to_f
+              dimension[dst] = num unless num == 0.0
+            end
+            pd.properties['dimension'] = dimension
+          end
           pd.properties['material'] = row['Material'].to_s
 
           unless dec = decoration_data[@supplier_num]
@@ -141,7 +184,7 @@ class PolyXLS < GenericImport
           end
           pd.decorations = [DecorationDesc.none] + dec
                     
-          colors = row['ColorList'].to_s.split(/\s*(?:(?:\,|(?:\sor\s)|(?:\sand\s)|\&)\s*)+/).uniq
+          colors = row[%w(ColorList Color)].to_s.split(/\s*(?:(?:\,|(?:\sor\s)|(?:\sand\s)|\&)\s*)+/).uniq
           colors = [''] if colors.empty?
           colors = @@color_override[pd.supplier_num] if @@color_override.has_key?(pd.supplier_num)
         
@@ -332,6 +375,7 @@ class PolyXLS < GenericImport
 
     'PhotoReal' => ['Photo Transfer',3],
     'Photografixx' => ['Photo Transfer',1],
+    'PGxx' => ['Photo Transfer',1],
     'Deboss' => ['Deboss',1],
     'Deboss Initials' => nil,
     'Laser Etching' => ['Laser Engrave',1],
@@ -352,10 +396,12 @@ class PolyXLS < GenericImport
     'Color Fill' => nil,
     'Color Fill Initials' => nil,
 
-    'Color Stamp' => ['Stamp', 1],
-    'Color Stamp DB' => ['Stamp', 1],
-    'Color Stamp Name' => nil,
-    'Color Stamp Initials' => nil,
+    'Beach Print' => ['Beach Print', 1],
+
+#    'Color Stamp' => ['Stamp', 1],
+#    'Color Stamp DB' => ['Stamp', 1],
+#    'Color Stamp Name' => nil,
+#    'Color Stamp Initials' => nil,
 
     'Oxidize' => nil,
 

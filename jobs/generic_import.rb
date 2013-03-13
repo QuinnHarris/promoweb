@@ -41,8 +41,9 @@ class Spreadsheet::Excel::Row
 
   alias_method :old_access, :[]
   def [](idx, len = nil)
-    if idx.is_a?(String)
-      i = worksheet.header_map[idx]
+    if idx.is_a?(String) or idx.is_a?(Array)
+      i = [idx].flatten.collect { |i| worksheet.header_map[i] }.compact.first
+#      i = worksheet.header_map[idx]
       raise NoHeader, idx unless i
       old_access(i)
     else

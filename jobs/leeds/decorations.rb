@@ -15,68 +15,99 @@ apply_decorations('Leeds') do |leeds|
     
     
     # Screen Print
+  [['Screen Print', 55.0], ['Laser Engrave', 55.0], ['Deboss', 75.0]].each do |dec_name, dec_setup|
     dec_grp = leeds.decoration_price_groups.create(
-      { :technique => DecorationTechnique.find_by_name("Screen Print") })  
+      { :technique => DecorationTechnique.find_by_name(dec_name) })
       dec_grp.entries.create({ :minimum => 1,
         :fixed_price_const => 0.0,
         :fixed_price_exp => 0.0,
         :fixed_price_marginal => Money.new(0),
-        :fixed_price_fixed => Money.new(55.00),
+        :fixed_price_fixed => Money.new(dec_setup),
         :fixed => PriceGroup.create_prices([
-        { :fixed => Money.new(44.00),
+        { :fixed => Money.new(dec_setup*0.8),
           :marginal => Money.new(0),
           :minimum => 1 }]),
 
-        :marginal_price_const => 29.372958454211,
-        :marginal_price_exp => -0.785213457768842,
-        :marginal_price_marginal => Money.new(0.36),
+        :marginal_price_const => 6.62796797472755,
+        :marginal_price_exp => -0.41179228034711,
+        :marginal_price_marginal => Money.new(0.312),
         :marginal_price_fixed => Money.new(55.00),
         :marginal => PriceGroup.create_prices(
-          {     1 => 0.85,
-              100 => 0.60,
-              300 => 0.45,
-             2500 => 0.40,
-            10000 => 0.35 }.collect do |min, price|
+          {     1 => 0.99,
+               50 => 0.69,
+              150 => 0.59,
+              500 => 0.39 }.collect do |min, price|
               { :fixed => Money.new(44.00),
                 :marginal => Money.new(price*0.8),
                 :minimum => min }
           end + [{ :minimum => 15000 }]) })
+  end
 
 
     # Photo Real
     dec_grp = leeds.decoration_price_groups.create(
       { :technique => DecorationTechnique.find_by_name("Photo Transfer") })
       dec_grp.entries.create({ :minimum => 1,
-        :fixed_price_const => 4.42804779005673,
-        :fixed_price_exp => -0.3362955759314,
-        :fixed_price_marginal => Money.new(1.36),
-        :fixed_price_fixed => Money.new(180.00),
+        :fixed_price_const => 15.3495506560675,
+        :fixed_price_exp => -0.63157782545505,
+        :fixed_price_marginal => Money.new(0.792),
+        :fixed_price_fixed => Money.new(95.0),
         :fixed => PriceGroup.create_prices(
-          {     1 => 3.40,
-              100 => 2.40,
-             1200 => 1.95,
-             2500 => 1.70,
-            10000 => 1.50 }.collect do |min, price|
-              { :fixed => Money.new(180.00*0.8),
+          {     1 => 2.99,
+               50 => 1.49,
+              150 => 1.29,
+              500 => 1.70 }.collect do |min, price|
+              { :fixed => Money.new(95.00*0.8),
                 :marginal => Money.new(price*0.8),
                 :minimum => min }
           end + [{ :minimum => 15000 }]),
 
-        :marginal_price_const => 4.39913959003335,
-        :marginal_price_exp => -0.33558443680551,
-        :marginal_price_marginal => Money.new(1.568),
-        :marginal_price_fixed => Money.new(180.00),
+        :marginal_price_const => 15.3495506560675,
+        :marginal_price_exp => -0.63157782545505,
+        :marginal_price_marginal => Money.new(0.792),
+        :marginal_price_fixed => Money.new(95.00),
         :marginal => PriceGroup.create_prices(
-          {     1 => 3.91,
-              100 => 2.76,
-             1200 => 2.24,
-             2500 => 1.96,
-            10000 => 1.73 }.collect do |min, price|
-              { :fixed => Money.new(180.00*0.8),
+          {     1 => 2.99,
+               50 => 1.49,
+              150 => 1.29,
+              500 => 1.70 }.collect do |min, price|
+              { :fixed => Money.new(95.00*0.8),
                 :marginal => Money.new(price*0.8),
                 :minimum => min }
           end + [{ :minimum => 15000 }]) })
         
+
+    # Beach Print
+    dec_grp = leeds.decoration_price_groups.create(
+      { :technique => DecorationTechnique.find_by_name("Beach Print") })
+      dec_grp.entries.create({ :minimum => 1,
+        :fixed_price_const => 9.0219391301915,
+        :fixed_price_exp => -0.57577751492939,
+        :fixed_price_marginal => Money.new(1.032),
+        :fixed_price_fixed => Money.new(699.0),
+        :fixed => PriceGroup.create_prices(
+          {     1 => 2.99,
+               50 => 1.99,
+              150 => 1.49,
+              500 => 1.20 }.collect do |min, price|
+              { :fixed => Money.new(699.00*0.8),
+                :marginal => Money.new(price*0.8),
+                :minimum => min }
+          end + [{ :minimum => 15000 }]),
+
+        :marginal_price_const => 9.0219391301915,
+        :marginal_price_exp => -0.57577751492939,
+        :marginal_price_marginal => Money.new(1.032),
+        :marginal_price_fixed => Money.new(699.0),
+        :marginal => PriceGroup.create_prices(
+          {     1 => 2.99,
+               50 => 1.99,
+              150 => 1.49,
+              500 => 1.20 }.collect do |min, price|
+              { :fixed => Money.new(699.00*0.8),
+                :marginal => Money.new(price*0.8),
+                :minimum => min }
+          end + [{ :minimum => 15000 }]) })
 
 
     # Embroidery
@@ -84,18 +115,16 @@ apply_decorations('Leeds') do |leeds|
       { :technique => DecorationTechnique.find_by_name("Embroidery") })
       # <= 7500
       dec_grp.entries.create({ :minimum => 1,
-        :fixed_price_const => 1.00534759358289,
-        :fixed_price_exp => -0.17056319392749,
-        :fixed_price_marginal => Money.new(1.50),
-        :fixed_price_fixed => Money.new(20.00),
+        :fixed_price_const => 1.7224412670333,
+        :fixed_price_exp => -0.30578466130462,
+        :fixed_price_marginal => Money.new(1.592),
+        :fixed_price_fixed => Money.new(10.00),
         :fixed => emb_fixed_grp = PriceGroup.create_prices(
-          {     1 => 2.55,
-              300 => 2.10,
-             1200 => 2.00,
-             2500 => 1.90,
-             5000 => 1.85,
-            10000 => 1.80 }.collect do |min, price|
-              { :fixed => Money.new(16.00),
+          {     1 => 2.79,
+               50 => 2.59,
+              150 => 2.29,
+              500 => 1.99 }.collect do |min, price|
+              { :fixed => Money.new(8.00),
                 :marginal => Money.new(price*0.8),
                 :minimum => min }
           end + [{ :minimum => 15000 }]),
@@ -106,17 +135,17 @@ apply_decorations('Leeds') do |leeds|
         :marginal_offset => 0,
 
         :marginal => PriceGroup.create_prices([
-          { :fixed => Money.new(16.00),
+          { :fixed => Money.new(8.00),
             :marginal => Money.new(0),
             :minimum => 1},
           { :minimum => 15000 }]) })
 
       # > 7500
       dec_grp.entries.create({ :minimum => 7500,
-       :fixed_price_const => 1.00534759358289,
-        :fixed_price_exp => -0.17056319392749,
-        :fixed_price_marginal => Money.new(1.50),
-        :fixed_price_fixed => Money.new(20.00),
+       :fixed_price_const => 1.7224412670333,
+        :fixed_price_exp => -0.30578466130462,
+        :fixed_price_marginal => Money.new(1.592),
+        :fixed_price_fixed => Money.new(10.00),
         :fixed => emb_fixed_grp,
 
         :fixed_divisor => 1000,
@@ -126,142 +155,42 @@ apply_decorations('Leeds') do |leeds|
 
         :marginal_price_const => 0,
         :marginal_price_exp => 0,
-        :marginal_price_marginal => Money.new(0.34),
-        :marginal_price_fixed => Money.new(20.00),
+        :marginal_price_marginal => Money.new(0.38),
+        :marginal_price_fixed => Money.new(10.00),
 
         :marginal => PriceGroup.create_prices([
-          { :fixed => Money.new(16.00),
-            :marginal => Money.new(0.38*0.8),
+          { :fixed => Money.new(8.00),
+            :marginal => Money.new(0.39*0.8),
             :minimum => 1},
           { :minimum => 15000 }]) })           
-
-
-        
-    # Deboss
-    dec_grp = leeds.decoration_price_groups.create(
-      { :technique => DecorationTechnique.find_by_name("Deboss") })
-      dec_grp.entries.create({ :minimum => 1,
-        :fixed_price_const => 0.0,
-        :fixed_price_exp => 0.0,
-        :fixed_price_marginal => Money.new(0),
-        :fixed_price_fixed => Money.new(75.00),
-        :fixed => PriceGroup.create_prices([
-        { :fixed => Money.new(75.00*0.8),
-          :marginal => Money.new(0),
-          :minimum => 1 }]),
-
-        :marginal_price_const => 1.62665947436704,
-        :marginal_price_exp => -0.385320956616481,
-        :marginal_price_marginal => Money.new(0.85),
-        :marginal_price_fixed => Money.new(75.00),
-        :marginal => PriceGroup.create_prices(
-          {     1 => 1.25,
-              100 => 1.15,
-              300 => 1.00,
-             1200 => 0.95,
-             2500 => 0.85,
-             5000 => 0.78,
-            10000 => 0.68 }.collect do |min, price|
-              { :fixed => Money.new(60.00*0.8),
-                :marginal => Money.new(price*0.8),
-                :minimum => min }
-           end + [{ :minimum => 15000 }]) })
-
-
-    # Stamp, duplicate of Deboss
-    dec_grp = leeds.decoration_price_groups.create(
-      { :technique => DecorationTechnique.find_by_name("Stamp") })
-      dec_grp.entries.create({ :minimum => 1,
-        :fixed_price_const => 0.0,
-        :fixed_price_exp => 0.0,
-        :fixed_price_marginal => Money.new(0),
-        :fixed_price_fixed => Money.new(75.00),
-        :fixed => PriceGroup.create_prices([
-        { :fixed => Money.new(75.00*0.8),
-          :marginal => Money.new(0),
-          :minimum => 1 }]),
-
-        :marginal_price_const => 1.62665947436704,
-        :marginal_price_exp => -0.385320956616481,
-        :marginal_price_marginal => Money.new(0.85),
-        :marginal_price_fixed => Money.new(75.00),
-        :marginal => PriceGroup.create_prices(
-          {     1 => 1.25,
-              100 => 1.15,
-              300 => 1.00,
-             1200 => 0.95,
-             2500 => 0.85,
-             5000 => 0.78,
-            10000 => 0.68 }.collect do |min, price|
-              { :fixed => Money.new(60.00*0.8),
-                :marginal => Money.new(price*0.8),
-                :minimum => min }
-           end + [{ :minimum => 15000 }]) })
-
-
-   # Laser Engrave
-    dec_grp = leeds.decoration_price_groups.create(
-      { :technique => DecorationTechnique.find_by_name("Laser Engrave") })  
-      dec_grp.entries.create({ :minimum => 1,
-        :fixed_price_const => 0.0,
-        :fixed_price_exp => 0.0,
-        :fixed_price_marginal => Money.new(0),
-        :fixed_price_fixed => Money.new(40.00),
-        :fixed => PriceGroup.create_prices([
-        { :fixed => Money.new(40.00*0.8),
-          :marginal => Money.new(0),
-          :minimum => 1 }]),
-
-        :marginal_price_const => 11.9264151450896,
-        :marginal_price_exp => -0.53517598338089,
-        :marginal_price_marginal => Money.new(0.32),
-        :marginal_price_fixed => Money.new(30.00),
-        :marginal => PriceGroup.create_prices(
-          {     1 => 0.85,
-              100 => 0.60,
-              300 => 0.45,
-             2500 => 0.40,
-            10000 => 0.35 }.collect do |min, price|
-              { :fixed => Money.new(30.00*0.8),
-                :marginal => Money.new((price*100.0*0.8).to_i),
-                :minimum => min }
-          end + [{ :minimum => 15000 }]) })
-
-
 
   # Dome
     dec_grp = leeds.decoration_price_groups.create(
       { :technique => DecorationTechnique.find_by_name("Dome") })
       dec_grp.entries.create({ :minimum => 1,
-        :fixed_price_const => 3.17636460716223,
-        :fixed_price_exp => -0.2770525557931,
-        :fixed_price_marginal => Money.new(0.60),
+        :fixed_price_const => 10.0052674141002,
+        :fixed_price_exp => -0.54467100941339,
+        :fixed_price_marginal => Money.new(0.472),
         :fixed_price_fixed => Money.new(0),
         :fixed => PriceGroup.create_prices(
-          {     1 => 1.25,
-              100 => 1.15,
-              300 => 1.00,
-             1200 => 0.95,
-             2500 => 0.85,
-             5000 => 0.78,
-            10000 => 0.69 }.collect do |min, price|
+          {     1 => 1.29,
+               50 => 0.99,
+              150 => 0.79,
+              500 => 0.59 }.collect do |min, price|
               { :fixed => Money.new(0),
                 :marginal => Money.new(price*0.8),
                 :minimum => min }
           end + [{ :minimum => 15000 }]),
 
-        :marginal_price_const => 2.21603786206194,
-        :marginal_price_exp => -0.23478317491358,
-        :marginal_price_marginal => Money.new(0.75),
+        :marginal_price_const => 10.0052674141002,
+        :marginal_price_exp => -0.54467100941339,
+        :marginal_price_marginal => Money.new(0.472),
         :marginal_price_fixed => Money.new(0),
         :marginal => PriceGroup.create_prices(
-          {     1 => 1.56,
-              100 => 1.44,
-              300 => 1.25,
-             1200 => 1.19,
-             2500 => 1.06,
-             5000 => 0.97,
-            10000 => 0.86 }.collect do |min, price|
+          {     1 => 1.29,
+               50 => 0.99,
+              150 => 0.79,
+              500 => 0.59 }.collect do |min, price|
               { :fixed => Money.new(0),
                 :marginal => Money.new(price*0.8),
                 :minimum => min }

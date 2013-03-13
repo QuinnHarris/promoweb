@@ -34,7 +34,7 @@ xml.document( :type => 'freeswitch/xml' ) do
 	        xml.user( :id => user.login, 'number-alias' => user.extension ) do
 		  xml.params do
 	  	    dial = "{presence_id=${dialed_user}@${dialed_domain},effective_caller_id_number=#{user.phone_i}}${sofia_contact(${dialed_user}@${dialed_domain})}"
-		    external = (user.external_phone_enable ? ",[leg_timeout=#{user.external_phone_timeout}]sofia/gateway/voipstreet/1#{user.external_phone_number}" : '')
+		    external = (user.external_phone_enable ? ",[leg_timeout=#{user.external_phone_timeout}]sofia/gateway/flowroute.com/1#{user.external_phone_number}" : '')
     		    xml.param( :name => 'dial-string', :value => dial + (user.external_phone_all ? external : '') )
     		    xml.param( :name => 'dial-string-external', :value => external ) if user.external_phone_enable and !user.external_phone_all
 		    xml.param( :name => 'password', :value => user.phone_password )
