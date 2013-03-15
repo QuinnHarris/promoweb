@@ -156,6 +156,7 @@ class PolyXLS < GenericImport
             end
           else
             %w(First Second Third Fourth Fifth).each do |name|
+              break if row["#{name}ColMinQty"].blank?
               pd.pricing.add(row["#{name}ColMinQty"], row["#{name}ColPriceUSD"])
             end
           end
@@ -198,8 +199,7 @@ class PolyXLS < GenericImport
             unless postfix
               postfix = @@color_map[color.downcase]
               postfix = color.split(/ |\//).collect { |c| [@@color_map[c.downcase]].flatten.first }.join unless postfix
-              puts "NoPost: #{@supplier_num}: #{color} : #{postfix}"
-            #          postfix = color[0...8]
+              warning 'No Postfix', color
             end
 
             # Prevend duplicate postfix
