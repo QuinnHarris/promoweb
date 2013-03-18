@@ -961,7 +961,7 @@ private
   end
 
   # g for gussetted in adbag?
-  @@component_regex = /#{@@number_regex}(?<aspect>wide|width|w|high|height|h|long|length|l|diameter|diam?\.?|square|d|depth|round)?/i
+  @@component_regex = /#{@@number_regex}(?<aspect>wide|width|w|high|height|h|long|length|l|diameter|diam?\.?|square|sq\.?|d|depth|round)?/i
   def parse_dimension(string, pedantic = false)
     list = string.strip.split(/x/i).collect do |part|
       unless m = /^#{@@component_regex}$/.match(part.strip)
@@ -1024,7 +1024,7 @@ private
                when /^dia/i;     :diameter
                when /^round/i;   :diameter
                when /^d/i;       :depth
-               when /^square$/i; :square
+               when /^sq/i; :square
                end
       if aspect
         if no_aspect

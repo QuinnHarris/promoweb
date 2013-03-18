@@ -245,7 +245,7 @@ class PrimeLineWeb < GenericImport
         pd.lead_time.rush = 1
       end
       
-      if categories.find { |c| c.downcase.include?('overseas') }
+      if categories.find { |c| c.downcase.include?('Overseas') }
         pd.lead_time.normal_min = 20
         pd.lead_time.normal_max = 60
       elsif it = doc.xpath("//table/tbody/tr/td/span[@class='black11']").last
