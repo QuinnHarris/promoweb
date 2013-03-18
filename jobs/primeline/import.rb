@@ -182,7 +182,7 @@ class PrimeLineWeb < GenericImport
   }
 
   def process_product(categories, url, tag)
-    puts "Processing: #{url}"
+    puts "Processing: #{categories.inspect} #{tag.inspect} #{url}"
     fetch = WebFetch.new(url)
     doc = Nokogiri::HTML(open(fetch.get_path), 'ASCII')
     return nil unless doc
@@ -236,7 +236,16 @@ class PrimeLineWeb < GenericImport
       pd.tags = []
       pd.tags << tag if tag
 #      pd.tags << 'Special' if price_rows.size > 1
-      
+
+      if cat_node = doc.at_xpath("//span[@id='ctl00_content_ProductClasstext']")
+        cat = cat_node.text.split('>').collect { |s| s.strip.capitalize }.flatten
+        unless cat.empty? or categories.include?(cat)
+          puts "CAT: #{cat.inspect}"
+          categories += cat
+          puts "CATS: #{categories.inspect}"
+        end
+      end
+
       # Lead Times
       case price_rows.to_s
       when /(\d)-Day Rush/i
@@ -245,7 +254,7 @@ class PrimeLineWeb < GenericImport
         pd.lead_time.rush = 1
       end
       
-      if categories.find { |c| c.downcase.include?('Overseas') }
+      if categories.find { |c| c.downcase.include?('overseas') }
         pd.lead_time.normal_min = 20
         pd.lead_time.normal_max = 60
       elsif it = doc.xpath("//table/tbody/tr/td/span[@class='black11']").last
