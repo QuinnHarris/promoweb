@@ -15,15 +15,20 @@ class Admin::SuppliersController < Admin::BaseController
     @address = @supplier.address = Address.new
   end
   def create
-    @supplier = Supplier.new(params[:supplier])
-    @supplier.address = Address.new(params[:address])
-    @supplier.price_source = PriceSource.create(:name => params[:supplier][:name])
-
-    if @supplier.save
-      redirect_to(admin_suppliers_path,
-                  :notice => 'Supplier created')
-    else
-      render :action => 'new'
+    Supplier.transaction do
+      sup_params = params[:supplier]
+      sup_params['phone'].gsub!(/[^0-9]/, '')
+      sup_params['fax'].gsub!(/[^0-9]/, '')
+      @supplier = Supplier.new(sup_params)
+      @supplier.address = Address.new(params[:address])
+      @supplier.price_source = PriceSource.create(:name => params[:supplier][:name])
+      
+      if @supplier.save
+        redirect_to(admin_suppliers_path,
+                    :notice => 'Supplier created')
+      else
+        render :action => 'new'
+      end
     end
   end
 
@@ -38,7 +43,10 @@ class Admin::SuppliersController < Admin::BaseController
   def update
     Supplier.transaction do
       @supplier = Supplier.find(params[:id])
-      @supplier.attributes = params[:supplier]
+      sup_params = params[:supplier]
+      sup_params['phone'].gsub!(/[^0-9]/, '')
+      sup_params['fax'].gsub!(/[^0-9]/, '')
+      @supplier.attributes = sup_params
       @supplier.address ||= Address.new
       @supplier.address.update_attributes!(params[:address])
       return unless @supplier.valid?
