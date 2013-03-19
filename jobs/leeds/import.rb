@@ -106,7 +106,7 @@ class PolyXLS < GenericImport
               when 'New.eps'
                 pd.tags << 'New'
               when 'Made in the USA.eps'
-                pd.tags << 'USA'
+                pd.tags << 'MadeInUSA'
               when 'Eco Friendly.eps'
                 pd.tags << 'Eco'
               when 'Exclusive Design.eps'
