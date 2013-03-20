@@ -198,7 +198,7 @@ class PhoneController < ActionController::Base
 
     doc = Nokogiri::XML(params[:cdr])
     
-    return if doc.at_xpath('/cdr/callflow/caller_profile/source/text()').to_s == 'src/switch_ivr_originate.c'
+    return if doc.at_xpath('/cdr/callflow/caller_profile/source/text()').text == 'src/switch_ivr_originate.c'
 
     attr = {}
 
@@ -206,12 +206,12 @@ class PhoneController < ActionController::Base
       'caller_name' => 'callflow[last()]/caller_profile/caller_id_name',
       'called_number' => 'callflow[last()]/caller_profile/destination_number',
     }.each do |name, path|
-      attr[name] = doc.at_xpath("/cdr/#{path}/text()").to_s
+      attr[name] = doc.at_xpath("/cdr/#{path}/text()").text
     end
 
-    attr['inbound'] = (doc.at_xpath('/cdr/callflow[last()]/caller_profile/context/text()').to_s == 'public')
+    attr['inbound'] = (doc.at_xpath('/cdr/callflow[last()]/caller_profile/context/text()').text == 'public')
 
-    uuid = doc.at_xpath('/cdr/variables/uuid/text()').to_s
+    uuid = doc.at_xpath('/cdr/variables/uuid/text()').text
     
     call_record = CallLog.find_by_uuid(uuid)
     if call_record
@@ -225,7 +225,7 @@ class PhoneController < ActionController::Base
     system_answer = doc.at_xpath("(/cdr/app_log/application[@app_name='answer' or @app_name='bridge'])[last()]")
     system_answer = (system_answer['app_name'] == 'answer') if system_answer
     logger.info("System Answer: #{system_answer.inspect}")
-    logger.info("Hang: #{doc.at_xpath('/cdr/variables/sip_hangup_disposition/text()').to_s}")
+    logger.info("Hang: #{doc.at_xpath('/cdr/variables/sip_hangup_disposition/text()').text}")
 
     user_id = nil
     mapping = { 'create_time' => 'callflow[last()]/times/created_time' }
@@ -234,18 +234,18 @@ class PhoneController < ActionController::Base
         mapping.merge!('ring_time' => 'callflow/times/profile_created_time')
         if node = doc.at_xpath('/cdr/callflow/caller_profile/originatee/originatee_caller_profile/destination_number/text()')
           mapping.merge!('answered_time' => 'callflow/times/progress_time')
-          user_id = node.to_s
+          user_id = node.text
         end
       end
     else
       mapping.merge!( 'ring_time' => 'callflow/times/progress_media_time',
                       'answered_time' => 'callflow/times/answered_time'
                       )
-      user_id = doc.at_xpath('/cdr/variables/user_name/text()').to_s
+      user_id = doc.at_xpath('/cdr/variables/user_name/text()').text
     end
     
     mapping.each do |name, path|
-      i = doc.at_xpath("/cdr/#{path}/text()").to_s.to_i
+      i = doc.at_xpath("/cdr/#{path}/text()").text.to_i
       next if i == 0
       attr[name] = Time.at(i/1000000.0)
     end
@@ -253,7 +253,7 @@ class PhoneController < ActionController::Base
     return unless attr['create_time'] # Return if no create_time
 
     %w(hangup resurrect transfer).each do |name|
-      i = doc.at_xpath("/cdr/callflow/times/#{name}_time/text()").to_s.to_i
+      i = doc.at_xpath("/cdr/callflow/times/#{name}_time/text()").text.to_i
       next if i == 0
       raise "Duplicate reason" if attr['end_reason']
       attr['end_reason'] = name
@@ -268,7 +268,7 @@ class PhoneController < ActionController::Base
         attr['end_reason'] = 'voicemail' if %w(voicemail playback).include?(last_app)
       end
       
-      if hangup_dispos = doc.at_xpath('/cdr/variables/sip_hangup_disposition/text()').to_s
+      if hangup_dispos = doc.at_xpath('/cdr/variables/sip_hangup_disposition/text()').text
         idx = %w(recv_bye send_bye).index(hangup_dispos)
         res = %w(inside outside)
         res.reverse! if attr['inbound']
@@ -283,7 +283,7 @@ class PhoneController < ActionController::Base
 
     CallLog.rtp_stat_names.each do |name|
       next unless val = doc.at_xpath("/cdr/variables/#{name}/text()")
-      attr[name] = val.to_s.to_i
+      attr[name] = val.text.to_i
     end
 
     logger.info("Attr: #{attr.inspect}")
