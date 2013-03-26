@@ -388,7 +388,7 @@ class window.ProductPricing extends PricingBase
       msg.push "quantity (enter number to right of Quantity:)"
     else msg.push "miminum quantity of " + @data.minimums[0]  if pedantic and @params.quantity < @data.minimums[0] and @params.technique_id != 1
     groups = @_getGroups(@params)
-    msg.push "a variant (Click on the appropriate box under Variants heading)"  unless groups.length == 1
+    msg.push "a variant (Click on the appropriate box at the top)"  unless groups.length == 1
     unless msg.length == 0
       alert "Must specify " + msg.join(" and ")
       return

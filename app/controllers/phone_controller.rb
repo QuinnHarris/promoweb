@@ -30,9 +30,18 @@ class PhoneController < ActionController::Base
   end
 
   # Provision Polycom
-  def polycom_provision
+  def polycom_provision_old # Polycom 501
     @phone = Phone.find_by_identifier(params[:id])
+    raise ::ActionController::RoutingError, "No phone provissioned for #{params[:addr]}" unless @phone
     @user = @phone.user
+  end
+
+  def polycom_provision # Polycom 550/560
+    @phone = Phone.find_by_identifier(params[:id])
+    raise ::ActionController::RoutingError, "No phone provissioned for #{params[:addr]}" unless @phone
+    @user = @phone.user
+    @users = User.where('extension IS NOT NULL').where("id <> #{@user.id}").order('extension')
+    @users.delete_if { |u| u.login == 'monica' } # Kludge to remove monica
   end
 
   # Provision UniData
