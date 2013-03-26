@@ -250,7 +250,8 @@ class PhoneController < ActionController::Base
       mapping.merge!( 'ring_time' => 'callflow/times/progress_media_time',
                       'answered_time' => 'callflow/times/answered_time'
                       )
-      user_id = doc.at_xpath('/cdr/variables/user_name/text()').text
+      node = doc.at_xpath('/cdr/variables/user_name/text()')
+      user_id = node.text if node
     end
     
     mapping.each do |name, path|

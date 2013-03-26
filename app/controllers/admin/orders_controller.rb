@@ -221,11 +221,16 @@ class Admin::OrdersController < Admin::BaseController
                                 :data => discard_customer.attributes },
                               CustomerMergeTask, [CustomerMergeTask])
 
-      discard_path = DATA_ROOT+"/customer/#{discard_customer.uuid}"
-      if File.directory?(discard_path)
-        FileUtils.mv(Dir.glob(discard_path + '/*'),
-                     DATA_ROOT+"/customer/#{keep_customer.uuid}")
-        FileUtils.rmdir(discard_path)
+      ['', 'thumbs/'].each do |aspect|
+        discard_path = DATA_ROOT+"/customer/#{aspect}#{discard_customer.uuid}"
+        keep_path = DATA_ROOT+"/customer/#{aspect}#{keep_customer.uuid}"
+        if File.directory?(discard_path)
+          FileUtils.mkdir(keep_path) unless File.directory?(keep_path)
+          Dir.glob(discard_path + '/*').each do |path|
+            FileUtils.mv(path, keep_path+'/')
+          end
+          FileUtils.rmdir(discard_path)
+        end
       end
     end
     redirect_to contact_order_path(@order)
