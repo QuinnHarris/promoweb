@@ -6,8 +6,7 @@ xml.userinfo do
       @users.each_with_object({}) do |user, hash|
         hash.merge!("attendant.resourceList.#{idx}.address" => user.login,
 	           "attendant.resourceList.#{idx}.label" => "#{user.login.capitalize} #{user.extension}",
-		   "attendant.resourceList.#{idx}.proceedingIsRecipient" => '0',
-		   "attendant.resourceList.#{idx}.proceedingIsRecipient" => 'normal')
+		   "attendant.resourceList.#{idx}.proceedingIsRecipient" => '0')
         idx += 1
       end)
   end
