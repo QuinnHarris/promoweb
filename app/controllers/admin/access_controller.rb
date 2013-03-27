@@ -52,13 +52,13 @@ class Admin::AccessController < Admin::BaseController
     calls = CallLog.where(:inbound => true).order('id DESC').limit(4).all
     
     @calls = calls.collect do |call_log|
-      number = call_log.caller_number.gsub(/^1/,'').to_i
+      number = call_log.caller_number.gsub(/^1/,'').gsub(/[^0-9]/, '').to_i
       customer = Customer.where('phone_numbers.number' => number)
                          .includes(:phone_numbers).order('customers.id DESC').first
 
       next [call_log, [customer]] if customer    
 
-      /^1?(\d{3})/ === call_log.caller_number
+      /^\+?1?(\d{3})/ === call_log.caller_number
       prefix = $1.to_i
       access = PageAccess.where("page_accesses.created_at > ?", Time.now - 15.days)
         .where("page_accesses.controller = 'products' AND action = 'show'")
