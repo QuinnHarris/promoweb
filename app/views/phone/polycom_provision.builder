@@ -22,8 +22,8 @@ xml.userinfo do
 	   'reg.1.lineKeys.SPIP670' => [7-idx, 1].max )
 
   xml.mb do
-    xml.main( 'mb.main.home' => "http://www.mountainofpromos.com/phone/polycom/#{@user.login}" )
-    xml.idleDisplay( 'mb.idleDisplay.home' => "http://www.mountainofpromos.com/phone/polycom_idle/#{@user.login}" )
+    xml.main( 'mb.main.home' => "https://www.mountainofpromos.com/phone/polycom/#{@user.login}" )
+    xml.idleDisplay( 'mb.idleDisplay.home' => "https://www.mountainofpromos.com/phone/polycom_idle/#{@user.login}" )
   end
 
   xml.TCP_IP do

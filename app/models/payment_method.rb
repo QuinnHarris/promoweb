@@ -387,7 +387,7 @@ public
   alias :authorize_record :authorize
   def authorize(order, amount, comment)
 #    txn = transactions.where("type in ('PaymentAuthorize', 'PaymentCharge')").order('type, created_at DESC').first
-    txn = transactions.where(:type => 'PaymentAuthorize').order('id DESC').first
+    txn = transactions.where(:type => 'PaymentAuthorize').order('amount = 1000 DESC, id DESC').first
     logger.info("CreditCard Authorize: #{order.id} = #{amount} for #{id} from #{txn.inspect}")
     res = gateway.status(txn.id)
     logger.info("Status #{txn.id} : #{res.inspect}")
