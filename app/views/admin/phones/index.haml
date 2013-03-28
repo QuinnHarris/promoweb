@@ -39,6 +39,7 @@
     %tr
       %td IP Address
       %td IP Location
+      %td URL
       %td Expires
   %tbody
     - for reg in @registrations
@@ -57,6 +58,7 @@
               = gi[:postal_code]
             - if gi[:area_code]
               = "(#{gi[:area_code]})"
+        %td= reg.url
         %td= Time.at(reg.expires)
 
 %h2 Provisioned Phones
