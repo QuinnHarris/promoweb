@@ -392,6 +392,10 @@ public
     res = gateway.status(txn.id)
     logger.info("Status #{txn.id} : #{res.inspect}")
     transaction = super(order, amount, comment)
+    unless res.params["TransactionID"]
+      apply_error!(transaction, res)
+      return
+    end
     response = gateway.authorize_additional(amount, res.params["TransactionID"], #txn.number,
                                             gateway_options(order, transaction)
                                               .merge(:order_id => transaction.id))

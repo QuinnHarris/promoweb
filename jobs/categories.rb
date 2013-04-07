@@ -779,7 +779,12 @@ private
       [match('name', 'nike'),
        sup('Norwood', cat('GOLF', 'NIKE')) ] ],
      ['Built®',
-      [sup('Prime Line', cat('BUILT')) ]]
+      [sup('Prime Line', cat('BUILT')) ]],
+     ['contigo®',
+      [sup('ETS Express Inc', cat('contigo')) ]],
+     ['h2go®',
+      [sup('ETS Express Inc', cat('h2go bottles')) ]],
+
     ] ],
 
  ['Computer Accessories',
@@ -1359,7 +1364,8 @@ private
        cat('Executive Drinkware') ),
    sup('Sweda',
        cat('Drinkware', 'Water Bottles'),
-       cat('Drinkware', 'Water Bottles (Plastic)') )
+       cat('Drinkware', 'Water Bottles (Plastic)') ),
+   sup('ETS Express Inc')
   ],[
      ['Aluminum Bottles',
       [match(%w(name description material), 'aluminum', 1),
@@ -1367,9 +1373,13 @@ private
            cat('Drinkware', 'Aluminum Bottles'),
            cat('Drinkware', 'Aluminum Sport Bottles')),
        sup('Lanco',
-           cat('Drinkware', 'Metal Bottles') ) ]],
-     ['Stainless Bottles', # Should this be vacuum tumbers?
+           cat('Drinkware', 'Metal Bottles') ),
+       sup('ETS Express Inc',
+           cat('aluminum') ),
+      ]],
+     ['Stainless Steel Bottles', # Should this be vacuum tumbers?
       [sup('Leeds', cat('Drinkware', 'Stainless Sport Bottles')),
+       sup('ETS Express Inc', cat('steel') )
       ]],
      ['Vacuum Tumblers',
       [sup('Sweda', cat('Drinkware', 'Vacuum Bottles') ),
@@ -1407,6 +1417,7 @@ private
        sup('Leeds', cat('Drinkware', 'Ceramic') ),
        sup('Bullet Line', cat('Drinkware', 'Ceramics') ),
        sup('Hit Promotional Products', cat('Ceramics') ),
+       sup('ETS Express Inc', cat('ceramic') ),
       ]],
      ['Drinkware Sets',
       [sup('Leeds', cat('Drinkware', 'Drinkware Sets') ),
@@ -1454,13 +1465,17 @@ private
                match('description', 'bottle') ) ),
        sup('Bullet Line', cat('Drinkware', 'Sports Bottles') ),
        sup('Starline', cat('Drinkware', 'Water Bottles') ),
+       sup('ETS Express Inc', cat('h2go bottles') ),
        exclude(match('name', 'holder') )
       ]],
-
+     ['Plastic Drinkware',
+      [match(%w(name material), 'plastic', 1),
+       sup('ETS Express Inc', cat('plastic') ) ] ],
      ['Glassware',
       [sup('Norwood', cat('DRINK', 'GLASS') ),
        sup('Leeds', cat('Drinkware', 'Glassware') ),
-       sup('Starline', cat('Drinkware', 'Glassware') )
+       sup('Starline', cat('Drinkware', 'Glassware') ),
+       sup('ETS Express Inc', cat('glass') ),
       ] ],
      ['Specialty Drinkware',
       [sup('Bullet Line', cat('Drinkware', 'Specialty Drinkware'))
@@ -2501,7 +2516,7 @@ private
            cat('Dog Collars & Leashes'),
            cat('Lanyards', 'Dog Leashes Lanyards') ) ] ],
      ['Pet Accessories',
-      [match('name', /Pets?($|\s)/i), ]],
+      [match('name', /(^|\s)Pets?($|\s)/i), ]],
      ['Light Ups',
       [sup('High Caliber Line', cat('Light Up') )
       ],[

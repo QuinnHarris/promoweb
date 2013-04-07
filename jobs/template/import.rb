@@ -35,6 +35,7 @@ class NewSupplier < GenericImport
       pd.lead_time.normal_min = nil # Optional - integer.  The minimum time required to produce this product
       pd.lead_time.normal_max = nil # Optional - integer.  The maximum time required to produce this product
       pd.lead_time.rush = nil       # Optional - integer.  The time required for a rush order, usually less than normal_min
+      pd.lead_time.rush_charge = nil 
 
       pd.package.units = nil   # Optional - integer.  Number of products in a single package
       pd.package.weight = nil  # Optional - float.  Weight in pounds (lbs) of a single package

@@ -707,11 +707,13 @@ public
 
         return
       end
-      
-      task_complete({ :data => { :id => transaction.id } },
-                    PaymentInfoOrderTask, nil, false)
-      flash[:notice] = "Successfully added Credit Card"
     end
+
+    # Keep out of transaction so fail doesn't cause successful card add to not commit
+    task_complete({ :data => { :id => transaction.id } },
+                  PaymentInfoOrderTask, nil, false)
+    flash[:notice] = "Successfully added Credit Card"
+    
     
     redirect_to :action => :payment, :order_id => @order, :task => 'PaymentInfoOrder'
   end

@@ -185,7 +185,8 @@ module PropertyObject
           i = instance_variable_get("@#{name}")
 #        end
         return i if i || options[:nil]
-        instance_variable_set("@#{name}", Array === type ? Array.new : type.new)
+        
+        instance_variable_set("@#{name}", type.respond_to?(:new) ? type.new : type.class.new)
       end
     end
   end
@@ -511,6 +512,14 @@ class VariantDesc
   end
 end
 
+class TagsDesc < Set
+  @@tags = Tag.select(:name).uniq.collect { |t| t.name }
+
+  def add(o)
+    raise PropertyError, "got #{p} expected in #{@@tags.inspect}" unless @@tags.include?(o)
+  end
+end
+
 class ProductDesc
   include PropertyObject
 
@@ -539,13 +548,8 @@ class ProductDesc
   property :data, Hash, :nil => true
   property :pricing_params, Hash, :nil => true
 
-  @@tags = Tag.select(:name).uniq.collect { |t| t.name }
-  property :tags, Array[String], :warn => true do |array|
-    array.each do |s|
-      raise PropertyError, "got #{s} expected in #{@@tags.inspect}" unless @@tags.include?(s)
-    end
-    array
-  end
+
+  property :tags, TagsDesc, :warn => true
 
   property :supplier_categories, Array do |v|
     v.each do |e|

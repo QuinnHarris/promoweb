@@ -639,25 +639,40 @@ class Product < ActiveRecord::Base
     end.compact  
     
     @common_properties.each { |p| properties.delete(p) }
+
+    # Transform property to array representation
+    properties = properties.each_with_object({}) do |(prop, list), hash|
+      hash[[prop.name, prop.value]] = list
+    end
+    properties.default = []
     
-    variant_hash = {}
-    variant_hash.default = []
-    properties.each do |prop, var|
-      if prop.name == 'swatch' # swatch is not orthoginal
-        var.each { |v| variant_hash[[v]] += [prop] }
-      else
-        variant_hash[var] += [prop]
+    property_map = {}
+    property_map.default = []
+    properties.keys.each { |name, value| property_map[name] += [value] }
+
+    # Find all pairs of properties that don't have a variant
+    merge_combos = property_map.keys.combination(2).select do |a_name, b_name|
+      property_map[a_name].find do |a_value|
+        property_map[b_name].find do |b_value|
+          next true if (properties[[a_name, a_value]] & properties[[b_name, b_value]]).empty?
+        end
       end
     end
-    
-    used = []
-    @property_groups = variant_hash.collect do |var, props|
-      props.collect { |p| p.name }.uniq.sort
-    end.uniq.sort_by { |e| e.size }.collect do |names|
-      ret = names.delete_if { |n| used.index(n) }
-      used += ret
-      ret.empty? ? nil : ret
-    end.compact.sort
+
+    # Merge common pairs
+    merge_groups = []
+    until merge_combos.empty?
+      a_pair = merge_combos.shift
+      m = merge_combos.select { |b_pair| !(a_pair & b_pair).empty? }
+      if m.empty?
+        merge_groups << a_pair
+      else
+        merge_combos -= m
+        merge_combos.unshift (a_pair + m.flatten).uniq
+      end
+    end
+
+    @property_groups = (property_map.keys - merge_groups.flatten).collect { |n| [n] } + merge_groups
   end
   
   def common_properties
@@ -786,7 +801,11 @@ class Product < ActiveRecord::Base
         pi = product_images.create(:supplier_ref => img.id,
                                    :image => img.get,
                                    :tag => img.tag)
-        pi.image.reprocess!
+        begin
+          pi.image.reprocess!
+        rescue Errno::ENOENT => e
+          raise "Most likely #{img.path} is bad"
+        end
         pi.image.save
       end
     end

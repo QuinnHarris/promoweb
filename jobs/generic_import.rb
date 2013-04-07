@@ -904,7 +904,7 @@ class GenericImport
         puts boom.backtrace
         @invalid_prods['Other'] = (@invalid_prods[boom.to_s] || []) + [pd ? pd.supplier_num : 'unknown']
         @invalid_values['Other'] ||= Set.new
-        @invalid_values['Other'] << boom.value
+        @invalid_values['Other'] << boom.value if boom.respond_to?(:value)
       end
     end
   end
