@@ -234,7 +234,7 @@ class PhoneController < ActionController::Base
     system_answer = doc.at_xpath("(/cdr/app_log/application[@app_name='answer' or @app_name='bridge'])[last()]")
     system_answer = (system_answer['app_name'] == 'answer') if system_answer
     logger.info("System Answer: #{system_answer.inspect}")
-    logger.info("Hang: #{doc.at_xpath('/cdr/variables/sip_hangup_disposition/text()').text}")
+    logger.info("Hang: #{doc.at_xpath('/cdr/variables/sip_hangup_disposition/text()').to_s}")
 
     user_id = nil
     mapping = { 'create_time' => 'callflow[last()]/times/created_time' }
