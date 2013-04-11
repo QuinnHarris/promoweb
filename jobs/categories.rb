@@ -939,7 +939,7 @@ private
        cat('GOLF', 'DESKFUN'),
        cat('OFFICE', 'DESKACC')),
    sup('Bullet Line', cat('Desktop', 'Desktop Accessories') ),
-   sup('Hit Promotional Products',cat('Desk, Office & Electronics') ),
+   sup('Hit Promotional Products',cat('Desk Accessories') ),
    sup('Logomark', cat('Desk and Office Accessories') ),
    sup('Starline', cat('Business', 'Convention/Desktop') )
   ],[
@@ -1418,6 +1418,7 @@ private
        sup('Bullet Line', cat('Drinkware', 'Ceramics') ),
        sup('Hit Promotional Products', cat('Ceramics') ),
        sup('ETS Express Inc', cat('ceramic') ),
+       sup('Hit Promotional Products', cat('Ceramic Mugs') )
       ]],
      ['Drinkware Sets',
       [sup('Leeds', cat('Drinkware', 'Drinkware Sets') ),
@@ -1563,7 +1564,7 @@ private
        sup('Lanco', cat('Toys & Games', 'Hacki Balls') ),
        sup('Hit Promotional Products',
            all(cat('Leisure'),
-               match('name', %w(ball disk disc rocket rope) ) ) ), ]],
+               match('name', %w(ball disk disc rocket rope spin) ) ) ), ]],
      ['Mind Games',
       [match('name', %w(suduko sudoku brain perplex mind))
       ],[
