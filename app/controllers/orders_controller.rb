@@ -670,6 +670,8 @@ public
     return unless @credit_card.valid?
 
     logger.info("Card Valid")
+
+    transaction = nil
       
     PaymentMethod.transaction do
       @address = Address.create(params[:address]) if @options.different

@@ -98,6 +98,7 @@ module QbwcHelper
             vp = oiv.variant.properties_unique
             string = vp.delete('color') || ''
             string << " - " + vp.collect { |name, value| "#{name.capitalize}: #{value}" }.join(', ') unless vp.empty?
+            string = string.encode('ASCII', :invalid => :replace, :undef => :replace, :replace => '')
             xml.Other1 string[0..24] # Item Color
           end
           xml.Other2 oiv.imprint_colors[0..28] if oiv.respond_to?(:imprint_colors)	# Imprint Color
