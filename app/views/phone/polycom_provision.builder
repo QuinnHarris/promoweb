@@ -16,7 +16,7 @@ xml.userinfo do
 	   'reg.1.label' => "#{@user.login.capitalize} #{@user.extension}",
 	   'reg.1.auth.userId' => @user.login,
 	   'reg.1.auth.password' => @user.phone_password,
- 	   'reg.1.srtp.offer' => 1,
+# 	   'reg.1.srtp.offer' => 1,
 	   'reg.1.lineKeys' => [5-idx, 1].max,
 	   'reg.1.lineKeys.SPIP650' => [7-idx, 1].max,
 	   'reg.1.lineKeys.SPIP670' => [7-idx, 1].max )
