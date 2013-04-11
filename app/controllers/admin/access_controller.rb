@@ -52,7 +52,7 @@ class Admin::AccessController < Admin::BaseController
     calls = CallLog.where(:inbound => true).order('id DESC').limit(4).all
     
     @calls = calls.collect do |call_log|
-      number = call_log.caller_number.gsub(/^1/,'').gsub(/[^0-9]/, '').to_i
+      number = call_log.caller_number.gsub(/[^0-9]/, '').gsub(/^1/,'').to_i
       customer = Customer.where('phone_numbers.number' => number)
                          .includes(:phone_numbers).order('customers.id DESC').first
 

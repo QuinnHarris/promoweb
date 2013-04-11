@@ -108,7 +108,6 @@ class HitPromoCSV < GenericImport
         pd.supplier_num = supplier_num
         pd.name = common['product_name']
         pd.supplier_categories = [[common['category'].strip]]
-        pd.tags = []
 
         pd.description =
           (common['description'] ? common['description'].split(/\s*\|\s*/) : []) +
