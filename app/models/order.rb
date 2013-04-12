@@ -91,9 +91,10 @@ class Order < ActiveRecord::Base
   end
 
   def save_invoice!(comment = nil)
+    # Save price first or we have null invoice entries BAD (most likely we will have an invoice if we run this)
+    save_price!
     invoice = invoices.last
     if invoice and invoice.new_record?
-      save_price!
       invoice.comment = comment
       invoice.save!
     end
