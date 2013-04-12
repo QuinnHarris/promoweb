@@ -221,7 +221,7 @@ class Admin::OrdersController < Admin::BaseController
                                 :data => discard_customer.attributes },
                               CustomerMergeTask, [CustomerMergeTask])
 
-      ['', 'thumbs/'].each do |aspect|
+      ['', 'thumb/'].each do |aspect|
         discard_path = DATA_ROOT+"/customer/#{aspect}#{discard_customer.uuid}"
         keep_path = DATA_ROOT+"/customer/#{aspect}#{keep_customer.uuid}"
         if File.directory?(discard_path)
