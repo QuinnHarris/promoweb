@@ -83,6 +83,8 @@ gem 'spreadsheet' # Spreadsheet for Leeds, Bullet
 gem 'savon'
 gem 'rmagick'
 
+gem 'bitcoin-client'
+
 # Bundle gems for the local environment. Make sure to
 # put test-only gems in this group so their generators
 # and rake tasks are available in development mode:
@@ -91,5 +93,5 @@ group :development, :test do
 #   gem 'webrat'
 end
 
-# Onlye needed for product updates
+# Only needed for product updates
 gem 'net-ftp-list'

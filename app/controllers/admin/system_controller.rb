@@ -29,4 +29,12 @@ class Admin::SystemController < Admin::BaseController
   def other
 
   end
+
+  def bitcoind
+    secrets = YAML.load_file("#{Rails.root}/config/secrets")
+    bitsec = secrets['bitcoin']
+                             
+    @client = Bitcoin::Client.new(bitsec['user'], bitsec['password'])
+    
+  end
 end

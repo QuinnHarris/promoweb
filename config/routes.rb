@@ -116,7 +116,7 @@ Promoweb::Application.routes.draw do
       match "access/#{name}" => "access##{name}"
     end
 
-    %w(quickbooks_blocked quickbooks_set other).each do |name|
+    %w(quickbooks_blocked quickbooks_set other bitcoind).each do |name|
       match "system/#{name}" => "system##{name}"
     end
 

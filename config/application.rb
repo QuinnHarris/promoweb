@@ -116,3 +116,11 @@ class Date
     date
   end
 end
+
+
+# Extensions to bitcoin-client library
+class Bitcoin::Client
+  def getpeerinfo
+    @api.request 'getpeerinfo'
+  end
+end

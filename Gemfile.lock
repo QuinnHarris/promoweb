@@ -48,6 +48,8 @@ GEM
     arel (3.0.2)
     awesome_nested_set (2.1.6)
       activerecord (>= 3.0.0)
+    bitcoin-client (0.0.1)
+      rest-client (= 1.6.3)
     builder (3.0.4)
     chunky_png (1.2.8)
     cocaine (0.4.2)
@@ -155,6 +157,8 @@ GEM
     rdoc (3.12.2)
       json (~> 1.4)
     ref (1.0.4)
+    rest-client (1.6.3)
+      mime-types (>= 1.16)
     rghost (0.9)
     rmagick (2.13.2)
     ruby-ole (1.2.11.6)
@@ -217,6 +221,7 @@ DEPENDENCIES
   activemerchant
   acts_as_tree
   awesome_nested_set
+  bitcoin-client
   coffee-rails (~> 3.2.1)
   compass-rails
   dynamic_form

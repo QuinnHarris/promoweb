@@ -1,0 +1,47 @@
+%h1 Bitcoin Daemon Status
+
+%table
+  - for name, value in @client.getinfo
+    %tr
+      %th= name
+      %td= value
+
+%hr
+      
+%table
+  %thead
+    %td Address
+    %td Location
+    %td Version
+    %td Conn Time
+    %td In
+    %td Last Recv
+    %td Last Send
+    %td Start Height
+    %td Ban Score
+  %tbody
+    - for hash in @client.getpeerinfo
+      %tr
+        %td= hash['addr']
+        %td
+          - if gi = GEOIP.look_up(hash['addr'].split(':').first)
+            - if gi[:city]
+              = gi[:city].force_encoding("UTF-8")
+            - if gi[:region]
+              = gi[:region].force_encoding("UTF-8")
+            - if gi[:country_name]
+              , #{gi[:country_name].force_encoding("UTF-8")}
+        %td #{hash['subver']} (#{hash['version']})
+        %td
+          = Time.at(hash['conntime']).to_formatted_s(:db)
+          - if hash['releasetime'] != 0
+            \=> #{Time.at(hash['releasetime']).to_formatted_s(:db)}
+        %td= hash['inbound'] ? 'X' : ''
+        %td
+          - t = Time.at(hash['lastrecv'])
+          #{t.strftime('%H:%M:%S')} (#{(Time.now - t).to_i})
+        %td
+          - t = Time.at(hash['lastsend'])
+          #{t.strftime('%H:%M:%S')} (#{(Time.now - t).to_i})
+        %td= hash['startingheight']
+        %td= hash['banscore']

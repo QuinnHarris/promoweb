@@ -79,6 +79,7 @@
                       - if allowed?('Super')
                         != li_to 'Users', {:controller => '/admin/users', :action => 'index'}
                         != li_to 'Quickbooks', {:controller => '/admin/system', :action => 'quickbooks_blocked'}
+                        != li_to 'BitCoin', {:controller => '/admin/system', :action => 'bitcoind' }
                       != li_to 'Password', {:controller => '/admin/users', :action => :password }
                       != li_to 'Other', { :controller => '/admin/system', :action => :other }
                 - elsif @order
