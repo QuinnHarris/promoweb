@@ -8,11 +8,4 @@
       %td Products
       %td ID
   %tbody
-    - for first in @suppliers[nil]
-      - for supplier in ([first] + (@suppliers[first.id] || []))
-        %tr
-          %td!= ((supplier != first) ? '&nbsp;|- ' : '') + supplier['name']
-          %td= supplier.description
-          %td= supplier.products.count
-          %td
-            = link_to((@static ? 'View' : 'Edit'), edit_admin_supplier_path(supplier))
+    = render :partial => 'supplier', :collection => @suppliers[nil], :locals => { :level => 0 }
