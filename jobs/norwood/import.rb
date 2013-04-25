@@ -76,23 +76,23 @@ class NorwoodAll < GenericImport
   def initialize
     @year = (Date.today + 7).year
     @colors = %w(Black White 186 202 208 205 211 1345 172 Process\ Yellow 116 327 316 355 341 Process\ Blue 293 Reflex\ Blue 281 2587 1545 424 872 876 877)
-    @list =
-      [['AUTO', 'Auto'], # 55066
-       ['AWARD', 'Award'], # 55066
-       ['BAG', 'Bag'], #55066,78227
-       ['CALENDAR', 'TRIUMPH', %w(Reflex\ Blue Process\ Blue 032 185 193 431 208 281 354 349 145 469 109 Process\ Yellow 165)], # 56085
-       ['DRINK', 'Drinkware'], # 55066,78227,15218,90045 ...
-##       ['FUN', 'Fun'],
-       ['GOLF', 'Golf'],
-       ['GV', 'GOODVALU'],
-       ['HEALTH', 'Health'],
-       ['HOUSEWARES', 'Housewares'],
-       ['MEETING', 'Meeting'],
-       ['OFFICE', 'Office'],
-       ['OUTDOOR', 'Outdoor'],
-       ['TECHNOLOGY', 'Technology'],
-       ['TRAVEL', 'Travel'],
-       ['WRITE', 'Writing', @colors + %w(569 7468 7433)],
+    @list = [
+             ['AUTO', 'Auto'], # 55066
+             ['AWARD', 'Award'], # 55066
+             ['BAG', 'Bag'], #55066,78227
+             ['CALENDAR', 'TRIUMPH', %w(Reflex\ Blue Process\ Blue 032 185 193 431 208 281 354 349 145 469 109 Process\ Yellow 165)], # 56085
+             ['DRINK', 'Drinkware'], # 55066,78227,15218,90045 ...
+             ##       ['FUN', 'Fun'],
+             ['GOLF', 'Golf'],
+             ['GV', 'GOODVALU'],
+             ['HEALTH', 'Health'],
+             ['HOUSEWARES', 'Housewares'],
+             ['MEETING', 'Meeting'],
+             ['OFFICE', 'Office'],
+             ['OUTDOOR', 'Outdoor'],
+             ['TECHNOLOGY', 'Technology'],
+             ['TRAVEL', 'Travel'],
+             ['WRITE', 'Writing', @colors + %w(569 7468 7433)],
       ]
     super 'Norwood'
   end
@@ -133,11 +133,12 @@ class NorwoodAll < GenericImport
       when /\/([A-Z]{2}?\d{4,5})(?:_14})?(?:\/|$)/
         product = $1
         if /^([A-Z]{2}?\d{4,5})(?:_(.+))?\.jpg$/i === file && $1 == product
+          var_id = $2
           tag = case path
             when /blank/i; 'blank'
             when /months/i; 'month'
           end
-          [id, product, $2, tag]
+          [id, product, var_id, tag]
         end
       when /\/(\d{4,5})(.+lifestyle.*)\.jpg$/i
         [id, $1, $2, 'extra']

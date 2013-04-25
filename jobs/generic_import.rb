@@ -343,13 +343,18 @@ def find_duplicate_images(images, id = nil)
       next
     end
     
-    if (ref = dup_hash[size]) and
-        match = ref.find { |r| FileUtils.compare_file(r.path, image.path) }
-      replace_images[image] = match
-      puts "  Duplicate Image: #{id} #{size} #{ref.inspect} #{image.inspect}\n"
-    else
-      dup_hash[size] += [image]
+    match = nil
+    if ref = dup_hash[size]
+      if match = ref.find { |r| File.stat(r.path) == File.stat(image.path) }
+        puts "  Existing Duplicate Image: #{id} #{match.path}\n"
+      elsif match = ref.find { |r| FileUtils.compare_file(r.path, image.path) }
+        puts "  Duplicate Image: #{id} #{size} #{ref.inspect} #{image.inspect}\n"
+        FileUtils.ln(match.path, image.path, :force => true)
+      end
+      replace_images[image] = match if match
     end
+
+    dup_hash[size] += [image] unless match
   end
 
   replace_images
@@ -1140,6 +1145,27 @@ private
     end.join(' ')
   end
 
+  def clean_ftp_images(image_list)
+    puts "Clean Images:"
+    keep_files = image_list.values.collect { |e| e.collect { |node, var_id| node.path } }.flatten
+
+    common = keep_files.first.split('/').compact
+    keep_files[1..-1].each do |path|
+      common = common[0...path.split('/').zip(common).index { |a, b| a != b}]
+    end
+
+    common = common.join('/')
+    puts "  #{keep_files.length} valid files all in #{common}"
+
+    all = Dir["#{common}/**/*.*"]
+
+    delete = all - keep_files
+    #raise "Bad Enumeration" if delete.length != all.length - keep_files.length
+    puts "  #{delete.length} to delete = #{all.length} - #{keep_files.length}"
+    
+    FileUtils.rm(delete)
+  end
+
   # Used by Leeds, PrimeLine and Norwood
   def get_ftp_images(server, paths = nil, recursive = nil)
 #    cache_marshal("#{@supplier_record.name}_imagelist") do
@@ -1187,32 +1213,13 @@ private
       end
 
       products.default = nil
-      
+
+      clean_ftp_images(products) if ARGV.include?('clean')
+
       return products
     ensure
       cache_write(directory_file, @directory)
     end
-  end
-
-  def clean_images
-    puts "Clean Images:"
-    keep_files = @image_list.values.collect { |node| node.get_path }
-
-    common = keep_files.first.split('/').compact
-    keep_files[1..-1].each do |path|
-      common = common[0...path.split('/').zip(common).index { |a, b| a != b}]
-    end
-
-    common = '/' + common.join('/')
-    puts "  #{keep_files.length} valid files all in #{common}"
-
-    all = Dir["#{common}/**/*"]
-
-    delete = all - keep_files
-    raise "Bad Enumeration" if deleted.length != all.length - keep_files.length
-    puts "  #{delete.length} to delete"
-    
-    FileUtils.rm(delete)
   end
 
   def match_colors(colors, options = {}, supplier_num = @supplier_num || @product_description.supplier_num)
