@@ -15,8 +15,8 @@
 
 - if @price_lock
   .admin
-    The order has been Acknowledged so customer pricing can't be changed.
-    = link_to "UNLOCK", { :unlock => true }, { :confirm => "Unlock this page to modify items even though the order has been acknowledged!!!" }
+    The order has been Acknowledged so customer pricing cant be changed.
+    = link_to 'UNLOCK', { :unlock => true }, { :confirm => 'Unlock this page to modify items even though the order has been acknowledged!!!' }
 .invoice{ :id => "order-#{@order.id}" }
   - for supplier, purchase_list in @suppliers.to_a.sort_by { |s| s.first.id }
     .supplier

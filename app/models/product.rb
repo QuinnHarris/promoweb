@@ -540,7 +540,7 @@ class Product < ActiveRecord::Base
   
   has_many :page_products
 
-  has_many :product_images, :order => 'id'
+  has_many :product_images, :order => 'tag DESC, id'
  
   composed_of :price_min_cache, :class_name => 'Money', :mapping => %w(price_min_cache units), :allow_nil => true
   composed_of :price_comp_cache, :class_name => 'Money', :mapping => %w(price_comp_cache units), :allow_nil => true
@@ -778,6 +778,10 @@ class Product < ActiveRecord::Base
         sign + ' ' + columns.zip(widths).collect { |column, width| rec[column].to_s.ljust(width) }.join(' ')
       end
     end.flatten.compact.join("\n   ") + "\n"
+  end
+
+  def valid_variant_images?
+    variants.includes(:product_images).where('product_images.id IS NULL').empty?
   end
 
   def set_images(images)

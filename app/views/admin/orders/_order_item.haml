@@ -16,12 +16,12 @@
           - unless item.purchase_id
             = check_box :item_po, item.id, { :checked => true }
             Include in PO
-          - if item.sample_requested
-            .late
-              SAMPLE REQ
-          - elsif item.task_completed?(ArtExcludeItemTask)
-            .late
-              BLANK ITEM
+          - notify_list = []
+          - notify_list << 'SAMPLE REQ' if item.sample_requested
+          - notify_list << 'BLANK ITEM' if item.task_completed?(ArtExcludeItemTask)
+          - notify_list << 'CHECK IMAGE' unless item.product.valid_variant_images?
+          - unless notify_list.empty?
+            .late= notify_list.join(', ')
         %th.head{ :colspan => "3" } Price (Invoice)
         %th.admin{ :colspan => "3" } Cost (Purchase Order)
         - if item.our_notes.blank?
@@ -47,7 +47,7 @@
       %tr
         %td{ :colspan => 10 }
 
-          .block.thumb
+          .block.thumb{ :class => item.product.valid_variant_images? ? nil : 'notice' }
             - if item.active_images.first
               %a{ :href => url_for_product(item.product) }
                 = image_tag(item.active_images.first.image.url(:thumb), :alt => "#{item.product.name} Thumbnail")
