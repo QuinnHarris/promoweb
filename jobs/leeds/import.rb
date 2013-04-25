@@ -34,14 +34,12 @@ class PolyXLS < GenericImport
 
     # Remove jpg if tif equivelent
     @image_list.each do |num, list|
-      keeps = list.collect do |path, file, var_id|
-        name, ext = file.split('.')
-        ext.downcase == 'tif' ? name.downcase : nil
+      keeps = list.collect do |image_node, var_id|
+        image_node.extname.downcase == 'tif' ? image_node.id.downcase : nil
       end.compact
-      list.delete_if do |path, file, var_id|
-        name, ext = file.split('.')
-        next false unless ext.downcase == 'jpg'
-        keeps.include?(name.downcase)
+      list.delete_if do |image_node, var_id|
+        next false unless image_node.extname.downcase == 'jpg'
+        keeps.include?(image_node.id.downcase)
       end
     end
 
@@ -98,7 +96,6 @@ class PolyXLS < GenericImport
           pd.lead_time.rush = 1
           pd.supplier_categories = [[row['Category'], row['SubCategory']]]
           
-          pd.tags = []
           if row.header?('Feature_1')
             # new format
             (1..5).collect { |i| row["Feature_#{i}"] }.compact.each do |feature|

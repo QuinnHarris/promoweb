@@ -893,7 +893,7 @@ private
                match(%w(name description), 'USB'))) ]],
      ['USB Flash Drives',
       [match('name', %w(flash memory mb gb), 1),
-       sup('Leeds', cat('Memory', 'Flash Drives') ),
+       sup('Leeds', cat('Memory') ),
        sup('Gemline', cat('Gifts', 'USB Drives') ),
        sup('Prime Line', cat('USB Memory') ),
        sup('Logomark', cat('USB Drives') ),
@@ -2361,7 +2361,7 @@ private
       ]],
      ['Pens',
       [match('name', /pens?($|\s)/i, 1),
-       sup('Leeds', cat('Pens-Plastic', 'Value Pens & Highlighters') ),
+       sup('Leeds', cat('Plastic Pens', 'Value Pens And Highlighters') ),
        sup('Gemline',
            ['Pens $3-$5', 'Pens $5-$10', 'Pens 10+', 'Pens under $3'].collect do |name|
              cat('Writing Instruments', name)
@@ -2416,7 +2416,7 @@ private
                cat('Pen Sets'),
                cat('Rollerball Ballpoint Sets') )]],
          ['Scripto Plastic Pens',
-          [sup('Leeds', cat('Pens-Plastic', 'Scripto') ) ]],
+          [sup('Leeds', cat('Plastic Pens', 'Scripto Plastic Pens') ) ]],
 
          ['Click Pens',
           [match('name', 'click', 1),

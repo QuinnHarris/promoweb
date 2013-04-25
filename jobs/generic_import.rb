@@ -195,7 +195,11 @@ end
 
 module FileCommon
   def filename
-    path.split('/').last
+    File.basename(path)
+  end
+
+  def extname
+    File.extname(path)
   end
 
   def get(time = nil)
@@ -1171,7 +1175,7 @@ private
             img_id, prod_id, var_id, tag = yield path, entry.basename
             url = "ftp://#{host}/#{path && (path+'/')}#{entry.basename}"
             if prod_id
-              products[prod_id] += [[img_id, url, var_id, tag]]
+              products[prod_id] += [[ImageNodeFetch.new(img_id, url, tag), var_id]]
             else
               puts "    Unknown: #{url}"
             end          
@@ -1189,10 +1193,29 @@ private
     end
   end
 
-  def match_colors(colors, options = {}, supplier_num = @supplier_num || @product_description.supplier_num)
-    image_list = (@image_list[supplier_num] || []).collect do |image_id, url, suffix, tag|
-      [ImageNodeFetch.new(image_id, url, tag), (suffix || '').split('_').first || '']
+  def clean_images
+    puts "Clean Images:"
+    keep_files = @image_list.values.collect { |node| node.get_path }
+
+    common = keep_files.first.split('/').compact
+    keep_files[1..-1].each do |path|
+      common = common[0...path.split('/').zip(common).index { |a, b| a != b}]
     end
+
+    common = '/' + common.join('/')
+    puts "  #{keep_files.length} valid files all in #{common}"
+
+    all = Dir["#{common}/**/*"]
+
+    delete = all - keep_files
+    raise "Bad Enumeration" if deleted.length != all.length - keep_files.length
+    puts "  #{delete.length} to delete"
+    
+    FileUtils.rm(delete)
+  end
+
+  def match_colors(colors, options = {}, supplier_num = @supplier_num || @product_description.supplier_num)
+    image_list = (@image_list[supplier_num] || [])
 
     match_image_colors(image_list, colors, options, supplier_num)
   end
@@ -1230,7 +1253,7 @@ private
     # Exact Suffix Match then remove color from furthur match
     remove_matches = []
     image_list.delete_if do |image, suffix|
-      if suffix.empty?
+      if suffix.blank?
         image_map[nil] += [image]
         next true
       end

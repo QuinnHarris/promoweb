@@ -557,6 +557,7 @@ class ProductDesc
       raise PropertyError, "expected Array of non empty Array" if e.empty?
       e.each do |s|
         raise PropertyError, "expected Array of Array of String got #{v.inspect}" unless s.is_a?(String)
+        s.strip!
       end
     end
     v

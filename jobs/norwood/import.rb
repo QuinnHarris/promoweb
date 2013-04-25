@@ -77,22 +77,22 @@ class NorwoodAll < GenericImport
     @year = (Date.today + 7).year
     @colors = %w(Black White 186 202 208 205 211 1345 172 Process\ Yellow 116 327 316 355 341 Process\ Blue 293 Reflex\ Blue 281 2587 1545 424 872 876 877)
     @list =
-      [['AUTO', 'Barlow'],
-       ['AWARD', 'Jaffa'],
-       ['BAG', 'AirTex'],
-       ['CALENDAR', 'TRIUMPH', %w(Reflex\ Blue Process\ Blue 032 185 193 431 208 281 354 349 145 469 109 Process\ Yellow 165)],
-       ['DRINK', 'RCC'],
-       ['GOLF', 'TeeOff'],
+      [['AUTO', 'Auto'], # 55066
+       ['AWARD', 'Award'], # 55066
+       ['BAG', 'Bag'], #55066,78227
+       ['CALENDAR', 'TRIUMPH', %w(Reflex\ Blue Process\ Blue 032 185 193 431 208 281 354 349 145 469 109 Process\ Yellow 165)], # 56085
+       ['DRINK', 'Drinkware'], # 55066,78227,15218,90045 ...
+##       ['FUN', 'Fun'],
+       ['GOLF', 'Golf'],
        ['GV', 'GOODVALU'],
-       ['HEALTH', 'Pillow'],
-       ['OFFICE', 'EOL'],
-       ['WRITE', 'Souvenir', @colors + %w(569 7468 7433)],
-#       ['FUN', 'Fun'],
+       ['HEALTH', 'Health'],
        ['HOUSEWARES', 'Housewares'],
        ['MEETING', 'Meeting'],
-       ['TECHNOLOGY', 'Technology'],
+       ['OFFICE', 'Office'],
        ['OUTDOOR', 'Outdoor'],
+       ['TECHNOLOGY', 'Technology'],
        ['TRAVEL', 'Travel'],
+       ['WRITE', 'Writing', @colors + %w(569 7468 7433)],
       ]
     super 'Norwood'
   end
@@ -117,21 +117,30 @@ class NorwoodAll < GenericImport
       2012_NPS3_Hi-Res_Images
       2013_Hardgoods_Hi_Res_Imprint_Images
       2013_Hardgoods_Hi_Res_Blank_Images
-      2013_Lifestyle_Images/2013_High_Res_Images
+      2013_Lifestyle_Images/2013_Lifestyle_HIgh_Res_Images
       2014_Calendars_Hi_Res_Imprint_Images
       2014_Calendars_Hi_Res_Blank_Images ).collect { |p| "Norwood Product Images/#{p}" }
 
-    @image_list = cache_marshal('Norwood_imagelist') do
-      get_ftp_images({ :server => 'library.norwood.com',
-                       :login => 'images', :password => 'norwood' },
-                     directory_list, /Hi[-_]Res/i) do |path, file|
-        next nil if file.include?('\\') # kludge to deal with \ in file name causing bad URI
-        if /\/([A-Z]{2}?\d{4,5})(?:_13)?(?:\/|$)/ === path
-          product = $1
-          if /^([A-Z]{2}?\d{4,5})(?:_(.+))?\.jpg$/i === file && $1 == product
-            [path.split('/')[1..-1].join('/')+'/'+file, product, $2, (/blank/i === path) ? 'blank' : nil]
+    #    @image_list = cache_marshal('Norwood_imagelist') do
+    @image_list = get_ftp_images({ :server => 'library.norwood.com',
+                                   :login => 'images', :password => 'norwood' },
+                                 directory_list, /Hi[-_]Res/i) do |path, file|
+      next nil if file.include?('\\') # kludge to deal with \ in file name causing bad URI
+      
+      id = path.split('/')[1..-1].join('/')+'/'+file
+      case path
+      # _14 is year for calendars
+      when /\/([A-Z]{2}?\d{4,5})(?:_14})?(?:\/|$)/
+        product = $1
+        if /^([A-Z]{2}?\d{4,5})(?:_(.+))?\.jpg$/i === file && $1 == product
+          tag = case path
+            when /blank/i; 'blank'
+            when /months/i; 'month'
           end
+          [id, product, $2, tag]
         end
+      when /\/(\d{4,5})(.+lifestyle.*)\.jpg$/i
+        [id, $1, $2, 'extra']
       end
     end
   end
@@ -211,7 +220,7 @@ class NorwoodCSV < GenericImport
         end
         
         if row['Country of Origin'] == 'United States'
-          pd.tags = %w(MadeInUSA)
+          pd.tags << 'MadeInUSA'
         end
 
         # Package
@@ -314,7 +323,7 @@ class NorwoodCSV < GenericImport
         end
         
 
-        color_image_map, color_num_map = match_colors(colors)
+        color_image_map, color_num_map = match_colors(colors, :prune_colors => true)
 
         if color_image_map.empty?
           pd.images = [ImageNodeFetch.new("#{@supplier_num}_Z.jpg",
