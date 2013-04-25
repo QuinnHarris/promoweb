@@ -739,10 +739,11 @@ class GenericImport
     init_time = Time.now
     print "Applying Category Transform: "
     trans = CategoryTransform.new [@supplier_name].flatten.first
-    print "APPLY(#{trans.rules_count}) "
+    puts "APPLY(#{trans.rules_count}) "
     @product_list.each do |pd|
       trans.apply_rules(pd)
     end
+    trans.status
     puts "DONE in #{Time.now - init_time}s"
   end
   

@@ -7,6 +7,10 @@ class CategoryTransform
   end
 
   def apply_rules(pd)
+    pd.supplier_categories.each do |cat|
+      @source_categories << cat
+    end
+
     remove_sub_dups(pd.supplier_categories)
     pd.categories = []
     @rules.each do |rule, category|
@@ -38,11 +42,22 @@ class CategoryTransform
     @supplier = supplier
     @rules = []
     @used_categories = Set.new
+    @source_categories = Set.new
     process_category(data, [])
   end
 
   def rules_count
     @rules.length
+  end
+
+  def status
+    defunct_categories = (@used_categories - @source_categories).to_a.sort
+    unless defunct_categories.empty?
+      puts "Defunct Categories:"
+      defunct_categories.each do |cat|
+        puts "  #{cat.join('/')}"
+      end
+    end
   end
 
 private
@@ -126,7 +141,6 @@ private
     Proc.new do |record, match_category|
       ret = record[field].collect { |cat| (cat[0...(src.length)] == src) ? (match_category + cat[src.size..-1]) : nil }.compact
       next nil if ret.empty?
-      @used_categories += ret
       ret
     end
   end
@@ -281,8 +295,8 @@ private
       [match('name', 'trophy'),
        sup('Norwood', cat('AWARD', 'AWARDS') ),
        sup('Leeds',
-           all(cat('Awards', 'Awards'),
-               match('name', 'award') ) ),
+           cat('Awards & Recognition', 'Awards'),
+           cat('Awards & Recognition', 'Awards & Recognition')),
        sup('Logomark',
            cat('Crystal Awards'),
            cat('Metal and Wood Awards') ),
@@ -475,8 +489,6 @@ private
           [match('name', 'hydrat', 1)]],
          ['Kid Friendly Backpacks',
           [sup('Gemline', cat('Kid-friendly', 'Backpacks') ) ] ],
-         ['Recycled Backpacks',
-          [sup('Leeds', cat('EcoSmart', 'Backpacks') ) ]],
          ['Sling Backpacks',
           [match('description', 'sling', 1),
            sup('Leeds', cat('Backpacks', 'Slings')),
@@ -545,8 +557,7 @@ private
                    match('name', 'brief') ) ),
           ]],
          ['Recycled Business Bags',
-          [match(%w(name description), 'recycle', 1),
-           sup('Leeds', cat('EcoSmart', 'Business Cases') ) ]],
+          [match(%w(name description), 'recycle', 1) ]],
          ['Wheeled Business Bags',
           [match('name', 'wheel', 1),
            sup('Leeds', cat('Business Cases', 'Wheeled Business Cases') ) ]],
@@ -573,13 +584,11 @@ private
        sup('Starline', cat('Bags', 'Duffels') ),
       ],[
          ['Executive Duffel Bags',
-          [sup('Leeds', cat('Duffels', 'Executive') ) ]],
-         ['Recycled Duffel Bags',
-          [sup('Leeds', cat('EcoSmart', 'Duffels') ) ]],
+          [sup('Leeds', cat('Duffels', 'Executive Duffels') ) ]],
          ['Sport Duffel Bags',
           [match('name', %w(athletic fitness), 2), # for Prime Line
            match('name', 'Sport Duffel', 1),
-           sup('Leeds', cat('Duffels', 'Sport') ),
+           sup('Leeds', cat('Duffels', 'Sport Duffels') ),
            sup('Gemline',
                cat('Sport & Travel', 'Sport Bags'),
                match('name', 'sport bag')),
@@ -590,13 +599,13 @@ private
             ]],
          ['Wheeled Duffel Bags',
           [match('name', 'wheeled'),
-           sup('Leeds', cat('Duffels', 'Wheeled') ),
+           sup('Leeds', cat('Duffels', 'Wheeled Duffels') ),
            sup('Gemline', cat('Sport & Travel', 'Wheeled') ) ]]
         ]],
      ['Golf Bags',
       [match('name', 'golf', 1),
        sup('Leeds',
-           all(cat('Luggage & Golf', 'Golf'),
+           all(cat('Travel & Golf', 'Golf'),
                match('name', %w(bag duffel)) ) ),
        sup('Norwood',
            all(match('name', %w(bag carrier)),
@@ -605,7 +614,7 @@ private
        sup('Starline', cat('Bags', 'Golf Bags') )
       ]],
      ['Luggage',
-      [sup('Leeds', cat('Luggage & Golf', 'Luggage') ),
+      [sup('Leeds', cat('Travel & Golf', 'Luggage') ),
        sup('Norwood',
            cat('TRAVEL', 'LUGGAGE'),
            match('name', 'carry on') ),
@@ -660,7 +669,7 @@ private
            exclude(match('description', 'business card')) ] ],
          ['Cotton Canvas Totes',
           [match(%w(name description material), %w(cotton canvas), 1),
-           sup('Leeds', cat('Totes', 'Cotton') ),
+           sup('Leeds', cat('Totes', 'Cotton Totes') ),
            sup('Gemline',
                cat('Totes', 'Canvas Bags'),
                cat('Living Green', 'Organic'))]],
@@ -672,7 +681,7 @@ private
          ['Non-woven Polypropylene Totes',
           [match('material', %w(poly non-woven non\ woven), 1),
            match(%w(name description), ['poly', 'pet plastic', 'non-woven'], 1),
-           sup('Leeds', cat('Totes', 'Non-Woven') ),
+           sup('Leeds', cat('Totes', 'Non-Woven Totes') ),
            sup('Gemline', cat('Totes', 'Non-woven') ),
            sup('Prime Line', cat('Non-Woven') )]],
          ['Shopper Totes',
@@ -686,10 +695,7 @@ private
          ['Kid Friendly Totes',
           [sup('Gemline', cat('Kid-friendly', 'Totes') ) ] ],
          ['Recycled & Organic Totes',
-          [match(%w(name description), 'recycled', 1),
-           sup('Leeds',
-               cat('Totes', 'EcoSmart'),
-               cat('EcoSmart', 'Totes') ) ]],
+          [match(%w(name description), 'recycled', 1) ]],
          ['Backpack Totes',
           [match(%w(name description), 'backpack', 1)],
           [
@@ -763,8 +769,6 @@ private
       ]],
      ['Wilson®',
       [sup('Norwood', cat('GOLF', 'WILSON')) ]],
-     ['Gusto!',
-      [sup('Leeds', duplicate(['Gusto!'], 'supplier_categories'))]],
      ['Life in Motion', 
       [sup('Gemline', duplicate(['Life in Motion'], 'supplier_categories') ) ]] ,
      ['Contours',
@@ -798,7 +802,7 @@ private
    sup('Starline', cat('Business', 'Computer Accessories') )
   ],[
      ['Apple Accessories',
-      [match('name', /iP(o|a)d/),
+      [match('name', /i(P(o|a)d)|(Phone)/),
        sup('LogoIncluded', cat('Mobile / Apple Accessories')),
       ]],
      ['CD Products',
@@ -818,7 +822,6 @@ private
       [match('name', 'mouse ', 1),
        match('name', /mouse($|\s)/),
        exclude(match('name', 'pad') ),
-       sup('Leeds', cat('Technology', 'Mice') ),
        sup('Norwood',
            all(match('name', ' mouse'),
                cat('TECHNOLOGY', 'OTHERTECH'), ) ),
@@ -842,7 +845,6 @@ private
        sup('LogoIncluded', cat('Screen Cleaner') )] ],
      ['MP3 Players',
       [match('name', %w(mp3 mp4) + [/(^|\s)ipod(\s|$)/i]),
-       sup('Leeds', cat('Memory', 'Music & Media') ),
        sup('Lanco', cat('Office / Computer Essentials', 'Mouse Pads') ),
        sup('Prime Line',
            all(cat('Mp3 / Radios'),
@@ -902,11 +904,10 @@ private
       ],[
          ['Pen USB Flash Drives',
           [match('name', 'pen', 1),
-           sup('Leeds', cat('Memory', 'Memory Pens') ),
+           sup('Leeds', cat('Memory', 'Memory Pens & Gift Sets') ),
            sup('LogoIncluded', cat('Pen Drive') )]],
          ['Recycled Flash Drives',
-          [match(%w(name description), 'recycle', 1),
-           sup('Leeds', cat('EcoSmart', 'Memory') ) ]],
+          [match(%w(name description), 'recycle', 1) ]],
         ] +
       ['128M', '256M', '512M', '1G', '2G', '4G', '8G', '16G', '32G', '64G'].collect do |name|
         ["#{name}B Flash Drives",
@@ -928,10 +929,9 @@ private
 
  ['Desktop Accessories',
   [sup('Leeds',
-       cat('Desktop', 'Accessories & Sets'),
-       cat('Desktop', 'Electronics & Clocks'),
-       cat('Desktop', 'Essentials'),
-       cat('Gusto', 'Work') ),
+       cat('Desktop', 'Desktop Accessories And Sets'),
+       cat('Desktop', 'Desktop Essentials'),
+       cat('Desktop', 'Electronics & Clocks') ),
    sup('Prime Line',
        cat('Office'),
        cat('Desk Helpers')),
@@ -1013,7 +1013,7 @@ private
          ['Travel Clocks',
           [match(%w(name description), 'travel', 1),
            sup('Leeds',
-               all(cat('Travel Gifts', 'Clocks & Wallets'),
+               all(cat('Travel Gifts', 'Travel Clocks'),
                    match('name', 'clock')) ),
            sup('Logomark', cat('Travel Clocks') ),
           ] ] ] ],
@@ -1036,9 +1036,6 @@ private
      ['Picture Frames',
       [match('name', ['photo frame', 'picture frame']),
        match('name', 'frame', 1),
-       sup('Leeds',
-           all(cat('Desktop Gifts', 'Desktop Accessories'),
-               match('name', %w(photo frame)) ) ), 
        sup('Norwood', cat('OFFICE', 'PHOTO') ),
        sup('High Caliber Line', cat('Picture Frames') ),
        sup('Prime Line',
@@ -1057,18 +1054,6 @@ private
       ]],
      ['Photo Albums',
       [match('name', %w(photo\ album brag\ book)) ] ],
-     ['Desktop Novelties',
-      [sup('Leeds',
-           cat('Desktop Gifts', 'Desktop Novelty'),
-           cat('Gusto', 'Connect')) ]],
-     ['Ecologically Friendly Desktop',
-      [sup('Leeds', cat('EcoSmart', 'Desktop') ) ] ],
-     ['Recycled Desktop Accessories',
-      [sup('Leeds',
-           all(cat('EcoSmart', 'Desktop'),
-               match('name', 'recycled') ) ) ]],
-     ['Desktop Technology',
-      [sup('Leeds', cat('Technology', 'Desktop') ) ]],
      ['Letter Openers',
       [match('name', ['letter opener', 'slitter']),
        match('name', 'opener', 1),
@@ -1314,8 +1299,6 @@ private
    sup('Sweda', cat('Bags', 'Coolers') ),
    sup('The Magnet Group', cat('Bag Factory', 'Coolers') )
   ],[
-     ['Beverage Holders',
-      [sup('Leeds', cat('Coolers', 'Beverage Holders') ) ]],
      ['Can Coolers',
       [match('name', 'can', 1)] ],
      ['Chair Coolers',
@@ -1325,8 +1308,6 @@ private
        sup('Gemline', cat('Coolers', 'Event') ) ]],
      ['Drink Coolers',
       [sup('Norwood', cat('OUTDOOR', 'HSCOOLERS') ) ] ],
-     ['Food Storage Coolers',
-      [sup('Leeds', cat('Coolers', 'Food Storage') ) ]],
      ['Kid Friendly Coolers',
       [sup('Gemline', cat('Kid-friendly', 'Coolers') ) ] ],
      ['Lunch Coolers',
@@ -1337,8 +1318,6 @@ private
        sup('Bullet Line', cat('Coolers', 'Lunch Coolers') ),
        sup('Sweda', cat('Bags', 'Lunch Bags') )
       ] ],
-     ['Recycled Coolers',
-      [sup('Leeds', cat('EcoSmart', 'Food Storage') ) ]],
      ['Wheeled Coolers',
       [match('name', %w(wheel rolling), 1),
        sup('Gemline', cat('Coolers', 'Wheeled') ),
@@ -1354,7 +1333,6 @@ private
   [#match('name', %w(coffe))
    sup('Prime Line', cat('Drinkware') ),
    sup('Norwood', cat('DRINK', 'BOTTLE') ),
-   sup('Leeds', cat('Drinkware', 'Gift Sets') ),
    sup('High Caliber Line', cat('Drinkware') ),
    sup('Lanco', cat('Drinkware', 'Cups') ),
    sup('Hit Promotional Products', cat('Plastic & Metal Drinkware') ),
@@ -1367,10 +1345,13 @@ private
        cat('Drinkware', 'Water Bottles (Plastic)') ),
    sup('ETS Express Inc')
   ],[
+     ['Acrylic Drinkware',
+      [match(%w(name description material), 'acrylic', 1),
+       sup('Leeds', cat('Drinkware', 'Acrylic') ),
+      ]],
      ['Aluminum Bottles',
       [match(%w(name description material), 'aluminum', 1),
        sup('Leeds',
-           cat('Drinkware', 'Aluminum Bottles'),
            cat('Drinkware', 'Aluminum Sport Bottles')),
        sup('Lanco',
            cat('Drinkware', 'Metal Bottles') ),
@@ -1414,7 +1395,7 @@ private
       [match('name', 'jigger')]],
      ['Ceramic',
       [match('name', 'ceramic', 1),
-       sup('Leeds', cat('Drinkware', 'Ceramic') ),
+       sup('Leeds', cat('Drinkware', 'Ceramics') ),
        sup('Bullet Line', cat('Drinkware', 'Ceramics') ),
        sup('Hit Promotional Products', cat('Ceramics') ),
        sup('ETS Express Inc', cat('ceramic') ),
@@ -1452,8 +1433,6 @@ private
            sup('Lanco', cat('Drinkware', 'Mugs') ),
            sup('Norwood', cat('DRINK', 'CERAMIC') )]],
         ]],
-     ['Recycled Drinkware',
-      [sup('Leeds', cat('EcoSmart', 'Drinkware') ) ]],
      ['Sport Bottles',
       [match('name', %w(bottle chill poly polly sports), 1),
        match('description', ['polyclear', 'sports bottle', 'squeeze bottle'], 1),
@@ -1474,7 +1453,6 @@ private
        sup('ETS Express Inc', cat('plastic') ) ] ],
      ['Glassware',
       [sup('Norwood', cat('DRINK', 'GLASS') ),
-       sup('Leeds', cat('Drinkware', 'Glassware') ),
        sup('Starline', cat('Drinkware', 'Glassware') ),
        sup('ETS Express Inc', cat('glass') ),
       ] ],
@@ -1533,10 +1511,8 @@ private
     ] ],
  ['Games & Toys',
   [sup('Leeds',
-       cat('Recreation', 'Family & Travel Games'),
-       cat('Gusto', 'Play'),
-       cat('Games', 'Desktop'),
-       cat('Games', 'Home')),
+       cat('Games', 'Desktop Games'),
+       cat('Games', 'Home Games')),
    sup('High Caliber Line', cat('Fun & Games')),
    sup('Prime Line', cat('Toys Executive') ),
    sup('Norwood',
@@ -1560,7 +1536,7 @@ private
        sup('High Caliber Line',
            match('name', ['super ball', 'flying star', 'paddle ball']) ),
        sup('Gemline', cat('Gifts', 'Outdoor Fun') ),
-       sup('Leeds', cat('Games', 'Outdoor') ),
+       sup('Leeds', cat('Games', 'Outdoor Games') ),
        sup('Lanco', cat('Toys & Games', 'Hacki Balls') ),
        sup('Hit Promotional Products',
            all(cat('Leisure'),
@@ -1584,11 +1560,10 @@ private
      ['Magic',
       [sup('High Caliber Line', cat('Magic') ) ]],
      ['Travel Games',
-      [sup('Leeds', cat('Games', 'Travel') ) ]],
+      [sup('Leeds', cat('Games', 'Travel Games') ) ]],
      ['Stress Reliever',
       [match('name', 'stress', 1),
        match('name', 'stress reliever'),
-       sup('Leeds', cat('Gusto', 'Live') ),
        sup('Prime Line', cat('Stress Relievers') ),
        sup('Lanco',
            cat('Toys & Games', 'Stress Balls & Shapes'),
@@ -1610,8 +1585,7 @@ private
     ] ],
  # Bad category
  ['Travel',
-  [sup('Leeds', cat('Gusto', 'Voyage') ),
-   sup('Gemline', cat('Gifts', 'Travel') ),
+  [sup('Gemline', cat('Gifts', 'Travel') ),
    sup('High Caliber Line', cat('Travel') ),
    sup('Crown Products', cat('Travel') )
   ],[
@@ -1624,7 +1598,7 @@ private
       ] ],
      ['Travel Accessories',
       [sup('Leeds',
-           cat('Travel Gifts', 'Accessories'),
+           cat('Travel Gifts', 'Travel Accessories'),
            exclude(match('name', 'charge'))),
        sup('Bullet Line', cat('Travel, Health & Beauty', 'Travel Accessories') ),
        sup('Logomark', cat('Travel Accessories') )
@@ -1642,9 +1616,8 @@ private
      ['Travel Sets',
       sup('Leeds', cat('Travel Gifts', 'Gift Sets') ) ],
      ['Utility Kits',
-      sup('Leeds', cat('Luggage & Golf', 'Utility Kits') ) ],
+      sup('Leeds', cat('Travel & Golf', 'Utility Kits') ) ],
      ['Travel Technology',
-      sup('Leeds', cat('Technology', 'Travel') ),
       sup('LogoIncluded',
           cat('Solar Charger'),
           cat('Executive Kit'))],
@@ -1657,7 +1630,7 @@ private
       sup('Lanco', cat('Bags / Containers', 'Boxes / Waterproof Containers'))],
      ['BBQ & Picnic',
       [match('name', %w(grill bbq picnic)),
-       sup('Leeds', cat('Outdoor Living', 'BBQ & Picnic') ),
+       sup('Leeds', cat('Outdoor Living', 'Bbq & Picnic') ),
        sup('Norwood',
            cat('HOUSEWARES', 'PICNIC2'),
            cat('OUTDOOR', 'PICNIC') ),
@@ -1670,14 +1643,9 @@ private
            cat('HomeStyles', 'Picnic') )
       ]],
      ['Beverage & Bar',
-      [sup('Leeds', cat('Housewares', 'Beverage & Bar') ),
+      [match('name', 'bar', 1),
        sup('Logomark', cat('Bar Accessories') )
-      ],[
-         ['Recycled Bar Sets',
-          sup('Leeds', cat('EcoSmart', 'Beverage & Bar') ) ]
-        ]],
-     ['Conserve',
-      [sup('Leeds', cat('Housewares', 'Conserve') ) ]],
+      ] ],
      ['Decorations',
       [sup('Norwood', cat('HOUSEWARES', 'DECO') ) ]],
      ['Food Storage',
@@ -1718,8 +1686,6 @@ private
      ['Salt & Pepper Shakers & Mills',
       [sup('Starline', cat('HomeStyles', 'Salt and Pepper Mills') )
       ] ],
-     ['Seasonal Housewares',
-      [sup('Leeds', cat('Housewares', 'Seasonal') ) ]],
      ['Tabletop & Serving',
       [sup('Leeds', cat('Housewares', 'Tabletop & Serving') ) ]],
      ['Vases',
@@ -1775,8 +1741,7 @@ private
       [match('name', ['pedometer', 'step-meter', 'step meter']),
        sup('Leeds',
            all(cat('Outdoor Living', 'Excursion'),
-               match('name', 'pedometer') ),
-           cat('Health & Wellness', 'Pedometers') ),
+               match('name', 'pedometer') ) ),
        sup('High Caliber Line', cat('Pedometer') ),
        sup('Lanco', cat('Travel / Personal Care', 'Pedometer') ),
        sup('Bullet Line', cat('Fitness & Recreation', 'Pedometers') ),
@@ -1785,9 +1750,7 @@ private
      ['Fitness Sets',
       [all(match('name', %w(set kit), 1),
            match('name', %w(exercise fitness)) ),
-       sup('Leeds', cat('Health, Safety & Auto', 'Fitness Sets') ) ]],
-     ['Personal Wellness',
-      [sup('Leeds', cat('Health & Wellness', 'Personal Wellness & Fitness') ) ]],
+       sup('Leeds', cat('Personal Wellness', 'Fitness') ) ]],
      ['Dental Products',
       [match('name', %w(floss toothbrush tooth\ brush toothpick))]],
      ['Pill Cases',
@@ -1924,7 +1887,7 @@ private
      ['Carabiners',
       [match('name', 'carabiner'),
        sup('Lanco', cat('Carabiners / Key Chains', 'Carabiner') ),
-       sup('Leeds', cat('Keychains, Keylights & Carabiners', 'Carabiners') ),
+       sup('Leeds', cat('Keychains Keylights & Carabiner', 'Carabiners') ),
        sup('High Caliber Line', cat('Carabiners') ),
        sup('Bullet Line',
            cat('Key Tags & Badge Holders', 'Carabiners'),
@@ -1941,7 +1904,7 @@ private
            cat('Carabiners / Key Chains', 'Keychains'),
            cat('Tools / Knives', 'Keychains') ),
        sup('Norwood', cat('AUTO', 'KEYCHAIN') ),
-       sup('Leeds', cat('Keychains, Keylights & Carabiners', 'Keychains') ),
+       sup('Leeds', cat('Keychains Keylights & Carabiner', 'Keychains') ),
        sup('Bullet Line',
            cat('Stress Relievers', 'Stress Reliever Keychains'),
            cat('Key Tags & Badge Holders', 'Key Tags')),
@@ -1961,7 +1924,7 @@ private
           [match('name', 'light', 1),
            match('name', /LED.+?light.+?key/i),
            exclude(match('name', 'limelight')),
-           sup('Leeds', cat('Keychains, Keylights & Carabiners', 'Keylights') ),
+           sup('Leeds', cat('Keychains Keylights & Carabiner', 'Keylights') ),
            sup('Bullet Line', cat('Lighting', 'Key Lights') ),
            sup('The Magnet Group', cat('Innovations', 'Key Lights') ),
            sup('Starline', cat('Flashlights', 'LED Keylights') ),
@@ -1973,8 +1936,7 @@ private
       [match('name', %w(wallet checkbook)),
        match('description', ['travel wallet', 'leather organizer', 'passport jacket']),
        sup('Leeds',
-           all(cat('Travel Gifts', 'Clocks & Wallets'),
-               match('name', ['wallet', 'passport'])) ),
+           cat('Travel Gifts', 'Travel Wallets') ),
        sup('Gemline', cat('Business Accessories', 'Travel Wallets') ),               
       ]],
      ['Money Clips',
@@ -1989,15 +1951,8 @@ private
            cat('Classic Watches'),
            cat('Fashion Watches') ),
       ],[
-         ['Cutter & Buck Watches',
-          [sup('Leeds', cat('Watches', 'Cutter & Buck Watches') ) ]],
          ['Executive Watches',
-          [sup('Leeds', cat('Watches', 'Executive') ),
-           sup('Sweda', cat('Watches', 'Analog Executive') ), ]],
-         ['Watch Gift Sets',
-          [sup('Leeds', cat('Watches', 'Gift Sets') ) ]],
-         ['Wenger Watches',
-          [sup('Leeds', cat('Watches', 'Wenger Watches') ) ]],
+          [sup('Sweda', cat('Watches', 'Analog Executive') ), ]],
          ['Sport Watches',
           [match('name', 'sport', 1),
            sup('Logomark', cat('Sport Watches') ),
@@ -2012,8 +1967,7 @@ private
     ] ],
 
  ['Recreation',
-  [sup('Leeds', cat('Gusto', 'Explore') ),
-   sup('High Caliber Line', cat('Sports and Recreation') ),
+  [sup('High Caliber Line', cat('Sports and Recreation') ),
    sup('Bullet Line', cat('Fitness & Recreation', 'Summer & Outdoor Items')),
   ],[
      ['Binoculars & Telescopes',
@@ -2036,7 +1990,7 @@ private
        sup('Leeds', cat('Towels', 'Beach Towels') )]],
      ['Golf',
       [match('name', 'golf'),
-       sup('Leeds', cat('Recreation', 'Golf') ) ,
+       sup('Leeds', cat('Luggage & Golf', 'Golf') ) ,
        sup('Norwood', cat('GOLF') ),
        sup('Crown Products', cat('Golf') ),
        sup('Logomark', cat('Golf Gifts' ) )
@@ -2065,7 +2019,7 @@ private
           [match('name', ['tees', 'ball marker'], 1),
            match('name', 'divot'),
            sup('Leeds',
-               all(cat('Luggage & Golf', 'Golf'),
+               all(cat('Travel & Golf', 'Golf'),
                    match('name', 'green'))),
            sup('Lanco', cat('Golf', 'Tees, Markers & Divot Tools') ),
            sup('Norwood', cat('GOLF', 'TEE') )]],
@@ -2114,27 +2068,17 @@ private
            match('supplier_num', /^((NC4P57)|(NC57(ECO)?)|(NPP?57))$/),
            exclude(match('name', 'notepad'))),
        sup('Sweda', cat('Stationery', 'Jotters') )
-      ],[
-         ['Recycled Jotters',
-          [sup('Leeds',
-               all(cat('EcoSmart', 'Jotters & Journals'),
-                   match('name', %w(pad jotter))) ) ] ],
-        ]],
+      ]],
      ['Journals',
       [match('name', 'journal'),
        sup('Leeds',
-           cat('JournalBooks', 'Bound'),
-           cat('JournalBooks', 'Spiral') ),
+           cat('Journalbooks', 'Bound'),
+           cat('Journalbooks', 'Spiral') ),
        sup('Lanco', cat('Journals / Portfolios', 'Journal Books') ),
        sup('Prime Line', cat('Notebooks | Journals') ),
        sup('Bullet Line', cat('Stationery', 'Notebooks') ),
        sup('Sweda', cat('Stationery', 'Journals & Notebooks') ),
-      ],[
-         ['Recycled Journals',
-          [sup('Leeds',
-               all(cat('EcoSmart', 'Jotters & Journals'),
-                   match('name', 'journal')) ) ] ],
-        ]],
+      ]],
      ['Padfolios & Writing Pads',
       [match('name', 'padfolio'),
        sup('Leeds', cat('Stationery', 'Padfolios & Writing Pads') ),
@@ -2164,8 +2108,7 @@ private
           [sup('Gemline', cat('Padfolios', 'Leather') ),
           ]],
          ['Recycled Pads',
-          [match(%w(name description), 'recycle', 1),
-           sup('Leeds', cat('EcoSmart', 'Padfolios & Writing Pads') ) ]],
+          [match(%w(name description), 'recycle', 1) ]],
         ] ],
      ['Planners',
       [sup('Leeds', cat('Stationery', 'Planners') ) ]],
@@ -2179,8 +2122,7 @@ private
 
  ['Tools',
   [sup('Leeds',
-       cat('Tools & Lighters', 'Tools'),
-       cat('Gusto', 'Construct') ),
+       cat('Tools & Lighters', 'Tools') ),
    sup('PrimLine', cat('Tools') ),
    sup('Norwood', cat('AUTO', 'TOOLS') ),
    sup('High Caliber Line', cat('Tools') ),
@@ -2229,11 +2171,11 @@ private
        sup('The Magnet Group', cat('Innovations', 'Flashlights') ),
       ],[
          ['Emergency Flashlights',
-          [sup('Leeds', cat('Flashlights', 'Emergency & Safety') ) ]],
+          [sup('Leeds', cat('Flashlights', 'Emergency & Safety Lights') ) ]],
          ['Everyday Flashlights',
-          [sup('Leeds', cat('Flashlights', 'Everyday') ) ]],
+          [sup('Leeds', cat('Flashlights', 'Everyday Lights') ) ]],
          ['Dynamo Flashlights',
-          [sup('Leeds', cat('Flashlights', 'Dynamo') ),
+          [sup('Leeds', cat('Flashlights', 'Dynamo Lights') ),
            sup('Sweda', cat('Flashlights', 'Dynamos') )
           ] ],
          ['LED Flashlights',
@@ -2241,7 +2183,7 @@ private
            sup('Starline', cat('Flashlights', 'LED Flashlights') )
           ]],
          ['Specialty Flashlights',
-          [sup('Leeds', cat('Flashlights', 'Specialty') ) ]],
+          [sup('Leeds', cat('Flashlights', 'Specialty Lights') ) ]],
          ['Lanterns',
           [cat('Starline', sup('Flashlights', 'Lanterns') ) ] ]
         ] ],
@@ -2399,10 +2341,10 @@ private
           [match('name', ['gift box', 'pen box'], 1),
            sup('Bullet Line', cat('Writing Instruments', 'Gift Boxes for Pens') ) ] ],
          ['Branded Pens',
-          [sup('Leeds', cat('Pens-Metal', 'Branded') ) ]],
+          [sup('Leeds', cat('Metal Pens', 'Branded Pens') ) ]],
          ['Multi Function Pens',
           [match('name', %w(usb laser), 1),
-           sup('Leeds', cat('Pens-Metal', 'Multi-Function') ),
+           sup('Leeds', cat('Metal Pens', 'Multi Function Pens') ),
            sup('High Caliber Line', cat('Writing Instruments', 'Laser Pointers & Light Up') ),
            sup('Lanco', cat('Writing Instruments', 'Pens with Staple Remover') ),
            sup('Bic Graphics',
@@ -2410,7 +2352,7 @@ private
            sup('Logomark', cat('Multi-Function Pens') )
           ]],
          ['Pen Sets',
-          [sup('Leeds', cat('Pens-Metal', 'Gift Sets') ),
+          [sup('Leeds', cat('Metal Pens', 'Pen Sets') ),
            sup('Gemline', cat('Writing Instruments', 'Pen Sets') ),
            sup('Logomark',
                cat('Pen Sets'),
@@ -2435,7 +2377,7 @@ private
            sup('Gemline',
                cat('Writing Instruments', 'Roller Balls'),
                cat('Writing Instruments', 'Roller Needle')),
-           sup('Leeds', cat('Pens-Metal', 'Roller Ball') ),
+           sup('Leeds', cat('Metal Pens', 'Roller Ball Pens') ),
            sup('Bic Graphics',
                cat('Writing Instruments', 'Rollerball'),
                match('supplier_num', /^((GR)|(T537R)|(XS)|(Z4)|(PLCCR))/) ),
@@ -2445,7 +2387,7 @@ private
           ]],
          ['Ballpoint Pens',
           [match(%w(name description), 'ballpoint'),
-           sup('Leeds', cat('Pens-Metal', 'Ballpoint') ),
+           sup('Leeds', cat('Metal Pens', 'Ballpoint Pens') ),
            sup('Gemline', cat('Writing Instruments', 'Ballpoint') ),
            sup('Bic Graphics', cat('Writing Instruments', 'Ballpoint') ),
            sup('Logomark',
@@ -2491,8 +2433,7 @@ private
            sup('Lanco', cat('Writing Instruments', 'Twist Pens') )]],
          ['Recycled Pens',
           [match(%w(name description), 'recycle', 1),
-           sup('Gemline', cat('Writing Instruments', 'Recycled') ),
-           sup('Leeds', cat('EcoSmart', 'Pens')) ]],
+           sup('Gemline', cat('Writing Instruments', 'Recycled') ) ]],
          ['Specialty Pens',
           [sup('Lanco', cat('Writing Instruments', 'Specialty Pens') ) ]],
          ['Pen Holders & Cases',
@@ -2538,7 +2479,7 @@ private
      ['Blankets',
       [match('name', 'blanket'),
        sup('Norwood', cat('OUTDOOR', 'BLANKETS') ),
-       sup('Leeds', cat('Outdoor Living', 'Blankets') ),
+       sup('Leeds', cat('Blankets', 'Blanket') ),
        sup('Prime Line', cat('Blankets') ),
        sup('Logomark', cat('Blankets') ),
        sup('Sweda', cat('Blankets') ),
@@ -2568,12 +2509,6 @@ private
   ],[
      ['Organic',
       [sup('Gemline', cat('Eco-Choice', 'Organic')) ]],
-     ['Growables',
-      sup('Leeds',
-          cat('Desktop', 'Growables'),
-          cat('EcoSmart', 'Growables') ) ],
-     ['Gusto',
-      sup('Leeds', cat('Gusto', 'Conserve') ) ],
      ['Recycled',
       [sup('Gemline', cat('Eco-Choice', 'Recycled') ),
        sup('Logomark', cat('Recycles') )
