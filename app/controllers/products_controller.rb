@@ -104,9 +104,9 @@ public
     @columns = 5
   
     @context = { :sort => 'name', :children => true }
-    [:sort, :tag, :children].each { |n| @context[n] = params[n] if params[n] }
-
-    raise ::ActionController::RoutingError, "Sort order must be #{Category.order_list.join(', ')}" unless Category.valid_order?(@context[:sort])
+    @context.merge!(:children => false) if params[:children] == 'false'
+    @context.merge!(:tag => params[:tag]) if params[:tag] and Tag.names.include?(params[:tag])
+    @context.merge!(:sort => params[:sort]) if params[:sort] and Category.valid_order?(sort)
 
     options = @context.merge({
       :limit => @columns,
