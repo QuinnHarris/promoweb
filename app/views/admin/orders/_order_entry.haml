@@ -1,20 +1,20 @@
-%td.description
-  - unless @price_lock
-    = link_to(image_tag("remove.png"), { :action => :order_item_remove, :id => entry.id, :klass => entry.class.to_s }, :remote => true, :class => 'remove')
-    /:complete => "entry_remove(request, '#{entry.class}-#{entry.id}-price')", :confirm => "Remove item?",
-  = text_field_tag "#{entry.class}-#{entry.id}-description", entry.description, :size => 32, :readonly => @price_lock
-  .auto_complete>
-%td.num= text_field_tag "#{entry.class}-#{entry.id}-price", entry.price.to_s, :class => 'money negative null', :readonly => @price_lock
-%td.num.admin= text_field_tag "#{entry.class}-#{entry.id}-cost", entry.cost.to_s, :class => 'money negative', :readonly => @price_lock
-%td.num
-  x
-  = text_field_tag "#{entry.class}-#{entry.id}-quantity", entry.quantity, :class => 'num', :readonly => @price_lock
-%td.num ???
-%td.num.admin ???
-%td.num.admin.profit
-  = text_field_tag "profit-#{entry.id}", "???", :class => 'money null', :readonly => @price_lock
-%td.num.admin.margin
-  = text_field_tag "margin-#{entry.id}", "???", :class => 'money null', :readonly => @price_lock
-%td.admin
-  \%
+%tr
+  %td.description
+    - unless @price_lock
+      = link_to(image_tag("remove.png"), { :action => :order_item_remove, :id => order_entry.id, :klass => order_entry.class.to_s }, :remote => true, :class => 'remove')
+    = text_field_tag "#{order_entry.class}-#{order_entry.id}-description", order_entry.description, :size => 32, :readonly => @price_lock
+    .auto_complete>
+  %td.num= text_field_tag "#{order_entry.class}-#{order_entry.id}-price", order_entry.price.to_s, :class => 'money negative null', :readonly => @price_lock
+  %td.num.admin= text_field_tag "#{order_entry.class}-#{order_entry.id}-cost", order_entry.cost.to_s, :class => 'money negative', :readonly => @price_lock
+  %td.num
+    x
+    = text_field_tag "#{order_entry.class}-#{order_entry.id}-quantity", order_entry.quantity, :class => 'num', :readonly => @price_lock
+  %td.num ???
+  %td.num.admin ???
+  %td.num.admin.profit
+    = text_field_tag "profit-#{order_entry.id}", "???", :class => 'money null', :readonly => @price_lock
+  %td.num.admin.margin
+    = text_field_tag "margin-#{order_entry.id}", "???", :class => 'money null', :readonly => @price_lock
+  %td.admin
+    \%
 

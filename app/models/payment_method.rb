@@ -509,3 +509,16 @@ class PaymentRefundCheck < PaymentCheck
   
   def creditable?; true; end
 end
+
+
+class PaymentBitCoin < PaymentMethod
+
+end
+
+class PaymentBitCoinReceive < PaymentBitCoin
+
+end
+
+class PaymentBitCoinSend < PaymentBitCoin
+
+end

@@ -45,7 +45,7 @@ $(document).ready ->
     container.append(content.replace(regexp, new_id))
     $(this).trigger('change')
 
-  $('form a.remove_child').live 'click', () ->
+  $(document).on 'click', 'form a.remove_child', () ->
     if $('.' + $(this).parent().className).length == 1
       false
     $(this).prev('input[type=hidden]')[0].value = '1'

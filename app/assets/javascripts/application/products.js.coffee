@@ -57,6 +57,7 @@ class PricingBase
   _decorationFind: (id) ->
     for dec in @data.decorations
       return dec if dec.id == id
+    return null
 
   _decorationPriceFunc: (entry, quantity) ->
     Math.round entry.price_marginal * (1 + entry.price_const * Math.pow(quantity, entry.price_exp))
@@ -195,7 +196,7 @@ class window.ProductPricing extends PricingBase
   applyTechnique: (li) ->
     @_selectVariant li
     dec = @_decorationFind(@params.technique_id)
-    return  unless dec
+    return null unless dec
 
     ul = $("#locations")
     dd = ul.parent()
@@ -237,6 +238,7 @@ class window.ProductPricing extends PricingBase
 #      $('#sample').show()
 #    else
 #      $('#sample').hide()
+    return null
 
   onMouseTechnique: (event) =>
     li = $(event.target).parents('li')
@@ -295,7 +297,7 @@ class window.ProductPricing extends PricingBase
     true
 
   changeCount: (event) =>
-    return unless @_onKeyPress event
+    return null unless @_onKeyPress event
     window.setTimeout( () =>
             count_limit = @decorationCountLimit(@params)
             @params.dec_count = parseInt(@unit.val())
@@ -365,7 +367,7 @@ class window.ProductPricing extends PricingBase
         i++
     qty_row = $("#qty_row")[0]
     price_row = $("#price_row")[0]
-    return  if not qty_row or not price_row
+    return null if not qty_row or not price_row
     # !!!! DO WE NEED A CLONE?
     params = @params
     i = 0
@@ -391,7 +393,7 @@ class window.ProductPricing extends PricingBase
     msg.push "a variant (Click on the appropriate box at the top)"  unless groups.length == 1
     unless msg.length == 0
       alert "Must specify " + msg.join(" and ")
-      return
+      return null
     form = document.forms.productform
     form.price_group.value = groups[0].id
     form.variants.value = (@params.variants or []).join(",")
@@ -493,7 +495,7 @@ set_layout = ->
   image = $("#prod_img")[0]
   content = $("#content")[0]
   prices = $("#prices")[0]
-  return unless prices?
+  return null unless prices?
   offset = 0
   for elem in $("#price_calc, #price_list")
     o = elem.offsetWidth + elem.offsetLeft

@@ -181,6 +181,8 @@ calculate_all = ->
     total_row = tax_row.nextSibling.nextSibling
     total_row.cells[1].innerHTML = displayMoney(total.price + tax_price)
 
+  return null
+
 
 parseField = (target, value) ->
   t = $(target)
@@ -214,7 +216,7 @@ request_success = (data, textStatus, t) ->
 
 input_update = (target) ->
   t = $(target)
-  return  if t.hasClass('sending')
+  return null if t.hasClass('sending')
 
   if (ismargin = t.parent().hasClass('margin')) or t.parent().hasClass('profit')
     tr = t.parent().parent()
@@ -244,7 +246,7 @@ input_update = (target) ->
       setField price_input, roundToCent(price)
 
     input_update price_input
-    return
+    return null
 
   oldValue = (if t.hasClass('predicate') then NaN else parseField(target, target.defaultValue))
   if target.value == ""
@@ -256,7 +258,7 @@ input_update = (target) ->
     else
       if not t.hasClass('null') and (t.hasClass('money') or t.hasClass('num'))
         target.value = target.defaultValue
-        return
+        return null
 
       newValue = (if t.hasClass('null') then NaN else "")
     target.defaultValue = ''
@@ -280,6 +282,8 @@ input_update = (target) ->
   # Fetch shipping if shipset class (variant quantities)
   if t.hasClass('shipset')
     get_shipping($('td.shipping', t.parents('tbody:first')))
+
+  return null
 
 autocomplete_change = (target, selectedElement) ->
   input_update target
@@ -336,7 +340,7 @@ $(document).ready ->
   )
 
   invoice = $('.invoice')
-  return if invoice.length == 0
+  return null if invoice.length == 0
   invoice
     .delegate('input[type="text"].money',
       keypress: (event) ->
@@ -359,10 +363,12 @@ $(document).ready ->
         return true
       change: (event) ->
         nxtSib = event.target.nextSibling
-        return  if nxtSib and ("hasClassName" of nxtSib) and nxtSib.hasClassName("auto_complete") and Element.getStyle(nxtSib, "display") != "none"
+        return null if nxtSib and ("hasClassName" of nxtSib) and nxtSib.hasClassName("auto_complete") and Element.getStyle(nxtSib, "display") != "none"
         input_update event.target
+        return null
       blur: (event) ->
         input_update event.target
+        return null
     )
 
     .delegate('td.shipping select',
@@ -381,7 +387,7 @@ $(document).ready ->
         target = $(event.target)
         root = target.parents('dl.variants')
         quantity = order_item_quantity(root)
-        return unless confirm("Set " + quantity + " units for " + target.text() + " only")
+        return null unless confirm("Set " + quantity + " units for " + target.text() + " only")
 
         quantity_inp = $('.shipset', target.parent())
         imprint_inp = $('.imprint', target.parent())
@@ -407,6 +413,8 @@ $(document).ready ->
           context: quantity_inp
           success: request_success
         )
+
+        return null
     )
 
   calculate_all()
@@ -429,3 +437,5 @@ $(document).ready ->
   $(document).delegate '.remove', 'ajax:success', (xhr, data, status) ->
     $(xhr.target).parents('tr:first').remove()
     calculate_all()
+
+  return null

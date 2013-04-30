@@ -12,9 +12,7 @@
           %td.admin Profit
           %td.admin{ :colspan => '2' } Margin
       %tbody
-        - for entry in order.entries
-          %tr
-            = render :partial => 'order_entry', :locals => { :entry => entry }
+        = render :partial => 'order_entry', :collection => order.entries
     %tfoot
       - unless empty
         %tr.sub

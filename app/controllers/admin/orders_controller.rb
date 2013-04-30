@@ -823,7 +823,7 @@ public
     klass = get_klass(params[:klass])
     order = klass.find(params[:id])
     entry = order.entries.create
-    render :partial => 'order_entry', :locals => { :entry => entry, :purchase_lock => false }
+    render :partial => 'order_entry', :locals => { :order_entry => entry, :purchase_lock => false }
   end
   
   def order_item_entry_insert

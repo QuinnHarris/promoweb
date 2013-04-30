@@ -272,7 +272,7 @@ class Order < ActiveRecord::Base
       end
       if customer.quickbooks_id == 'BLOCKED'
         customer.quickbooks_id = nil
-        customer.save!
+        customer.save!(:validate => false)
       end
     end
   end
