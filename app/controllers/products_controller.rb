@@ -106,7 +106,7 @@ public
     @context = { :sort => 'name', :children => true }
     @context.merge!(:children => false) if params[:children] == 'false'
     @context.merge!(:tag => params[:tag]) if params[:tag] and Tag.names.include?(params[:tag])
-    @context.merge!(:sort => params[:sort]) if params[:sort] and Category.valid_order?(sort)
+    @context.merge!(:sort => params[:sort]) if params[:sort] and Category.valid_order?(params[:sort])
 
     options = @context.merge({
       :limit => @columns,
