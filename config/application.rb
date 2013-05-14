@@ -123,4 +123,20 @@ class Bitcoin::Client
   def getpeerinfo
     @api.request 'getpeerinfo'
   end
+
+  def encryptwallet(passphrase)
+    @api.request 'encryptwallet', passphrase
+  end
+
+  def keypoolrefill
+    @api.request 'keypoolrefill'
+  end
+
+  def walletlock
+    @api.request 'walletlock'
+  end
+
+  def walletpassphrase(passphrase, timeout)
+    @api.request 'walletpassphrase', passphrase, timeout
+  end
 end

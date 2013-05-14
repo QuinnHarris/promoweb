@@ -1,6 +1,6 @@
 class SearchController < ApplicationController
   def index
-    @terms = params[:terms].strip
+    @terms = params[:terms].strip if params[:terms]
     @terms = '' unless @terms
 
     if @terms.upcase[0] == ?M
