@@ -191,8 +191,6 @@ class GemlineXML < GenericImport
         end
                
 
-        pd.tags = [] # Suppress tag warning
-
         # Turn closeout/new category to tag
         prod_categories.delete_if do |category|
           delete = nil

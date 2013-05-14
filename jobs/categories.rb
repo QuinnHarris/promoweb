@@ -450,7 +450,7 @@ private
        match('description', 'backpack', 1),
        sup('Leeds', cat('Backpacks', 'Backpacks')),
        sup('Gemline',
-           ['Under $15', '$15-$30', ' $30+', 'Sports', 'New', 'Clearance'].collect do |name|
+           ['Sports', 'New', 'Clearance'].collect do |name|
              cat('Backpacks', name)
            end),
        sup('Prime Line', cat('Backpacks') ),
@@ -480,7 +480,7 @@ private
            sup('Leeds', cat('Backpacks', 'Cinches')),
            sup('Gemline',
                cat('Backpacks', 'Cinchpacks'),
-               all(cat('Backpacks', 'Sports Backpacks'),
+               all(cat('Backpacks', 'Sports'),
                    match('name', 'cinch') ) ),
            sup('Bullet Line', cat('Bags', 'Drawstrings & Backpacks')),
            sup('Starline', cat('Bags', 'Cinchpaks') )
@@ -512,7 +512,7 @@ private
        match('name', 'brief', 1),
        sup('Leeds', cat('Business Cases', 'Business Cases') ),
        sup('Gemline',
-           ['Clearance', 'New', 'Portfolios Under $10'].collect do |name|
+           ['Clearance', 'New'].collect do |name|
              cat('Portfolios', name)
            end),
        sup('Lanco', cat('Bags / Containers', 'Business Cases')),
@@ -534,8 +534,7 @@ private
                cat('Business Cases', 'Compu-Cases'),
                cat('Business Cases', 'Compu-Messenger Bags') ),
            sup('Gemline',
-               cat('Portfolios', 'Computer Cases'),
-               cat('Cirrus', 'Business Cases') ) ]],
+               cat('Portfolios', 'Computer Cases') ) ]],
          ['Messenger & Saddle Bags',
           [match('name', %w(messenger saddle), 2),
            match('name', 'messenger bag'),
@@ -543,7 +542,6 @@ private
                cat('Business Cases', 'Messenger Bags'),
                cat('Business Cases', 'Compu-Messenger Bags') ),
            sup('Gemline',
-               cat('Portfolios', 'Saddlebags'),
                cat('Portfolios', 'Business'),
                cat('Portfolios', 'Messenger Bags') ),
            sup('Logomark', cat('Shoulder Bags') )
@@ -551,7 +549,6 @@ private
          ['Leather Business Bags',
           [match('name', 'lthr', 1), # Why doesn't this work?
            match('material', 'leather', 1),
-           sup('Gemline', cat('Portfolios', 'Leather Bags') ),
            sup('Logomark',
                all(cat('Leather Bags'),
                    match('name', 'brief') ) ),
@@ -560,7 +557,9 @@ private
           [match(%w(name description), 'recycle', 1) ]],
          ['Wheeled Business Bags',
           [match('name', 'wheel', 1),
-           sup('Leeds', cat('Business Cases', 'Wheeled Business Cases') ) ]],
+           sup('Leeds', cat('Business Cases', 'Wheeled Business Cases') ),
+           sup('Gemline', cat('Portfolios', 'Wheeled') )
+          ]],
          ['Kid Friendly Portfolios',
           [sup('Gemline', cat('Kid-friendly', 'Portfolios')) ]],
          ['Womens Portfolios',
@@ -573,7 +572,7 @@ private
      ['Duffel Bags',
       [match('name', ['duffel', 'duffle']),
        sup('Gemline',
-           ['$15-$25', '$25+', 'Closeout Sport/Travel Bags', 'New Sport/Travel Bags', 'Under $15', 'Travel Bags'].collect do |name|
+           ['Clearance', 'New', 'Travel Bags'].collect do |name|
              cat('Sport & Travel', name)
            end),
        sup('Lanco', cat('Bags / Containers', 'Sport and Duffle Bags')),
@@ -643,7 +642,7 @@ private
         ] ],
      ['Wheeled Bags',
       [match('name', 'wheel', 1),
-       sup('Gemline', cat('Sport & Travel', 'Wheeled Bags') )
+       sup('Gemline', cat('Sport & Travel', 'Wheeled') )
       ],[dup('Bags', 'Backpacks', 'Wheeled Backpacks'),
          dup('Bags', 'Business Bags', 'Wheeled Business Bags'),
          dup('Bags', 'Duffel Bags', 'Wheeled Duffel Bags')
@@ -652,7 +651,7 @@ private
       [match('name', 'tote'),
        sup('Leeds', cat('Totes', 'Totes')),
        sup('Gemline',
-           ['New', 'Clearance', 'Totes 10+', 'Totes Under $10', 'Totes Under $5', 'Market Sets'].collect do |name|
+           ['New', 'Clearance'].collect do |name|
              cat('Totes', name)
            end),
        sup('Lanco', cat('Bags / Containers', 'Tote Bags')),
@@ -671,8 +670,7 @@ private
           [match(%w(name description material), %w(cotton canvas), 1),
            sup('Leeds', cat('Totes', 'Cotton Totes') ),
            sup('Gemline',
-               cat('Totes', 'Canvas Bags'),
-               cat('Living Green', 'Organic'))]],
+               cat('Totes', 'Cotton Bags') )]],
          ['Jute Totes',
           [match(%w(name description material), %w(jute), 1),
            sup('Prime Line',
@@ -755,8 +753,8 @@ private
       [sup('Lanco', cat('Candles / Bath / Body', 'Bath & Body Lotions') ) ]],
     ] ],
 
- ['Collections',
-  [sup('Gemline', duplicate(['Collections'], 'supplier_categories'))
+ ['Brands',
+  [sup('Gemline', duplicate(['Brands'], 'supplier_categories'))
   ],[
      ['Cleveland®',
       [sup('Norwood', cat('GOLF', 'CLEVE')) ]],
@@ -769,16 +767,6 @@ private
       ]],
      ['Wilson®',
       [sup('Norwood', cat('GOLF', 'WILSON')) ]],
-     ['Life in Motion', 
-      [sup('Gemline', duplicate(['Life in Motion'], 'supplier_categories') ) ]] ,
-     ['Contours',
-      [sup('Gemline', duplicate(['Contour'], 'supplier_categories') ) ]] ,
-     ['Cirrus',
-      [sup('Gemline', duplicate(['Cirrus'], 'supplier_categories'))]],
-     ['Elements',
-      [sup('Gemline', duplicate(['Elements'], 'supplier_categories'))]],
-     ['Equity',
-      [sup('Gemline', duplicate(['Equity'], 'supplier_categories'))]],
      ['Nike®',
       [match('name', 'nike'),
        sup('Norwood', cat('GOLF', 'NIKE')) ] ],
@@ -857,15 +845,17 @@ private
      ['WiFi Finders',
       [sup('LogoIncluded', cat('WiFi Finder') )] ],
      ['Tablet Accessories',
-      [
+      [sup('Gemline', cat('Gifts', 'Tablet Accessories') )
       ],[['iPad Accessories',
           [match('name', 'iPad')]],
          ['Tablet Cases, Stands & Sleeves',
-          [all(match('name', %w(case stand sleeve holder)),
-               match(%w(name description), %w(tablet iPad)))
+          [all(match('name', %w(case stand sleeve holder padfolio)),
+               match(%w(name description), %w(tablet iPad))),
+           sup('Gemline', cat('Padfolios', 'e-Padfolios'),
+               cat('Technology', 'Tablet cases/stands'))
           ]],
          ['Screen Stylus',
-          [all(match('name', 'stylus'),
+          [all(match('name', ['stylus', 'tablet pen']),
                match('description', ['screen', 'ipad', 'iphone']))
           ]],
         ] ],
@@ -896,7 +886,6 @@ private
      ['USB Flash Drives',
       [match('name', %w(flash memory mb gb), 1),
        sup('Leeds', cat('Memory') ),
-       sup('Gemline', cat('Gifts', 'USB Drives') ),
        sup('Prime Line', cat('USB Memory') ),
        sup('Logomark', cat('USB Drives') ),
        sup('LogoIncluded', cat('USB Drive') ),
@@ -1278,9 +1267,7 @@ private
  ['Coolers',
   [match('name', ['cooler', 'kooler']),
    sup('Gemline',
-       ['Closeout Coolers', 'Coolers 12+', 'New', 'Under $12'].collect do |name|
-         cat('Coolers', name)
-       end),
+       cat('Coolers', 'New') ),
    sup('Lanco', cat('Bags / Containers', 'Lunch Bag & Coolers')),
    sup('Prime Line',
        cat('Coolers - Ice'),
@@ -1937,7 +1924,6 @@ private
        match('description', ['travel wallet', 'leather organizer', 'passport jacket']),
        sup('Leeds',
            cat('Travel Gifts', 'Travel Wallets') ),
-       sup('Gemline', cat('Business Accessories', 'Travel Wallets') ),               
       ]],
      ['Money Clips',
       [match('name', ['money clip', 'money band']),
@@ -1962,8 +1948,7 @@ private
           ] ],
         ] ],
      dup('Travel', 'Personal Travel'),
-     ['Womens Accessories',
-      [sup('Gemline', cat('Women`s', 'Travis & Wells')) ]],
+
     ] ],
 
  ['Recreation',
@@ -2043,7 +2028,7 @@ private
 
  ['Stationery',
   [sup('Gemline',
-       ['New Padfolios', 'Padfolios $10 - $20', 'Padfolios 20+', 'Padfolios Under $10', 'Closeout Padfolios'].collect do |name|
+       ['New', 'Clearance'].collect do |name|
          cat('Padfolios', name)
        end),
    sup('Hit Promotional Products', cat('Portfolios & Jotters') ),
@@ -2098,12 +2083,11 @@ private
           [match('name', 'jr', 1),
            sup('Norwood', cat('MEETING', 'JUNIORS') ),
            sup('Bic Graphics', match('supplier_num', 'SHAJ1') ),
+           sup('Gemline', cat('Padfolios', 'Junior') ),
            sup('Logomark',
                cat('Mini Padfolios'),
                cat('Junior Padfolios') )
           ] ],
-         ['Kid Friendly Padfolios',
-          [sup('Gemline', cat('Kid-friendly', 'Padfolios') ) ] ],
          ['Leather Padfolios',
           [sup('Gemline', cat('Padfolios', 'Leather') ),
           ]],
@@ -2185,7 +2169,7 @@ private
          ['Specialty Flashlights',
           [sup('Leeds', cat('Flashlights', 'Specialty Lights') ) ]],
          ['Lanterns',
-          [cat('Starline', sup('Flashlights', 'Lanterns') ) ] ]
+          [sup('Starline', cat('Flashlights', 'Lanterns') ) ] ]
         ] ],
      ['Knives',
       [match(%w(name description), %w(knive knife cutter)),
@@ -2304,10 +2288,6 @@ private
      ['Pens',
       [match('name', /pens?($|\s)/i, 1),
        sup('Leeds', cat('Plastic Pens', 'Value Pens And Highlighters') ),
-       sup('Gemline',
-           ['Pens $3-$5', 'Pens $5-$10', 'Pens 10+', 'Pens under $3'].collect do |name|
-             cat('Writing Instruments', name)
-           end),
        sup('High Caliber Line',
            cat('Writing Instruments', 'Pens'),
            cat('Writing Instruments', 'Executive Pens') ),
@@ -2373,7 +2353,7 @@ private
           ]],
          ['Roller Ball Pens',
           [match('name', 'roller', 1),
-           match('name', 'rollerball'),
+           match('name', ['rollerball', /Roller Ball/]),
            sup('Gemline',
                cat('Writing Instruments', 'Roller Balls'),
                cat('Writing Instruments', 'Roller Needle')),
@@ -2500,17 +2480,11 @@ private
 
  ['Ecologically Friendly',
   [sup('High Caliber Line', cat('Eco Friendly Products') ),
-   sup('Gemline',
-       cat('Eco-Choice', 'New Eco-Choice'),
-       cat('Eco-Choice', 'Under $10'),
-       cat('Eco-Choice', '$10+')),
    sup('Logomark', cat('Sustainable') )
 
   ],[
-     ['Organic',
-      [sup('Gemline', cat('Eco-Choice', 'Organic')) ]],
      ['Recycled',
-      [sup('Gemline', cat('Eco-Choice', 'Recycled') ),
+      [sup('Gemline', cat('Living Green', 'Recycled') ),
        sup('Logomark', cat('Recycles') )
       ],[
          dup('Bags', 'Backpacks', 'Recycled Backpacks'),
