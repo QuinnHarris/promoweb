@@ -278,7 +278,7 @@ class PhoneController < ActionController::Base
         attr['end_reason'] = 'voicemail' if %w(voicemail playback).include?(last_app)
       end
       
-      if hangup_dispos = doc.at_xpath('/cdr/variables/sip_hangup_disposition/text()').text
+      if hangup_dispos = doc.at_xpath('/cdr/variables/sip_hangup_disposition/text()').try(:text)
         idx = %w(recv_bye send_bye).index(hangup_dispos)
         res = %w(inside outside)
         res.reverse! if attr['inbound']

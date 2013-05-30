@@ -25,7 +25,10 @@
         %div
           = page.created_at.strftime(" %I:%M:%S %p")
           \:
-          %a{ :href => url_for(page.uri) }
+          - begin
+            - url = url_for(page.uri)
+          - rescue ActionController::RoutingError
+          %a{ :href => url }
             - case [page.controller, page.action]
               - when ['products', 'show']
                 Product #{page.action_id}
