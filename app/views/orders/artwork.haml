@@ -50,7 +50,7 @@
     %hr
 
 = form_for @artwork, :url => edit_order_artwork_path(@order)  do |artwork|
-  - if dragable = allowed?('Orders') && !@order.task_completed?(ArtPrepairedOrderTask)
+  - if dragable = allowed?('Orders') && (!@order.task_completed?(ArtPrepairedOrderTask) || params[:unlock])
     %div.group{ :id => "artwork-group=" }
       %div.decorations
         = render :partial => 'artwork_decoration', :collection => @order_item_decorations, :locals => { :group => nil, :dragable => true }

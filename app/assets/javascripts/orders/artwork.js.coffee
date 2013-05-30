@@ -18,7 +18,7 @@ $(document).ready ->
       node = document.getElementById(id)
       $(event.target).parents().andSelf().filter('.decorations').first().append(node)
 
-      $.ajax(document.URL+"/drop_decoration",
+      $.ajax(document.URL.split('?')[0]+"/drop_decoration",
         type: 'POST'
         context: node
         data:
@@ -50,7 +50,7 @@ $(document).ready ->
         node = document.getElementById(id)
         $(event.target).parents().andSelf().filter('.items').first().append(node)
 
-        $.ajax(document.URL+"/drop_artwork",
+        $.ajax(document.URL.split('?')[0]+"/drop_artwork",
           type: 'POST'
           context: node
           data:
