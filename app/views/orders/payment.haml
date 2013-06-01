@@ -4,143 +4,135 @@
 - if @user
   = render :partial => 'pending_tasks'
 
-- if @payment_methods.empty?
-  - if @order.task_completed?(AcknowledgeOrderTask)
-    #ack.nav
-      %p You have acknowledged this order but must provide payment to proceed with the order.
-  - elsif !@order.task_completed?(RequestOrderTask)
-    %p
-      Enter payment information below to place the order.  Otherwise click "Submit Quote" to request a quote.
-      %br
-      A future acknowledgment will be required before the order is put in production.
-
-  = render :partial => 'payment_creditcard'
-  %hr
-  = link_to("Send a check for payment.", { :action => :payment_sendcheck }, { :confirm => "Aknowledge that you will mail a check as payment for this order." })
-
-- else
-  - if @chargeable
-    :javascript
-      function charge(form)
-      {
-        var string = form.getElementsByClassName('money')[0].value;
-        var amount = parseMoney(string);
-        if (!amount ||
-            (amount > #{@amount.to_i}) ||
-            (amount < 0)) {
-          alert('Amount must be between 0 and #{@amount}');
-          return false;
-        }
-        if ((amount/multiplier).toFixed(2) != string) {
-          alert("Amount must be of form xx.xx");
-          return false;
-        }
-
-        return confirm('Apply Payment Source ' + displayMoney(amount) + '!');
+- if @chargeable
+  :javascript
+    function charge(form)
+    {
+      var string = form.getElementsByClassName('money')[0].value;
+      var amount = parseMoney(string);
+      if (!amount ||
+          (amount > #{@amount.to_i}) ||
+          (amount < 0)) {
+        alert('Amount must be between 0 and #{@amount}');
+        return false;
+      }
+      if ((amount/multiplier).toFixed(2) != string) {
+        alert("Amount must be of form xx.xx");
+        return false;
       }
 
-  - split_by_common(@payment_methods.sort_by { |m| (m.useable? ? 0 : 10000000) - m.id }) { |method| method.useable? }.each do |current, methods|
-    %div{ :class => !current && 'lowlight' }
-      - unless current
-        %h1 Previous Payments
-        %p Credit cards or checks listed below can not be charged.  We do not retain credit card information for more than 30 days after a customers order is closed.
-        %hr
-      - for method in methods
-        .item.info_block
-          .left
-            %h3= method.type_name
-            - if method.has_name?
-              %strong Name:
-              = method.name
-              %br
-            - unless method.sub_type.blank?
-              %strong Type:
-              = method.sub_type.humanize
-              %br
-            - if method.has_number?
-              %strong Last Digits:
-              = method.display_number
-              %br
-            %strong Date Added:
-            = method.created_at.strftime("%Y-%m-%d")
+      return confirm('Apply Payment Source ' + displayMoney(amount) + '!');
+    }
+
+- @payment_methods.sort_by! { |m| -m.id }
+- usable = @payment_methods.find_all { |pm| pm.useable? or pm.transactions.find { |t| t.order == @order } }
+- previous = @payment_methods - usable
+  
+- [[:usable, usable], [:add], [nil, previous]].each do |current, methods|
+  - if current == :add
+    = render :partial => 'payment_add', :locals => { :active => usable.empty? }
+    %hr
+    - next
+
+  - next if methods.empty?
+  
+  %div{ :class => !current && 'lowlight' }
+    - unless current
+      %h1 Previous Payments
+    - for method in methods
+      .item.info_block
+        .left
+          %h3= method.type_name
+          - if method.has_name?
+            %strong Name:
+            = method.name
             %br
-            - if current and method.type_notes
-              - for line in method.type_notes.split("\n")
-                %div= line
-            - if method.billing_id or method.transactions.empty?
-              = link_to(image_tag('remove.png') + (method.transactions.empty? ? 'Remove' : 'Revoke'), payment_remove_order_path(@order, :method_id => method), :method => :post, :confirm => "Remove #{method.type_name} for #{method.name}")
-            - if method.billing_id and !@order.task_completed?(PaymentInfoOrderTask)
-              = link_to(image_tag('add.png') + 'Use as Payment', payment_use_order_path(@order, :method_id => method), :method => :post, :confirm => "Use #{method.type_name} for #{method.name} as payment information")
-
-          = form_tag(payment_apply_admin_order_path(@order, :method_id => method.id, :txn_id => params[:txn_id]), :onsubmit => "return charge(this)") do
-            %table.items
-              %thead
-                %tr
-                  %td Date
-                  %td Order
-                  %td Type
-                  %td Amount
-                  %td Comment
-              %tbody
-                - if @chargeable and method.useable? and (!(@mode == :credit) == !method.creditable?)
-                  %tr{ :id => "method-#{method.id}" }
-                    %td TODAY
-                    %td= link_to @order.id, status_order_path(@order)
-                    %td
-                      - if method.level3? and @order.level3?
-                        LEVEL3
-                    %td
-                      = method.creditable? ? '-' : ''
-                      = text_field :transaction, :amount, :value => @amount, :size => 8, :class => 'money negative', :onkeypress => 'input_press(event)'
-                    %td
-                      = text_field :transaction, :comment
-                    %td
-                      - case @mode
-                      - when :credit
-                        = submit_tag 'Credit'
-                      - when :authorize
-                        - if method.authorizeable?
-                          = submit_tag 'Authorize'
-                        - if allowed?
-                          .admin= submit_tag 'Charge'
-                      - when :charge
-                        = submit_tag 'Charge'
-                      - when :already_auth
-                        - if @order.task_ready?(FirstPaymentOrderTask)
-                          = submit_tag 'Accept Existing as Payment'
-                        - if allowed?
-                          .admin= submit_tag 'Charge'
-                - transactions = method.transactions.order('id DESC')
-                - unless params[:errors] or transactions.first.is_a?(PaymentError)
-                  - transactions.delete_if { |t| t.is_a?(PaymentError) }
-                - for transaction in transactions
-                  %tr
-                    %td= transaction.created_at.strftime("%Y-%m-%d")
-                    %td= link_to transaction.order_id, :action => :status, :id => transaction.order_id
-                    %td= transaction.class.to_s.gsub(/^Payment/,'')
-                    - if transaction.is_a?(PaymentError)
-                      %td{ :colspan => "2" }= transaction.message
-                    - else
-                      %td= transaction.amount.to_perty
-                    %td
-                      = transaction.comment
-                    - if @chargeable and transaction.method.refundable?
-                      - if method.creditable? == transaction
-                        %td Refunding
-                      - elsif transaction.is_a?(PaymentCharge) and @order.total_chargeable.to_i < 0
-                        %td= link_to "Refund", { :txn_id => transaction.id }
-
-  %hr
-  %div
-    = link_to "Add Credit Card", :action => :payment_creditcard
-    %br
-    - if @user
-      .admin
-        = link_to "Send a check for payment", payment_sendcheck_order_path(@order), { :method => :post, :confirm => "Aknowledge that you will mail a check as payment for this order." }
-        - if @order.total_chargeable.to_i < 0
+          - unless method.sub_type.blank?
+            %strong Type:
+            = method.sub_type.humanize
+            %br
+          - if name = method.number_name
+            %strong #{name}:
+            = method.display_number
+            %br
+          %strong Date Added:
+          = method.created_at.strftime("%Y-%m-%d")
           %br
-          = link_to "Send refund check", { :action => :payment_sendcheck, :refund => true }, { :confirm => "A refund check will be sent to the customer." }
+          - if current and method.type_notes
+            - for line in method.type_notes.split("\n")
+              %div= line
+          - if method.revokable? or method.transactions.empty?
+            = link_to(image_tag('remove.png') + (method.transactions.empty? ? 'Remove' : 'Revoke'), payment_remove_order_path(@order, :method_id => method), :method => :post, :confirm => "Remove #{method.type_name} for #{method.name}")
+          - if method.billing_id and !@order.task_completed?(PaymentInfoOrderTask)
+            = link_to(image_tag('add.png') + 'Use as Payment', payment_use_order_path(@order, :method_id => method), :method => :post, :confirm => "Use #{method.type_name} for #{method.name} as payment information")
 
+        = form_tag(payment_apply_admin_order_path(@order, :method_id => method.id, :txn_id => params[:txn_id]), :onsubmit => "return charge(this)") do
+          %table.items
+            %thead
+              %tr
+                %td Date
+                %td Order
+                %td Type
+                %td Amount
+                %td Comment
+            %tbody
+              - if @chargeable and method.chargeable? and method.useable? and (!(@mode == :credit) == !method.creditable?)
+                %tr{ :id => "method-#{method.id}" }
+                  %td TODAY
+                  %td= link_to @order.id, status_order_path(@order)
+                  %td
+                    - if method.level3? and @order.level3?
+                      LEVEL3
+                  %td
+                    = method.creditable? ? '-' : ''
+                    = text_field :transaction, :amount, :value => @amount, :size => 8, :class => 'money negative', :onkeypress => 'input_press(event)'
+                  %td
+                    = text_field :transaction, :comment
+                  %td
+                    - case @mode
+                    - when :credit
+                      = submit_tag 'Credit'
+                    - when :authorize
+                      - if method.authorizeable?
+                        = submit_tag 'Authorize'
+                      - if allowed?
+                        .admin= submit_tag 'Charge'
+                    - when :charge
+                      = submit_tag 'Charge'
+                    - when :already_auth
+                      - if @order.task_ready?(FirstPaymentOrderTask)
+                        = submit_tag 'Accept Existing as Payment'
+                      - if allowed?
+                        .admin= submit_tag 'Charge'
+              - transactions = method.transactions.order('id DESC')
+              - unless params[:errors] or transactions.first.is_a?(PaymentError)
+                - transactions.delete_if { |t| t.is_a?(PaymentError) }
+              - for transaction in transactions
+                %tr
+                  %td= transaction.created_at.strftime("%Y-%m-%d")
+                  %td= link_to transaction.order_id, :action => :status, :id => transaction.order_id
+                  %td= transaction.class.to_s.gsub(/^Payment(BitCoin)/,'')
+                  - if transaction.is_a?(PaymentError)
+                    %td{ :colspan => "2" }= transaction.message
+                  - else
+                    %td= transaction.amount.to_perty
+                  %td
+                    = transaction.comment
+                  - if @chargeable and transaction.method.refundable?
+                    - if method.creditable? == transaction
+                      %td Refunding
+                    - elsif transaction.is_a?(PaymentCharge) and @order.total_chargeable.to_i < 0
+                      %td= link_to "Refund", { :txn_id => transaction.id }
+
+
+- if @user
   %hr
-  = form_for PaymentMethod.new, :url => payment_submit_order_path(@order) do
-    != submit_options false
+  .admin
+    = link_to "Send a check for payment", payment_sendcheck_order_path(@order), { :method => :post, :confirm => "Aknowledge that you will mail a check as payment for this order." }
+    - if @order.total_chargeable.to_i < 0
+      %br
+      = link_to "Send refund check", { :action => :payment_sendcheck, :refund => true }, { :confirm => "A refund check will be sent to the customer." }
+
+%hr
+= form_for PaymentMethod.new, :url => payment_submit_order_path(@order) do
+  != submit_options false

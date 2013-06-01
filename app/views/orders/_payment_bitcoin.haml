@@ -1,0 +1,40 @@
+- if no_request = !@order.task_completed?(RequestOrderTask)
+  %p Order total is not finalized.  Please wait for order confirmation before making a payment.
+  %hr
+- elsif !@order.task_completed?(AcknowledgeOrderTask)
+  %p Please #{link_to "Acknowledge this Order", acknowledge_order_order_path(@order)} before making a Bitcoin payment.
+  %hr
+
+- total = @order.total_chargeable
+  
+%table.form#bcinfo
+  %tr
+    %th Dollars:
+    %td= total.to_perty
+  %tr
+    %th Rate:
+    %td #{(payment_transaction ? payment_transaction.rate : BCRate.rate_USD).to_perty} / BTC
+  %tr
+    %th Discount:
+    %td #{payment_transaction ? payment_transaction.discount : BCDiscount}%
+  %tr
+    %th Bitcoins:
+    %td
+      %strong= payment_transaction ? payment_transaction.chargeable : BCRate.bc_USD(total * (1.0 - BCDiscount/100.0))
+  - if payment_transaction
+    %th Expires:
+    %td
+      %span#countdown{ 'data-expire' => payment_transaction.expires.to_i }
+
+%div#bcmeta
+  - if payment_transaction
+    %a{ :href => payment_transaction.url }
+      Send to
+      %strong #{payment_transaction.pay_address}
+      %br
+      = image_tag("/orders/#{@order.id}/payment_bitcoin_qr.png?request_id=#{payment_transaction.id}")
+  - elsif !total.zero? and !no_request
+    = link_to image_tag('pay_now_64.png'), payment_bitcoin_order_path(@order), :remote => true, :method => :post, :id => 'bitcoinpay', 'data-type' => 'html'
+
+%div#bottom
+    

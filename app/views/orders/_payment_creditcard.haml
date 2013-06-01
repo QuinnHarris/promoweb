@@ -1,5 +1,4 @@
-%p
-  Your card will not be charged until you acknowledge the invoice for the amount that will be billed.
+%p Your card will not be charged until you acknowledge the invoice for the amount that will be billed.
 
 = form_for(@credit_card, :as => :credit_card, :url => payment_creditcard_order_path(@order), :html => { :class => 'noauto' } ) do |cc|
   %table.form

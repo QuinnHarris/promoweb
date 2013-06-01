@@ -168,6 +168,8 @@ Promoweb::Application.routes.draw do
       post 'payment_submit'
       get 'payment_creditcard'
       post 'payment_creditcard'
+      post 'payment_bitcoin'
+      get 'payment_bitcoin_qr'
       
       get 'payment_sendcheck'
       post 'payment_sendcheck'

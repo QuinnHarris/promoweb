@@ -157,7 +157,6 @@ class Starline < GenericImport
 
 
         # Tags
-        pd.tags = []
         pd.tags << 'Closeout' if response['closeout']
         if response['types'] && response['types'].find { |h| h['name'].include?('New') } or
             response['logos'] && response['logos'].find { |h| h['name'] == '119' }

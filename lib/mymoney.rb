@@ -91,6 +91,14 @@ class MyRange
       end      
     end
   end
+
+  def collect
+    if min == max
+      MyRange.new(yield(min))
+    else
+      MyRange.new(yield(min), yield(max))
+    end
+  end
   
   def single
     return @min if @min == @max

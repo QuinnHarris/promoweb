@@ -1,0 +1,42 @@
+%div#payment_tabs
+  %ul
+    %li
+      %a{ :href => "#creditcard"}
+        = image_tag('payments/credit_cards.png')
+    %li
+      %a{ :href => "#bitcoin"}
+        = image_tag('payments/bitcoin.png')
+    %li
+      %a{ :href => "#check"}
+        = image_tag('payments/check.png')
+  %div#creditcard
+    = render :partial => 'payment_creditcard'
+  %div#bitcoin
+    - pt = nil
+    - pm = @order.bitcoin_receive_payment_method and pt = pm.find_request
+    = render :partial => 'payment_bitcoin', :locals => { :payment_transaction => pt }
+  %div#check
+    %p We accept checks for payment with a 1% discount either mailed or processed electronically.
+    %hr
+    %p Send a copy of the complete check with your order number (#{@order.id}) to one of the following.
+    %table.form
+      %tr
+        %th Email:
+        %td= mail_to('payment@mountainofpromos.com')
+      %tr
+        %th Fax:
+        %td (877) 765-3617
+      %tr
+        %th Postal Mail:
+        %td
+          Mountain Xpress Promotions, LLC
+          %br
+          2885 Sanford Ave SW #24393
+          %br
+          Grandville, MI 49418 
+  
+  - active = 0 if active
+  - active = 1 if bitcoin = @payment_methods.first.is_a?(PaymentBitCoin)
+  :javascript
+    $("#payment_tabs").tabs({ active: #{active}, collapsible: #{!active} });
+

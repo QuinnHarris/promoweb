@@ -140,3 +140,69 @@ class Bitcoin::Client
     @api.request 'walletpassphrase', passphrase, timeout
   end
 end
+
+
+class BitCoinRate
+  def initialize(file, url)
+    @file = file
+    @url = url
+    @cache = {}
+  end
+
+  def get_hash(age = 20.minutes)
+    return @hash if @mtime and @mtime > (Time.now - age)
+    @mtime = @hash = nil
+    @cache = {}
+    unless File.exists?(@file)
+      Rails.logger.warn("BitCoin Rate file does not exist: #{@file}")
+    else
+      @mtime = File.mtime(@file)
+      unless @mtime > (Time.now - age)
+        Rails.logger.warn("BitCoin Rate file out of date: (#{age}) #{@mtime} : #{@file}")
+        @mtime = nil
+      end
+    end
+
+    if @mtime
+      Rails.logger.info("BitCoin Rate file reloaded: #{@mtime} : #{@file}")
+      f = File.open(@file)
+      data = f.read
+    else
+      Rails.logger.info("BitCoin Rate file fetched: #{@file} : #{@url}")
+      f = URI.parse(@url).open
+      data = f.read
+      File.open(@file, 'w') { |f| f.write(data) }
+      @mtime = File.mtime(@file)
+    end
+
+    @hash = ActiveSupport::JSON.decode(data)
+  end
+
+  def age
+    Time.now - @mtime
+  end
+
+  def rate_USD(age = 20.minutes)
+    get_hash(age)
+    return @cache['rate_USD'] if @cache['rate_USD']
+    @cache['rate_USD'] = Money.new(Float(@hash['USD']['24h']))
+  end
+
+  def self.bc_USD(rate, usd)
+    digits = (Math.log(rate.to_f)/Math.log(10)).ceil + 2
+    (usd.to_f / rate.to_f).round(digits)
+  end
+
+  def bc_USD(usd, age = 20.minutes)
+    rate = rate_USD(age)
+    @cache['digits_USD'] = (Math.log(rate.to_f)/Math.log(10)).ceil + 2 unless @cache['digits_USD']
+    (usd.to_f / rate.to_f).round(@cache['digits_USD'])
+  end
+
+  def self.usd_BC(rate, coin)
+    Money.new(rate) * coin
+  end
+end
+
+BCRate = BitCoinRate.new('/tmp/weighted_prices.json', 'http://api.bitcoincharts.com/v1/weighted_prices.json')
+BCDiscount = 5.0

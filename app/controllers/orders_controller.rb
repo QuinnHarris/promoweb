@@ -572,12 +572,15 @@ public
 
     customer = @order.customer
     @payment_methods = customer.payment_methods.find(:all, :include => :transactions)
-    if @payment_methods.empty?
-      @address = customer.default_address || Address.new
-      @options = Struct.new(:different).new nil
-      @credit_card = ActiveMerchant::Billing::CreditCard.new
-      next
-    end
+
+    # To add card
+    @address = customer.default_address || Address.new
+    @options = Struct.new(:different).new nil
+    @credit_card = ActiveMerchant::Billing::CreditCard.new
+
+    next if @payment_methods.empty?
+
+    @payment_methods.each { |pm| pm.update! } # Fills BitCoin Transactions
 
     if @user and @order.task_ready_completed?(FirstPaymentOrderTask)
       if @order.items.find { |i| i.task_completed?(ShipItemTask) }
@@ -656,6 +659,39 @@ public
       parameters.delete('credit_card')
     end
     parameters
+  end
+
+  def payment_bitcoin
+    PaymentMethod.transaction do
+      unless method = @order.bitcoin_receive_payment_method
+        client = PaymentBitCoin.client
+        
+        method =
+          PaymentBitCoinReceive.create(:customer => @order.customer,
+                                       :address => @order.customer.default_address,
+                                       :name => '',
+                                       :display_number => client.getnewaddress
+                                       )
+      end
+      
+      unless transaction = method.find_request
+        @transaction = method.create_request(@order)
+      end
+
+      task_complete({ :data => { :id => @transaction.id } },
+                    PaymentInfoOrderTask, nil, false)
+    end
+
+    render :partial => 'payment_bitcoin', :locals => { :payment_transaction => @transaction }
+  end
+
+  def payment_bitcoin_qr
+    PaymentTransaction
+    pr = PaymentBitCoinRequest.find(params[:request_id])
+    respond_to do |format|
+      format.svg  { render :qrcode => pr.url, :level => :l, :unit => 10 }
+      format.png  { render :qrcode => pr.url, :unit => 3 }
+    end
   end
 
   def payment_creditcard

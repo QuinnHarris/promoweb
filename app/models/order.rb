@@ -154,7 +154,7 @@ class Order < ActiveRecord::Base
   end
   
   def payment_charges
-    payment_transactions.where("(type = 'PaymentCharge' OR type = 'PaymentCredit') AND amount != 0")
+    payment_transactions.where("(type = 'PaymentCharge' OR type = 'PaymentCredit' OR (type = 'PaymentBitCoinAccept' AND auth_code IS NOT NULL)) AND amount != 0")
   end
 
   def payment_authorizes
@@ -296,5 +296,9 @@ class Order < ActiveRecord::Base
 
   def artwork_proofs
     artwork_proof_groups.collect { |ag| ag.artworks.find_all { |a| a.has_tag?('proof') } }.flatten
+  end
+
+  def bitcoin_receive_payment_method
+    PaymentBitCoinReceive.includes(:transactions).where(:customer_id => customer.id).where("payment_transactions.order_id = #{id}").first
   end
 end

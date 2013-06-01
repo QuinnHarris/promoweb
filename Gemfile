@@ -25,7 +25,7 @@ group :assets do
   gem 'therubyracer'
 end
 
-gem 'jquery-rails' #, '~> 2.1.3'
+gem 'jquery-rails', '~> 2.2.0'
 
 # Deploy with Capistrano
 # gem 'capistrano'
@@ -84,6 +84,8 @@ gem 'savon'
 gem 'rmagick'
 
 gem 'bitcoin-client'
+gem 'mini_magick'
+gem 'rqrcode-rails3'
 
 # Bundle gems for the local environment. Make sure to
 # put test-only gems in this group so their generators

@@ -141,6 +141,7 @@ class PaymentMethod < ActiveRecord::Base
   
 #  validates_uniqueness_of :display_number, :scope => :customer_id
   
+  def chargeable?; true; end
   def creditable?; false; end
   def authorizeable?; false; end
   def type_notes; nil; end
@@ -148,6 +149,8 @@ class PaymentMethod < ActiveRecord::Base
   def revoke!; end;
   def fee; 0.0; end
   def level3?; nil; end
+
+  def update!; end;
   
   PaymentTransaction
   def authorize(order, amount, comment = nil)
@@ -190,7 +193,7 @@ end
 class PaymentCreditCard < OnlineMethod
   def type_name; "Credit Card ending in #{display_number}"; end
   def has_name?; true; end
-  def has_number?; true; end
+  def number_name; 'Last Digits'; end
   def authorizeable?; true; end
 
   def revokable?
@@ -463,18 +466,9 @@ public
 end
 
 class PaymentACHCheck < OnlineMethod
-  def type_name
-    "Electronic Check"
-  end
-  
-  def has_name?
-    nil
-  end
-
-  def has_number?
-    true
-  end
-
+  def type_name; 'Electronic Check'; end
+  def has_name?; nil; end
+  def number_name; 'Check No'; end
   def useable?; transactions.empty?; end
 end
 
@@ -490,7 +484,7 @@ class PaymentCheck < PaymentMethod
   def refundable?; false; end
 
   def has_name?; nil; end
-  def has_number?; false; end
+  def number_name; nil; end
 end
 
 class PaymentSendCheck < PaymentCheck
@@ -512,13 +506,104 @@ end
 
 
 class PaymentBitCoin < PaymentMethod
+  def chargeable?; false; end
+  def refundable?; false; end
+  def useable?; transactions.empty? or !transactions.last.auth_code; end
+  def has_name?; nil; end
+  def number_name; 'Address'; end
 
+  def pay_address; read_attribute(:display_number); end   
+
+  def self.client
+    secrets = YAML.load_file("#{Rails.root}/config/secrets")
+    bitsec = secrets['bitcoin']
+    Bitcoin::Client.new(bitsec['user'], bitsec['password'])
+  end
+
+  def find_request
+    transactions.to_a.sort_by { |t| t.created_at }.find { |t| t.is_a?(PaymentBitCoinRequest) && t.respond_to?(:active?) && t.active? }
+  end
+
+  def create_request(order)
+    PaymentBitCoinRequest.create(:method => self,
+                                 :order => order,
+                                 :invoice => order.invoices.last,
+                                 :amount => order.total_chargeable,
+                                 :rate => BCRate.rate_USD,
+                                 :discount => BCDiscount)
+  end
 end
 
 class PaymentBitCoinReceive < PaymentBitCoin
+  def type_name; 'BitCoin Receive'; end
+  def revokable?
+    not transactions.to_a.find { |t| !t.is_a?(PaymentBitCoinRequest) or t.active? }
+  end
+  def revoke!
+    return unless revokable?
+    transactions.each { |t| t.destroy }
+  end
+  
+  def update!
+    client = self.class.client
+    client_list = client.listtransactions('', 20).find_all { |h| h['address'] == display_number }
+    
+    trans_list = transactions.to_a
 
+    # Update
+    trans_list.delete_if do |t|
+      next unless h = client_list.find { |h| h['txid'] == t.number }
+      client_list.delete(h)
+      unless t.confirmations == h['confirmations']
+        t.confirmations = h['confirmations']
+        t.save!
+        if t.confirmed? and t.fudge and t.order.task_ready?(FirstPaymentOrderTask)
+          t.order.task_complete({}, FirstPaymentOrderTask)
+        end
+      end
+      true
+    end
+
+    request = find_request
+
+    # Add
+    client_list.each do |h|
+      unless request
+        r = trans_list.find { |t| t.is_a?(PaymentBitCoinRequest) }
+        request = create_request(r.order)
+      end
+
+      amount = ((request.rate * h['amount']) / (1.0 - request.discount/100.0))
+      needed = request.order.total_chargeable
+      fudge = nil
+
+      abs = (amount - needed).abs
+      if abs < Money.new(500) and abs.to_i * 200 < request.order.total_invoice_price.to_i
+        logger.info("Fudging BitCoin Accept: #{amount} #{needed}")
+        fudge = needed - amount
+        amount = needed
+      end
+
+      t = PaymentBitCoinAccept.create(:method => self,
+                                      :order => request.order,
+                                      :number => h['txid'],
+                                      :coins => h['amount'],
+                                      :amount => amount,
+                                      :fudge => fudge,
+                                      :rate => request.rate,
+                                      :discount => request.discount,
+                                      :confirmations => h['confirmations'])
+      if t.confirmed? and fudge and t.order.task_ready?(FirstPaymentOrderTask)
+        t.order.task_complete({}, FirstPaymentOrderTask)
+      end
+    end
+
+#    trans_list.delete_if { |t| t.is_a?(PaymentBitCoinRequest) }
+#    raise "Possible double spend" unless trans_list.empty?    
+  end
 end
 
 class PaymentBitCoinSend < PaymentBitCoin
+  def type_name; 'BitCoin Send'; end
 
 end
