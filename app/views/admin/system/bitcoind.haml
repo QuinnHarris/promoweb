@@ -34,7 +34,7 @@
         %td #{hash['subver']} (#{hash['version']})
         %td
           = Time.at(hash['conntime']).to_formatted_s(:db)
-          - if hash['releasetime'] != 0
+          - if hash['releasetime'] and hash['releasetime'] != 0
             \=> #{Time.at(hash['releasetime']).to_formatted_s(:db)}
         %td= hash['inbound'] ? 'X' : ''
         %td

@@ -14,12 +14,12 @@
       %p Need a custom imprinted product right away? We can decorate and ship many of our custom imprinted promotional products and executive gifts within 24 hours of your order – and often, at no additional charge!
 
     %div
-      %p We have over 7000 custom promotional products including custom tote bags, padfolios, mugs, pens and much, much more ! A promotional product makes a great employee gift, trade show item, customer incentive or customer thank-you gift .  If you need marketing ideas, an effective form of advertising, want to gain brand recognition, or simply want to stand out from the crowd and make your trade show exhibit memorable, look no further!
+      %p We have over 16,000 custom promotional products including custom tote bags, padfolios, mugs, pens and much, much more ! A promotional product makes a great employee gift, trade show item, customer incentive or customer thank-you gift .  If you need marketing ideas, an effective form of advertising, want to gain brand recognition, or simply want to stand out from the crowd and make your trade show exhibit memorable, look no further!
 
   #categories
     - for category, tag, count in @categories
       = render :partial => 'categories/category', :locals => { :category => category, :display_name => category.name, :path => category.path_web, :to_list => true, :context => { :children => true, :tag => tag } }
 
   %p 
-    We have a large selection of custom imprinted promotional products with over 7,000 to choose from for events like 
+    We have a large selection of custom imprinted promotional products with over 16,000 to choose from for events like 
     = @purposes.join(', ')
