@@ -695,6 +695,8 @@ class ProductDesc
   end
 
   def validate_after
+    return if ARGV.include?('nodup')
+
     all_images = ((variants.collect { |v| v.images }) + self.images).flatten.compact.uniq
 
     replace_images = find_duplicate_images(all_images, supplier_num)

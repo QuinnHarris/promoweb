@@ -221,22 +221,21 @@ class LogomarkXLS < GenericImport
           pd.name = "#{common['Name']} #{common['Description']}".strip
           pd.description = common['Features'] || ''
           pd.supplier_categories = (common['Categories'] || '').split(',').collect { |c| [c.strip] }
-          pd.tags = [] # FIX !!!
 
           pd.package.units = common['Quantity Per Box']
           pd.package.weight = common['Box Weight']
 
-          unless /^(\d+)-(\d+) Working ((?:Days)|(?:Weeks))$/ === common['Production Time']
+          unless /^(\d+)(?:-(\d+))? Working ((?:Days)|(?:Weeks))$/ === common['Production Time']
             raise "Unkown Production Time: #{supplier_num} #{common['Production Time']}"
           end
           multiplier = ($3 == 'Days') ? 1 : 5
           pd.lead_time.normal_min = Integer($1) * multiplier
-          pd.lead_time.normal_max = Integer($2) * multiplier
+          pd.lead_time.normal_max = Integer($2 || $1) * multiplier
           pd.lead_time.rush = 1 if common['IsAdvantage24'] == 'YES'
 
           pd.properties = {
             'material' => common['Finish / Material'],
-            'dimension' => common['Item Size'] && parse_dimension(common['Item Size'])
+            'dimension' => common['Item Size'].blank? ? nil : (parse_dimension(common['Item Size']) || common['Item Size'])
           }
 
 

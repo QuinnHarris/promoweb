@@ -1262,6 +1262,10 @@ private
        sup('Bullet Line', cat('Lighting', 'Book Lights') ) ] ],
      ['Pencil Sharpeners',
       [match('name', 'pencil sharpener')] ],
+     ['Magnifiers',
+      [match('name', 'magnifier', 1),
+       sup('Logomark', cat('Magnifiers') ) 
+      ]],
     ] ], 
 
  ['Coolers',
@@ -1926,7 +1930,7 @@ private
            cat('Travel Gifts', 'Travel Wallets') ),
       ]],
      ['Money Clips',
-      [match('name', ['money clip', 'money band']),
+      [match('name', ['money clip', 'money band', 'credit card holder']),
        sup('Logomark', cat('Money Clips') )
       ] ],
      ['Wristbands',
@@ -2075,7 +2079,9 @@ private
            cat('MEETING', 'PAD'),
            cat('MEETING', 'FOLDERS')),
        sup('Bullet Line', cat('Stationery', 'Portfolios') ),
-       sup('Logomark', cat('Letter Padfolios' ) ),
+       sup('Logomark', 
+           cat('Letter Padfolios' ),
+           cat('Zip Padfolios') ),
        sup('Sweda', cat('Stationery', 'Portfolios') ),
        sup('Starline', cat('Business', 'Portfolios/Padfolios') )
       ],[
@@ -2148,7 +2154,7 @@ private
        sup('Prime Line', match('name', 'torch') ),
        sup('Norwood', cat('AUTO', 'FLASH') ),
        sup('Bullet Line', cat('Lighting', 'Flashlights') ),
-       sup('Logomark', cat('Flash Lights') ),
+       sup('Logomark', cat('Flashlights') ),
        sup('Sweda',
            cat('Flashlights', 'Metal'),
            cat('Flashlights', 'Plastic') ),
@@ -2484,8 +2490,7 @@ private
 
   ],[
      ['Recycled',
-      [sup('Gemline', cat('Living Green', 'Recycled') ),
-       sup('Logomark', cat('Recycles') )
+      [sup('Gemline', cat('Living Green', 'Recycled') )
       ],[
          dup('Bags', 'Backpacks', 'Recycled Backpacks'),
          dup('Bags', 'Business Bags', 'Recycled Business Bags'),

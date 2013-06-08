@@ -976,7 +976,7 @@ private
     list = string.strip.split(/x/i).collect do |part|
       unless m = /^#{@@component_regex}$/.match(part.strip)
         warning 'Parse Dimension', "RegEx mismatch: #{part.inspect}"
-        return
+        return if pedantic
       end
       m
     end.compact
