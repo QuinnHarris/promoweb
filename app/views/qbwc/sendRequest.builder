@@ -188,7 +188,8 @@ xml.QBXML do
       xml.VendorRef do
         # Using ListID on Bills causes Quickbooks to crash for some reason QBBUG!
         #xml.ListID purchase.supplier.quickbooks_id
-	supplier = purchase.supplier.attributes['quickbooks_id'] ? purchase.supplier : purchase.supplier.parent
+	supplier = purchase.supplier
+        supplier = supplier.parent until supplier.attributes['quickbooks_id']
         xml.FullName supplier.attributes['name'][0...41]
       end
 
