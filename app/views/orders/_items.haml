@@ -35,7 +35,7 @@
       %tr.total
         %th{ :colspan => 3 } Total:
         %td.num= @order.total_price.to_perty
-      - if rate = BCRate.rate_USD
+      - if (rate = BCRate.rate_USD) and !static
         %tr.special
-          %th{ :colspan => 3 } BitCoin Total (#{rate.to_perty}, #{BCDiscount}% off):
+          %th{ :colspan => 3 } Bitcoin Total (#{rate.to_perty}, #{BCDiscount}% off):
           %td.num= BCRate.bc_USD(@order.total_price * (1.0 - BCDiscount/100.0))

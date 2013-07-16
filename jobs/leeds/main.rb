@@ -6,7 +6,7 @@ class LeedsXLS < PolyXLS
     @src_urls = ['http://media.leedsworld.com/msfiles/downloads/WebDecorationMethodByItem.xls']
     # USDcatalog
     # USDMemorycatalog 
-    @src_urls += %w(USDMemorycatalog USDcatalog).collect do |name|
+    @src_urls += %w(USDcatalog).collect do |name|
       "http://media.leedsworld.com/ms/?/excel/#{name}/EN"
     end
     @image_url = 'images.leedsworld.com'

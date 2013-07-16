@@ -233,7 +233,6 @@ class PrimeLineWeb < GenericImport
       price_rows = doc.xpath("//tr[@id='ctl00_content_RegularPriceRow']/td/table/tr/td") +
         doc.xpath("//tr[@id='ctl00_content_CloseoutPriceRow']/td/table/tr/td")
 
-      pd.tags = []
       pd.tags << tag if tag
 #      pd.tags << 'Special' if price_rows.size > 1
 
@@ -433,7 +432,7 @@ class PrimeLineWeb < GenericImport
 
       
       color_image_map, color_num_map = match_colors(color_list)
-      puts "Color Map: #{color_image_map.inspect} #{color_image_map.default.inspect}"
+#      puts "Color Map: #{color_image_map.inspect} #{color_image_map.default.inspect}"
       pd.images = color_image_map[nil] || []
 
       pd.variants = product_list.zip(color_list).collect do |prod, color|
