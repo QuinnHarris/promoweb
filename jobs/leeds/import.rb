@@ -123,7 +123,7 @@ class PolyXLS < GenericImport
           
           pd.package.merge_from_object(row,
                                        { 'units' => ['Carton Quantity', 'CartonPackQTY'],
-                                         'weight' => ['Carton Weight', 'CartonWeight'] })
+                                         'weight' => ['Carton Actual Weight', 'CartonWeight'] })
 
           if row.header?('Carton Width') # Only in new format
             pd.package.merge_from_object(row,
