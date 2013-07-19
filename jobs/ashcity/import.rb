@@ -102,7 +102,7 @@ class AshCityXLS < GenericImport
         
         # Decorations
         pd.decorations = [DecorationDesc.none,
-                          DecorationDesc.new(:technique => 'Heat Transfer (area)',
+                          DecorationDesc.new(:technique => 'Heat Transfer',
                                              :location => '', :limit => 20),
                           DecorationDesc.new(:technique => 'Embroidery',
                                              :location => '', :limit => 25000) ]

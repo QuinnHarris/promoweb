@@ -983,7 +983,7 @@ private
     aspects = parse_aspects(list, string, pedantic)
     return nil unless aspects
     if [:height, :width, :length].count { |a| aspects[a] } < 2
-      warning 'Parse Area', "Missing two aspects: #{string}"
+      warning 'Parse Dimension', "Missing two aspects: #{string}"
       return if pedantic
     end
     aspects
@@ -1001,7 +1001,7 @@ private
     other = {}
     m.names.each do |name|
       first, second = name.split('_')
-      next unless val = m[name]
+      next if (val = m[name]).blank?
       if second 
         parts[first] ||= {}
         parts[first][second.to_sym] = val

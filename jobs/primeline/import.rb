@@ -16,7 +16,7 @@ class PrimeLineWeb < GenericImport
       page = @agent.get(url)
       puts "File: #{file.inspect}"
       f = page.form_with(:action => file)
-      if f['ctl00$content$cboPerPage'] != '0'
+      if f and f['ctl00$content$cboPerPage'] != '0'
         puts "  Refetch: #{f['ctl00$content$cboPerPage']}"
         f['ctl00$content$cboPerPage'] = '0' # All Items
         page = f.click_button
@@ -33,35 +33,50 @@ class PrimeLineWeb < GenericImport
     fetch = WebFetch.new('http://www.primeline.com/')
     doc = Nokogiri::HTML(open(fetch.get_path))
     categories = {}
-    doc.xpath("//a").each do |a|
-      next unless a['href'].include?('/Products/ProductList.aspx')
-      next if a.inner_html.include?('<img')
+    categories.default = []
+    parent_category = nil
+#    doc.xpath("//a").each do |a|
+    doc.xpath("/html/body/div/table/tr/td/table/tr/td/font/a").each do |a|
+#      next unless a['href'].include?('/Products/ProductList.aspx')
+#      next if a.inner_html.include?('<img')
+      next unless /^\/|(?:http:\/\/www\.primeline\.com\/)/ === a['href']
+      next if a['href'].include?('/General')
+
       url = a['href'].gsub(/^\.\.\//, '')
-      categories[url] = (categories[url] || []) + [a.inner_html.encode('ASCII', :invalid => :replace, :undef => :replace, :replace => '').strip.gsub(/\s+/, ' ').gsub(/<.*?>/,'').gsub(/&.+;/, '')]
+
+      category_name = a.inner_html.encode('ASCII', :invalid => :replace, :undef => :replace, :replace => '').strip.gsub(/\s+/, ' ').gsub(/<.*?>/,'').gsub(/&.+;/, '')
+      case a['class']
+      when 'footerLinks_Form'
+        parent_category = category_name
+        categories[url] += [[category_name]]
+      when 'footerSubLinks_Form'
+        categories[url] += [[parent_category, category_name]]
+      else
+        categories[url] += [[category_name]]
+      end
     end
 
+    puts "Categories"
     categories.each do |path, category_list|
-      if /^http:\/\// === path
-        url = path
-      else
-        url = "http://www.primeline.com/#{path}"
-      end
-      process_category(category_list.uniq.join(' '), url)
+      url = (/^http:\/\// === path) ? path : "http://www.primeline.com/#{path}"
+
+      process_category(category_list.uniq, url)
     end
   end
 
-  def process_category(category, url)
-    puts "Category: #{url}  #{category}"
-    doc = get_parser(url)
+  def process_category(categories, url)
+    unless doc = get_parser(url)
+      puts "  #{url}  #{categories.inspect} CAN'T PARSE"
+      return
+    end
     count = 0
-    doc.xpath("//table/tr/td/div/a").each do |a|
-      next unless a['href'].index('ProductDetail')
-      path = a['href'].strip.gsub(/^\.\.\//, '')
-#      puts "Product: #{path} : #{category}"
-      @product_pages[path] = (@product_pages[path] || []) + [category]
+    doc.xpath("//a").each do |a|
+      next unless a['href'] and a['href'].index('ProductDetail')
+      path = a['href'].strip.gsub(/^(\.\.\/)|(http:\/\/primeline\.com\/)/, '')
+      @product_pages[path] += categories
       count += 1
     end
-    puts "  Products: #{count}"
+    puts "  #{url}  #{categories.inspect} #{count}"
   end
 
   def products_list(name)
@@ -85,7 +100,7 @@ class PrimeLineWeb < GenericImport
     products_list('Specials').each { |p| @tags[p] = 'Special' }
     products_list('HotDeals').each { |p| @tags[p] = 'Special' }
     products_list('Closeouts').each { |p| @tags[p] = 'Closeout' }
-    products_list('nonstock').each { |p| @product_pages[p] = ['Overseas'] }
+    products_list('nonstock').each { |p| @product_pages[p] = [['Overseas']] }
    
 
     # Fetch Images
@@ -151,21 +166,38 @@ class PrimeLineWeb < GenericImport
     'Silk Screened' => ['Screen Print', 5],
     'Silk-screened' => ['Screen Print', 5],
     'Silk screened' => ['Screen Print', 5],
+    'Silk Screen' => ['Screen Print', 5],
+    'Silk Screened up to three colors' => ['Screen Print', 3],
     'Debossed' => ['Deboss', 1],
+    'Deboss' => ['Deboss', 1],
     'Laser Engraved' => ['Laser Engrave', 1],
     'Laser Engraved with Oxidation' => ['Laser Engrave', 1],
     'Laser Engraved with Oxidization' => ['Laser Engrave', 1],
     'Laser Personalization' => ['Laser Engrave', 1],
-    'Pad Printed' => ['Pad Print', 1],
+    'Pad Print' => ['Pad Print', 3],
+    'Pad Printed' => ['Pad Print', 3],
+    'Pad printed' => ['Pad Print', 3],
+    'Pad Printed (for multi-color)' => ['Pad Print', 3],
+    'Pad Print (for multi-color)' => ['Pad Print', 3],
     'Pad Printed outside' => ['Pad Print', 1],
     'Image Bonding®' => ['Image Bonding', 1],
+    'Image Bonding® 4-Color Process' => ['4 Color Photographic', 1],
     'VibraTec' => ['4 Color Photographic', 1],
+    'VibraTec+ Drinkware' => ['4 Color Photographic', 1],
+    '4-Color Process' => ['4 Color Photographic', 1],
+    'Four-color Process Offset' => ['4 Color Photographic', 1],
     'Four-Color Process Offset' => ['4 Color Photographic', 1],
+    'Four-Color Process Offset inside' => ['4 Color Photographic', 1],
     'Four-Color Process Digital Label' => ['4 Color Photographic', 1],
     'Four-Color Process Digital Label for insert' => ['4 Color Photographic', 1],
     'Four-Color Process Digital Label with protective epoxy dome' => ['4 Color Photographic', 1],
     'Four-Color Process Offset protected by an epoxy dome' => ['4 Color Photographic', 1],
     'Hand applied' => ['H?', 1],
+    'Embroidery up to 7,500 stitches and 7 colors; Production time: 7' => ['Embroidery', 7500],
+    'Embroidery up to 7,500 stitches and 7 colors; Production time: 7-10 business days; no rush service available' => ['Embroidery', 7500],
+    'Embroidery (Price includes up to 12,000 stitches)' => ['Embroidery', 7500],
+    'Transfer' => ['Heat Transfer', 3],
+    'Transfer (for multi-color)' => ['Heat Transfer', 3],
   }
 
   @@decoration_limit = {
@@ -209,12 +241,22 @@ class PrimeLineWeb < GenericImport
           when 'a'
             next nil unless child.attributes['href']
             href = child.attributes['href'].value.strip
-            unless /\/Products\/ProductDetail\.aspx\?fpartno=(.+)$/ === href
+            case href
+            when /\/Products\/ProductDetail\.aspx\?fpartno=(.+)$/
+              product = get_product($1)
+              "<a href='#{product.web_id}'>#{child.inner_html.gsub($1,'').strip}</a>"
+            when '/eco/eco-design.aspx'
+              "eco-responsible™"
+            when '/Safety/Polycarbonate.aspx'
+              "Polycarbonate (contains BPA)"
+            when '/leeman/'
+              "Leeman New York Product"
+            when '/BUILT'
+              "BUILT Product"
+            else
               warning 'Unkown URL', "#{pd.supplier_num} #{href}"
               next nil
             end
-            product = get_product($1)
-            "<a href='#{product.web_id}'>#{child.inner_html.gsub($1,'').strip}</a>"
             
           when 'font', 'b'
             next nil if child.inner_html.downcase.include?('free ship') 
@@ -225,7 +267,7 @@ class PrimeLineWeb < GenericImport
           else
             raise "Unknown element #{pd.supplier_num} #{child.name}"
           end
-        end.compact.collect { |s| s.encode('ISO-8859-1') }.join(' ')
+        end.compact.collect { |s| s.encode('UTF-8') }.join(' ')
         line.blank? ? nil : line
       end.compact
       
@@ -238,9 +280,9 @@ class PrimeLineWeb < GenericImport
 
       if cat_node = doc.at_xpath("//span[@id='ctl00_content_ProductClasstext']")
         cat = cat_node.text.split('>').collect { |s| s.strip.capitalize }.flatten
-        unless cat.empty? or categories.include?(cat)
+        unless cat.empty? or categories.flatten.include?(cat)
           puts "CAT: #{cat.inspect}"
-          categories += cat
+          categories += [cat]
           puts "CATS: #{categories.inspect}"
         end
       end
@@ -253,7 +295,7 @@ class PrimeLineWeb < GenericImport
         pd.lead_time.rush = 1
       end
       
-      if categories.find { |c| c.downcase.include?('overseas') }
+      if categories.flatten.find { |c| c.downcase.include?('overseas') }
         pd.lead_time.normal_min = 20
         pd.lead_time.normal_max = 60
       elsif it = doc.xpath("//table/tbody/tr/td/span[@class='black11']").last
@@ -262,7 +304,7 @@ class PrimeLineWeb < GenericImport
         pd.lead_time.normal_min, pd.lead_time.normal_max = 3, 5
       end
       
-      pd.supplier_categories = categories.collect { |c| [c] }
+      pd.supplier_categories = categories
       
       price_no_special = nil
       price_no_less = nil
@@ -280,7 +322,7 @@ class PrimeLineWeb < GenericImport
       
 
 
-      variant_pricing = {}      
+      variant_pricing = {}
       doc.xpath("//tr[@id='ctl00_content_RegularPriceRow' or @id='ctl00_content_CloseoutPriceRow']/td/table/tr").each do |tr|
         price_str = tr.children[1].at_xpath('span/text()').to_s
         price_str += 'C' if price_str.length == 1 and price_str[0] > ?0 and price_str[0] <= ?9 #Kludge for 4 without C price
@@ -293,11 +335,13 @@ class PrimeLineWeb < GenericImport
         minimums = rows.shift.xpath("//td[@align='right']/font/b").to_a.compact
         next if minimums.empty?
         minimums = minimums.collect { |m| m.inner_html.to_i }
+
+        pd.tags << 'Closeout' if tr.parent.parent.parent.attributes['id'].value.include?('Closeout')
         
         rows.each do |row|
           head = row.xpath("td/span/font").first
           head = head.inner_html.downcase if head
-          puts "HEAD: #{head}"
+#          puts "HEAD: #{head}"
           
           list = row.xpath("td/font").collect { |e| e.inner_html.strip.empty? ? nil : e.inner_html }.compact
           next nil if list.empty?
@@ -313,7 +357,7 @@ class PrimeLineWeb < GenericImport
             pricing.ltm(44.00) unless price_no_less
             pricing.maxqty
           rescue PropertyError
-            puts " Price Row Error: #{minimums.inspect} #{list.inspect}"
+            warning 'Price Row Error', "#{minimums.inspect} #{list.inspect}"
           end
         end
       end
@@ -323,101 +367,8 @@ class PrimeLineWeb < GenericImport
       unless variant_pricing.default = [nil, 'now', 'standard'].collect { |k| variant_pricing[k] }.compact.first
         raise ValidateError, 'No Price'
       end
-      
 
-      # Decorations
-      imprint_area = {}
-      imprint_area.default = []
-      imprint_method = {}
-      imprint_method.default = []
-      
-      puts "Properties:"
-      doc.xpath("//td[@id='ctl00_content_TableCell1']/span").each do |span|
-        raise "Unkonown prop" unless /^\s*<b>\s*(.+?)\s*:\s*<\/b>\s*(.+?)\s*$/ =~ span.inner_html
-        name, value = $1.strip.downcase, iconv($2.strip)
-        puts "  #{name} : #{value.inspect}"
-        
-        name, name_sub = name.split(/\s*,\s*/)
-        
-        case name
-        when 'size'
-          warning 'Already has dimension', pd.properties['dimension'] if pd.properties['dimension']
-          pd.properties['dimension'] = parse_dimension(value) || value.strip
-          
-        when 'imprint area'
-          if /^(.+?(?:(?:\"?h)|(?:sq\.)|(?:dia\.)|(?:triangle)))(.*)$/ =~ value
-            area_str, location = $1, $2.strip
-            location = nil if location and location.empty?
-            area = parse_dimension(area_str)
-            puts "  Area: #{name_sub}: #{area.inspect} #{location.inspect}"
-            
-            #            raise "Multiple imprint areas of type: #{name_sub_norm}" if imprint_area.has_key?(name_sub)
-            imprint_area[name_sub] += [[location, area]]
-          else
-            warning 'Unknown Area', value.inspect
-          end
-          
-        when 'imprint method'
-          /^(.+?)(\s+(?:–|-|(?:on))\s+.+?)?(?:\.\s*(.+))?$/ =~ value
-          technique, tail, comment = $1, $2, $3
-          if tail
-            /(\s+(?:–|-)\s+(.+))/ =~ tail
-            modify_all, modify = $1, $2
-            /(\s+on\s+(.+))/ =~ tail
-            location_all, location = $1, $2
-            location = nil if location and location.empty?
-            
-            if modify_all and location_all
-              modify = modify[0...modify.index(location_all)].strip if modify.include?(location_all)
-              location = location[0...location.index(modify_all)].strip if location.include?(modify_all)
-            end
-          end
-          
-          technique, limit = @@decoration_replace[technique]
 
-          unless technique
-            warning 'Unknown Technique', technique
-            next
-          end
-          
-          if modify
-            it = @@decoration_limit[modify]
-            limit = it if it
-            #            modify = it ? it : "X(#{modify})"
-          end
-          
-          #          raise "Multiple imprint methods of type: #{name_sub}" if imprint_method.has_key?(name_sub)
-          imprint_method[name_sub] += [[technique, limit, location]]
-          puts "  Method: #{name_sub}: #{value.inspect} => #{technique.inspect} : #{limit.inspect} #{location.inspect} : #{comment.inspect}"
-          
-          #        when 'packaging options'
-          # Ignore
-          # 
-          #        when 'packaging'
-          #          puts "Packaging: #{value.inspect}"
-          
-          #        when 'ink cartridge'
-          
-        else
-          warning 'Unknown Property', name
-        end
-      end
-      
-      pd.decorations = [DecorationDesc.none]
-      
-      (imprint_area.keys + imprint_method.keys).uniq.each do |name|
-        imprint_method[name].each do |technique, limit, method_location|
-          imprint_area[name].each do |area_location, area|
-            dec = DecorationDesc.new(:technique => technique,
-                                     :limit => limit,
-                                     :location => area_location || method_location || '')
-            dec.merge!(area) if area
-            pd.decorations << dec
-          end
-        end
-      end
-
-            
       # Colors (Variants)
       product_list = []
       color_list = []
@@ -432,7 +383,6 @@ class PrimeLineWeb < GenericImport
 
       
       color_image_map, color_num_map = match_colors(color_list)
-#      puts "Color Map: #{color_image_map.inspect} #{color_image_map.default.inspect}"
       pd.images = color_image_map[nil] || []
 
       pd.variants = product_list.zip(color_list).collect do |prod, color|
@@ -443,12 +393,117 @@ class PrimeLineWeb < GenericImport
       end
 
 
+      # HiRes Images not specific to variant
       if hi_res = doc.at_xpath("//span[@id='ctl00_content_HiReslink']/a")
         path = "http://www.primeline.com/#{hi_res['href']}"
         pd.images << ImageNodeFetch.new(path.split('/').last, path)
       end
-
       
+
+      # Decorations
+      imprint_area = {}
+      imprint_area.default = []
+      imprint_method = {}
+      imprint_method.default = []
+      size_list = []
+      
+#      puts "Properties:"
+      doc.xpath("//td[@id='ctl00_content_TableCell1']/span").each do |span|
+        raise "Unknown prop" unless /^\s*<b>\s*(.+?)\s*:\s*<\/b>\s*(.+?)\s*$/ =~ span.inner_html
+        name, value = $1.strip.downcase, iconv($2.strip)
+#        puts "  #{name} : #{value.inspect}"
+
+        /^(?:(optional) )?(.+)$/ =~ name
+        name, name_sub = $2, $1
+        name_sum = nil if name_sub.blank?
+        
+        case name
+        when 'size'
+          size_list << value.strip
+          
+        when 'imprint area'
+#          if /^(.+?(?:(?:\"?h)|(?:sq\.)|(?:dia\.)|(?:triangle)))(.*)$/ =~ value
+          if /template/i =~ value
+            imprint_area[name_sum] += [['Refer to template', {}]]
+
+          elsif aspects = parse_area(value)
+            if aspects[:left]
+              warning 'Unexpected Imprint Area Left', aspects.delete(:left)
+              next
+            end
+
+            location = if aspects[:right]
+                         /^(– )?(on )?(.+)$/ =~ aspects.delete(:right)
+                         $3
+                       end
+
+#            puts "  Imprint Area: #{name_sub}: #{aspects.inspect} #{location.inspect}"
+            imprint_area[name_sub] += [[location, aspects]]
+          end
+          
+        when 'imprint method'
+          /^(.+?)(\s+(?:–|-|(?:on))\s+.+?)?(?:\.\s*(.+))?$/ =~ value
+          technique_str, tail, comment = $1, $2, $3
+          if tail
+            /(\s+(?:–|-)\s+(.+))/ =~ tail
+            modify_all, modify = $1, $2
+            /(\s+on\s+(.+))/ =~ tail
+            location_all, location = $1, $2
+            location = nil if location and location.empty?
+            
+            if modify_all and location_all
+              modify = modify[0...modify.index(location_all)].strip if modify.include?(location_all)
+              location = location[0...location.index(modify_all)].strip if location.include?(modify_all)
+            end
+          end
+          
+          technique, limit = @@decoration_replace[technique_str]
+
+          unless technique
+            warning 'Unknown Technique', technique_str
+            next
+          end
+          
+          if modify
+            it = @@decoration_limit[modify]
+            limit = it if it
+          end
+          
+          imprint_method[name_sub] += [[technique, limit, location]]
+#          puts "  Imprint Method: #{name_sub}: #{value.inspect} => #{technique.inspect} : #{limit.inspect} #{location.inspect} : #{comment.inspect}"
+
+        when 'packaging', 'ink cartridge'
+          pd.properties[name] = value.strip unless value.blank?
+
+        else
+          warning 'Unknown Property', name
+        end
+      end
+
+      # Apply size, some products have multiple size listings for different size aspects of the same product
+      if size_list.length > 2
+        pd.properties['dimension'] = size_list.join(', ')
+      elsif value = size_list.first
+        pd.properties['dimension'] = parse_dimension(value, true) || value.strip
+      end
+      
+      pd.decorations = [DecorationDesc.none]
+
+      imprint_method.default = nil
+      
+      (imprint_area.keys + imprint_method.keys).uniq.each do |name|
+        imprint_area[name].each do |area_location, area|
+          (imprint_method[name] || imprint_method[nil] || []).each do |technique, limit, method_location|
+            dec = DecorationDesc.new(:technique => technique,
+                                     :limit => limit,
+                                     :location => area_location || method_location || '')
+            dec.merge!(area) if area
+            pd.decorations << dec
+          end
+        end
+      end
+      
+
       # Shipping
       if shipping = doc.at_xpath("//td[@id='ctl00_content_ShippingManualCell']/span/text()")
         if /^(?<units>\d{1,4}) pieces per carton, (?<weight>\d{1,3}(?:\.\d{1,2})?) lbs per carton, carton size (?<size>.*)$/ =~ shipping.to_s
