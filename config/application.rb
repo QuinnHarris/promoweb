@@ -60,6 +60,8 @@ module Promoweb
 #    unless Rails.env.production?
 #      config.sass.load_paths << "#{Gem.loaded_specs['fancy-buttons'].full_gem_path}/stylesheets"
 #    end
+
+#    config.wash_out = { :parser => :nokogiri }
   end
 end
 

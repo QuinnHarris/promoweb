@@ -78,10 +78,12 @@ ActionMailer::Base.smtp_settings = {
   :enable_starttls_auto => false
 }
 
-Promoweb::Application.config.middleware.use ExceptionNotifier,
-  :email_prefix => "[Error] ",
-  :sender_address => %{"Web Application Error" <error@mountainofpromos.com>},
-  :exception_recipients => %w{quinn@mountainofpromos.com}
+Promoweb::Application.config.middleware.use ExceptionNotification::Rack,
+  :email => { 
+    :email_prefix => "[Error] ",
+    :sender_address => %{"Web Application Error" <error@mountainofpromos.com>},
+    :exception_recipients => %w{quinn@mountainofpromos.com}
+  }
 
 SEND_EMAIL = "Mountain Express Promotions <sales@mountainofpromos.com>"
 

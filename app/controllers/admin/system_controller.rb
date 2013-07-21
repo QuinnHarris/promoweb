@@ -1,4 +1,8 @@
 class Admin::SystemController < Admin::BaseController
+  def qbwc
+    render :layout => false, :format => :xml, :filename => 'promoweb.qwc'
+  end
+  
   def quickbooks_blocked
     @title = "Quickbooks"
 

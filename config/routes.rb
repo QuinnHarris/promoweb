@@ -116,7 +116,7 @@ Promoweb::Application.routes.draw do
       match "access/#{name}" => "access##{name}"
     end
 
-    %w(quickbooks_blocked quickbooks_set other bitcoind).each do |name|
+    %w(qbwc quickbooks_blocked quickbooks_set other bitcoind).each do |name|
       match "system/#{name}" => "system##{name}"
     end
 
@@ -246,7 +246,8 @@ Promoweb::Application.routes.draw do
     end
   end
 
-  match '/qbwc/api' => 'qbwc#api'
+  QbwcController # QbwcRouter in qbwc_controller.rb
+  match "qbwc/api" => QbwcRouter.new('qbwc'), :via => [:get, :post], :defaults => { :controller => 'qbwc', :action => '_action' }, :format => false
 
 #  match '/phone/:addr.cfg' => 'phone#polycom_provision', :constraints => { :addr => /[0-9a-f]{12}/ }
   match '/phone/:action(/:id)' => 'Phone'

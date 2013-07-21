@@ -1,48 +1,41 @@
-# This controller implements the seven web callback methods for QBWC
-# Check qbwc_api.rb file for descriptions of parameters and return values
-class QbwcController < ActionController::Base
-  acts_as_web_service
-  web_service_api QbwcApi
-  
-  # Fallthrough for non soap request (needed to validate certificate)
-  def render_text(a, b)
-    render :inline => 'Use with SOAP'
-  end
-  
-  before_filter :set_soap_header
-
-  def log_error(exception)
-    return unless logger
-    
-    ActiveSupport::Deprecation.silence do
-      message = "\n#{exception.class} (#{exception.message}):\n"
-      message << exception.annoted_source_code.to_s if exception.respond_to?(:annoted_source_code)
-#      message << "  " << application_trace(exception).join("\n  ")
-      logger.fatal("#{message}\n\n")
+class QbwcRouter < WashOut::Router
+  # The W3C SOAP docs state (http://www.w3.org/TR/2000/NOTE-SOAP-20000508/#_Toc478383528):
+  #   "The SOAPAction HTTP request header field can be used to indicate the intent of
+  #    the SOAP HTTP request. The value is a URI identifying the intent. SOAP places
+  #    no restrictions on the format or specificity of the URI or that it is resolvable.
+  #    An HTTP client MUST use this header field when issuing a SOAP HTTP Request."
+  # Unfortunately the QBWC does not set this header and ActionWebService needs 
+  # HTTP_SOAPACTION set correctly in order to route the incoming SOAP request.
+  # So we set the header in this before filter.
+  def call(env)
+    if env['HTTP_SOAPACTION'].blank? || env['HTTP_SOAPACTION'] == %Q("")
+      env['HTTP_SOAPACTION'] = env['action_dispatch.request.request_parameters']['Envelope']['Body'].keys.last.dup
     end
+    
+    super env
   end
-  
-  def qwc
-    qwc = %(
-<QBWCXML>
-   <AppName>PromoWeb</AppName>
-   <AppID></AppID>
-   <AppURL>http#{Rails.env.production? ? 's://www.mountainofpromos.com' : '://10.86.201.144:3000'}/qbwc/api</AppURL>
-   <AppDescription>Mountain Xpress Promotions Quickbooks Integration</AppDescription>
-   <AppSupport>https://www.mountainofpromos.com/admin/</AppSupport>
-   <UserName>mntxpresspromo</UserName>
-   <OwnerID>{d9ec2073-2248-45cf-98fe-4788da4aba7#{Rails.env.production? ? 'a' : 'b'}}</OwnerID>
-   <FileID>{77c425b3-0e8a-4dcd-b7a4-679d3e3e385#{Rails.env.production? ? '6' : '0'}}</FileID>
-   <QBType>QBFS</QBType>
-   <Style>RPC</Style>
-   <Scheduler>
-      <RunEveryNMinutes>15</RunEveryNMinutes>
-   </Scheduler>
-</QBWCXML>
-)
-    send_data qwc, :filename => 'promoweb.qwc'
-  end
-  
+end
+
+# This controller implements the seven web callback methods for QBWC
+class QbwcController < ActionController::Base
+  include WashOut::SOAP
+
+  # Fallthrough for non soap request (needed to validate certificate)
+#  def render_text(a, b)
+#    render :inline => 'Use with SOAP'
+#  end
+
+#  def log_error(exception)
+#    return unless logger
+#    
+#    ActiveSupport::Deprecation.silence do
+#      message = "\n#{exception.class} (#{exception.message}):\n"
+#      message << exception.annoted_source_code.to_s if exception.respond_to?(:annoted_source_code)
+#      message << "  " << application_trace(exception).join("\n  ")
+#      logger.fatal("#{message}\n\n")
+#    end
+#  end
+    
   @@ticket = 'cohtuwei8ahGei'
 
   # --- [ QBWC version control ] ---
@@ -51,9 +44,10 @@ class QbwcController < ActionController::Base
   # Returns string: 
   #   * NULL or <emptyString> = QBWC will let the web service update
   #   * "E:<any text>" = popup ERROR dialog with <any text>, abort update and force download of new QBWC.
-  #   * "W:<any text>" = popup WARNING dialog with <any text>, and give user choice to update or not.  
-  def clientVersion(version)
-    nil # support any version
+  #   * "W:<any text>" = popup WARNING dialog with <any text>, and give user choice to update or not.
+  soap_action 'clientVersion', :args => { :strVersion => :string }, :return => :string
+  def clientVersion
+    render :soap => nil # support any version
   end
   
   # --- [ QBWC version control ] ---
@@ -61,8 +55,9 @@ class QbwcController < ActionController::Base
   #   * string strVersion = QBWC version number
   # Returns string: 
   #   * a message string describing the server version and any other information that you want your user to see.
-  def serverVersion(ticket)
-    "1.2"
+  soap_action 'serverVersion', :args => { :strVersion => :string }, :return => :string
+  def serverVersion
+    render :soap => "1.2"
   end
 
   # --- [ Authenticate web connector ] ---
@@ -75,14 +70,17 @@ class QbwcController < ActionController::Base
   #       - empty string = use current company file
   #       - "none" = no further request/no further action required
   #       - "nvu" = not valid user
-  #       - any other string value = use this company file             
-  def authenticate(username, password)
-    if username != 'mntxpresspromo' and
-       password != 'Mi0meeref4ium0'
-       logger.error("QBWC: Invalid Username Password: #{username} - #{password}")
-      return ['', 'nvu']
+  #       - any other string value = use this company file    
+  soap_action 'authenticate', :args => { :strUserName => :string, :strPassword => :string }, :return => { :item => :string }
+  def authenticate
+    if params[:strUserName] != 'mntxpresspromo' and
+       params[:strPassword] != 'Mi0meeref4ium0'
+      logger.error("QBWC: Invalid Username Password: #{params[:strUserName]} - #{params[:strPassword]}")
+      render :locals => { :ticket => '', :status => 'nvu' }, :content_type => 'text/xml'
+      return
     end
-    [@@ticket, '' ]
+    logger.info("QBWC: authenticated")
+    render :locals => { :ticket => @@ticket, :status => '' }, :content_type => 'text/xml'
   end
 
   # --- [ To facilitate capturing of QuickBooks error and notifying it to web services ] ---
@@ -93,14 +91,14 @@ class QbwcController < ActionController::Base
   # Returns string:
   #   * "done" = no further action required from QBWebConnector
   #   * any other string value = use this name for company file
-  def connectionError(ticket, hresult, message)
-    'done'
+  soap_action 'connectionError', :args => { :ticket => :string, :hresult => :string, :message => :string }, :return => [:string]
+  def connectionError
+    render :soap => 'done'
   end
   
   # quickbooks_id = valid if object exists in quickbooks in any state
   # quickbooks_sequence = valid unless object is in error state
   # quickbooks_at = valid if object is up to date, infinity when updating or failed updating, -infinity to force update when quickbooks_id is valid
-  
   def self.qb_condition(klass)
     table_name = klass.table_name
     "( ( (#{table_name}.quickbooks_at IS NULL) AND (#{table_name}.quickbooks_id IS NULL) ) OR " +     # Add Item
@@ -138,8 +136,6 @@ class QbwcController < ActionController::Base
 
   # --- [ Facilitates web service to send request XML to QuickBooks via QBWC ] ---
   # Expects:
-  #   * int qbXMLMajorVers
-  #   * int qbXMLMinorVers
   #   * string ticket
   #   * string strHCPResponse 
   #   * string strCompanyFileName 
@@ -149,8 +145,19 @@ class QbwcController < ActionController::Base
   # Returns string:
   #   * "any_string" = Request XML for QBWebConnector to process
   #   * "" = No more request XML
-  def sendRequestXML(ticket, hpc_response, company_file_name, country, qbxml_major_version, qbxml_minor_version)
-    return "" unless ticket == @@ticket
+  soap_action 'sendRequestXML', :args => { :ticket => :string,
+                                           :strHCPResponse => :string,
+                                           :strCompanyFileName => :string,
+                                           :Country => :string,
+                                           :qbXMLMajorVers => :integer,
+                                           :qbXMLMinorVers => :integer },
+                                :return => :string
+  def sendRequestXML
+    unless params[:ticket] == @@ticket
+      render :soap => ''
+      return
+    end
+
     @qb_list_id = @@qb_list_id
     @@objects.each do |klass, condition, limit, include|
       list = klass.find(:all, :include => include, :conditions => condition, :order => "#{klass.table_name}.id", :limit => limit)
@@ -169,13 +176,14 @@ class QbwcController < ActionController::Base
         logger.info("Request Response: <<<")
         logger.info(str)
         logger.info("Request Response: >>>")
-        return str
+        render :soap => str
+        return
       end
     end
     
     logger.info("XXXX NO QUICKBOOKS UPDATES XXXX")
-    
-    return ''    
+
+    render :soap => nil
   end
 
 private
@@ -288,11 +296,19 @@ public
   #   * Greater than zero  = There are more request to send
   #   * 100 = Done. no more request to send
   #   * Less than zero  = Custom Error codes
-  def receiveResponseXML(ticket, response, hresult, message)
-    return -1 unless ticket == @@ticket
+  soap_action 'receiveResponseXML', :args => { :ticket => :string,
+                                               :response => :string,
+                                               :hresult => :string,
+                                               :message => :string },
+                                    :return => :int
+  def receiveResponseXML
+    unless params[:ticket] == @@ticket
+      render :soap => -1
+      return
+    end
     
-    logger.info("receiveResponse: #{ticket}, #{hresult}, #{message}")
-    root = REXML::Document.new(response).root
+    logger.info("receiveResponse: #{params[:ticket]}, #{params[:hresult]}, #{params[:message]}")
+    root = REXML::Document.new(params[:response]).root
     logger.info("response parsed")
     
     update_row(root, 'Vendor') { Supplier }
@@ -315,15 +331,16 @@ public
     
     update_row(root, %w(ReceivePayment Check), 'TxnID') do |node, id, status|
       PaymentTransaction
-    end
-    
-    return 100 if @dont_repeat
+    end   
 
     @@objects.each do |klass, condition, limit, include|
-      return 1 if klass.count(:include => include, :conditions => condition) != 0
-    end
+      if klass.count(:include => include, :conditions => condition) != 0
+        render :soap => 1
+        return
+      end
+    end unless @dont_repeat
     
-    100 # Signal done - no more requests are needed.
+    render :soap => 100 # Signal done - no more requests are needed.
   end
 
   # --- [ Facilitates QBWC to receive last web service error ] ---
@@ -331,9 +348,10 @@ public
   #   * string ticket
   # Returns string:
   #   * error message describing last web service error
-  def getLastError(ticket)
+  soap_action 'getLastError', :args => { :ticket => :string }, :return => :string
+  def getLastError
     #    'An error occurred'
-    nil
+    render :soap => nil
   end
 
   # --- [ QBWC will call this method at the end of a successful update session ] ---
@@ -341,40 +359,9 @@ public
   #   * string ticket 
   # Returns string:
   #   * closeConnection result. Ex: "OK"
-  def closeConnection(ticket)
-    'OK'
+  soap_action 'closeConnection', :args => { :ticket => :string }, :return => :string
+  def closeConnection
+    render :soap => 'OK'
   end
-  
-  private
-    
-    # The W3C SOAP docs state (http://www.w3.org/TR/2000/NOTE-SOAP-20000508/#_Toc478383528):
-    #   "The SOAPAction HTTP request header field can be used to indicate the intent of
-    #    the SOAP HTTP request. The value is a URI identifying the intent. SOAP places
-    #    no restrictions on the format or specificity of the URI or that it is resolvable.
-    #    An HTTP client MUST use this header field when issuing a SOAP HTTP Request."
-    # Unfortunately the QBWC does not set this header and ActionWebService needs 
-    # HTTP_SOAPACTION set correctly in order to route the incoming SOAP request.
-    # So we set the header in this before filter.
-    def set_soap_header
-      if request.env['HTTP_SOAPACTION'].blank? || request.env['HTTP_SOAPACTION'] == %Q("")
-        xml = REXML::Document.new(request.raw_post)
-        element = REXML::XPath.first(xml, '/soap:Envelope/soap:Body/*')
-        request.env['HTTP_SOAPACTION'] = element.name if element
-      end
-    end
 
-    # Simple wrapping helper
-    def wrap_qbxml_request(body)
-      r_start = <<-XML
-<?xml version="1.0" ?>
-<?qbxml version="7.0" ?>
-<QBXML>
-  <QBXMLMsgsRq onError="continueOnError">
-XML
-      r_end = <<-XML
-  </QBXMLMsgsRq>
-</QBXML>
-XML
-      r_start + body + r_end
-    end
 end

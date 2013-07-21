@@ -4,10 +4,8 @@ class Invoice < ActiveRecord::Base
   has_many :payment_transactions
 
   def total_item_price
-    entries.inject(Money.new(0)) { |m, e| m += e.total_price }
+    @total_item_price ||= entries.inject(Money.new(0)) { |m, e| m += e.total_price }
   end
-  extend ActiveSupport::Memoizable
-  memoize :total_item_price
 
   def tax_rate_s
     '%0.02f%' % (self.tax_rate * 100.0)

@@ -74,7 +74,7 @@ gem 'rails3-jquery-autocomplete'
 
 #gem 'httparty' # for json parsing
 
-#gem 'actionwebservice', :git => 'https://github.com/jlecard/actionwebservice.git'
+gem 'wash_out'
 
 # Not needed for webserver
 gem 'mechanize' # DL for Gemline
