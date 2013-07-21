@@ -592,8 +592,7 @@ class Product < ActiveRecord::Base
   include PgSearch
   pg_search_scope :search,
     :against => { :supplier_num => 'A', :name => 'A', :description => 'C' },
-#    :associated_against => {  },
-  :associated_against => { :categories => { :name => 'B' }, :supplier => { :name => 'B' } },
+    :associated_against => { :categories => { :name => 'B' }, :supplier => { :name => 'B' } },
     :using => { :tsearch => { :dictionary => "english" } }
 
   def property_group_names
