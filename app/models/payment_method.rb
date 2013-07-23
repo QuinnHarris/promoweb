@@ -242,9 +242,11 @@ private
     phone_numbers = order.customer.phone_numbers.to_a
     fax_numbers = phone_numbers.find_all { |p| p.name == 'Fax' }
 
+    number = (phone_numbers - fax_numbers).first.number
+
     attr = address.attributes.symbolize_keys
     attr.merge(:zip => attr[:postalcode],
-               :phone => (phone_numbers - fax_numbers).first.number,
+               :phone => number || 9704227140,
                :fax => fax_numbers.first && fax_numbers.first.number)
   end
 
