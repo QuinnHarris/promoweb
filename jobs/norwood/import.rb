@@ -130,7 +130,7 @@ class NorwoodAll < GenericImport
       id = path.split('/')[1..-1].join('/')+'/'+file
       case path
       # _14 is year for calendars
-      when /\/([A-Z]{2}?\d{4,5})(?:_14})?(?:\/|$)/
+      when /\/([A-Z]{2}?\d{4,5})(?:_14)?(?:\/|$)/
         product = $1
         if /^([A-Z]{2}?\d{4,5})(?:_(.+))?\.jpg$/i === file && $1 == product
           var_id = $2
@@ -175,7 +175,8 @@ end
 require 'csv'
 class NorwoodCSV < GenericImport
   @@technique_replace = {
-    'Offset' => '?'
+    'Offset' => '?',
+    'Digital' => '4 Color Photographic'
   }
 
   def initialize(file_name, sub_supplier, image_list)
@@ -244,6 +245,7 @@ class NorwoodCSV < GenericImport
         (1..6).each do |num|
           dec = DecorationDesc.new
           break if (technique = row["Imprint Method#{num}"]).blank?
+          puts "Tech: #{num} #{technique}"
           if @@technique_replace.has_key?(technique)
             dec.technique = @@technique_replace[technique]
           else
@@ -291,7 +293,7 @@ class NorwoodCSV < GenericImport
 
         pd.properties['material'] = row['Material'] unless row['Material'].blank?
         size = row['Sizes']
-        pd.properties['dimension'] = parse_dimension(size) || size if size
+        pd.properties['dimension'] = parse_dimension(size, true) || size if size
 
 
         # Get all properties (usually color)
@@ -323,7 +325,6 @@ class NorwoodCSV < GenericImport
           end.flatten
         end
         
-
         color_image_map, color_num_map = match_colors(colors, :prune_colors => true)
 
         if color_image_map.empty?
@@ -338,7 +339,7 @@ class NorwoodCSV < GenericImport
           num_suf = properties.keys.sort.collect { |k| '-' + properties[k].reverse[0...num_w].reverse.strip }.join
           VariantDesc.new(:supplier_num => @supplier_num + num_suf,
                           :properties => properties,
-                          :images => properties[color_key] && (color_image_map[properties[color_key]] || []))
+                          :images => (properties[color_key] && color_image_map[properties[color_key]]) || [])
         end
       end
     end

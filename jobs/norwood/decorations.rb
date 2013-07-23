@@ -1,22 +1,7 @@
 require '../generic_import'
 
-norwood = Supplier.find_by_name("Norwood")
-
-# Remove all old records
-norwood.decoration_price_groups.each do |grp|
-  grp.entries.each do |entry|
-    fixed = entry.fixed
-    marginal = entry.marginal
-
-    entry.destroy
-    
-    fixed.destroy if fixed and fixed.decoration_price_entry_fixed.empty?
-    marginal.destroy if marginal and marginal.decoration_price_entry_marginal.empty?
-  end
-  grp.destroy
-end
-
-dec_grp = norwood.decoration_price_groups.create(
+apply_decorations('Norwood') do |norwood|
+  dec_grp = norwood.decoration_price_groups.create(
     { :technique => DecorationTechnique.find_by_name("None") })
       dec_grp.entries.create({ :minimum => 0,
         :fixed_price_const => 0.0,
@@ -29,8 +14,8 @@ dec_grp = norwood.decoration_price_groups.create(
           :minimum => 0 }]) })
     
     
-# Screen Print
-dec_grp = norwood.decoration_price_groups.create(
+  # Screen Print
+  dec_grp = norwood.decoration_price_groups.create(
     { :technique => DecorationTechnique.find_by_name("Screen Print") })  
       dec_grp.entries.create({ :minimum => 1,
         :fixed_price_const => 0.0,
@@ -58,8 +43,8 @@ dec_grp = norwood.decoration_price_groups.create(
           end + [{ :minimum => 15000 }]) })
 
 
-# Pad Print
-dec_grp = norwood.decoration_price_groups.create(
+  # Pad Print
+  dec_grp = norwood.decoration_price_groups.create(
     { :technique => DecorationTechnique.find_by_name("Pad Print") })  
       dec_grp.entries.create({ :minimum => 1,
         :fixed_price_const => 0.0,
@@ -85,8 +70,8 @@ dec_grp = norwood.decoration_price_groups.create(
     
 
 
-# Embroidery
-dec_grp = norwood.decoration_price_groups.create(
+  # Embroidery
+  dec_grp = norwood.decoration_price_groups.create(
     { :technique => DecorationTechnique.find_by_name("Embroidery") })
       # <= 10000
       dec_grp.entries.create({ :minimum => 1,
@@ -133,8 +118,8 @@ dec_grp = norwood.decoration_price_groups.create(
 
 
         
-# Deboss
-dec_grp = norwood.decoration_price_groups.create(
+  # Deboss
+  dec_grp = norwood.decoration_price_groups.create(
     { :technique => DecorationTechnique.find_by_name("Deboss") })
       dec_grp.entries.create({ :minimum => 1,
         :fixed_price_const => 0.0,
@@ -165,8 +150,8 @@ dec_grp = norwood.decoration_price_groups.create(
           :minimum => 1200 },
         { :minimum => 2500 }]) })
 
-# Laser Engrave
-dec_grp = norwood.decoration_price_groups.create(
+  # Laser Engrave
+  dec_grp = norwood.decoration_price_groups.create(
     { :technique => DecorationTechnique.find_by_name("Laser Engrave") })  
       dec_grp.entries.create({ :minimum => 1,
         :fixed_price_const => 0.0,
@@ -192,3 +177,4 @@ dec_grp = norwood.decoration_price_groups.create(
                 :marginal => Money.new(price*0.8),
                 :minimum => min }
           end + [{ :minimum => 15000 }]) })
+end

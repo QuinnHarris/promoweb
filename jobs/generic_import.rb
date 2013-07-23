@@ -1233,10 +1233,12 @@ private
 #      return { colors.first => image_list.collect { |image, suffix| image } }
 #    end
 
+    if colors.empty?
+      return [{ nil => image_list.collect { |image, suffix| image } }, nil]
+    end
+
     image_map = {}
     supplier_map = {}
-
-    return [image_map, supplier_map] if colors.empty?
 
     image_map.default = []
 
@@ -1357,7 +1359,7 @@ private
         next
       end
 
-      image_map[nil] += [image]
+      image_map[nil] += [image] # Place every remaining image in image_map[nil]
     end
 
     unless multiple_map.empty?
