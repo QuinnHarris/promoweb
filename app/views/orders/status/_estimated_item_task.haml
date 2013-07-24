@@ -2,7 +2,7 @@
   - if @user and task.ready?
     %table.spacer
       %tr
-        %td!= text_field(:data, :ship_date, :class => 'shipdate', :index => task.id)
+        %td!= text_field(:data, :ship_date, :class => 'shipdate', :id => "data_ship_date_#{task.id}")
         %td
           Days Shipping:
           = text_field(:data, :ship_days, :size => 3, :value => task.object.shipping && task.object.shipping.days)
