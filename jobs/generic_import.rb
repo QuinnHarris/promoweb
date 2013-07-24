@@ -1234,7 +1234,9 @@ private
 #    end
 
     if colors.empty?
-      return [{ nil => image_list.collect { |image, suffix| image } }, nil]
+      list = image_list.collect { |image, suffix| image }
+      return [{}, {}] if list.empty?
+      return [{ nil => list }, {}]
     end
 
     image_map = {}

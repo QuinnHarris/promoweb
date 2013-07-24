@@ -328,18 +328,14 @@ private
            sup('The Magnet Group', cat('Crystal', 'Wood and Glass Awards') )
           ]],
         ] ],
+     ['Paper Weights',
+      [sup('Norwood', cat('AWARD', 'PAPERWEIGHT') ) ] ],
      ['Clocks',
       [sup('Norwood', cat('AWARD', 'CLOCKS') ) ] ],
-#     ['Bases',
-#      [sup('Norwood', cat('AWARD', 'BASES') ) ] ],
-#     ['Coasters & Beverage Ware',
-#      [sup('Norwood', cat('AWARD', 'COASTER') ) ] ],
      ['3D Lasered Crystal',
       [sup('Norwood', cat('AWARD', 'IMAGE3') ),
        sup('The Magnet Group', cat('Crystal', '3D Lasered') )
       ] ],
-     ['Specialty Gifts',
-      [sup('Norwood', cat('AWARD', 'SPECIALTY') ) ] ],
      ['Vases',
       [sup('Norwood', cat('AWARD', 'VASE') ),
        sup('The Magnet Group', cat('Crystal', 'Vases') )
@@ -397,6 +393,8 @@ private
       [sup('Norwood', cat('CALENDAR', 'SUC') ) ]],
      ['Perpetual Calendars',
       [sup('Logomark', cat('Perpetual Calendars') ) ] ],
+     ['Your Name Here',
+      [sup('Norwood', cat('CALENDAR', 'YOURNAMEHERE') ) ]],
     ] ],
 
  ['Automobile',
@@ -421,17 +419,13 @@ private
      ['Auto Safety     ',
       [sup('Leeds', cat('Safety & Auto', 'Auto Safety') ),
        sup('Gemline', cat('Gifts', 'Safety/Auto') ),
-       sup('Norwood', cat('AUTO', 'HIGHWAY') ),
       ] ],
      ['Ice Scraper',
       [match('name', 'ice scraper'),
        sup('Lanco', cat('Tools / Knives', 'Ice Scraper') ) ]],
     ]],
  ['Bags',
-  [sup('Norwood',
-       all(cat('BAG', 'COMPBAG'),
-           match('name', %w(bag brief))) ),
-   sup('High Caliber Line', cat('Bags') ),
+  [sup('High Caliber Line', cat('Bags') ),
    sup('Ash City',
        all(cat('Accessories'),
            match('name', %w(bag pack portfolio tote brief)))),
@@ -592,7 +586,6 @@ private
            sup('Gemline',
                cat('Sport & Travel', 'Sport Bags'),
                match('name', 'sport bag')),
-           sup('Norwood', cat('BAG', 'SPORT') )
           ],[['Kid Friendly Sport Bags',
               [sup('Gemline',
                    cat('Kid-friendly', 'Sport & Travel') ) ] ],
@@ -756,8 +749,6 @@ private
  ['Brands',
   [sup('Gemline', duplicate(['Brands'], 'supplier_categories'))
   ],[
-     ['Cleveland®',
-      [sup('Norwood', cat('GOLF', 'CLEVE')) ]],
      ['Titleist®',
       [sup('Norwood', cat('GOLF', 'TITLEIST')) ]],
      ['Callaway®',
@@ -782,7 +773,6 @@ private
  ['Computer Accessories',
   [match('name', 'Computer Accessory'),
    sup('Prime Line', cat('Technology') ),
-   sup('Norwood', cat('TECHNOLOGY', 'ELEC') ),
    sup('LogoIncluded', cat('Card Reader') ),
    sup('Logomark', cat('Computer Accessories') ),
    sup('Starline', cat('Business', 'Computer Accessories') )
@@ -819,9 +809,6 @@ private
       ]],
      ['Computer Mouse Pads',
       [match('name', ['mousepad', 'mouse pad']), 
-       sup('Norwood',
-           all(match('name', 'mousepad'),
-               cat('OFFICE', 'TECHNOLOGY') ) ),
        sup('Bic Graphics',
            match('supplier_num', /^((MPC?\d)|(MPSH)|(MPFR))/) ),
       ] ],
@@ -850,7 +837,8 @@ private
           [all(match('name', %w(case stand sleeve holder padfolio)),
                match(%w(name description), %w(tablet iPad))),
            sup('Gemline', cat('Padfolios', 'e-Padfolios'),
-               cat('Technology', 'Tablet cases/stands'))
+               cat('Technology', 'Tablet cases/stands')),
+           sup('Norwood', cat('MEETING', 'TABLET') )
           ]],
          ['Screen Stylus',
           [all(match('name', ['stylus', 'tablet pen']),
@@ -921,7 +909,6 @@ private
    sup('Prime Line',
        cat('Office', 'Desk Items')),
    sup('Norwood',
-       cat('GOLF', 'DESKFUN'),
        cat('OFFICE', 'DESKACC')),
    sup('Bullet Line', cat('Desktop', 'Desktop Accessories') ),
    sup('Hit Promotional Products',cat('Desk Accessories') ),
@@ -1189,7 +1176,7 @@ private
            all(cat('Office'),
                match('name', 'tape') ) )]],
      ['Magnets',
-      [sup('Norwood', cat('OFFICE', 'MAGNET') ),
+      [match('name', 'magnet'),
        sup('The Magnet Group', cat('Innovations', 'Dots and Springs') ),
        sup('The Magnet Group', cat('Magnets') ) ## TEMPORARY
       ],
@@ -1374,7 +1361,7 @@ private
        sup('Lanco', cat('Drinkware', 'Coasters') ),
        sup('Norwood',
            cat('HOUSEWARES', 'COASTERS'),
-           cat('AWARD', 'COASTERS') ),
+           cat('AWARD', 'COASTER') ),
        sup('Hit Promotional Products',
            exclude(match('name', 'mug') ) ),
        sup('Logomark', cat('Coasters') )]],
@@ -1390,7 +1377,6 @@ private
       ]],
      ['Drinkware Sets',
       [sup('Leeds', cat('Drinkware', 'Drinkware Sets') ),
-       sup('Norwood', cat('DRINK', 'DRINKGIFT') )
       ]],
      ['Thermos Bottles',
       [sup('Starline', cat('Drinkware', 'Thermos Bottles') )
@@ -1505,8 +1491,6 @@ private
    sup('Prime Line', cat('Executive Toys') ),
    sup('Norwood',
        match('name', 'hockey'),
-       cat('GOLF', 'FUN'),
-       cat('GOLF', 'GAMES'),
        cat('FUN', 'GAMES') ),
    sup('Lanco',
        cat('Toys & Games', 'Toys'),
@@ -1620,7 +1604,6 @@ private
       [match('name', %w(grill bbq picnic)),
        sup('Leeds', cat('Outdoor Living', 'Bbq & Picnic') ),
        sup('Norwood',
-           cat('HOUSEWARES', 'PICNIC2'),
            cat('OUTDOOR', 'PICNIC') ),
        exclude(sup('LogoIncluded', always)),
        sup('Logomark',
@@ -1691,8 +1674,7 @@ private
        all(cat('HEALTH'),
            match('name', 'thermometer')), # Only 40014
        all(cat('HEALTH'),
-           match('name', ['flu', 'CPR'])), # Only 400693, 50049
-       cat('HEALTH', 'SPA') ),
+           match('name', ['flu', 'CPR'])), ), # Only 400693, 50049
    sup('High Caliber Line', cat('Healthy Living') ),
    sup('Prime Line', cat('Health Wellness', 'Personal Care') ),
    sup('Hit Promotional Products', cat('Amenities') ),
@@ -1982,14 +1964,10 @@ private
        sup('Crown Products', cat('Golf') ),
        sup('Logomark', cat('Golf Gifts' ) )
       ],[
-         ['Ladies Golf',
-          [sup('Norwood', cat('GOLF', 'LADIES') ) ] ],
          ['Golf Balls',
           [match('name', 'balls', 1),
            sup('Lanco', cat('Golf', 'Golf Balls') ),
            sup('Norwood', cat('GOLF', 'GOLFBALL') ) ] ],
-         ['Golf Club',
-          [sup('Norwood', cat('GOLF', 'GOLFCLUB') ) ] ],
         ['Golf Kits',
           [match('name', 'kit', 1),
            match('name', 'putter'),
@@ -2180,7 +2158,6 @@ private
       [match(%w(name description), %w(knive knife cutter)),
        exclude(match(%w(name description), /Cutter.+Buck/i)),
        sup('Lanco', cat('Tools / Knives', 'Knives') ),
-       sup('Norwood', cat('AUTO', 'KNIVES') ),
        sup('Bullet Line', cat('Tools', 'Knives') ),
        sup('Logomark', cat('Knives') ),
        sup('Starline', cat('Tools', 'Knives') )
@@ -2211,7 +2188,6 @@ private
      ['Tape Measures',
       [match(%w(name description), 'tape measure'),
        sup('Lanco', cat('Tools / Knives', 'Tape Measure') ),
-       sup('Norwood', cat('AUTO', 'MEASURE') ),
        sup('Bullet Line', cat('Tools', 'Tape Measures') ),
        sup('Logomark', cat('Tape Measures') ),
        sup('Starline', cat('Tools', 'Measuring Tools') )
