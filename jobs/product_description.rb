@@ -740,13 +740,14 @@ class ProductDesc
       context.add_product(desc) unless false == r
     rescue ValidateError => boom
       boom.mark_duplicate! if dup = context.has_product?(desc.supplier_num)
-      puts "- Validate Error: #{desc.error_id}: #{boom}"
-      puts boom.backtrace
       if dup
-        context.add_error(boom, desc.error_id)
-      else
+        puts "- Validate Warning: #{desc.error_id}: #{boom}"
         context.add_warning(boom, desc.error_id)
+      else
+        puts "- Validate Error: #{desc.error_id}: #{boom}"
+        context.add_error(boom, desc.error_id)
       end
+      puts boom.backtrace
     end
   end
 end

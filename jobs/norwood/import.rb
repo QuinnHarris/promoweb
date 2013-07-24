@@ -82,7 +82,7 @@ class NorwoodAll < GenericImport
              ['BAG', 'Bag'], #55066,78227
              ['CALENDAR', 'TRIUMPH', %w(Reflex\ Blue Process\ Blue 032 185 193 431 208 281 354 349 145 469 109 Process\ Yellow 165)], # 56085
              ['DRINK', 'Drinkware'], # 55066,78227,15218,90045 ...
-             ##       ['FUN', 'Fun'],
+##             ['FUN', 'Fun'],
              ['GOLF', 'Golf'],
              ['GV', 'GOODVALU'],
              ['HEALTH', 'Health'],
@@ -147,13 +147,15 @@ class NorwoodAll < GenericImport
   end
 
   def apply_all(klass = NorwoodCSV)
+    transform = CategoryTransform.new @supplier_name
     list.each do |file, name, c|
       import = klass.new("norwood/#{year} CSV #{file}.csv", name, @image_list)
       import.set_standard_colors(c || @colors)
       import.run_parse_cache
-      import.run_transform
+      import.run_transform transform
       import.run_apply_cache
     end
+    transform.status
   end
 
   def import_list
@@ -175,8 +177,8 @@ end
 require 'csv'
 class NorwoodCSV < GenericImport
   @@technique_replace = {
-    'Offset' => '?',
-    'Digital' => '4 Color Photographic'
+#    'Offset' => '?',
+#    'Digital' => '4 Color Photographic'
   }
 
   def initialize(file_name, sub_supplier, image_list)
@@ -210,7 +212,8 @@ class NorwoodCSV < GenericImport
         pd.supplier_num = @supplier_num = row['Product ID']
         pd.name = row['Product Name']
         pd.description = row['Product Description']
-        pd.supplier_categories = [%w(Category Sub-Taxonomy).collect { |n| row[n] }]
+        pd.supplier_categories = [%w(Category Sub-Taxonomy).collect { |n| row[n].strip }]
+        puts "CATEGORY: #{pd.supplier_categories.inspect}"
 
 
         # Calendar Kludge

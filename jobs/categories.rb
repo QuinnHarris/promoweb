@@ -368,7 +368,7 @@ private
         'Education' => %w(8153 8320 8330 8350 7569 7303 8960 6350),
       }.collect do |name, nums|
         ["#{name} Calendars",
-         [sup('Norwood', match('supplier_num', Regexp.new('^'+nums.join('|')+'$') ) ) ] ]
+         [sup('Norwood', match('supplier_num', Regexp.new('^('+nums.join('|')+')$') ) ) ] ]
       end
      ],
      ['Appointment Calendars',
