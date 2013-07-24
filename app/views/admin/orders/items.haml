@@ -83,7 +83,7 @@
                   - when 'EstimatedItemTask', 'ShipItemTask'
                     = klass.status_name
                     - if klass == EstimatedItemTask
-                      != text_field(:data, :ship_date, :class => 'shipdate ignore')
+                      != text_field(:data, :ship_date, :class => 'shipdate ignore', :index => purchase.id)
                       Days Shipping:
                       = text_field(:data, :ship_days, { :size => 3, :value => purchase.items.first.shipping && purchase.items.first.shipping.days, :class => 'ignore' })
                       = check_box :data, :ship_saturday
