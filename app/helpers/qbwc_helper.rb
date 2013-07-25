@@ -255,7 +255,7 @@ module QbwcHelper
     
     bill_ship_address(xml, customer)
     
-    xml.Phone customer.phone_numbers.first.number_string[0...21] if customer.phone_numbers.first
+    xml.Phone customer.phone_numbers.first.number_string[0...21] if customer.phone_numbers.first and customer.phone_numbers.first.number_string
     #xml.AltPhone
     #xml.Fax
     xml.Email customer.email_addresses.first.address if customer.email_addresses.first
