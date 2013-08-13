@@ -128,7 +128,6 @@ class CrownProdXLS < GenericImport
         pd.supplier_categories = [[row['Product Categories'].strip]]
         pd.package.weight = row['Shipping Weight'] && Float(row['Shipping Weight'])
         pd.package.units = row['Shipping Quantity'] && row['Shipping Quantity'].to_i
-        pd.tags = []
 
         pd.tags << 'Closeout' if @supplier_num.include?('_CL')
 
@@ -223,7 +222,7 @@ class CrownProdXLS < GenericImport
 
         
         
-        colors = row['Available Colors'] ? row['Available Colors'].split(/\s*,\s*/).collect { |c| c.split(' ').collect { |w| w.capitalize }.join(' ') } : ['']
+        colors = row['Available Colors'] ? row['Available Colors'].split(/\s*,\s*/).collect { |c| c.split(' ').collect { |w| w.capitalize }.join(' ') }.uniq : ['']
         
         image_list_path = WebFetch.new("http://www.crownprod.com/includes/productimages.php?browse&itemno=#{@supplier_num.gsub(/_CL$/, '')}").get_path
         doc = Nokogiri::HTML(open(image_list_path))

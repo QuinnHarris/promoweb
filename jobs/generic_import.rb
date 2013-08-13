@@ -1524,6 +1524,7 @@ private
             hash = { :limit => 6 }.merge(hash) if marginal
           end
           puts "  Dec: #{hash.inspect}"
+          return unless hash[:location]
           DecorationDesc.new({ :limit => 1 }.merge(hash))
         else
           subs.first.collect do |sub|

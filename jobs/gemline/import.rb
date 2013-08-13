@@ -118,7 +118,7 @@ class GemlineXML < GenericImport
                                     :limit => limit)
             
             if area = parse_area(s = location.text.strip)
-              dd.location = area.delete(:left) + ' ' + area.delete(:right)
+              dd.location = ((area.delete(:left) || '') + ' ' + (area.delete(:right) || '')).strip
               dd.merge!(area)
             else
               dd.location = s
@@ -158,7 +158,6 @@ class GemlineXML < GenericImport
           
           last_max = nil
           item.xpath("pricing[@type='US']/price").each do |price|
-            puts "Break: #{price['break']}"
             unless /^(?<min>\d+)[-+](?<max>\d+)?$/ =~ price['break']
               raise PropertyError.new('Unknown break', price['break'])
             end

@@ -27,7 +27,7 @@ class CategoryTransform
     else
       pd.categories += pd.categories.collect { |cat| ['YBySupplier', @supplier] + cat }
 
-      unused_categories = (pd.supplier_categories - @used_categories.to_a).collect { |cat| cat.collect { |s| s.gsub('/', 'slash') } }
+      unused_categories = (pd.supplier_categories - @used_categories.to_a).collect { |cat| cat.collect { |s| s.gsub('/', '-slash-') } }
       unused_categories << ['AAA'] if pd.categories.empty?
       unless unused_categories.uniq.empty?
         pd.categories += unused_categories.collect { |cat| ['XUnOrganized', @supplier] + cat }
@@ -163,9 +163,7 @@ private
   def data
 [
   ['Apparel',
-  [sup('Ash City', cat('Catalog', 'NESPORT')), # Kludge for 68627,
-   sup('Ash City', cat('NEW STYLES'), cat('NEW Styles'))
-  ],[
+  [],[
      ['Hats & Caps',
       [match('name', /(?:^| )hat(?:$| |\/)/),
        exclude(match('name', ['stress', 'keychain', 'hat clip'])),
@@ -249,7 +247,6 @@ private
       ] ],
      ['Knits',
       [sup('Ash City',
-           cat('Knits'),
            match('name', 'polo') ) ],
       %w(Jersey Pique Teflon Edry Textured Eperformance Jacquard Mercerized Interlock Micro\ pima).collect do |name|
         [name, [sup('Ash City', match(%w(name material description), name, 1))]]
@@ -404,7 +401,7 @@ private
       [match('name', ['roadside', 'auto visor']),
        match('description', 'car visor'),
        sup('Leeds', cat('Safety & Auto', 'Auto Accessories') ),
-       sup('Gemline', cat('Sport & Travel', 'Cargo') ),
+       sup('Gemline', cat('Auto & Cargo Management', 'Cargo') ),
        sup('Gemline',
            all(cat('Gifts', 'Safety/Auto'),
                match('name', 'auto detail') ) ),
@@ -445,7 +442,7 @@ private
        match('description', 'backpack', 1),
        sup('Leeds', cat('Backpacks', 'Backpacks')),
        sup('Gemline',
-           ['Sports', 'New', 'Clearance'].collect do |name|
+           ['Sports', 'New'].collect do |name|
              cat('Backpacks', name)
            end),
        sup('Prime Line', cat('Bags', 'Backpacks') ),
@@ -488,7 +485,6 @@ private
           [match('description', 'sling', 1),
            sup('Leeds', cat('Backpacks', 'Slings')),
            sup('Gemline',
-               cat('Backpacks', 'Monopacks'),
                all(cat('Backpacks', 'Sports'),
                    match('name', 'sling') ) ) ]],
          ['Tote Backpacks',
@@ -507,7 +503,7 @@ private
        match('name', 'brief', 1),
        sup('Leeds', cat('Business Cases', 'Business Cases') ),
        sup('Gemline',
-           ['Clearance', 'New'].collect do |name|
+           ['New'].collect do |name|
              cat('Portfolios', name)
            end),
        sup('Lanco', cat('Bags / Containers', 'Business Cases')),
@@ -567,8 +563,8 @@ private
      ['Duffel Bags',
       [match('name', ['duffel', 'duffle']),
        sup('Gemline',
-           ['Clearance', 'New', 'Travel Bags'].collect do |name|
-             cat('Sport & Travel', name)
+           ['New', 'Weekender'].collect do |name|
+             cat('Duffels', name)
            end),
        sup('Lanco', cat('Bags / Containers', 'Sport and Duffle Bags')),
        sup('Norwood', cat('BAG', 'DUFFELS')),
@@ -584,7 +580,7 @@ private
            match('name', 'Sport Duffel', 1),
            sup('Leeds', cat('Duffels', 'Sport Duffels') ),
            sup('Gemline',
-               cat('Sport & Travel', 'Sport Bags'),
+               cat('Duffels', 'Sport Bags'),
                match('name', 'sport bag')),
           ],[['Kid Friendly Sport Bags',
               [sup('Gemline',
@@ -593,7 +589,7 @@ private
          ['Wheeled Duffel Bags',
           [match('name', 'wheeled'),
            sup('Leeds', cat('Duffels', 'Wheeled Duffels') ),
-           sup('Gemline', cat('Sport & Travel', 'Wheeled') ) ]]
+           sup('Gemline', cat('Duffels', 'Wheeled') ) ]]
         ]],
      ['Golf Bags',
       [match('name', 'golf', 1),
@@ -612,6 +608,7 @@ private
            cat('TRAVEL', 'LUGGAGE'),
            match('name', 'carry on') ),
        sup('Logomark', cat('Luggage') ),
+       sup('Gemline', cat('Travel', 'Luggage') ),
       ]],
      ['Checkpoint Friendly Bags',
       [ ],
@@ -636,7 +633,7 @@ private
         ] ],
      ['Wheeled Bags',
       [match('name', 'wheel', 1),
-       sup('Gemline', cat('Sport & Travel', 'Wheeled') )
+       sup('Gemline', cat('Duffels', 'Wheeled') )
       ],[dup('Bags', 'Backpacks', 'Wheeled Backpacks'),
          dup('Bags', 'Business Bags', 'Wheeled Business Bags'),
          dup('Bags', 'Duffel Bags', 'Wheeled Duffel Bags')
@@ -696,7 +693,7 @@ private
           ] ],
          ['Womens Totes',
           [match('name', 'gloss', 1),
-           sup('Gemline', cat('Women`s', 'Totes')) ]],
+           sup('Gemline', cat('Women`s', 'Totes'), cat('Totes', "Women's")) ]],
          ['Zippered Totes',
           [match(%w(name description), 'zipper', 1)]],
         ] ],
@@ -721,7 +718,7 @@ private
        sup('Lanco', cat('Bags / Containers', 'Small Pouches & Bags'))] ],
      ['Amenity Cases',
       [match('name', 'toiletr'),
-       sup('Gemline', cat('Sport & Travel', 'Amenity Cases') ),
+       sup('Gemline', cat('Travel', 'Amenity cases') ),
        sup('Bullet Line',
            all(cat('Travel, Health & Beauty', 'Travel Accessories'),
                match('name', ['amenity', 'travel']) ) ),
@@ -836,7 +833,7 @@ private
          ['Tablet Cases, Stands & Sleeves',
           [all(match('name', %w(case stand sleeve holder padfolio)),
                match(%w(name description), %w(tablet iPad))),
-           sup('Gemline', cat('Padfolios', 'e-Padfolios'),
+           sup('Gemline', cat('Padfolios/e-Padfolios', 'e-Padfolios'),
                cat('Technology', 'Tablet cases/stands')),
            sup('Norwood', cat('MEETING', 'TABLET') )
           ]],
@@ -1413,6 +1410,7 @@ private
        sup('Lanco',
            cat('Drinkware', 'Polycarbonate Bottles'),
            cat('Drinkware', 'Sports Bottles')),
+       sup('Gemline', cat('Drinkware', 'Sports') ),
        sup('Prime Line', cat('Drinkware', 'Sport Bottles') ),
        sup('Norwood',
            all(cat('DRINK', 'BOTTLE'),
@@ -1573,7 +1571,8 @@ private
            cat('Travel Gifts', 'Travel Accessories'),
            exclude(match('name', 'charge'))),
        sup('Bullet Line', cat('Travel, Health & Beauty', 'Travel Accessories') ),
-       sup('Logomark', cat('Travel Accessories') )
+       sup('Logomark', cat('Travel Accessories') ),
+       sup('Gemline', cat('Travel', 'Travel Accessories') ),
       ] ],
      ['Phone Chargers',
       [match('name', ['charger', 'charging']),
@@ -2008,8 +2007,8 @@ private
 
  ['Stationery',
   [sup('Gemline',
-       ['New', 'Clearance'].collect do |name|
-         cat('Padfolios', name)
+       ['New'].collect do |name|
+         cat('Padfolios/e-Padfolios', name)
        end),
    sup('Hit Promotional Products', cat('Portfolios & Jotters') ),
    sup('The Magnet Group', cat('Bag Factory', 'Stationery & Writing') )
@@ -2048,7 +2047,7 @@ private
       [match('name', 'padfolio'),
        sup('Leeds', cat('Stationery', 'Padfolios & Writing Pads') ),
        sup('Gemline',
-           cat('Padfolios', 'Writing Pads'),
+           cat('Padfolios/e-Padfolios', 'Writing Pads'),
            match('name', ['writing pad', 'tech organizer', 'e-organizer']) ),
        sup('Lanco', cat('Journals / Portfolios', 'Portfolios') ),
        sup('Norwood',
@@ -2066,13 +2065,13 @@ private
           [match('name', 'jr', 1),
            sup('Norwood', cat('MEETING', 'JUNIORS') ),
            sup('Bic Graphics', match('supplier_num', 'SHAJ1') ),
-           sup('Gemline', cat('Padfolios', 'Junior') ),
+           sup('Gemline', cat('Padfolios/e-Padfolios', 'Junior') ),
            sup('Logomark',
                cat('Mini Padfolios'),
                cat('Junior Padfolios') )
           ] ],
          ['Leather Padfolios',
-          [sup('Gemline', cat('Padfolios', 'Leather') ),
+          [sup('Gemline', cat('Padfolios/e-Padfolios', 'Leather') ),
           ]],
          ['Recycled Pads',
           [match(%w(name description), 'recycle', 1) ]],
@@ -2082,7 +2081,7 @@ private
      ['Ringbinders',
       [match('name', ['ringfolio', 'ringbinder']),
        sup('Leeds', cat('Stationery', 'Ringbinders') ),
-       sup('Gemline', cat('Padfolios', 'Ringbinders') )]],
+       sup('Gemline', cat('Padfolios/e-Padfolios', 'Ringbinders') )]],
      ['Postcards & Greeting Cards',
       [sup('The Magnet Group', cat('SmartLine') ) ] ],
     ] ],
@@ -2337,8 +2336,7 @@ private
           [match('name', 'roller', 1),
            match('name', ['rollerball', /Roller Ball/]),
            sup('Gemline',
-               cat('Writing Instruments', 'Roller Balls'),
-               cat('Writing Instruments', 'Roller Needle')),
+               cat('Writing Instruments', 'Roller Balls') ),
            sup('Leeds', cat('Metal Pens', 'Roller Ball Pens') ),
            sup('Bic Graphics',
                cat('Writing Instruments', 'Rollerball'),
@@ -2395,8 +2393,7 @@ private
            sup('Gemline', cat('Writing Instruments', 'Twists') ),
            sup('Lanco', cat('Writing Instruments', 'Twist Pens') )]],
          ['Recycled Pens',
-          [match(%w(name description), 'recycle', 1),
-           sup('Gemline', cat('Writing Instruments', 'Recycled') ) ]],
+          [match(%w(name description), 'recycle', 1), ]],
          ['Specialty Pens',
           [sup('Lanco', cat('Writing Instruments', 'Specialty Pens') ) ]],
          ['Pen Holders & Cases',
@@ -2409,6 +2406,9 @@ private
          ['Magnetic Pens',
           [match('name', 'magnet', 1),
            sup('The Magnet Group', cat('Innovations', 'Magnetic Pens') ) ] ],
+         ['Pens with Stylus',
+          [match(%w(name description), 'stylus', 1),
+           sup('Gemline', cat('Writing Instruments', 'Stylus') ) ] ],
         ] ],
     ] ],
 

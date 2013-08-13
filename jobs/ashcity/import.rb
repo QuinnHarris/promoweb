@@ -71,7 +71,6 @@ class AshCityXLS < GenericImport
         
         # Name
         pd.name = common['Style Name'].gsub(/<\/?p>/, '').gsub('&nbsp;', ' ').strip
-        pd.tags = []
         if pd.name.gsub!(/(?<tag><(?:strong|span)[^>]*>\s*(?:\g<tag>*|new)\s*<[^>]+>)\s*/i, '')
           pd.tags << 'New'
         end
