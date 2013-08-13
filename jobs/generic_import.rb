@@ -782,7 +782,10 @@ class GenericImport
           else
             puts "    Items: #{list.join(', ')}"
           end
-          puts "    Values: #{values[aspect].sort_by { |s, c| c }.reverse.collect { |s, c| "#{s}(#{c})" }.join(', ')}" unless values[aspect].blank?
+          if values[aspect]
+            val_list = values[aspect].find_all { |s, c| c > 1 }.sort_by { |s, c| c }.reverse
+            puts "    Values: #{val_list.collect { |s, c| "#{s}(#{c})" }.join(', ')}" unless val_list.empty?
+          end
         end
       end
 
@@ -1299,7 +1302,7 @@ private
         id = elem.first
         image_map[id] += [image]
         if supplier_map[id]
-          puts "Supplier Num mismatch #{supplier_num}: #{id.inspect} => #{supplier_map[id]} != #{suffix}" unless supplier_map[id] == suffix
+          warning 'Image Supplier Num Mismatch', "#{id.inspect} => #{supplier_map[id]} != #{suffix}" unless supplier_map[id] == suffix
         else
           supplier_map[id] = suffix
         end
@@ -1377,10 +1380,11 @@ private
       end
 
       unless multiple_map.empty?
-        puts "Multiple Match: #{supplier_num}"
-        multiple_map.each do |image, list|
-          puts "  #{image} => #{list.inspect}"
-        end
+        warning("Image Multiple Match", 
+                multiple_map.collect do |image, list|
+                  image_map[nil] += [image]
+                  "#{image} => #{list.inspect}"
+                end.join(', '))
       end
     end
 

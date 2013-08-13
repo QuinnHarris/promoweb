@@ -26,7 +26,7 @@ class CrownProdXLS < GenericImport
     form.action = '/' + form.action
     page = agent.submit(form)
     
-    page.save_as @src_file
+    page.save! @src_file
     
     puts "Fetched"
     true
