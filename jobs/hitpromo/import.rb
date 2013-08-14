@@ -79,20 +79,24 @@ class HitPromoCSV < GenericImport
     [[normal_file, false],
      [closeout_file, true]
     ].each do |file, closeout|
-      CSV.foreach(file, :headers => :first_row, :col_sep => ' ', :quote_char => "'") do |row|
-        unless /^(.+?)((B( Blank)?)|(E( Embroidered)?)|(D( .*Debossed)?)|(L( Laser Engrave)?)|(S( .*Silk-Screen)?)|(S( Pad-Print)?)|(T( Transfer)?))?$/ === row['product_sku']
-          raise "Bad Reg: #{row['product_sku']}"
+      begin
+        CSV.foreach(file, :headers => :first_row) do |row|
+          unless /^(.+?)((B( Blank)?)|(E( Embroidered)?)|(D( .*Debossed)?)|(L( Laser Engrave)?)|(S( .*Silk-Screen)?)|(S( Pad-Print)?)|(T( Transfer)?))?$/ === row['product_sku']
+            raise "Bad Reg: #{row['product_sku'].inspect}"
+          end
+          supplier_num = $1.strip
+          postfix = $2 && $2[0]
+          
+          if closeout and product_merge.include?(supplier_num)
+            puts "CLOSEOUT MATCHING: #{supplier_num}"
+            supplier_num += 'OUTLET'
+          end
+          
+          uhash = product_merge.merge(supplier_num, row, :common => { 'closeout' => closeout })
+          uhash['postfix'] = postfix
         end
-        supplier_num = $1.strip
-        postfix = $2 && $2[0]
-
-        if closeout and product_merge.include?(supplier_num)
-          puts "CLOSEOUT MATCHING: #{supplier_num}"
-          supplier_num += 'OUTLET'
-        end
-        
-        uhash = product_merge.merge(supplier_num, row, :common => { 'closeout' => closeout })
-        uhash['postfix'] = postfix
+      rescue CSV::MalformedCSVError => e
+        puts "Malformed CSV: #{e.inspect}"
       end
     end
 

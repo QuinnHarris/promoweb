@@ -4,8 +4,8 @@ class LancoXLS < GenericImport
 
     @decorations = {}
 
-    @src_urls = 'http://www.lancopromo.com/downloads/LANCO-ProductData.zip'
-    @src_file = @src_file = File.join(JOBS_DATA_ROOT, "Lanco.xls")
+#    @src_urls = 'http://www.lancopromo.com/downloads/LANCO-ProductData.zip'
+    @src_file = File.join(JOBS_DATA_ROOT, "Lanco.xls")
   end
 
   def imprint_colors
@@ -114,7 +114,7 @@ class LancoXLS < GenericImport
       pricing.add(minimum, product["Col#{n}Price"])
     end
     pricing.apply_code(product['PriceCode'] || '5R')
-    pricing.eqp_costs
+#    pricing.eqp_costs
     pricing.maxqty #(pricing.prices.last[:minimum]*2)
     pricing.ltm_if(24.00, product['absoluteMin'])
     pricing
@@ -141,12 +141,17 @@ class LancoXLS < GenericImport
   end
 
   def fetch_parse?
-    return false unless super or !File.exists?(@src_file)
+    return nil unless super
 
-    FileUtils.rm_f(@src_file)
+    agent = Mechanize.new
+    page = agent.get('http://www.lancopromo.com/productdata')
+    href = page.links.find { |l| /productdata/i =~ l.href }.href
+    
+    wf = WebFetch.new(href)
+    return nil unless wf.fetch?
+    path = wf.get_path
 
     puts "Unziping Data"
-    path = @src_files.first
     dst_path = File.join(JOBS_DATA_ROOT,'lanco')
     out = `unzip -o #{path} -d #{dst_path}`
     list = out.scan(/inflating:\s+(.+?)\s*$/).flatten
