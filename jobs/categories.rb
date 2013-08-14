@@ -772,7 +772,7 @@ private
    sup('Prime Line', cat('Technology') ),
    sup('LogoIncluded', cat('Card Reader') ),
    sup('Logomark', cat('Computer Accessories') ),
-   sup('Starline', cat('Business', 'Computer Accessories') )
+   sup('Starline', cat('Business', 'Computer Accessories') ),
   ],[
      ['Apple Accessories',
       [match('name', /i(P(o|a)d)|(Phone)/),
@@ -792,8 +792,7 @@ private
        match('name', /((usb)|(network)).+cable/i),
        sup('Lanco', cat('Office / Computer Essentials', 'Modem Cord') ) ]],
      ['Computer Mice',
-      [match('name', 'mouse ', 1),
-       match('name', /mouse($|\s)/),
+      [match('name', /mouse($|\s)/i),
        exclude(match('name', 'pad') ),
        sup('Norwood',
            all(match('name', ' mouse'),
@@ -910,7 +909,8 @@ private
    sup('Bullet Line', cat('Desktop', 'Desktop Accessories') ),
    sup('Hit Promotional Products',cat('Desk Accessories') ),
    sup('Logomark', cat('Desk and Office Accessories') ),
-   sup('Starline', cat('Business', 'Convention/Desktop') )
+   sup('Starline', cat('Business', 'Convention/Desktop') ),
+   sup('Crown Products', cat('Office Accessories') ),
   ],[
      ['Calculators',
       [match('name', 'calculator'),
@@ -1495,6 +1495,8 @@ private
        cat('Tradeshow', 'Toys') ),
    sup('Logomark', cat('Executive Games') )
   ],[
+     ['Balls',
+      [match('name', /ball$/i) ] ],
      ['Electronic Games',
       [match('name', 'electr', 1),
        match('description', ['electr', 'batteries', 'LCD'], 1)]],
@@ -1692,7 +1694,7 @@ private
        sup('Lanco', cat('Health', 'Bandage Dispenser') ),
        sup('Norwood', cat('HEALTH', 'BANDAGE') )]],
      ['Sanitizers',
-      [match('name', ['hand cleaner', 'hand sanitizer']),
+      [match('name', ['hand cleaner', 'hand sanitizer', /sanitizer$/i]),
        sup('Lanco',
            cat('Hand Sanitizers', 'Hand Sanitizers'),
            cat('Candles / Bath / Body', 'Hand Sanitizers') ),
@@ -1993,7 +1995,7 @@ private
      ['Camping',
       [match('name', 'tent') ]],
      ['Outdoor Seating',
-      [match('name', ['chair', 'recliner']),
+      [match('name', ['chair', 'recliner', 'lounger']),
        match(%w(name description), ['stadium seat', 'stadium cushion', 'stadium kushion', 'outdoor lounger', 'seat cushion', /chair.+fold/i]),
        all(match('name', %w(chair seat)), match('description', %w(outdoor beach sporting stadium))),
        exclude(match('name', 'stress reliever')),
@@ -2014,7 +2016,7 @@ private
    sup('The Magnet Group', cat('Bag Factory', 'Stationery & Writing') )
   ],[
      ['Jotters',
-      [match('name', 'notepad'),
+      [match('name', ['notepad', 'notebook']),
        match('name', 'jotter'),
        sup('Leeds',
            cat('Stationery', 'Jotters'),
@@ -2408,6 +2410,7 @@ private
            sup('The Magnet Group', cat('Innovations', 'Magnetic Pens') ) ] ],
          ['Pens with Stylus',
           [match(%w(name description), 'stylus', 1),
+           all(match('name', 'pen'), match('name', 'stylus') ),
            sup('Gemline', cat('Writing Instruments', 'Stylus') ) ] ],
         ] ],
     ] ],
