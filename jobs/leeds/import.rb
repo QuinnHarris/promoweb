@@ -79,6 +79,7 @@ class PolyXLS < GenericImport
 
       decoration_data[prefix] += [dd]
     end
+    decoration_data.default = nil
 
 
     prod_files.each do |file|
