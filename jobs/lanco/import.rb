@@ -216,22 +216,22 @@ class LancoXLS < GenericImport
         
         pd.description = description
         yes_list = ['YES', 'True', Date.parse("Sun, 31 Dec 1899 00:00:00 +0000")]
-        pd.tags = {
+        {
           'New' => 'New',
           'Closeout' => 'Closeout',
           'isKosher' => 'Kosher',
           'MadeInUSA' => 'MadeInUSA',
         'isEcoFriendly' => 'Eco',
-        }.collect { |method, name| name if yes_list.include?(product[method]) }.compact
+        }.each { |method, name| pd.tags << name if yes_list.include?(product[method]) }
         
         pd.supplier_categories = [[product['Category'] || 'unkown', product['Subcategory'] || 'unknown']]
         pd.package.unit_weight = product['shipping_info(wt/100)'].is_a?(String) ? (product['shipping_info(wt/100)'].to_f / 100.0) : nil
         
         # Lead Times
-        raise "Unkown Lead: #{product['production_time']}" unless /(\d+)-(\d+) ((?:Business Days)|(?:weeks))/i === product['production_time']
+        raise "Unknown Lead: #{product['production_time'].inspect}" unless /(\d+)(?:-(\d+))? ((?:(?:Business )?Days)|(?:weeks))/i === product['production_time']
         multiplier = $3.include?('weeks') ? 7 : 1
         pd.lead_time.normal_min = $1.to_i * multiplier
-        pd.lead_time.normal_max = $2.to_i * multiplier
+        pd.lead_time.normal_max = ($2 || $1).to_i * multiplier
         
         # 0 - none
         # 1 - 3day, 1day, 2hr
