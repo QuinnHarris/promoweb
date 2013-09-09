@@ -226,7 +226,7 @@ module QbwcHelper
     xml.Addr1 encode(customer.company_name[0...41])
     xml.Addr2 "ATTN: #{encode((address.name and !address.name.strip.empty?) ? address.name : customer.person_name)}"[0...41]
     xml.Addr3 encode(address.address1)[0...41]
-    xml.Addr4 encode(address.address2)[0...41]
+#    xml.Addr4 encode(address.address2)[0...41]  # Error sometimes about not enough address lines
     common_address(xml, address)
   end
   

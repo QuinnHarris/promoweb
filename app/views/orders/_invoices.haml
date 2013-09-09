@@ -28,11 +28,9 @@
         Website: www.mountainofpromos.com
         - if @order.user
           %h4 Representative
-          Name:
-          = @order.user.name
+          Name: #{@order.user.name}
           %br
-          Email:
-          = mail_to @order.user.email
+          Email: #{mail_to @order.user.email}
         %h4 Terms
         Required Date:
         - if @order.delivery_date_not_important
@@ -42,25 +40,23 @@
           - if customer.ship_address && customer.ship_address.country != 'US'
             %strong (NOT GUARANTEED/BEST EFFORT)
         %br
-        Rush Order:
-        = @order.rush ? "YES" : "NO"
+        Rush Order: #{@order.rush ? "YES" : "NO"}
         %br
-        Payment:
-        = valid?(@order, :terms) ? @order.terms : "Pre-Paid"
+        Payment: #{valid?(@order, :terms) ? @order.terms : "Pre-Paid"}
         %br
         - unless @order.fob.blank?
-          FOB:
-          = @order.fob
+          FOB: #{order.fob}
+          %br
+        - unless @order.purchase_order.blank?
+          PO: #{@order.purchase_order}
 
       %td{ :style => 'width: 1em;' }
       %td
         %h2 Order Acknowledgement / Invoice
         - task = @order.task_completed?(AcknowledgeOrderTask)
-        Order #:
-        = @order.id
+        Order #: #{@order.id}
         %br
-        Date:
-        = (task ? task.created_at : Time.new).strftime("%b %d, %Y")
+        Date: #{(task ? task.created_at : Time.new).strftime("%b %d, %Y")}
         %div
           %h3 Ship To
           - if valid?(customer.ship_address, :name)
