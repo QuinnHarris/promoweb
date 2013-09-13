@@ -41,7 +41,6 @@ class PhoneController < ActionController::Base
     raise ::ActionController::RoutingError, "No phone provissioned for #{params[:addr]}" unless @phone
     @user = @phone.user
     @users = User.where('extension IS NOT NULL').where("id <> #{@user.id}").order('extension')
-    @users.delete_if { |u| u.login == 'monica' } # Kludge to remove monica
   end
 
   # Provision UniData
