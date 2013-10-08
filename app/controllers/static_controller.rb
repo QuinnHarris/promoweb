@@ -15,7 +15,7 @@ class StaticController < ApplicationController
    ['Copyright', 'copyright'],
    ['Candy Fills', 'fills'],
    ['Must Login', 'login'],
-   ['Bitcoin', 'bitcoin']
+   ['Bitcoin', 'bitcoin', 'Buy custom printed promotional products with bitcoin']
   ]
   
   cattr_reader :pages, :hidden_pages
