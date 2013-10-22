@@ -1,6 +1,8 @@
-Fix fasttrack lead time on PO - Q4465
-Over/Under charge waive
-Fix Leeds and other outstanding import
+Rails 4.0
+Clean Theme
+Redo global layout
+
+
 Clean up CSS including email artwork
 Implement FedEx
 Implement Bitcoin
