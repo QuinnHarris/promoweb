@@ -1,3 +1,6 @@
+sudo -u postgres createuser -D -l -s quinn
+createdb promoweb_development
+
 sudo apt-get install build-essential libxml2-dev libxslt-dev libgeoip-dev libpq-dev libmagickcore-dev libmagickwand-dev
 
 sudo gem install bundler

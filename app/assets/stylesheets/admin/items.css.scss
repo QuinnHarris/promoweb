@@ -29,7 +29,7 @@ table.block {
     tr:first-child td {
       border-top: thin solid black;
     }
-    td { vertical-align: top; }
+    td { vertical-align: top; padding-top: 0.2em; }
     th { font-weight: bold; text-align: right; }
   }
 

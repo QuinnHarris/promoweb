@@ -1,11 +1,5 @@
 @import "compass/css3";
 
-/* ADMIN */
-.admin {
-  background-color: #FFF0F0;
-  font-size: 0.8em;
-  line-height: 1.5;
-}
 
 h2 { font-size: 1.2em; font-weight: bold; margin-top: 0.6em; margin-bottom: 0.3em; }
 ol {
@@ -13,9 +7,14 @@ ol {
    margin-left: 3em;
 }
 
+/* ADMIN */
+.admin {
+  background-color: #FFF0F0;
+  font-size: 0.8em;
+}
+
 div.admin {
   clear: both;
-  padding: 0.5em 1em 0.5em 1em;
   
   h2 {
     background-color: #400000;
@@ -111,6 +110,7 @@ div#sublist{
 div.action {
   border: thin solid black;
   margin-top: 0.5em;
+  padding: 0.5em 1em 0.5em 1em;
   
   div.delegate {
     padding-left: 0.5em;

@@ -72,8 +72,8 @@ require 'geoip'
 GEOIP = GeoIP::City.new('/usr/share/GeoIP/GeoLiteCity.dat')
 
 # Use Nokogiri for soap4r used https://github.com/spox/soap4r-spox (for ruby 1.9 support)
-require 'xsd/xmlparser'
-require 'xsd/xmlparser/nokogiri'
+#require 'xsd/xmlparser'
+#require 'xsd/xmlparser/nokogiri'
 
 # From rails 3.1 to make action_web_services work
 require "#{Rails.root}/lib/inheritable_attributes"
