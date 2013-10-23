@@ -25,7 +25,8 @@ group :assets do
   gem 'therubyracer'
 end
 
-gem 'jquery-rails', '~> 2.2.0'
+gem 'jquery-rails', '~> 3.0.0'
+gem 'jquery-ui-rails', '~> 4.0.5'
 
 # Deploy with Capistrano
 # gem 'capistrano'
@@ -66,7 +67,7 @@ gem 'scruffy'
 gem 'geoip-c'
 gem 'wicked_pdf'
 gem 'fast_xs'
-gem 'rails_autolink'
+gem 'rails_autolink' # Finds URLs in text for sending emails
 gem 'rails3-jquery-autocomplete'
 #gem 'jquery-fileupload-rails'
 #gem 'rubyXL' # this should not be included in the webserver production environment as its not needed.  Need to create profile for import driver gems
