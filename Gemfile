@@ -56,7 +56,7 @@ gem 'activemerchant'
 gem 'foreigner'
 gem 'acts_as_tree'
 gem 'will_paginate'
-gem 'paperclip', "~> 3.3.0"
+gem 'paperclip' #, "~> 3.3.0"
 gem 'rghost'
 gem 'exception_notification'
 #gem 'exifr'
