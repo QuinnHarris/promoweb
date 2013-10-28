@@ -35,13 +35,13 @@ Promoweb::Application.configure do
 end
 
 ActionMailer::Base.smtp_settings = {
-  :address => "bigmux.qutek.net",
+  :address => "mountainofpromos.com",
   :port => 25,
-  :domain => "dev.qutek.net",
-#  :user_name => 'quinn@qutek.net',
-#  :password => 'JoeBlow',
-  :enable_starttls_auto => false,
-#  :authentication => :login
+  :domain => "mountainofpromos.com",
+  :user_name => 'quinn',
+  :password => '',
+  :enable_starttls_auto => true,
+  :authentication => :login
 }
 
 SEND_EMAIL = "quinn@qutek.net"
