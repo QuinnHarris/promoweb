@@ -12,13 +12,11 @@ class Admin::AccessController < Admin::BaseController
 
     if params[:session_id]
       conditions << "session_accesses.id = #{params[:session_id].to_i}"
+    elsif params[:ppc]
+      conditions << "access.session_accesses.id IN (SELECT session_access_id FROM access.page_accesses WHERE created_at > NOW() - '1 day'::interval AND params ~ 'gclid')"
     else
       conditions << "access.page_accesses.created_at > (NOW() - '2 days'::interval)"
       conditions << "access.session_accesses.id IN (SELECT session_access_id FROM access.page_accesses WHERE created_at > NOW() - '1 day'::interval)"
-    end
-
-    if params[:ppc]
-      conditions << "access.session_accesses.id IN (SELECT session_access_id FROM access.page_accesses WHERE created_at > NOW() - '1 day'::interval AND params ~ 'gclid')"
     end
 
     logger.info("Conditions: #{conditions.collect { |s| "(#{s})" }.join(' AND ').inspect}")
