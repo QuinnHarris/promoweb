@@ -20,7 +20,7 @@ customers.each do |c|
 
     puts "#{a.address}: #{c.person_name} - #{c.company_name}"
     send = Spam.spam_message(c)
-    send.to = "quinn@mountainofpromos.com"
+    send.to = a.address
     send.deliver
   end
 end
