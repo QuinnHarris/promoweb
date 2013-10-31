@@ -138,6 +138,7 @@ Promoweb::Application.routes.draw do
   root :to => 'categories#home'
 
   match 'sitemaps' => 'general#sitemaps'
+  match 'sitemap.xml' => 'general#sitemaps'
   match 'categories/sitemap' => 'categories#sitemap'
 
   match 'categories/map' => 'categories#map'

@@ -176,6 +176,8 @@ protected
 #      @description += ", Customize with #{@techniques.collect { |t| t.name }.join(', ')}"  
     
       @keywords = "Custom Imprinted #{@product.name} #{@product.supplier.name} #{@product.supplier_num}"
+
+      @canonical = url_for(:only_path => false, :protocol => 'http', :host => 'www.mountainofpromos.com', :id => @product.web_id)
     end
   end
 public
