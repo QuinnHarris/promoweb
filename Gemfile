@@ -29,7 +29,10 @@ gem 'jquery-rails', '~> 3.0.0'
 gem 'jquery-ui-rails', '~> 4.0.5'
 
 # Deploy with Capistrano
-# gem 'capistrano'
+gem 'capistrano', '~> 3.0'
+gem 'capistrano-rvm', '~> 0.0.3'
+gem 'capistrano-bundler'
+gem 'capistrano-rails'
 
 # To use debugger (ruby-debug for Ruby 1.8.7+, ruby-debug19 for Ruby 1.9.2+)
 # gem 'ruby-debug'
