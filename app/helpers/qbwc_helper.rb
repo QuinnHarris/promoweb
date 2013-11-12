@@ -131,7 +131,7 @@ module QbwcHelper
 
         # Just a Comment
         sub_item_aspect(xml, sub, new_item, qb_type, bill_po, 'fixed') do
-          xml.Desc "|- #{sub.description}"
+          xml.Desc "|- #{encode(sub.description)}"
           xml.Amount '0.00'
           xml.SalesTaxCodeRef do
             xml.FullName 'Tax'
@@ -141,7 +141,7 @@ module QbwcHelper
         sufix = true #(no_margin && no_fixed && sub.is_a?())
 
         sub_item_aspect(xml, sub, new_item, qb_type, bill_po, 'marginal', no_marginal) do
-          xml.Desc "|- #{sub.description}#{sufix && ' Unit'}"
+          xml.Desc "|- #{encode(sub.description)}#{sufix && ' Unit'}"
           xml.Quantity item.quantity
           xml.tag!(bill_po ? 'Cost' : 'Rate', negate ? -price.marginal : price.marginal)
           xml.SalesTaxCodeRef do
@@ -150,7 +150,7 @@ module QbwcHelper
         end
         
         sub_item_aspect(xml, sub, new_item, qb_type, bill_po, 'fixed', no_fixed) do
-          xml.Desc(no_marginal ? "|- #{sub.description}#{sufix && ' Setup'}" : "|  * Setup")
+          xml.Desc(no_marginal ? "|- #{encode(sub.description)}#{sufix && ' Setup'}" : "|  * Setup")
           xml.Amount(negate ? -price.fixed : price.fixed)
           xml.SalesTaxCodeRef do
             xml.FullName 'Tax'
@@ -163,7 +163,7 @@ module QbwcHelper
     if item.respond_to?(:shipping_type)
       ship_price = item.send("list_shipping_#{character}")
       sub_item_aspect(xml, item, new_item, qb_type, bill_po, 'shipping', ship_price.nil? || ship_price.zero?) do
-        xml.Desc "Shipping: #{item.shipping_description}"
+        xml.Desc "Shipping: #{encode(item.shipping_description)}"
         xml.Amount(negate ? -ship_price : ship_price)
         xml.SalesTaxCodeRef do
           xml.FullName 'Tax'
