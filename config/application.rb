@@ -170,11 +170,18 @@ class BitCoinRate
       f = File.open(@file)
       data = f.read
     else
-      Rails.logger.info("BitCoin Rate file fetched: #{@file} : #{@url}")
-      f = URI.parse(@url).open
-      data = f.read
-      File.open(@file, 'w') { |f| f.write(data) }
-      @mtime = File.mtime(@file)
+      begin
+        f = URI.parse(@url).open
+        data = f.read
+        File.open(@file, 'w') { |f| f.write(data) }
+        Rails.logger.info("BitCoin Rate file fetched: #{@file} : #{@url}")
+        @mtime = File.mtime(@file)
+      rescue 
+        # Rescue errors on bitcoin website
+        Rails.logger.error("Could not get bitcoin rate: #{@url}")
+        f = File.open(@file)
+        data = f.read
+      end
     end
 
     @hash = ActiveSupport::JSON.decode(data)
