@@ -232,7 +232,7 @@
           %td{ :colspan => (tail ? 1 : 0) + (fixed ? 1 : 0) }
           %th{ :colspan => fixed ? 3 : 2 } Total per Unit:
           %td.num= (total_sum / order_item.quantity).to_perty
-      - if rate = BCRate.rate_USD and !invoice and !static
+      - if !invoice and !static and rate = BCRate.rate_USD
         %tr.special
           %td{ :colspan => (tail ? 1 : 0) + (fixed ? 1 : 0) }
           %th{ :colspan => fixed ? 3 : 2 } Bitcoin Total (#{rate.to_perty}, #{BCDiscount}% off):

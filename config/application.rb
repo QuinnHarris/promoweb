@@ -165,11 +165,9 @@ class BitCoinRate
       end
     end
 
-    if @mtime
-      Rails.logger.info("BitCoin Rate file reloaded: #{@mtime} : #{@file}")
-      f = File.open(@file)
-      data = f.read
-    else
+    data = nil
+
+    unless @mtime
       begin
         f = URI.parse(@url).open
         data = f.read
@@ -179,9 +177,13 @@ class BitCoinRate
       rescue 
         # Rescue errors on bitcoin website
         Rails.logger.error("Could not get bitcoin rate: #{@url}")
-        f = File.open(@file)
-        data = f.read
       end
+    end
+
+    unless data
+      Rails.logger.info("BitCoin Rate file reloaded: #{@mtime} : #{@file}")
+      f = File.open(@file)
+      data = f.read
     end
 
     @hash = ActiveSupport::JSON.decode(data)
