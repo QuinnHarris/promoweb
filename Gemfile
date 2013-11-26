@@ -85,7 +85,7 @@ gem 'mechanize' # DL for Gemline
 gem 'spreadsheet' # Spreadsheet for Leeds, Bullet
 #gem 'httpclient' # Auth for soap4r for Lanco
 gem 'savon'
-gem 'rmagick'
+#gem 'rmagick'
 
 gem 'bitcoin-client'
 gem 'mini_magick'
@@ -101,3 +101,4 @@ end
 
 # Only needed for product updates
 gem 'net-ftp-list'
+gem 'progressbar'

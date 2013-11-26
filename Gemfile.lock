@@ -151,6 +151,7 @@ GEM
       activesupport (>= 3.1)
       arel
     polyglot (0.3.3)
+    progressbar (0.21.0)
     rack (1.4.5)
     rack-cache (1.2)
       rack (>= 0.4)
@@ -185,7 +186,6 @@ GEM
     rest-client (1.6.3)
       mime-types (>= 1.16)
     rghost (0.9.3)
-    rmagick (2.13.2)
     rqrcode (0.4.2)
     rqrcode-rails3 (0.1.6)
       rqrcode (>= 0.4.2)
@@ -278,11 +278,11 @@ DEPENDENCIES
   paperclip
   pg
   pg_search
+  progressbar
   rails (= 3.2.14)
   rails3-jquery-autocomplete
   rails_autolink
   rghost
-  rmagick
   rqrcode-rails3
   ruby-prof
   sass-rails

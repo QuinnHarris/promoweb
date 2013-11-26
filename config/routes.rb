@@ -133,6 +133,9 @@ Promoweb::Application.routes.draw do
         post 'product_remove'
       end
     end
+
+    resources :prospect, :only => [:index, :show] do
+    end
   end
 
   root :to => 'categories#home'

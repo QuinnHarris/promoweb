@@ -147,7 +147,7 @@ end
 class BitCoinRate
   def initialize(file, url)
     @file = file
-    @url = url
+    @uri = URI.parse(url)
     @cache = {}
   end
 
@@ -169,14 +169,17 @@ class BitCoinRate
 
     unless @mtime
       begin
-        f = URI.parse(@url).open
-        data = f.read
-        File.open(@file, 'w') { |f| f.write(data) }
-        Rails.logger.info("BitCoin Rate file fetched: #{@file} : #{@url}")
+        start = Time.now
+        Net::HTTP.start(@uri.host, @uri.port, nil, nil, nil, nil, :open_timeout => 2, :read_timeout => 2) do |http|
+          data = http.request_get(@uri.path).body
+          File.open(@file, 'w') { |f| f.write(data) }
+        end
+        Rails.logger.info("BitCoin Rate file fetched: #{@file} : #{@uri} : #{Time.now - start}")
         @mtime = File.mtime(@file)
       rescue 
         # Rescue errors on bitcoin website
-        Rails.logger.error("Could not get bitcoin rate: #{@url}")
+        Rails.logger.error("Could not get bitcoin rate: #{@uri}")
+        @mtime = Time.now - age/2 # Retry latter
       end
     end
 

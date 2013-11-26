@@ -1,11 +1,6 @@
 # -*- coding: utf-8 -*-
-
-require 'rubygems'
-#require 'RMagick'
-#require 'rubyXL'
-require File.dirname(__FILE__) + '/../config/environment'
 require 'open-uri'
-require File.dirname(__FILE__) + '/progressbar'
+require File.dirname(__FILE__) + '/../config/environment'
 require File.dirname(__FILE__) + '/categories'
 
 JOBS_DATA_ROOT = File.join(Rails.root, 'jobs/data')
@@ -247,10 +242,14 @@ module WebFetchCommon
     @uri.respond_to?(:request_uri) ? @uri.request_uri : @uri.path
   end
 
-  def path
-    base = "#{@@cache_dir}/#{@uri.host}/#{uri_tail}"
-    base = "#{base}/index.html" if @uri.path[-1..-1] == '/'
+  def path_tail
+    base = "/#{@uri.host}/#{uri_tail}"
+    base = "#{base}/index.html" if @uri.path.empty? or @uri.path[-1..-1] == '/'
     base
+  end
+
+  def path
+    "#{@@cache_dir}#{path_tail}"
   end
 
   def fetch?(time = nil)
@@ -267,8 +266,6 @@ module WebFetchCommon
 
   def get_path(time = nil)
     return path unless fetch?(time)
-
-    FileUtils.mkdir_p(File.split(path).first)
     
     begin
       puts "Fetch: #{@uri} => #{path}"
@@ -283,6 +280,9 @@ module WebFetchCommon
                       pbar.set s if pbar
                     })
       return nil if f.length == 0
+
+      FileUtils.mkdir_p(File.split(path).first)
+
       if f.respond_to?(:path)
         FileUtils.mv(f.path, path)
       elsif f.respond_to?(:save_as)
@@ -320,6 +320,7 @@ end
 
 class WebFetch
   include WebFetchCommon
+  cattr_accessor :cache_dir
 
   def initialize(uri)
     @uri = URI.parse(uri.gsub(' ', '%20'))
