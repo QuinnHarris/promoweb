@@ -549,8 +549,16 @@ class PaymentBitCoinReceive < PaymentBitCoin
   def update!
     client = self.class.client
     client_list = client.listtransactions('', 20).find_all { |h| h['address'] == display_number }
-    
-    trans_list = transactions.to_a
+
+    trans_list = transactions.to_a    
+
+    # Request Transaction
+    request = find_request
+    unless request
+      r = trans_list.find { |t| t.is_a?(PaymentBitCoinRequest) }
+      request = create_request(r.order)
+    end
+    needed = request.order.total_chargeable
 
     # Update
     trans_list.delete_if do |t|
@@ -559,24 +567,16 @@ class PaymentBitCoinReceive < PaymentBitCoin
       unless t.confirmations == h['confirmations']
         t.confirmations = h['confirmations']
         t.save!
-        if t.confirmed? and t.fudge and t.order.task_ready?(FirstPaymentOrderTask)
+        if t.confirmed? and (t.fudge or t.amount > needed) and t.order.task_ready?(FirstPaymentOrderTask)
           t.order.task_complete({}, FirstPaymentOrderTask)
         end
       end
       true
     end
 
-    request = find_request
-
     # Add
     client_list.each do |h|
-      unless request
-        r = trans_list.find { |t| t.is_a?(PaymentBitCoinRequest) }
-        request = create_request(r.order)
-      end
-
       amount = ((request.rate * h['amount']) / (1.0 - request.discount/100.0))
-      needed = request.order.total_chargeable
       fudge = nil
 
       abs = (amount - needed).abs
@@ -595,7 +595,7 @@ class PaymentBitCoinReceive < PaymentBitCoin
                                       :rate => request.rate,
                                       :discount => request.discount,
                                       :confirmations => h['confirmations'])
-      if t.confirmed? and fudge and t.order.task_ready?(FirstPaymentOrderTask)
+      if t.confirmed? and (fudge or amount > needed) and t.order.task_ready?(FirstPaymentOrderTask)
         t.order.task_complete({}, FirstPaymentOrderTask)
       end
     end
