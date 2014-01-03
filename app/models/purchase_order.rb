@@ -5,11 +5,11 @@ class PurchaseOrder < ActiveRecord::Base
   def set_po_num
     last_po = PurchaseOrder.find(:first, :conditions => 'purchase_orders.quickbooks_ref IS NOT NULL', :order => 'quickbooks_ref DESC')
 
-    unless /Q(\d+)/ === last_po.quickbooks_ref
+    unless /[QR](\d+)/ === last_po.quickbooks_ref
       raise "Unkown PO: #{last_po.quickbooks_ref}"
     end
 
-    new_po = "Q#{Integer($1)+1}"
+    new_po = "R#{Integer($1)+1}"
     logger.info("Allocating PO: #{new_po}")
     self.quickbooks_ref = new_po
   end

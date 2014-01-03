@@ -61,7 +61,7 @@ class User < ActiveRecord::Base
   end  
 
   def email_string
-    "\"#{name} / Mountain Xpress Promotions\" <#{email}>"
+    "\"#{name} / #{COMPANY_NAME_SHORT}\" <#{email}>"
   end
   
   def role

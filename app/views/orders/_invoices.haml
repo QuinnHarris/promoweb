@@ -16,14 +16,13 @@
   %table
     %tr
       %td
-        %h2 Mountain Xpress Promotions, LLC
-        954 E. 2nd Ave, Ste 206
+        %h2= COMPANY_NAME
+        - for l in COMPANY_ADDRESS.split("\n")
+          = l
+          %br
+        Phone #: 970-375-1900
         %br
-        Durango, CO 81301
-        %br
-        Phone #: 970.375.1900
-        %br
-        Fax #: 877.765.3617
+        Fax #: 877-765-3617
         %br
         Website: www.mountainofpromos.com
         - if @order.user

@@ -3,7 +3,7 @@
     %title= @title
     %meta{ :content => "text/html; charset=UTF-8", "http-equiv" => "Content-Type" }
   %body
-    %h1 Artwork for PO-#{@po.quickbooks_ref} from Mountain Xpress Promotions
+    %h1 Artwork for PO-#{@po.quickbooks_ref} from #{COMPANY_NAME_SHORT}
     - if @po.purchase.supplier.account_number
       Account: #{@po.purchase.supplier.account_number}
       

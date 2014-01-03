@@ -4,11 +4,11 @@ class StaticController < ApplicationController
   before_filter :setup_context
 
   @@pages = [
-   ['About Us', 'about', 'About Mountain Xpress Promotions'],
-   ['Ordering', 'order', 'Order Information for Mountain Xpress Promotions'],
-   ['Artwork', 'artwork', 'Artwork Requirements'],
-   ['Decorations', 'decorations', 'Product Decorations'],
-   ['Colors', 'color_chart', 'Pantone Color Chart'],
+             ['About Us', 'about', "About #{COMPANY_NAME}"],
+             ['Ordering', 'order', "Order Information for #{COMPANY_NAME}"],
+             ['Artwork', 'artwork', 'Artwork Requirements'],
+             ['Decorations', 'decorations', 'Product Decorations'],
+             ['Colors', 'color_chart', 'Pantone Color Chart'],
   ]
   
   @@hidden_pages = [

@@ -101,13 +101,13 @@ class RequestOrderTask < OrderTask
     if object.task_completed?(PaymentInfoOrderTask)
       subject = "Order Confirmation"
       header = 
-%q(Thank you for placing an order with <a href='http://www.mountainofpromos.com/'>Mountain Xpress Promotions, LLC.</a>.
+        %Q(Thank you for placing an order with <a href='http://www.mountainofpromos.com/'>#{COMPANY_NAME}.</a>.
 Please allow a few business hours to process your order.  We will contact you at the number or email provided for final price and artwork approval.
 We look forward to working with you for your promotional needs.)
     else
       subject = "Quote Request Confirmation"
       header =
-%q(Thank you for requesting a product quote from <a href='http://www.mountainofpromos.com/'>Mountain Xpress Promotions, LLC.</a>.
+        %Q(Thank you for requesting a product quote from <a href='http://www.mountainofpromos.com/'>#{COMPANY_NAME}.</a>.
 Please allow a few business hours to receive a complete quote. If we have any questions, we will contact you at the number or email provided.
 We look forward to working with you for your promotional needs.)      
     end
@@ -142,7 +142,7 @@ class QuoteOrderTask < OrderTask
     return string if string
 
     string =  "Hi #{object.customer.person_name.split(' ').first},\n"
-    string += "Thank you for contacting Mountain Xpress Promotions.\n"
+    string += "Thank you for contacting #{COMPANY_NAME}.\n"
     string += "Please review the revised quote below.\n"
     string += "Please let me know if I can answer any questions.\n"
     string
@@ -193,7 +193,7 @@ Customer Comments:
     return string if string
 
     string =  "Hi #{object.customer.person_name.split(' ').first},\n"
-    string += "Thank you for contacting Mountain Xpress Promotions.\n"
+    string += "Thank you for contacting #{COMPANY_NAME}.\n"
     string += "Please review the revised order below.\n"
     unless object.task_completed?(PaymentInfoOrderTask)
       string += "You will be required to provide payment before the order can proceed and your artwork can be processed.\n"
@@ -516,7 +516,7 @@ class CompleteOrderTask < OrderTask
   def email_complete
     subject = "Order Complete, Review Request"
     header = 
-      %q(Thank you for ordering from Mountain Xpress Promotions, LLC.
+      %Q(Thank you for ordering from #{COMPANY_NAME}.
 <a href="http://www.shopperapproved.com/surveys/full.php?id=3559">I would greatly appreciate if you would review our service by clicking on this link.</a>
 I hope we have served you well and look forward to working with you again!)
 

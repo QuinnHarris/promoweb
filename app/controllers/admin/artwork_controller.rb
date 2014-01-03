@@ -371,7 +371,7 @@ class ProofGenerate
     y += 14
 
     doc.moveto :x => center_x, :y => y
-    doc.show "Mountain Xpress Promotions, LLC", :with => :bold_font, :align => :show_center
+    doc.show COMPANY_NAME, :with => :bold_font, :align => :show_center
 
     # Links
     url_prefix = "http://www.mountainofpromos.com/orders/#{order.id}/acknowledge_artwork?auth=#{order.customer.uuid}&"
@@ -527,7 +527,7 @@ class Admin::ArtworkController < Admin::OrdersController
     proof.setup(:Title => 'Artwork Proof',
                 :Author => @order.user && @order.user.name,
                 :Subject => "#{product_name} on #{decoration_location}",
-                :Producer => "Mountain Xpress Proof Creator using RGhost v#{RGhost::VERSION::STRING}")
+                :Producer => "Mountain Express Proof Creator using RGhost v#{RGhost::VERSION::STRING}")
 
     proof.draw_head(product_image)
     proof.draw_foot(@order)

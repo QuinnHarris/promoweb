@@ -1,6 +1,6 @@
-%h1 About Mountain Xpress Promotions
+%h1 About #{COMPANY_NAME}
 
-%p Mountain Xpress Promotions strives to provide the best possible value for our customers. We guarantee that you will get your items the way you expected them, on time, at the price we quoted, and at the best price:
+%p #{COMPANY_NAME_SHORT} strives to provide the best possible value for our customers. We guarantee that you will get your items the way you expected them, on time, at the price we quoted, and at the best price:
 
 %h2 Guarantees
 %h3 What you Expect
@@ -38,11 +38,10 @@
   = link_to "MountainOfPromos.com", "http://www.mountainofpromos.com/"
   is owned and operated by:
   %br
-  = link_to "Mountain Xpress Promotions, LLC", "http://www.mountainexpresspromotions.com"
-  %br
-  954 E. 2nd Ave, Suite 206
-  %br
-  Durango, CO. 81301
+  = link_to COMPANY_NAME, "http://www.mountainexpresspromotions.com"
+  - for l in COMPANY_ADDRESS.split("\n")
+    %br
+    = l
 
 %br
 
@@ -65,11 +64,10 @@
   %tr
     %td Mail Address:
     %td
-      Mountain Xpress Promotions, LLC
-      %br
-      2885 Sanford Ave SW #24393
-      %br
-      Grandville, MI 49418  
+      = COMPANY_NAME
+      - for l in COMPANY_ADDRESS.split("\n")
+        %br
+        = l
 
 %hr
 %div

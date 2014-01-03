@@ -776,7 +776,7 @@ public
     # Remove from here and fold into ReviesedOrderTask class
     unless @order.our_comments
       string =  "Hi #{@order.customer.person_name.split(' ').first},\n"
-      string += "Thank you for contacting Mountain Xpress Promotions.\n"
+      string += "Thank you for contacting #{COMPANY_NAME}.\n"
       string += "Please review the revised quote below.\n"
       unless @order.task_completed?(PaymentInfoOrderTask)
         string += "You will be required to provide payment before the order can proceed and your artwork can be processed.\n"

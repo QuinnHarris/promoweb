@@ -108,7 +108,7 @@ class PaymentBitCoinRequest < BitCoinTransaction
   end
 
   def url
-    "bitcoin:#{pay_address}?amount=#{chargeable}&label=Mountain%20Xpress%20Promotions"
+    "bitcoin:#{pay_address}?" + { 'amount' => chargeable, 'label' => COMPANY_NAME_SHORT }.to_query
   end
 
   def comment

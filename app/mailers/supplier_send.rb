@@ -53,7 +53,7 @@ class SupplierSend < ActionMailer::Base
     send.reply_to = [primary_email, secondary_email] if secondary_email
     send.to = to
     send.to = SEND_EMAIL unless Rails.env.production?
-    send.subject = "PO-#{purchase.purchase_order.quickbooks_ref} #{subject} / Mountain Xpress Promotions"
+    send.subject = "PO-#{purchase.purchase_order.quickbooks_ref} #{subject} / #{COMPANY_NAME_SHORT}"
     send.deliver
 
     # To Self

@@ -19,7 +19,7 @@ xml.svg('xmlns:dc' => 'http://purl.org/dc/elements/1.1/',
         xml.tag!('dc:title', "Order #{@order.id} - " + (@order.customer.company_name.blank? ? @order.customer.person_name : "#{@order.customer.company_name} - #{@order.customer.person_name}"))
 	xml.tag!('dc:creator') do
 	  xml.tag!('cc:Agent') do
-	    xml.tag!('dc:title', "#{@user.name} - Mountain Xpress Promotions, LLC")
+	    xml.tag!('dc:title', "#{@user.name} - #{COMPANY_NAME}")
 	  end
 	end
 	xml.tag!('dc:identifier', @oid.id.to_s)

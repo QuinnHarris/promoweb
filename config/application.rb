@@ -81,6 +81,10 @@ require "#{Rails.root}/lib/inheritable_attributes"
 SITE_NAME = "www.mountainofpromos.com"
 MAIN_EMAIL = 'sales@mountainofpromos.com'
 
+COMPANY_NAME_SHORT = 'Mountain Express Promotions'
+COMPANY_NAME = "#{COMPANY_NAME_SHORT}, LLC"
+COMPANY_ADDRESS = "361 S. Camino Del Rio, Ste 160\nDurango, CO 81301"
+
 class Time
   def add_workday(duration)
     duration = duration.to_i

@@ -2,7 +2,7 @@
   %h1#message= flash[:notice]
   %hr
 
-%h2 Mountain Xpress Promotions Login
+%h2 #{COMPANY_NAME} Login
 
 = form_for [:admin, User.new], :url => :admin_login do |f|
   %table.form
