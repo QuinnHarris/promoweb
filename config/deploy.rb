@@ -1,5 +1,5 @@
 set :application, "mountainofpromos.com"
-set :repo_url,  "git@bigmux.qutek.net:promoweb"
+set :repo_url,  "git@git.qutek.net:promoweb"
 
 set :deploy_to, "/var/www/mountainofpromos.com"
 set :scm, :git
