@@ -361,6 +361,7 @@ class Admin::OrdersController < Admin::BaseController
     Order.transaction do
       @order.closed = false
       @order.save!
+      @order.customer.touch # Update customer to ensure quickbooks customer is marked active
       [CancelOrderTask, CompleteOrderTask].each do |klass|
         if task = klass.find(:first, :conditions => { 'order_id' => @order.id, 'active' => true })
           task.active = nil

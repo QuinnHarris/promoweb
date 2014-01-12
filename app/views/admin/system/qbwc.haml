@@ -2,7 +2,7 @@
 %QBWCXML
   %AppName PromoWeb
   %AppID
-  %AppURL http#{Rails.env.production? ? 's://www.mountainofpromos.com' : '://10.86.201.145:3000'}/qbwc/api
+  %AppURL http#{Rails.env.production? ? 's://www.mountainofpromos.com' : "://#{request.env['SERVER_NAME']}:#{request.env['SERVER_PORT']}"}/qbwc/api
   %AppDescription #{COMPANY_NAME} Quickbooks Integration
   %AppSupport https://www.mountainofpromos.com/admin/
   %UserName promoweb

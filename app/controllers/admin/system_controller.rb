@@ -1,6 +1,7 @@
 class Admin::SystemController < Admin::BaseController
   def qbwc
-    render :layout => false, :format => :xml, :filename => 'promoweb.qwc'
+    response.headers['Content-Disposition'] = 'attachment; filename=promoweb.qwc'
+    render :layout => false, :format => :xml
   end
   
   def quickbooks_blocked

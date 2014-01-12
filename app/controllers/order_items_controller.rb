@@ -46,6 +46,8 @@ class OrderItemsController < OrdersController
             :company_name => '',
             :person_name => ''})
           @customer.save(:validate => false)
+        else
+          @customer.touch # Update customer to ensure quickbooks customer record is made active
         end
 
         @order = @customer.orders.create

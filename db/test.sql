@@ -24,13 +24,26 @@ DELETE FROM customers WHERE id NOT IN
    (select customer_id from payment_methods));
    
 
-update order_items set price_group_id = 17942 where id in (3765, 3592, 1613, 2333, 2334, 4754, 4932, 2017, 2219, 3044, 3334, 3516, 3594, 3691, 4682, 2006);
+
+/* Remove deleted variants */
+BEGIN;
+create temp table vars as select * from variants where deleted and id not in (select variant_id from price_groups_variants join order_items on price_groups_variants.price_group_id = order_items.price_group_id) and id not in (select variant_id from order_item_variants where variant_id is not null);
+
+delete from price_groups_variants where variant_id in (select id from vars);
+delete from properties_variants where variant_id in (select id from vars);
+delete from variants where id in (select id from vars);
+COMMIT;
+
+delete from decorations where deleted and id not in (select decoration_id from order_item_decorations where decoration_id is not null);
+
+DELETE FROM properties WHERE id NOT IN (SELECT DISTINCT property_id FROM properties_variants);
 
 /* Remove customers without name that are old */
 BEGIN;
-create temp table cust as select * from customers where (updated_at < '2010-09-01' and person_name = '' and company_name = '') or email ~ 'qutek.net' or company_name ~ 'Mountain Express';
+delete from phone_numbers where number_string is null;
+delete from email_addresses where address is null;
 
-create temp table cust as select * from customers where id in (3389, 3391, 3393, 3394, 3399);
+create temp table cust as select * from customers where (updated_at < '2013-09-01' and person_name = '' and company_name = '' and id not in (select customer_id from email_addresses) and id not in (select customer_id from phone_numbers)) or company_name ~ 'Mountain Express';
 
 delete from order_item_decorations using order_items join orders on order_items.order_id = orders.id join customers on orders.customer_id = customers.id
   where order_item_decorations.order_item_id = order_items.id and customers.id in (select id from cust);
@@ -91,6 +104,9 @@ delete from purchases using order_items join orders on order_items.order_id = or
 
 delete from shipping_rates where customer_id in (select id from cust);
 
+delete from phone_numbers where customer_id in (select id from cust);
+delete from email_addresses where customer_id in (select id from cust);
+
 delete from customers where customers.id in (select id from cust);
 COMMIT;
 
@@ -126,22 +142,6 @@ SELECT product_id, COUNT(*) FROM
     GROUP BY variants.product_id, price_groups_variants.price_group_id) AS base
   GROUP BY product_id
   ORDER BY count;
-
-/* Think I fixed the bug that need this
-DELETE FROM price_groups_variants WHERE
-  price_group_id IN (SELECT MIN(min) FROM variants
-  LEFT OUTER JOIN
-  (SELECT variant_id, COUNT(*), MIN(price_group_id) FROM
-    (SELECT variant_id, price_group_id FROM price_groups_variants
-      LEFT OUTER JOIN price_groups ON price_groups_variants.price_group_id = price_groups.id
-      WHERE NULLVALUE(price_groups.source_id)
-      GROUP BY price_groups_variants.variant_id, price_groups_variants.price_group_id) AS base
-    GROUP BY variant_id
-    ORDER BY count) AS base
-  ON variants.id = base.variant_id
-  WHERE count > 1
-  GROUP BY product_id
-  ORDER BY product_id);
 
 
 SELECT product_id, MIN(min) FROM variants
@@ -271,29 +271,9 @@ select products.supplier_num AS product_num, variants.id, variants.supplier_num 
   where supplier_id=4;
   
 
-  
-/* Update kludges */
-update order_items set variant_id = 235 where variant_id=238;
-update order_items set variant_id = 2146 where variant_id in (2145, 2147);
-update order_items set variant_id = 2083 where variant_id in (2081, 2082);
-
-
-/* Delete old records */
-
-
-
-
 select name, count(*) from (select person_name as name from customers) as sub group by name order by count;
 
 
-
-/* QUICKBOOKS */
-update products set quickbooks_id=null, quickbooks_at=null, quickbooks_sequence = null;
-
-update suppliers set quickbooks_id = '490000-1145061839' where name = 'PrimeLine';
-update suppliers set quickbooks_id = '20000-1132160224' where name = 'Gemline';
-update suppliers set quickbooks_id = '390000-1143231953' where name = 'Leeds';
-update suppliers set quickbooks_id = '7F0000-1151959608' where name = 'Lanco';
 
 
 /* Get all added product ids */
@@ -343,7 +323,7 @@ CREATE INDEX pages_pop ON pages ( site_id, fetch_started_at, fetch_complete_at);
 
 
 /* Prune crawl DB */
-DELETE FROM pages WHERE id NOT IN (SELECT page_id from page_products);=======
+DELETE FROM pages WHERE id NOT IN (SELECT page_id from page_products);
 
 
 /* Access */
@@ -387,38 +367,6 @@ CREATE INDEX page_access_index ON page_accesses (controller, action, action_id);
 
 
 delete from page_accesses where controller = 'products' and action = 'main' and nullvalue(action_id) and nullvalue(params);
-
-
-
-/* New Company cleanup */
-delete from suppliers where id not in (select supplier_id from products) and parent_id is null and id not in (select parent_id from suppliers where parent_id is not null);
-
-/* Update all decoration_techniques,  */
-update decoration_techniques set quickbooks_id = null, quickbooks_at = null, quickbooks_sequence = null;
-update suppliers set quickbooks_id = null, quickbooks_at = null, quickbooks_sequence = null where quickbooks_at != '3000-01-01';
-
-update bills set quickbooks_id = 'BLOCKED', quickbooks_at = null, quickbooks_sequence = null;
-update purchase_orders set quickbooks_id = 'BLOCKED', quickbooks_at = null, quickbooks_sequence = null;
-update invoices set quickbooks_id = 'BLOCKED', quickbooks_at = null, quickbooks_sequence = null;
-
-update purchase_entries set quickbooks_po_id = null, quickbooks_bill_id = null;
-
-update order_entries set quickbooks_id = null, quickbooks_at = null;
-update order_item_decorations set quickbooks_po_marginal_id = null, quickbooks_po_fixed_id = null, quickbooks_bill_marginal_id = null, quickbooks_bill_fixed_id = null;
-update order_item_entries set quickbooks_po_marginal_id = null, quickbooks_po_fixed_id = null, quickbooks_bill_marginal_id = null, quickbooks_bill_fixed_id = null;
-update order_item_variants set quickbooks_po_id = null, quickbooks_bill_id = null;
-update order_items set quickbooks_po_id = null, quickbooks_po_shipping_id = null, quickbooks_bill_id = null, quickbooks_bill_shipping_id = null;
-
-update orders set quickbooks_id = 'BLOCKED', quickbooks_at = null, quickbooks_sequence = null;
-update payment_transactions set quickbooks_id = 'BLOCKED', quickbooks_at = null, quickbooks_sequence = null;
-update products set quickbooks_id = 'BLOCKED', quickbooks_at = null, quickbooks_sequence = null;
-
-update customers set quickbooks_id = 'BLOCKED', quickbooks_at = null, quickbooks_sequence = null;
-
-
-
-create index product_images_product_id on product_images (product_id);
-create index decorations_product_id on decorations (product_id);
 
 
 

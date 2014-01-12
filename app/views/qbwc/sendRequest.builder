@@ -80,7 +80,7 @@ xml.QBXML do
         :conditions => ["substr(coalesce(nullif(company_name,''), person_name), 0, 39) = ?", name],
         :order => 'id').index(customer)
       xml.Name encode(name + ((idx && (idx > 0)) ? " #{idx}" : ''))
-      xml.IsActive 1
+      xml.IsActive customer.orders.find { |o| !o.closed } ? 1 : 0
 #      xml.ParentRef do
 #        xml.FullName '100-WEB Customers'
 #      end
@@ -90,6 +90,7 @@ xml.QBXML do
     
     items(xml, @orders, 'Customer', 'ListID', %w(Name)) do |order, new_item|
       xml.Name "Order #{order.id}"
+      xml.IsActive order.closed ? 0 : 1
 
       xml.ParentRef do
         xml.ListID order.customer.quickbooks_id
@@ -124,7 +125,7 @@ xml.QBXML do
       #end
       #xml.TemplateRef do
       xml.TxnDate invoice.created_at.strftime("%Y-%m-%d")
-      #xml.RefNumber @order.id.to_s
+      xml.RefNumber invoice.quickbooks_ref if invoice.quickbooks_ref
       bill_ship_address(xml, invoice.order.customer)
       #xml.IsPending
         #xml.IsFinaceCharge
@@ -202,29 +203,55 @@ xml.QBXML do
 
 
     @payment_transactions.each do |payment_transaction|
-      if payment_transaction.amount.to_i > 0
-        item(xml, payment_transaction, 'ReceivePayment', 'TxnID') do |pt, new_item|
+      charge = payment_transaction.amount.to_i > 0
+      if charge or payment_transaction.method.is_a?(PaymentCreditCard)
+        item(xml, payment_transaction, charge ? 'ReceivePayment': 'ARRefundCreditCard', 'TxnID') do |pt, new_item|
           xml.CustomerRef do
             xml.ListID pt.order.quickbooks_id
           end
+#	  xml.RefundFromAccountRef do
+#	    xml.FullName "Undeposited Funds"
+#	  end unless charge
 #         xml.ARAccountRef do
 #           xml.FullName "Undeposited Funds"
 #         end
           xml.TxnDate pt.created_at.strftime("%Y-%m-%d")
-          xml.RefNumber pt.method.billing_id
-          xml.TotalAmount pt.amount.to_s
-          #xml.PaymentMethodRef do 
+          xml.RefNumber "#{pt.method.billing_id}:#{pt.id}"
+	  amount = pt.amount.round_cents.abs
+          xml.TotalAmount amount.to_s if charge
+          xml.PaymentMethodRef do 
+	    xml.FullName pt.method.quickbooks_type
+	  end if pt.method.quickbooks_type
           xml.Memo pt.comment
+#          xml.DepositToAccountRef do
+#	    if pt.is_a?(BitCoinTransaction)
+#	      xml.ListID @qb_list_id['Account-Bitcoin']
+#	    else
+#              xml.FullName "Undeposited Funds"
+#	    end
+#          end
           xml.DepositToAccountRef do
-            xml.FullName "Undeposited Funds"
-          end
-          xml.IsAutoApply 1
+	    xml.ListID @qb_list_id['Account-Bitcoin']
+          end if pt.is_a?(BitCoinTransaction)
+	  if charge
+            xml.IsAutoApply 1
+	  else
+	    pt.order.invoices.to_a.find_all { |i| i.total_price.to_i < 0 }.sort_by { |i| i.total_price.abs.to_i }.each do |invoice|
+	      xml.RefundAppliedToTxnAdd do
+	        xml.TxnID invoice.quickbooks_id
+		refund = [invoice.total_price.abs, amount].min
+		xml.RefundAmount refund.to_s
+		amount -= refund
+		break if amount.zero?
+	      end
+	    end
+	  end
         end
       else
         item(xml, payment_transaction, 'Check', 'TxnID') do |pt, new_item|
-	  xml.AccountRef do
-	    xml.ListID @qb_list_id['Account-Checking']
-	  end
+          xml.AccountRef do
+            xml.ListID @qb_list_id['Account-Checking']
+          end
           xml.PayeeEntityRef do
             xml.ListID pt.order.quickbooks_id
           end
@@ -232,25 +259,25 @@ xml.QBXML do
           xml.TxnDate pt.created_at.strftime("%Y-%m-%d")
           xml.Memo pt.comment
 
-#	  if invoice = pt.order.invoices.find { |i| i.total_price == pt.amount }
-#	    xml.tag!("ApplyCheckToTxn#{new_item ? 'Add' : 'Mod'}") do
-#	      xml.TxnID invoice.quickbooks_id
-#	      xml.Amount (-pt.amount).to_s
-#	    end
-#	  end
+#        if invoice = pt.order.invoices.find { |i| i.total_price == pt.amount }
+#          xml.tag!("ApplyCheckToTxn#{new_item ? 'Add' : 'Mod'}") do
+#            xml.TxnID invoice.quickbooks_id
+#            xml.Amount (-pt.amount).to_s
+#          end
+#        end
 
-	  xml.tag!("ExpenseLine#{new_item ? 'Add' : 'Mod'}") do
-	    xml.AccountRef do
-	      xml.FullName "Accounts Receivable"
-	    end
-	    xml.Amount (-pt.amount).to_s
-	    xml.CustomerRef do
-	      xml.ListID pt.order.quickbooks_id
-    	    end
+          xml.tag!("ExpenseLine#{new_item ? 'Add' : 'Mod'}") do
+            xml.AccountRef do
+              xml.FullName "Accounts Receivable"
+            end
+            xml.Amount pt.amount.abs.to_s
+            xml.CustomerRef do
+              xml.ListID pt.order.quickbooks_id
+            end
             xml.ClassRef do
               xml.ListID @qb_list_id['Class']
             end
-	  end
+ 	  end
         end
       end
     end if @payment_transactions

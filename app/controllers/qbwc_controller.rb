@@ -106,15 +106,15 @@ class QbwcController < ActionController::Base
   end
   
   @@objects = [
-    [Supplier, qb_condition(Supplier), 10],
-    [Product, qb_condition(Product) + " AND products.name != ''", 200],
-    [DecorationTechnique, '( quickbooks_at IS NULL AND quickbooks_id IS NULL )', 100],
-    [Customer, qb_condition(Customer) + " AND customers.person_name != ''", 25, :orders],
-    [Order, qb_condition(Order) + " AND customers.quickbooks_id IS NOT NULL", 5, :customer],
-    [Invoice, qb_condition(Invoice), 1, :order],
-    [PurchaseOrder, qb_condition(PurchaseOrder), 1, { :purchase => { :items => :order } }],
-    [Bill, qb_condition(Bill), 1, { :purchase => { :items => :order } }],
-    [PaymentTransaction, "payment_transactions.quickbooks_id IS NULL AND payment_transactions.type IN ('PaymentCharge', 'PaymentCredit')", 10, :method]
+    [Supplier, qb_condition(Supplier)],
+    [Product, qb_condition(Product) + " AND products.name != ''"],
+    [DecorationTechnique, '( quickbooks_at IS NULL AND quickbooks_id IS NULL AND parent_id IS NULL )'],
+    [Customer, qb_condition(Customer) + " AND customers.person_name != ''", :orders],
+    [Order, qb_condition(Order) + " AND customers.quickbooks_id IS NOT NULL", :customer],
+    [Invoice, qb_condition(Invoice), :order, 5],
+    [PurchaseOrder, qb_condition(PurchaseOrder), { :purchase => { :items => :order } }, 5],
+    [Bill, qb_condition(Bill), { :purchase => { :items => :order } }, 5],
+    [PaymentTransaction, "payment_transactions.quickbooks_id IS NULL AND (payment_transactions.quickbooks_at IS NULL OR payment_transactions.quickbooks_at < payment_transactions.created_at) AND payment_transactions.type IN ('PaymentCharge', 'PaymentCredit', 'PaymentBitCoinAccept')", :method, 10]
   ]
   
   def self.objects
@@ -122,16 +122,18 @@ class QbwcController < ActionController::Base
   end
 
   @@qb_list_id = {
-    'VendorType-Suppliers' => '80000005-1294361921',
-    'JobType-Open' => '80000003-1294367720',
-    'JobType-Closed' => '80000004-1294367726',
-    'Item-Decorations' => '80000003-1294366227',
-    'Item-Products' => '80000002-1294366098',
-    'Account-Checking' => '80000005-1294361798',
-    'Account-Sales' => '8000000A-1294361921',
-    'Account-COG' => '8000000D-1294361921',
-    'Class' => '80000001-1294531601',
-    'Class-PPC' => '80000002-1294531612'
+    'VendorType-Suppliers' => '80000005-1388431826',
+    'JobType-Open' => '80000003-1389477472',
+    'JobType-Closed' => '80000004-1389477472',
+    'Item-Decorations' => '80000002-1389477472',
+    'Item-Products' => '80000003-1389477472',
+    'Item-Misc' => '80000004-1389477472',
+    'Account-Checking' => '80000025-1389477377',
+    'Account-Sales' => '80000006-1388431826',
+    'Account-COG' => '8000000B-1388431826',
+    'Account-Bitcoin' => '80000027-1389554922',
+    'Class' => '80000001-1389477472',
+    'Class-PPC' => '80000002-1389477472',
   }.freeze
 
   # --- [ Facilitates web service to send request XML to QuickBooks via QBWC ] ---
@@ -159,7 +161,7 @@ class QbwcController < ActionController::Base
     end
 
     @qb_list_id = @@qb_list_id
-    @@objects.each do |klass, condition, limit, include|
+    @@objects.each do |klass, condition, include, limit|
       list = klass.find(:all, :include => include, :conditions => condition, :order => "#{klass.table_name}.id", :limit => limit)
       unless list.empty?
         klass.update_all("quickbooks_at = 'infinity'", ["id IN (?)", list.collect { |r| r.id }])
@@ -201,7 +203,11 @@ private
         listID = listID.text
         raise "Unknown sequence" unless sequence = node.get_elements(xml_names.collect { |n| "#{n}Ret/EditSequence" }.join('|')).first  
         sequence = sequence.text
-        at = Time.now.utc unless !valid or node.name.include?('Query')
+        if valid
+          at = Time.now.utc unless node.name.include?('Query')
+        else
+          at = '-infinity'
+        end
       elsif status == '3175'
         at = '-infinity'
         @dont_repeat = true
@@ -329,11 +335,11 @@ public
 
     update_po_bill(root, Bill, 'Item', 'bill')
     
-    update_row(root, %w(ReceivePayment Check), 'TxnID') do |node, id, status|
+    update_row(root, %w(ReceivePayment Check ARRefundCreditCard), 'TxnID') do |node, id, status|
       PaymentTransaction
     end   
 
-    @@objects.each do |klass, condition, limit, include|
+    @@objects.each do |klass, condition, include, limit|
       if klass.count(:include => include, :conditions => condition) != 0
         render :soap => 1
         return

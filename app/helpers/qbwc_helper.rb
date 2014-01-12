@@ -55,7 +55,8 @@ module QbwcHelper
         if item && item.respond_to?(:quickbooks_ref) and item.quickbooks_ref
           xml.ListID item.quickbooks_ref
         else
-          xml.FullName 'Misc'
+          #xml.FullName 'Misc'
+          xml.ListID @qb_list_id['Item-Misc']
         end
       end unless bill_po and txn_po_id
       

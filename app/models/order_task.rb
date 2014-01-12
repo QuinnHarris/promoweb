@@ -511,6 +511,7 @@ class CompleteOrderTask < OrderTask
   def apply(params)
     object.closed = true
     object.save!
+    object.customer.touch # Update customer to ensure quickbooks customer is marked inactive
   end
 
   def email_complete
@@ -616,6 +617,7 @@ class CancelOrderTask < OrderTask
   def apply(params)
     object.closed = true
     object.save!
+    object.customer.touch # Update customer to ensure quickbooks customer is marked inactive
   end
 end
 

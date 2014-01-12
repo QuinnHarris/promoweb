@@ -145,6 +145,7 @@ class PaymentMethod < ActiveRecord::Base
   def creditable?; false; end
   def authorizeable?; false; end
   def type_notes; nil; end
+  def quickbooks_type; nil; end
 
   def revoke!; end;
   def fee; 0.0; end
@@ -195,6 +196,14 @@ class PaymentCreditCard < OnlineMethod
   def has_name?; true; end
   def number_name; 'Last Digits'; end
   def authorizeable?; true; end
+  def quickbooks_type
+    case sub_type
+      when 'visa'; 'Visa'
+      when 'master'; 'MasterCard'
+      when 'american_express'; 'American Express'
+      when 'discover'; 'Discover'
+    end
+  end
 
   def revokable?
     billing_id
@@ -472,6 +481,7 @@ class PaymentACHCheck < OnlineMethod
   def has_name?; nil; end
   def number_name; 'Check No'; end
   def useable?; transactions.empty?; end
+  def quickbooks_type; 'E-Check'; end
 end
 
 class PaymentCheck < PaymentMethod
@@ -487,6 +497,8 @@ class PaymentCheck < PaymentMethod
 
   def has_name?; nil; end
   def number_name; nil; end
+
+  def quickbooks_type; 'Check'; end
 end
 
 class PaymentSendCheck < PaymentCheck
@@ -512,6 +524,8 @@ class PaymentBitCoin < PaymentMethod
   def useable?; transactions.empty? or !transactions.last.auth_code; end
   def has_name?; nil; end
   def number_name; 'Address'; end
+
+  def quickbooks_type; 'Bitcoin'; end
 
   def pay_address; read_attribute(:display_number); end   
 

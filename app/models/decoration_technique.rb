@@ -21,4 +21,8 @@ class DecorationTechnique < ActiveRecord::Base
   def friendly_name
     parent ? parent.name : name
   end
+
+  def quickbooks_ref
+    parent ? parent.quickbooks_ref : attributes['quickbooks_ref']
+  end
 end

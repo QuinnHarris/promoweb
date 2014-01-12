@@ -1,0 +1,111 @@
+<?xml version="1.0" ?>
+<?qbxml version="7.0"?>
+<QBXML>
+ <QBXMLMsgsRq onError="continueOnError">
+  <VendorTypeQueryRq requestID="1">
+   <FullName>Suppliers</FullName>
+  </VendorTypeQueryRq>
+
+  <JobTypeAddRq requestID="2">
+   <JobTypeAdd>
+    <Name>Open</Name>
+   </JobTypeAdd>
+  </JobTypeAddRq>
+  <JobTypeAddRq requestID="3">
+   <JobTypeAdd>
+    <Name>Close</Name>
+   </JobTypeAdd>
+  </JobTypeAddRq>
+
+  <ItemNonInventoryAddRq requestID="4">
+   <ItemNonInventoryAdd>
+    <Name>Decorations</Name>
+    <SalesTaxCodeRef>
+     <FullName>Non</FullName>
+    </SalesTaxCodeRef>
+    <SalesAndPurchase>
+     <SalesPrice>0.00</SalesPrice>
+     <IncomeAccountRef>
+      <FullName>Sales</FullName>
+     </IncomeAccountRef>
+     <ExpenseAccountRef>
+      <FullName>Purchases - Resale Items</FullName>
+     </ExpenseAccountRef>
+    </SalesAndPurchase>
+   </ItemNonInventoryAdd>
+  </ItemNonInventoryAddRq>
+
+  <ItemNonInventoryAddRq requestID="5">
+   <ItemNonInventoryAdd>
+    <Name>Products</Name>
+    <SalesTaxCodeRef>
+     <FullName>Non</FullName>
+    </SalesTaxCodeRef>
+    <SalesAndPurchase>
+     <SalesPrice>0.00</SalesPrice>
+     <IncomeAccountRef>
+      <FullName>Sales</FullName>
+     </IncomeAccountRef>
+     <ExpenseAccountRef>
+      <FullName>Purchases - Resale Items</FullName>
+     </ExpenseAccountRef>
+    </SalesAndPurchase>
+   </ItemNonInventoryAdd>
+  </ItemNonInventoryAddRq>
+
+  <ItemNonInventoryAddRq requestID="6">
+   <ItemNonInventoryAdd>
+    <Name>Misc</Name>
+    <SalesTaxCodeRef>
+     <FullName>Non</FullName>
+    </SalesTaxCodeRef>
+    <SalesAndPurchase>
+     <SalesPrice>0.00</SalesPrice>
+     <IncomeAccountRef>
+      <FullName>Sales</FullName>
+     </IncomeAccountRef>
+     <ExpenseAccountRef>
+      <FullName>Purchases - Resale Items</FullName>
+     </ExpenseAccountRef>
+    </SalesAndPurchase>
+   </ItemNonInventoryAdd>
+  </ItemNonInventoryAddRq>
+
+  <AccountQueryRq requestID="7">
+   <AccountType>Bank</AccountType>
+  </AccountQueryRq>
+  <AccountQueryRq requestID="8">
+   <FullName>Sales</FullName>
+  </AccountQueryRq>
+  <AccountQueryRq requestID="9">
+   <AccountType>CostOfGoodsSold</AccountType>
+  </AccountQueryRq>
+
+  <AccountAddRq requestID="10">
+   <AccountAdd>
+    <Name>Bitcoin Cash Equivalent</Name>
+    <AccountType>Bank</AccountType>
+   </AccountAdd>
+  </AccountAddRq>
+
+  <PaymentMethodAddRq requestID="11">
+   <PaymentMethodAdd>
+    <Name>Bitcoin</Name>
+    <PaymentMethodType>Other</PaymentMethodType>
+   </PaymentMethodAdd>
+  </PaymentMethodAddRq>
+
+  <ClassAddRq requestID="12">
+   <ClassAdd>
+    <Name>Web</Name>
+   </ClassAdd>
+  </ClassAddRq>
+  <ClassAddRq requestID="13">
+   <ClassAdd>
+    <Name>PPC</Name>
+    <ParentRef><FullName>Web</FullName></ParentRef>
+   </ClassAdd>
+  </ClassAddRq>
+
+ </QBXMLMsgsRq>
+</QBXML>
