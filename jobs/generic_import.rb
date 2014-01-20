@@ -862,7 +862,7 @@ class GenericImport
     @invalid_values[boom.aspect][boom.value] += 1
   end
 
-  def add_warning(boom, id)
+  def add_warning(boom, id = @supplier_num || @product_description.supplier_num)
     puts "* #{id}: #{boom}"  unless ARGV.include?('nowarn')
     @warning_prods[boom.aspect] = (@warning_prods[boom.aspect] || []) + [id]
     @warning_values[boom.aspect] ||= (h = {}; h.default = 0; h)
@@ -870,7 +870,7 @@ class GenericImport
   end
 
   def warning(aspect, description = nil)
-    add_warning(ValidateError.new(aspect, description), @supplier_num || @product_description.supplier_num)
+    add_warning(ValidateError.new(aspect, description))
   end
   
   def has_product?(supplier_num)
@@ -1383,7 +1383,7 @@ private
       unless multiple_map.empty?
         warning("Image Multiple Match", 
                 multiple_map.collect do |image, list|
-                  image_map[nil] += [image]
+                  #image_map[nil] += [image] # THERE IS A BUG HERE
                   "#{image} => #{list.inspect}"
                 end.join(', '))
       end

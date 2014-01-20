@@ -430,7 +430,8 @@ private
        cat('Bags'),
        exclude(match(%w(name description), 'cooler'))),
    sup('Hit Promotional Products',
-       cat('Bags, Totes & Koolers'),
+       cat('Bags, Duffels & Accessories'),
+       cat('Drawstring, Backpacks & Koolers'),
        exclude(match('name', 'kool')) ),
    sup('Crown Products',
        cat('Bags'),
@@ -1262,7 +1263,7 @@ private
            match('name', 'cooler'))),
    sup('Bullet Line', cat('Coolers', 'Rolling & Chair Coolers') ), 
    sup('Hit Promotional Products',
-       all(cat('Bags, Totes & Koolers'),
+       all(cat('Drawstrings, Backpacks & Koolers'),
            match('name', 'kool') ) ),
    sup('Crown Products', cat('Coolers') ),
    sup('Logomark', cat('Coolers') ),
@@ -1305,7 +1306,7 @@ private
    sup('Norwood', cat('DRINK', 'BOTTLE') ),
    sup('High Caliber Line', cat('Drinkware') ),
    sup('Lanco', cat('Drinkware', 'Cups') ),
-   sup('Hit Promotional Products', cat('Plastic & Metal Drinkware') ),
+   sup('Hit Promotional Products', cat('Drinkware') ),
    sup('Crown Products', cat('Drinkware') ),
    sup('Logomark',
        cat('Water Bottles and Flasks'),
@@ -1594,6 +1595,7 @@ private
  ['Housewares',
   [
    match('name', 'door knob'),
+   sup('Hit Promotional Products', cat('Housewares') ),
   ],[
      ['Boxes & Waterproof Containers',
       sup('Lanco', cat('Bags / Containers', 'Boxes / Waterproof Containers'))],
@@ -1674,7 +1676,7 @@ private
            match('name', ['flu', 'CPR'])), ), # Only 400693, 50049
    sup('High Caliber Line', cat('Healthy Living') ),
    sup('Prime Line', cat('Health Wellness', 'Personal Care') ),
-   sup('Hit Promotional Products', cat('Amenities') ),
+   sup('Hit Promotional Products', cat('Amenities'), cat('Personal Care') ),
    sup('Logomark', cat('Health and Fitness') )          
   ],[
      ['First Aid Kits',
@@ -1794,6 +1796,7 @@ private
        sup('Leeds', duplicate(['Umbrellas'], 'supplier_categories')),
        sup('Lanco', cat('Sun / Outdoors / Sports', 'Umbrellas') ),
        sup('Bullet Line', cat('Fitness & Recreation', 'Umbrellas') ),
+       sup('Hit Promotional Products', cat('Umbrellas') ),
        sup('Sweda', cat('Umbrellas') ),
       ],[
          ['London Fog',
@@ -2008,7 +2011,7 @@ private
        ['New'].collect do |name|
          cat('Padfolios/e-Padfolios', name)
        end),
-   sup('Hit Promotional Products', cat('Portfolios & Jotters') ),
+   sup('Hit Promotional Products', cat('Portfolios & Notebooks') ),
    sup('The Magnet Group', cat('Bag Factory', 'Stationery & Writing') )
   ],[
      ['Jotters',

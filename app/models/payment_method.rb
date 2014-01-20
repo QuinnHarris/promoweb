@@ -418,7 +418,7 @@ public
     while true
       res = gateway.status(transaction.id)
       logger.info("Status Check: #{res.inspect}")
-      if res.params['TransactionStatusCode'] == '15'
+      if res.params['TransactionStatusCode'] == '12'  # Was 15
         error = nil
       else
         error = res.params

@@ -3,7 +3,7 @@ class Net::FTP::List::Unix < Net::FTP::List::Parser
 
   # Stolen straight from the ASF's commons Java FTP LIST parser library.
   # http://svn.apache.org/repos/asf/commons/proper/net/trunk/src/java/org/apache/commons/net/ftp/
-  REGEXP = %r{
+  NORREGEXP = %r{
 ([pbcdlfmpSs-])
 (((r|-)(w|-)([xsStTL-]))((r|-)(w|-)([xsStTL-]))((r|-)(w|-)([xsStTL-])))\+?\s+
 (?:(\d+)\s+)?
@@ -17,11 +17,9 @@ class Net::FTP::List::Unix < Net::FTP::List::Parser
 }x
 # !!! Added $ to capture to end
 
-  ONE_YEAR = (60 * 60 * 24 * 365)
-
   # Parse a Unix like FTP LIST entries.
   def self.parse(raw)
-    match = REGEXP.match(raw) or return false # !!! Removed strip
+    match = NORREGEXP.match(raw) or return false # !!! Removed strip
 
     dir, symlink, file, device = false, false, false, false
     case match[1]
@@ -115,11 +113,10 @@ class NorwoodAll < GenericImport
     # Get Image List
     directory_list = %w(
       2012_NPS3_Hi-Res_Images
-      2013_Hardgoods_Hi_Res_Imprint_Images
-      2013_Hardgoods_Hi_Res_Blank_Images
-      2013_Lifestyle_Images/2013_Lifestyle_HIgh_Res_Images
-      2014_Calendars_Hi_Res_Imprint_Images
-      2014_Calendars_Hi_Res_Blank_Images ).collect { |p| "Norwood Product Images/#{p}" }
+      2014_HARDGOODS_NEW_PRODUCTS/HIGH\ RES
+      2014_NORWOOD_HARDGOODS_Hi_Res_Images
+      2015_Calendars_Hi_Res_Imprint_Images
+      2015_Calendars_Hi_Res_Blank_Images ).collect { |p| "NORWOOD Product Images/#{p}" }
 
     #    @image_list = cache_marshal('Norwood_imagelist') do
     @image_list = get_ftp_images({ :server => 'library.norwood.com',

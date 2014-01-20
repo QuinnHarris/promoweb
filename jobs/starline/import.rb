@@ -113,7 +113,7 @@ class Starline < GenericImport
                 warning 'Right unexpected', area[:right].inspect
                 next
               end
-              id = area.delete(:left).gsub(':', '').strip
+              id = area[:left] && area.delete(:left).gsub(':', '').strip
               hash[id] = area
             end
 
@@ -178,7 +178,7 @@ class Starline < GenericImport
 
           # Pricing
           pri['qty'].zip(pri['price']).each do |qty, cost|
-            next if cost.nil? or cost == 0.0
+            next if qty.nil? or qty == 'null' or cost.nil? or cost == 0.0
             
             # the price field is actually the cost of the item
             pd.pricing.add(qty, nil, cost)

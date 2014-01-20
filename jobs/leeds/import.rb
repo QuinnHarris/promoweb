@@ -124,7 +124,7 @@ class PolyXLS < GenericImport
           
           pd.package.merge_from_object(row,
                                        { 'units' => ['Carton Quantity', 'CartonPackQTY'],
-                                         'weight' => ['Carton Actual Weight', 'CartonWeight'] })
+                                         'weight' => ['Carton Actual Weight', 'Carton Weight'] })
 
           if row.header?('Carton Width') # Only in new format
             pd.package.merge_from_object(row,
@@ -167,9 +167,9 @@ class PolyXLS < GenericImport
             pd.properties['dimension'] = parse_dimension(row['CatalogSize']) || row['CatalogSize'] unless row['CatalogSize'].blank?
           else
             dimension = {}
-            { 'ItemLength'=> 'length', 
-              'ItemWidth' => 'width',
-              'ItemHeight' => 'height' }.each do |src, dst|
+            { 'Itemlength'=> 'length', 
+              'Itemwidth' => 'width',
+              'Itemheight' => 'height' }.each do |src, dst|
               num = row[src].to_s.gsub('\'','').to_f
               dimension[dst] = num unless num == 0.0
             end

@@ -221,7 +221,7 @@ class PrimeLineWeb < GenericImport
 
     ProductDesc.apply(self) do |pd|
       pd.supplier_num = doc.xpath("//span[@id='ctl00_content_ProductCode']").inner_html.strip
-      pd.name = iconv(doc.xpath("//span[@id='ctl00_content_ProductName']").inner_html).split(' ').collect do |c|
+      pd.name = doc.xpath("//span[@id='ctl00_content_ProductName']").inner_html.encode('UTF-8').split(' ').collect do |c|
         @@upcases.index(c.upcase.gsub(/\d/,'')) ? c.upcase : c.capitalize
       end.join(' ')
       
@@ -350,7 +350,12 @@ class PrimeLineWeb < GenericImport
             pricing = variant_pricing[head] = PricingDesc.new
             minimums.zip(list).each do |min, price|
               next unless price
-              pricing.add(min, price)
+              begin
+                pricing.add(min, price)
+              rescue ValidateError => e
+                raise e unless minimums.last == min
+                add_warning(e)
+              end
             end
             pricing.apply_code(price_str || '5R', :round => true)
             pricing.eqp_costs unless price_no_special
@@ -383,6 +388,7 @@ class PrimeLineWeb < GenericImport
 
       
       color_image_map, color_num_map = match_colors(color_list)
+      puts "ColorMAP: #{color_image_map.inspect}"
       pd.images = color_image_map[nil] || []
 
       pd.variants = product_list.zip(color_list).collect do |prod, color|
@@ -396,7 +402,8 @@ class PrimeLineWeb < GenericImport
       # HiRes Images not specific to variant
       if hi_res = doc.at_xpath("//span[@id='ctl00_content_HiReslink']/a")
         path = "http://www.primeline.com/#{hi_res['href']}"
-        pd.images << ImageNodeFetch.new(path.split('/').last, path)
+        node = ImageNodeFetch.new(path.split('/').last, path)
+        pd.images << node unless color_image_map.values.flatten.include?(node)
       end
       
 
@@ -410,7 +417,7 @@ class PrimeLineWeb < GenericImport
 #      puts "Properties:"
       doc.xpath("//td[@id='ctl00_content_TableCell1']/span").each do |span|
         raise "Unknown prop" unless /^\s*<b>\s*(.+?)\s*:\s*<\/b>\s*(.+?)\s*$/ =~ span.inner_html
-        name, value = $1.strip.downcase, iconv($2.strip)
+        name, value = $1.strip.downcase, $2.strip.encode('UTF-8')
 #        puts "  #{name} : #{value.inspect}"
 
         /^(?:(optional) )?(.+)$/ =~ name

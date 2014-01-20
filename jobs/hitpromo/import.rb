@@ -13,7 +13,7 @@ class HitPromoCSV < GenericImport
     puts "Starting Fetch for #{year}"
     @src_files = 
       ["http://www.hitpromo.net/fs/documents/hit_product_data_#{year}.csv",
-       "http://outlet.hitpromo.net/fs/documents/hit_outlet_data_#{year}.csv"].collect do |url|
+       "http://outlet.hitpromo.net/fs/documents/hit_outlet_data_2013.csv"].collect do |url| # #{year}
       WebFetch.new(url).get_path(Time.now - 1.day)
     end
     @package_file = File.join(JOBS_DATA_ROOT, 'HitPackingData.xls')
@@ -111,7 +111,7 @@ class HitPromoCSV < GenericImport
         puts "Product: #{supplier_num}"
         pd.supplier_num = supplier_num
         pd.name = common['product_name']
-        pd.supplier_categories = [[common['category'].strip]]
+        pd.supplier_categories = common['category'] ? [[common['category'].strip]] : [[]]
 
         pd.description =
           (common['description'] ? common['description'].split(/\s*\|\s*/) : []) +
@@ -257,21 +257,25 @@ class HitPromoCSV < GenericImport
         end
         pd.decorations = decorations_from_parts([locations, setups, running], techniques)
 
-        colors = common['colors_available']
-          .scan(/(?:\s*([^,:]+?)(:|(?:\s*with)))?\s*(.+?)(?:\s*(?:(?:all)|(?:both))\s*with\s*(.+?))?(?:\.|$)/i)
-          .collect do |left, split, list, right|\
-          
-          list = list.split(/,|(?:\s+or\s+)|\|/)
-          split = split.include?(':') ? ' ' : " #{split.strip} " if split
-          right = " with #{right}" if right
-          list.collect { |e| (right && e.include?('with')) ? e : "#{left}#{split}#{e.strip}#{right}".strip }
-        end.flatten.uniq
-        
+        if common['colors_available']
+          colors = common['colors_available']
+            .scan(/(?:\s*([^,:]+?)(:|(?:\s*with)))?\s*(.+?)(?:\s*(?:(?:all)|(?:both))\s*with\s*(.+?))?(?:\.|$)/i)
+            .collect do |left, split, list, right|\
+            
+            list = list.split(/,|(?:\s+or\s+)|\|/)
+            split = split.include?(':') ? ' ' : " #{split.strip} " if split
+            right = " with #{right}" if right
+            list.collect { |e| (right && e.include?('with')) ? e : "#{left}#{split}#{e.strip}#{right}".strip }
+          end.flatten.uniq
+        else
+          colors = [nil]
+        end
+
         #      colors = common['colors'].split(/\s*\|\s*/).compact.collect { |c| c.split(' ').collect { |w| w.capitalize }.join(' ') }
         
         pd.variants = colors.collect do |color|
-          VariantDesc.new( :supplier_num => "#{supplier_num}-#{color.gsub(' ', '')}"[0..63],
-                           :properties => { 'color' => color},
+          VariantDesc.new( :supplier_num => "#{supplier_num}-#{color && color.gsub(' ', '')}"[0..63],
+                           :properties => color && { 'color' => color},
                            :images => [])
         end
       end

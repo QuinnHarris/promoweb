@@ -126,7 +126,7 @@ class CrownProdXLS < GenericImport
         pd.name = row['Item Name']
         pd.description = (row['Product Description'] || '').gsub(".", ".\n").strip
         pd.supplier_categories = [[row['Product Categories'].strip]]
-        pd.package.weight = row['Shipping Weight'] && Float(row['Shipping Weight'])
+        pd.package.weight = row['Shipping Weight (lbs)'] && Float(row['Shipping Weight (lbs)'])
         pd.package.units = row['Shipping Quantity'] && row['Shipping Quantity'].to_i
 
         pd.tags << 'Closeout' if @supplier_num.include?('_CL')
