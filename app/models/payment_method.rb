@@ -433,7 +433,7 @@ public
   def charge(order, amount, comment)
     # Authorization logic also in order.rb:payment_authorizes
     auth_time = Time.now - ((sub_type == 'american_express') ? 30 : 14).days
-    txn = transactions.where(:type => 'PaymentAuthorize').where("amount >= ?", amount.to_i).where("created_at > ?", auth_time).where('active').order("order_id != #{order.id}, id, amount").first
+    txn = transactions.where(:type => 'PaymentAuthorize').where("amount >= ?", amount.to_i).where("created_at > ?", auth_time).where('active').order("order_id != #{order.id}, amount, id DESC").first
 
     return authorize(order, amount, comment) unless txn
 
