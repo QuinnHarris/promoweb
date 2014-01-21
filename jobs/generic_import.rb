@@ -414,6 +414,7 @@ class ProductApply
       end
     rescue Exception
       puts current.inspect
+      puts "Log: \n" + product_log
       raise
     ensure
       # Log it

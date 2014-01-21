@@ -525,7 +525,11 @@ class ProductDesc
 
   property :supplier_num, String do |s| s.strip end
   def error_id; "Product #{supplier_num}"; end
-  property :name, String do |s| s.strip end
+  property :name, String do |s|
+    s = s.strip
+    raise PropertyError, "blank name" if s.blank?
+    s
+  end
 
   property :description, String, :no_pre => true do |v|
     if Array === v

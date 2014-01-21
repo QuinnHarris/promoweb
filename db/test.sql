@@ -386,3 +386,12 @@ SELECT id, name FROM products WHERE NOT deleted AND id NOT IN (
       SELECT c.id FROM categories c, my_categories m WHERE c.parent_id = m.id
     )
   SELECT id, name FROM categories WHERE id NOT IN (SELECT id FROM my_categories);
+
+
+insert into decoration_techniques (name, parent_id, unit_name) values ('Laser Engrave - Level 1', 10, 'location');
+insert into decoration_techniques (name, parent_id, unit_name) values ('Laser Engrave - Level 2', 10, 'location');
+
+insert into decoration_techniques (name, unit_name) values ('PhotoGrafixx', 'location');
+insert into decoration_techniques (name, parent_id, unit_name) values ('PhotoGrafixx - Level 1', 145, 'location');
+insert into decoration_techniques (name, parent_id, unit_name) values ('PhotoGrafixx - Level 2,3', 145, 'location');
+insert into decoration_techniques (name, parent_id, unit_name) values ('PhotoGrafixx - Level 4', 145, 'location');

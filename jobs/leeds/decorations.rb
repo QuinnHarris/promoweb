@@ -42,7 +42,7 @@ apply_decorations('Leeds') do |leeds|
           end + [{ :minimum => 15000 }]) })
 
    # Screen Print
-  [['Laser Engrave - Level 1', 55.0], ['Photo Transfer - Level 1', 95.0], ['Deboss', 75.0]].each do |dec_name, dec_setup|
+  [['Laser Engrave - Level 1', 55.0], ['PhotoGrafixx - Level 1', 95.0], ['Deboss', 75.0]].each do |dec_name, dec_setup|
     dec_grp = leeds.decoration_price_groups.create(
       { :technique => DecorationTechnique.find_by_name(dec_name) })
       dec_grp.entries.create({ :minimum => 1,
@@ -105,7 +105,7 @@ apply_decorations('Leeds') do |leeds|
 
     # Photo Real
     dec_grp = leeds.decoration_price_groups.create(
-      { :technique => DecorationTechnique.find_by_name("Photo Transfer - Level 2,3") })
+      { :technique => DecorationTechnique.find_by_name("PhotoGrafixx - Level 2,3") })
       dec_grp.entries.create({ :minimum => 1,
         :fixed_price_const => 27.9798139127662,
         :fixed_price_exp => -0.83602431030508,
@@ -136,7 +136,7 @@ apply_decorations('Leeds') do |leeds|
           end + [{ :minimum => 15000 }]) })
 
    dec_grp = leeds.decoration_price_groups.create(
-      { :technique => DecorationTechnique.find_by_name("Photo Transfer - Level 4") })
+      { :technique => DecorationTechnique.find_by_name("PhotoGrafixx - Level 4") })
       dec_grp.entries.create({ :minimum => 1,
         :fixed_price_const => 21.3867422708763,
         :fixed_price_exp => -0.71388037968683,

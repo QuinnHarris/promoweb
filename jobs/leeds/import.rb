@@ -68,7 +68,7 @@ class PolyXLS < GenericImport
 
       technique, dd.limit = @@decoration_replace[row['Method'].to_s]
       unless technique
-        warning "Unknown Decoration", row['Method'].to_s
+        warning "Unknown Decoration", row['Method'].to_s unless @@decoration_replace.has_key?(row['Method'].to_s)
         next
       end
       dd.technique = technique
@@ -372,11 +372,20 @@ class PolyXLS < GenericImport
     'Watch Printing' => ['Screen Print', 3],
 
     'PhotoReal' => ['Photo Transfer',3],
-    'Photografixx' => ['Photo Transfer',1],
+ 
+    'PhotoGrafixx - Level 1' => [['PhotoGrafixx', 'PhotoGrafixx - Level 1'], 1],
+    'PhotoGrafixx - Level 2' => [['PhotoGrafixx', 'PhotoGrafixx - Level 2,3'], 1],
+    'PhotoGrafixx - Level 3' => [['PhotoGrafixx', 'PhotoGrafixx - Level 2,3'], 1],
+    'PhotoGrafixx - Level 4' => [['PhotoGrafixx', 'PhotoGrafixx - Level 4'], 1],
+
     'PGxx' => ['Photo Transfer',1],
     'Deboss' => ['Deboss',1],
     'Deboss Initials' => nil,
-    'Laser Etching' => ['Laser Engrave',1],
+
+    'Laser Etching' => [['Laser Engrave', 'Laser Engrave - Level 1'], 1],
+    'Laser - Level 1' => [['Laser Engrave', 'Laser Engrave - Level 1'], 1],
+    'Laser - Level 2' => [['Laser Engrave', 'Laser Engrave - Level 2'], 1],
+
     'Laser Etching Name' => [nil,1],
     'Laser Etching Initials' => [nil,1],
     'Laser Etch With Outline' => [nil,1],
