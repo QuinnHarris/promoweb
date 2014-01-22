@@ -295,6 +295,9 @@ class PricingDesc
     prices == right.prices && costs == right.costs
   end
 
+  def empty?
+    @prices.empty? and @costs.empty?
+  end
 #  Remove Sometime
 #  def self.get
 #    sp = new
@@ -692,7 +695,7 @@ class ProductDesc
     decorations.each do |d|
       dec = base_decorations[d.technique.first]
       if dec && (dec != d.technique)
-        raise ValidateError.new("Multiple Decorations of same type", d.technique.inspect)
+        import.add_warning(ValidateError.new("Multiple Decorations of same type", d.technique.inspect))
       end
       base_decorations[d.technique.first] = d.technique
     end

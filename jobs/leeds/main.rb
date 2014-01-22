@@ -16,3 +16,5 @@ end
 
 import = LeedsXLS.new
 import.run_all
+#import.run_parse_cache
+#import.purge_image_cache(WebFetch.cache_dir + '/images.leedsworld.com/')

@@ -395,3 +395,5 @@ insert into decoration_techniques (name, unit_name) values ('PhotoGrafixx', 'loc
 insert into decoration_techniques (name, parent_id, unit_name) values ('PhotoGrafixx - Level 1', 145, 'location');
 insert into decoration_techniques (name, parent_id, unit_name) values ('PhotoGrafixx - Level 2,3', 145, 'location');
 insert into decoration_techniques (name, parent_id, unit_name) values ('PhotoGrafixx - Level 4', 145, 'location');
+
+insert into decoration_techniques (name, unit_name) values ('Pen Print', 'colors');

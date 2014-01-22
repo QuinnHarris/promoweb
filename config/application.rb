@@ -203,7 +203,7 @@ class BitCoinRate
   def rate_USD(age = 20.minutes)
     get_hash(age)
     return @cache['rate_USD'] if @cache['rate_USD']
-    @cache['rate_USD'] = Money.new(Float(@hash['USD']['24h']))
+    @cache['rate_USD'] = rate_USD_internal
   end
 
   def self.bc_USD(rate, usd)
@@ -222,5 +222,25 @@ class BitCoinRate
   end
 end
 
-BCRate = BitCoinRate.new('/tmp/weighted_prices.json', 'http://api.bitcoincharts.com/v1/weighted_prices.json')
+class BitCoinChartsRate < BitCoinRate
+  def initialize(file)
+    super file, 'http://api.bitcoincharts.com/v1/weighted_prices.json'
+  end
+
+  def rate_USD_internal
+    Money.new(Float(@hash['USD']['24h']))
+  end
+end
+
+class BitCoinAverageRate < BitCoinRate
+  def initialize(file)
+    super file, 'http://api.bitcoinaverage.com/ticker/global/USD/'
+  end
+
+  def rate_USD_internal
+    Money.new(Float(@hash['24h_avg']))
+  end
+end
+
+BCRate = BitCoinAverageRate.new('/tmp/weighted_prices_avarage.json')
 BCDiscount = 5.0

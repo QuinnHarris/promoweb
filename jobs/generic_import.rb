@@ -414,7 +414,7 @@ class ProductApply
       end
     rescue Exception
       puts current.inspect
-      puts "Log: \n" + product_log
+      puts "Log: \n" + product_log if product_new
       raise
     ensure
       # Log it
@@ -839,6 +839,32 @@ class GenericImport
       end if cleanup
     ensure
       cache_write(file_name, last_data)
+    end
+  end
+
+  def purge_image_cache(common_path)
+    puts "Finding Good Images"
+    keep_images = @product_list.collect do |prod|
+      (prod.images + prod.variants.collect { |v| v.images }).flatten.collect do |img|
+        img.get_path
+      end.uniq
+    end.flatten.uniq
+
+    puts "Checking common path"
+    keep_images.each do |path|
+      raise "Non Common Path: #{path} of #{common_path}" unless common_path == path[0...common_path.length]
+    end
+
+    puts "Finding Excess"
+    all = Dir["#{common_path}/**/*.*"].collect { |s| s.gsub(/\/+/, '/') }
+
+    unenumerated = keep_images - all
+    delete = all - keep_images
+
+    puts "Keep: #{keep_images.length} Delete: #{delete.length} Unenumerated: #{unenumerated.length}"
+    delete.each do |f|
+      puts " Delete: #{f}"
+      FileUtils.rm(f)
     end
   end
 

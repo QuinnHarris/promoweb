@@ -41,7 +41,31 @@ apply_decorations('Leeds') do |leeds|
                 :minimum => min }
           end + [{ :minimum => 15000 }]) })
 
-   # Screen Print
+
+    # PenPrint
+    dec_grp = leeds.decoration_price_groups.create(
+      { :technique => DecorationTechnique.find_by_name('Pen Print') })
+      dec_grp.entries.create({ :minimum => 1,
+        :fixed_price_const => 0.0,
+        :fixed_price_exp => 0.0,
+        :fixed_price_marginal => Money.new(0),
+        :fixed_price_fixed => Money.new(15.0),
+        :fixed => PriceGroup.create_prices([
+        { :fixed => Money.new(15.0*0.8),
+          :marginal => Money.new(0),
+          :minimum => 1 }]),
+
+        :marginal_price_const => 0.0,
+        :marginal_price_exp => 0.0,
+        :marginal_price_marginal => Money.new(0.25*0.8),
+        :marginal_price_fixed => Money.new(15.00),
+        :marginal => PriceGroup.create_prices([
+              { :fixed => Money.new(15.0*0.8),
+                :marginal => Money.new(0.25*0.8),
+                :minimum => 1 },
+              { :minimum => 15000 }]) })
+
+
   [['Laser Engrave - Level 1', 55.0], ['PhotoGrafixx - Level 1', 95.0], ['Deboss', 75.0]].each do |dec_name, dec_setup|
     dec_grp = leeds.decoration_price_groups.create(
       { :technique => DecorationTechnique.find_by_name(dec_name) })

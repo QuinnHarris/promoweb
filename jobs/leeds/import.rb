@@ -13,7 +13,27 @@ class PolyXLS < GenericImport
                   'green with silver trim',
                   'pearlescent with gold trim',
                   'silver with silver trim',
-                  'wine red with silver trim']
+                  'wine red with silver trim'],
+    '2050-02' => ['Black',
+                  'Black and White',
+                  'Black/Red',
+                  'Black/Yellow',
+                  'Burgundy/White',
+                  'Green',
+                  'Green and White',
+                  'Navy',
+                  'Navy and White',
+                  'Navy/Yellow',
+                  'Orange and White',
+                  'Pink/White',
+                  'Purple and White',
+                  'Red',
+                  'Red and White',
+                  'Red/Gray',
+                  'Red/White/Blue',
+                  'Royal',
+                  'Royal and White',
+                  'Yellow and White']
   }
 
   def parse_products
@@ -122,9 +142,16 @@ class PolyXLS < GenericImport
           end
 #          pd.tags << 'Eco' if row['Category'] == 'EcoSmart'
           
-          pd.package.merge_from_object(row,
-                                       { 'units' => ['Carton Quantity', 'CartonPackQTY'],
-                                         'weight' => ['Carton Actual Weight', 'Carton Weight'] })
+          if row['Carton Quantity'].is_a?(String)
+            # Kludge for bad data
+            pd.package.merge_from_object(row,
+                                         { 'units' => ['Carton Actual Weight', 'Carton Weight'],
+                                           'weight' => ['Carton Quantity', 'CartonPackQTY'], })
+          else
+            pd.package.merge_from_object(row,
+                                         { 'units' => ['Carton Quantity', 'CartonPackQTY'],
+                                           'weight' => ['Carton Actual Weight', 'Carton Weight'] })
+          end
 
           if row.header?('Carton Width') # Only in new format
             pd.package.merge_from_object(row,
@@ -157,6 +184,10 @@ class PolyXLS < GenericImport
               break if row["#{name}ColMinQty"].blank?
               pd.pricing.add(row["#{name}ColMinQty"], row["#{name}ColPriceUSD"])
             end
+          end
+          if pd.pricing.empty?
+            # No prices probably memory product
+            pd.pricing.add(25, 500.0)
           end
           pd.pricing.eqp(0.4, true)
           pd.pricing.ltm_if(40.00, 4) # LTM of 4 unless clearance
@@ -386,11 +417,21 @@ class PolyXLS < GenericImport
     'Laser - Level 1' => [['Laser Engrave', 'Laser Engrave - Level 1'], 1],
     'Laser - Level 2' => [['Laser Engrave', 'Laser Engrave - Level 2'], 1],
 
+    'Laser Initials - Level 1' => [nil,1],
+    'Laser Initials - Level 2' => [nil,1],
+
+    'Laser Names - Level 1' => [nil,1],
+    'Laser Names - Level 2' => [nil,1],
+
     'Laser Etching Name' => [nil,1],
     'Laser Etching Initials' => [nil,1],
     'Laser Etch With Outline' => [nil,1],
     'Laser Outline Only' => [nil,1],
     'Name- personalization' => [nil,1],
+
+    'Penprint' => ['Pen Print', 4],
+    'Polycolor' => nil,
+    'Screen Etch' => nil,
 
     'Embroidery' => ['Embroidery', 10000],
     'Embroidery Initials' => nil,
@@ -405,10 +446,10 @@ class PolyXLS < GenericImport
 
     'Beach Print' => ['Beach Print', 1],
 
-#    'Color Stamp' => ['Stamp', 1],
+    'Color Stamp' => nil, #['Stamp', 1],
 #    'Color Stamp DB' => ['Stamp', 1],
-#    'Color Stamp Name' => nil,
-#    'Color Stamp Initials' => nil,
+    'Color Stamp Name' => nil,
+    'Color Stamp Initials' => nil,
 
     'Oxidize' => nil,
 
