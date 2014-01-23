@@ -80,7 +80,6 @@ class NorwoodAll < GenericImport
              ['BAG', 'Bag'], #55066,78227
              ['CALENDAR', 'TRIUMPH', %w(Reflex\ Blue Process\ Blue 032 185 193 431 208 281 354 349 145 469 109 Process\ Yellow 165)], # 56085
              ['DRINK', 'Drinkware'], # 55066,78227,15218,90045 ...
-##             ['FUN', 'Fun'],
              ['GOLF', 'Golf'],
              ['GV', 'GOODVALU'],
              ['HEALTH', 'Health'],
