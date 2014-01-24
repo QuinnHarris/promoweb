@@ -201,8 +201,7 @@ class LancoXLS < GenericImport
         pd.supplier_num = product['ProductID']
         pd.name = convert_name(product['Alt_Prod_Name'].empty? ? product['Prod_Name'] : product['Alt_Prod_Name'])
         
-        doc = Nokogiri::HTML(product['Prod_Description'])
-        description = doc.root.search('text()').collect { |n| n.text.strip }.find_all { |s| !s.empty? }.join("\n")
+        description = product['Prod_Description'].gsub(/\.\s*/, ".\n").strip
         
         # Replace Lanco Product ID references to our product ids
         description.scan(/\w{2,3}\d{3,4}/).each do |num|
@@ -225,7 +224,7 @@ class LancoXLS < GenericImport
         'isEcoFriendly' => 'Eco',
         }.each { |method, name| pd.tags << name if yes_list.include?(product[method]) }
         
-        pd.supplier_categories = [[product['Category'] || 'unkown', product['Subcategory'] || 'unknown']]
+        pd.supplier_categories = [[product['Category'] || 'unkown', product['SubCategory'] || 'unknown']]
         pd.package.unit_weight = product['shipping_info(wt/100)'].is_a?(String) ? (product['shipping_info(wt/100)'].to_f / 100.0) : nil
         
         # Lead Times
