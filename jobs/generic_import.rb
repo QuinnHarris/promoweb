@@ -896,7 +896,7 @@ class GenericImport
     @warning_values[boom.aspect][boom.value] += 1
   end
 
-  def warning(aspect, description = nil, id = nil)
+  def warning(aspect, description = nil, id = @supplier_num || @product_description.supplier_num)
     add_warning(ValidateError.new(aspect, description), id)
   end
   

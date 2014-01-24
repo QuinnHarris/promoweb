@@ -271,6 +271,7 @@ private
      ['Safety',
       [match('name', 'safety vest'),
        sup('Ash City', cat('Safety') ),
+       sup('Starline', cat('Safety', 'Hi-Vis Apparel') ),
        sup('High Caliber Line',
            all(cat('Safety Items'),
                match('name', %w(vest shirt)) ) ) ],
@@ -423,6 +424,7 @@ private
      ['Auto Safety     ',
       [sup('Leeds', cat('Safety & Auto', 'Auto Safety') ),
        sup('Gemline', cat('Gifts', 'Safety/Auto') ),
+       sup('Starline', cat('Flashlights', 'Roadside Safety') ),
       ] ],
      ['Ice Scraper',
       [match('name', 'ice scraper'),
@@ -443,7 +445,8 @@ private
    sup('Crown Products',
        cat('Bags'),
        cat('Bags, Bags') ),
-   sup('Sweda', cat('Bags') )
+   sup('Sweda', cat('Bags') ),
+   sup('Starline', cat('Bags', 'Business Travel') ),
   ],[
      ['Backpacks',
       [match('name', %w(Backpack Daypack Sports\ Pack)),
@@ -462,7 +465,7 @@ private
        sup('Logomark', cat('Backpacks and Slings') ),
        sup('Sweda', cat('Bags', 'Backpacks') ),
        sup('The Magnet Group', cat('Bag Factory', 'Backpacks') ),
-       sup('Starline', cat('Bags', 'Backpacks') )
+       sup('Starline', cat('Bags', 'Backpacks'), cat('Bags', 'Urban Peak') )
       ],[
          ['Cooler Backpacks',
           [match('name', 'cooler', 1)]],
@@ -489,7 +492,8 @@ private
           ]],
          ['Hydration Backpacks',
           [match('name', 'hydrat', 1),
-           match('name', 'hydration pack')]],
+           match('name', 'hydration pack'),
+           sup('Starline', cat('Lifestyles and Golf', 'Hydration Packs') ),]],
          ['Kid Friendly Backpacks',
           [sup('Gemline', cat('Kid-friendly', 'Backpacks') ) ] ],
          ['Sling Backpacks',
@@ -787,7 +791,7 @@ private
    sup('Prime Line', cat('Technology') ),
    sup('LogoIncluded', cat('Card Reader') ),
    sup('Logomark', cat('Computer Accessories') ),
-   sup('Starline', cat('Business', 'Computer Accessories') ),
+   sup('Starline', cat('Business Essentials', 'Computer Accessories') ),
   ],[
      ['Apple Accessories',
       [match('name', /i(P(o|a)d)|(Phone)/),
@@ -883,7 +887,7 @@ private
        sup('Prime Line', cat('Technology', 'USB Memory') ),
        sup('Logomark', cat('USB Drives') ),
        sup('LogoIncluded', cat('USB Drive') ),
-       sup('Starline', cat('Business', 'Flash Drives') ),
+       sup('Starline', cat('Business Essentials', 'Flash Drives') ),
        sup('Leeds', cat('Memory', 'Usb Memory (Memory)') ),
       ],[
          ['Pen USB Flash Drives',
@@ -900,7 +904,8 @@ private
       end
      ],
      ['Digital Photo Frames',
-      [sup('Leeds', all(match('name', 'digital'), cat('Desktop', 'Photo Frames') ) ),
+      [match('name', 'digital frame'),
+       sup('Leeds', all(match('name', 'digital'), cat('Desktop', 'Photo Frames') ) ),
        sup('LogoIncluded', cat('Digital Photo Frame') ),
        sup('Sweda', cat('Computer', 'Digital Picture Frames') )
       ]],
@@ -919,7 +924,7 @@ private
    sup('Bullet Line', cat('Desktop', 'Desktop Accessories') ),
    sup('Hit Promotional Products',cat('Desk Accessories') ),
    sup('Logomark', cat('Desk and Office Accessories') ),
-   sup('Starline', cat('Business', 'Convention/Desktop') ),
+   sup('Starline', cat('Business Essentials', 'Convention/Desktop') ),
    sup('Crown Products', cat('Office Accessories') ),
   ],[
      ['Calculators',
@@ -1005,7 +1010,7 @@ private
      ['Weather Station',
       [match('name', 'weather station'),
        sup('Logomark', cat('Weather Stations') ),
-       sup('Starline', cat('Business', 'Weather Stations') )
+       sup('Starline', cat('Electronics', 'Weather Stations') ),
       ]],
      dup('Computer Accessories', 'Digital Photo Frames'),
      ['Picture Frames',
@@ -1049,7 +1054,7 @@ private
      ['Speakers',
       [match('name', 'speaker')] ],
      ['Headphones & Earbuds',
-      [match('name', %w(headphones head\ phones earbuds ear\ buds earphone ear\ plugs ear\ phones)),
+      [match('name', %w(headphones head\ phones earbuds ear\ buds earphone ear\ plugs ear\ phones) + [/bluetooth.+headset/i]),
        all(match('name', 'headset'), match('name', 'headphones') ),
        sup('Leeds',
            all(cat('Mobile Tech', 'Audio'),
@@ -1273,7 +1278,8 @@ private
    sup('Crown Products', cat('Coolers') ),
    sup('Logomark', cat('Coolers') ),
    sup('Sweda', cat('Bags', 'Coolers') ),
-   sup('The Magnet Group', cat('Bag Factory', 'Coolers') )
+   sup('The Magnet Group', cat('Bag Factory', 'Coolers') ),
+   sup('Starline', cat('Bags', 'Cooler Bags') ),
   ],[
      ['Can Coolers',
       [match('name', ['can', /(\d+|six)[ -]pack/i], 1)] ],
@@ -1320,7 +1326,8 @@ private
    sup('Sweda',
        cat('Drinkware', 'Water Bottles'),
        cat('Drinkware', 'Water Bottles (Plastic)') ),
-   sup('ETS Express Inc')
+   sup('ETS Express Inc'),
+   sup('Starline', cat('Drinkware', 'Vacuum Water Bottles') ),
   ],[
      ['Acrylic Drinkware',
       [match(%w(name description material), 'acrylic', 1),
@@ -1335,6 +1342,8 @@ private
        sup('ETS Express Inc',
            cat('aluminum') ),
       ]],
+     ['Barware',
+      [sup('Starline', cat('Drinkware', 'Barware') )] ],
      ['Branded Drinkware',
       [sup('Leeds', cat('Drinkware', 'Branded') ),
       ],[
@@ -1358,6 +1367,9 @@ private
       [sup('Sweda', cat('Drinkware', 'Vacuum Bottles') ),
        sup('Starline', cat('Drinkware', 'Vacuum Tumblers'),
            cat('Drinkware', 'Vacuum Insulated Bottles') )
+      ] ],
+     ['Vacuum Storage Containers',
+      [sup('Starline', cat('Drinkware', 'Vacuum Storage Containers') ),
       ] ],
      ['Can & Bottle Holders',
       [match('name', ['can holder', 'bottle holder', 'bottle insulator']), # Was matched on descrption but to broad
@@ -1396,9 +1408,6 @@ private
      ['Drinkware Sets',
       [sup('Leeds', cat('Drinkware', 'Gift Sets') ),
       ]],
-     ['Thermos Bottles',
-      [sup('Starline', cat('Drinkware', 'Thermos Bottles') )
-      ] ],
      ['Insulated Bottles',
       [sup('Leeds', cat('Drinkware', 'Insulated Bottles') ) ]],
      ['Mugs & Tumblers',
@@ -1510,7 +1519,8 @@ private
    sup('Lanco',
        cat('Toys & Games', 'Toys'),
        cat('Tradeshow', 'Toys') ),
-   sup('Logomark', cat('Executive Games') )
+   sup('Logomark', cat('Executive Games') ),
+   sup('Starline', cat('Lifestyles and Golf', 'Games') ),
   ],[
      ['Balls',
       [match('name', /ball$/i),
@@ -1597,8 +1607,8 @@ private
            all(cat('Travel Gifts', 'Accessories'),
                match('name', 'charge'))),
        sup('LogoIncluded', cat('Solar Charger') ),
-       sup('Starline', cat('Business', 'Mobile/Solar Power Packs') ),
        sup('Prime Line', cat('Technology', 'USB Chargers') ),
+       sup('Starline', cat('Electronics', 'Mobile/Solar Power Packs') ),
       ] ],
      ['Travel Clocks', duplicate(['Desktop Accessories', 'Clocks', 'Travel Clocks']) ],
      ['Travel Games', duplicate(['Games & Toys', 'Travel Games']) ],
@@ -1816,6 +1826,7 @@ private
        sup('Bullet Line', cat('Fitness & Recreation', 'Umbrellas') ),
        sup('Hit Promotional Products', cat('Umbrellas') ),
        sup('Sweda', cat('Umbrellas') ),
+       sup('Starline', cat('Lifestyles and Golf', 'Umbrellas') ),
       ],[
          ['London Fog',
           [sup('Sweda', cat('BRANDS', 'London Fog') ) ]],
@@ -1840,11 +1851,19 @@ private
       [match('name', 'sunglasses'),
        exclude(match('name', 'case')),
        sup('High Caliber Line', cat('Sunglasses') ),
-       sup('Starline', cat('Performance Eyewear', 'Outdoor Sport') )
+       sup('Starline', cat('Safety', 'Outdoor Sport Glasses') )
       ] ],
      ['Safety Glasses',
-      [sup('Starline', cat('Performance Eyewear', 'Safety') )
+      [sup('Starline',
+           cat('Safety', 'Safety Eyewear'),
+           cat('Safety', 'Bollé Safety Eyewear') )
        ] ],
+     ['Head Protection',
+      [sup('Starline', cat('Safety', 'Head Protection') )
+      ] ],
+     ['Work Gloves',
+      [sup('Starline', cat('Safety', 'Hand Protection') )
+      ] ],
      ['Badge Holders',
       [match('name', %w(badge ident)),
        match('description', 'badge holder'),
@@ -1900,7 +1919,8 @@ private
            cat('Keychains') ),
        sup('The Magnet Group',
            cat('Innovations', 'Keytags'),
-           cat('Innovations', 'Keychains') )
+           cat('Innovations', 'Keychains') ),
+       sup('Starline', cat('Business Essentials', 'Key Fobs') ),
       ],[
          ['Bottle Opener Key Chains',
           [match('name', 'opener', 1),
@@ -1957,7 +1977,8 @@ private
       [match('name', %w(binocular telescope monocular)),
        sup('Leeds', cat('Outdoor Living', 'Binoculars') ),
        sup('High Caliber Line', cat('Binoculars') ),
-       sup('Sweda', cat('Binoculars') )
+       sup('Sweda', cat('Binoculars') ),
+       sup('Starline', cat('Lifestyles and Golf', 'Binoculars') ),
       ] ],
      dup('Games & Toys', 'Outdoor Games'),
      dup('Health & Personal Care', 'First Aid Kits'),
@@ -1978,7 +1999,8 @@ private
        sup('Leeds', cat('Luggage & Golf', 'Golf') ) ,
        sup('Norwood', cat('GOLF', 'GOLFACC') ),
        sup('Crown Products', cat('Golf') ),
-       sup('Logomark', cat('Golf Gifts' ) )
+       sup('Logomark', cat('Golf Gifts' ) ),
+       sup('Starline', cat('Lifestyles and Golf', 'Golf') ),
       ],[
          ['Golf Balls',
           [match('name', 'balls', 1),
@@ -2072,7 +2094,7 @@ private
            cat('Zip Padfolios') ),
        sup('Prime Line', cat('Office', 'Padfolios') ),
        sup('Sweda', cat('Stationery', 'Portfolios') ),
-       sup('Starline', cat('Business', 'Portfolios/Padfolios') ),
+       sup('Starline', cat('Business Essentials', 'Portfolios/Padfolios') ),
       ],[
          ['Jr. Padfolios',
           [match('name', 'jr', 1),
@@ -2147,6 +2169,7 @@ private
            cat('Flashlights', 'Metal'),
            cat('Flashlights', 'Plastic') ),
        sup('The Magnet Group', cat('Innovations', 'Flashlights') ),
+       sup('Starline', cat('Flashlights', 'Search Lights') ),
       ],[
          ['Emergency Flashlights',
           [sup('Leeds', cat('Flashlights', 'Emergency & Safety') ) ]],
@@ -2154,11 +2177,14 @@ private
           [sup('Leeds', cat('Flashlights', 'Everyday') ) ]],
          ['Dynamo Flashlights',
           [sup('Leeds', cat('Flashlights', 'Dynamo') ),
-           sup('Sweda', cat('Flashlights', 'Dynamos') )
+           sup('Sweda', cat('Flashlights', 'Dynamos') ),
+           sup('Starline', cat('Flashlights', 'Emergency Dynamo/Solar') ),
           ] ],
          ['LED Flashlights',
           [match('name', /(^|\s+)L\.?E\.?D\.?(\s+|$)/, 1),
-           sup('Starline', cat('Flashlights', 'LED Flashlights') )
+           sup('Starline',
+               cat('Flashlights', 'LED Flashlights'),
+               cat('Flashlights', 'CREE LED'))
           ]],
          ['Specialty Flashlights',
           [sup('Leeds', cat('Flashlights', 'Specialty') ) ]],
@@ -2184,9 +2210,6 @@ private
         ] ],
      ['Pliers',
       [match('name', 'pliers', 1)
-      ] ],
-     ['Work Gloves',
-      [sup('Starline', cat('Tools', 'Work Gloves') )
       ] ],
      ['Screwdrivers',
       [match(%w(name description), %w(screwdriver screw\ driver)),
@@ -2496,7 +2519,8 @@ private
      ['Whistles',
       [match('name', 'whistle') ]],
      ['Gardening',
-      [match('name', 'garden') ]],
+      [match('name', 'garden'),
+       sup('Starline', cat('Lifestyles and Golf', 'Garden') ),]],
      ['Gift Tins',
       [sup('Logomark', cat('Gift Tins') ) ] ],
      ['Stopwatches & Timers',

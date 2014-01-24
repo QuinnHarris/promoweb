@@ -283,7 +283,7 @@ class PricingDesc
     @max_qty = 0
   end
   # Temp?
-  attr_accessor :prices, :costs
+  attr_accessor :prices, :costs, :max_qty
 
   def validate
     raise ValidateError, "price empty" if prices.empty?
@@ -297,6 +297,9 @@ class PricingDesc
 
   def empty?
     @prices.empty? and @costs.empty?
+  end
+  def length
+    [@prices.length, @costs.length].max
   end
 #  Remove Sometime
 #  def self.get
@@ -577,10 +580,7 @@ class ProductDesc
 
   property :decorations, Array[DecorationDesc]
 
-  property :variants, Array[VariantDesc] do |v|
-    raise PropertyError.new("empty") if v.empty?
-    v
-  end
+  property :variants, Array[VariantDesc]
 
   property :properties, Hash, :no_check => true # Properties applied to all variants
 
@@ -605,12 +605,24 @@ class ProductDesc
     end.flatten
   end
 
+  def variants_apply_each
+    vars = self.variants
+    raise PropertyError, "variants_apply_each without existing variants" if vars.empty?
+    self.variants = []
+    self.variants += vars.collect do |vd|
+      res = yield vd.dup
+      res.is_a?(VariantDesc) ? res : nil
+    end.compact
+  end
+
   def validate(import)
     # Apply Warnings
     warnings(import)
 
     # check presense
     validate_properties
+
+    raise PropertyError.new("variants empty") if variants.empty?
 
     # check all variants have the same set of properties
     prop_list = variants.collect { |v| v.properties.keys }.flatten.compact.uniq.sort

@@ -70,6 +70,8 @@ class Starline < GenericImport
         dimension.delete_if { |k, v| v == 0.0 }
         pd.properties['dimension'] = dimension.empty? ? nil : dimension
 
+        # Base Variant
+        pd.variants = [VariantDesc.new(:supplier_num => pd.supplier_num, :properties => {}, :images => [])]
 
         # Properties
         colors = response['colors']
@@ -121,12 +123,12 @@ class Starline < GenericImport
             pd.variants = pd.variants.collect do |vd|
               text.split(/\s*,\s*/).collect do |color|
                 vd = vd.dup
-                vd.supplier_num = pd.supplier_num + color
+                vd.supplier_num += color
                 vd.properties[name] = color
                 vd
               end
-              
             end.flatten
+
           when 'Price', 'Set-Up Charge', 'More Info', 'Oxidation'
 
           when 'Production Time'
@@ -170,7 +172,7 @@ class Starline < GenericImport
         end
 
         # Pricing
-        if pri = response['printed']
+        if pri = response['printed'] and !pri.empty?
           if response['types'] && response['types'].find { |h| h['name'] == 'Special Printed' }
             pd.tags << 'Special' unless pd.tags.include?('New')
             pri = response['specialPrinted']
@@ -179,6 +181,10 @@ class Starline < GenericImport
           # Pricing
           pri['qty'].zip(pri['price']).each do |qty, cost|
             next if qty.nil? or qty == 'null' or cost.nil? or cost == 0.0
+            if pd.pricing.length > 2 and qty < pd.pricing.max_qty
+              warning "Non sequencial qty"
+              break
+            end
             
             # the price field is actually the cost of the item
             pd.pricing.add(qty, nil, cost)
@@ -188,23 +194,24 @@ class Starline < GenericImport
           pd.pricing.maxqty
 
           # Variants
-          if colors.empty?
-            pd.variants = [VariantDesc.new(:supplier_num => pd.supplier_num, :properties => {}, :images => [])]
-          else
-            colors.each do |color|
-              if pd.variants.find { |vd| vd.properties['color'] == color['name'] }
-                warning 'Duplicate Color', color['name']
-                next
+          unless colors.empty?
+            pd.variants_apply_each do |var_desc|
+              colors.each do |color|
+                if pd.variants.find { |vd| vd.properties['color'] == color['name'] }
+                  warning 'Duplicate Color', color['name']
+                  next
+                end
+                
+                # Find matching images and place in this variant
+                images = image_files.find_all { |f| f.include?("_#{color['code']}") }
+                image_files -= images
+                
+                vd = var_desc.dup
+                vd.supplier_num += color['name']
+                vd.properties['color'] = color['name']
+                vd.images = images.collect { |f| ImageNodeFetch.new(f, "http://us.starline.com/content/image/product/#{f}") }
+                pd.variants << vd
               end
-
-              # Find matching images and place in this variant
-              images = image_files.find_all { |f| f.include?("_#{color['code']}") }
-              image_files -= images
-              
-              pd.variants <<
-                VariantDesc.new(:supplier_num => pd.supplier_num + color['name'],
-                                :properties => { 'color' => color['name'] },
-                                :images => images.collect { |f| ImageNodeFetch.new(f, "http://us.starline.com/content/image/product/#{f}") })
             end
           end
         elsif list = response['magnetPricing']
@@ -214,28 +221,36 @@ class Starline < GenericImport
             warning 'Missing Magnet Dimension', magnets_dimension.inspect
             magnets_dimension = nil
           end
-
-          list.each do |hash|
-            properties = { 'size' => hash['size'], 'type' => hash['type'] }
-            if magnets_dimension and magnets_dimension[hash['size']]
-              properties['dimension'] = magnets_dimension[hash['size']]
+          
+          pd.variants_apply_each do |var_desc|
+            list.each do |hash|
+              vd = var_desc.dup
+              %w(size type).each { |s| vd.properties[s] = hash[s] }
+              if magnets_dimension and magnets_dimension[hash['size']]
+                vd.properties['dimension'] = magnets_dimension[hash['size']]
+              end
+              
+              if pd.variants.find { |v| v.properties == vd.properties }
+                warning 'Duplicate Magnet', vd.properties.inspect
+                next
+              end
+              
+              vd.supplier_num = hash['code']
+              vd.images = []
+              
+              begin
+                (1..4).each do |n|
+                  vd.pricing.add(hash["qty#{n}"], nil, hash["price#{n}"])
+                end
+              rescue
+                warning "Bad Magnet Pricing"
+                next nil
+              end
+              vd.pricing.apply_code(response['priceCode'], :reverse => true, :fill => true)
+              vd.pricing.ltm(32.0)
+              vd.pricing.maxqty
+              pd.variants << vd
             end
-
-            if pd.variants.find { |vd| vd.properties == properties }
-              warning 'Duplicate Magnet', properties.inspect
-              next
-            end
-
-            vd = VariantDesc.new(:supplier_num => hash['code'],
-                                 :properties => properties,
-                                 :images => [])
-            (1..4).each do |n|
-              vd.pricing.add(hash["qty#{n}"], nil, hash["price#{n}"])
-            end
-            vd.pricing.apply_code(response['priceCode'], :reverse => true, :fill => true)
-            vd.pricing.ltm(32.0)
-            vd.pricing.maxqty
-            pd.variants << vd
           end
         else
           raise ValidateError, 'No Pricing'
