@@ -30,8 +30,7 @@ class PrimeLineWeb < GenericImport
   end
 
   def process_root
-    fetch = WebFetch.new('http://www.primeline.com/')
-    doc = Nokogiri::HTML(open(fetch.get_path))
+    doc = WebFetch.new('http://www.primeline.com/').get_doc
     categories = {}
     categories.default = []
     parent_category = nil
@@ -216,12 +215,12 @@ class PrimeLineWeb < GenericImport
   def process_product(categories, url, tag)
     puts "Processing: #{categories.inspect} #{tag.inspect} #{url}"
     fetch = WebFetch.new(url)
-    doc = Nokogiri::HTML(open(fetch.get_path), 'ASCII')
+    doc = Nokogiri::HTML(open(fetch.get_path), nil, 'UTF-8')
     return nil unless doc
 
     ProductDesc.apply(self) do |pd|
       pd.supplier_num = doc.xpath("//span[@id='ctl00_content_ProductCode']").inner_html.strip
-      pd.name = doc.xpath("//span[@id='ctl00_content_ProductName']").inner_html.encode('UTF-8').split(' ').collect do |c|
+      pd.name = doc.xpath("//span[@id='ctl00_content_ProductName']").inner_html.split(' ').collect do |c|
         @@upcases.index(c.upcase.gsub(/\d/,'')) ? c.upcase : c.capitalize
       end.join(' ')
       
@@ -267,7 +266,7 @@ class PrimeLineWeb < GenericImport
           else
             raise "Unknown element #{pd.supplier_num} #{child.name}"
           end
-        end.compact.collect { |s| s.encode('UTF-8') }.join(' ')
+        end.compact.join(' ')
         line.blank? ? nil : line
       end.compact
       
@@ -417,7 +416,7 @@ class PrimeLineWeb < GenericImport
 #      puts "Properties:"
       doc.xpath("//td[@id='ctl00_content_TableCell1']/span").each do |span|
         raise "Unknown prop" unless /^\s*<b>\s*(.+?)\s*:\s*<\/b>\s*(.+?)\s*$/ =~ span.inner_html
-        name, value = $1.strip.downcase, $2.strip.encode('UTF-8')
+        name, value = $1.strip.downcase, $2.strip
 #        puts "  #{name} : #{value.inspect}"
 
         /^(?:(optional) )?(.+)$/ =~ name

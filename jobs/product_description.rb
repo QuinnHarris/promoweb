@@ -559,15 +559,14 @@ class ProductDesc
   property :tags, TagsDesc, :warn => true
 
   property :supplier_categories, Array do |v|
-    v.each do |e|
+    v.collect do |e|
       raise PropertyError, "expected Array of Array" unless e.is_a?(Array)
       raise PropertyError, "expected Array of non empty Array" if e.empty?
-      e.each do |s|
+      e.collect do |s|
         raise PropertyError, "expected Array of Array of String got #{v.inspect}" unless s.is_a?(String)
-        s.strip!
+        s.strip.gsub(/\s+/, ' ')
       end
     end
-    v
   end
 
   property :categories, Array, :nil => true

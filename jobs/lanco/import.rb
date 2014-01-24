@@ -12,11 +12,6 @@ class LancoXLS < GenericImport
     %w(340 3305 Process\ Blue Reflex\ Blue 2935 116 021 186 209 320 2597 871 Black White 877 876 281 CoolGray\ 7 476 190)
   end
 
-  @@image_path = "http://www.lancopromo.com/images/products/"
-  def image_path(web_id)
-    "#{@@image_path}#{web_id.downcase}/"
-  end
-
   @@fills = {
     'A' => %w(Animal\ Crackers Caramel\ Popcorn Honey\ Roasted\ Peanuts Gold\ Fish Jelly\ Beans Mini\ Pretzels Peanuts Red\ Hots Starlight\ Mints Tootsie\ Rolls),
     'B' => %w(Candy\ Corn Choc\ Covered\ Peanuts Choc\ Covered\ Rasins Gum\ Balls Gummy\ Bears Gummy\ Worms Pistachios Runts Sour\ Patch\ Kids Supermints Swedish\ Fish Teenie\ Beenies Trail\ Mix),
@@ -157,6 +152,7 @@ class LancoXLS < GenericImport
     list = out.scan(/inflating:\s+(.+?)\s*$/).flatten
     raise "More than one file" if list.length > 1
     FileUtils.ln_sf(list.first, @src_file)
+    puts "Done"
   end
 
   def parse_products
@@ -169,6 +165,7 @@ class LancoXLS < GenericImport
     sub_products.default = []
     ws.each(1) do |row|
       data = ws.header_map.each_with_object({}) { |(k, v), h| h[k] = row[v] }
+      break unless row['ProductID']
       unless row['ParentID'].blank?
 #        puts "Sub: #{data['ParentID'].inspect}"
         sub_products[data['ParentID']] += [data]
@@ -183,12 +180,16 @@ class LancoXLS < GenericImport
       puts "Fetching Image Lists:"
       products.each do |product|
         next if @image_list[web_id = product['ProductID']] or web_id.nil?
-        print " #{web_id}"
-        uri = URI.parse(image_path(web_id))
-        txt = uri.open.read
-        @image_list[web_id] = txt.scan(/<a href="([\w-]+\.jpg)">/).flatten
+        begin
+          doc = WebFetch.new(product['LinkToLanco']).get_doc
+          @image_list[web_id] = doc.search("a[@class='product_thumb_img']").collect do |node|
+            url = node.attributes['href'].value
+            ImageNodeFetch.new(url.split('/').last, url)
+          end
+        rescue
+          warning("Couldn't fetch image list", nil, web_id)
+        end
       end
-      puts
     ensure
       cache_write(file_name, @image_list)
     end
@@ -248,8 +249,7 @@ class LancoXLS < GenericImport
           end
         
         
-        image_list = @image_list[pd.supplier_num]
-        image_list = image_list.collect { |img| ImageNodeFetch.new(img, "#{image_path(pd.supplier_num)}#{img}") }
+        image_list = @image_list[pd.supplier_num] || []
         
         used_image_list = []
         
