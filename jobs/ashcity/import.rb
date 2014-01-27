@@ -12,14 +12,14 @@ class AshCityXLS < GenericImport
     product_num = row['Style No'].strip
     unique = product_merge.merge(product_num, row)   
 
-    if row.header?('Color Codes')
-      color_codes = row['Color Codes'].split(',')
+    if row.header?('Color Code')
+      color_codes = row['Color Code'].split(',').collect { |s| s.strip }
       
-      variants = color_codes.zip(color_codes[1..-1]).collect do |color_code, cc2|
+      product_merge.unique_hash[product_num] = color_codes.zip(color_codes[1..-1]).collect do |color_code, cc2|
         pre = unique['Color Name'].scan(Regexp.new("#{color_code} (.+?)" + (cc2 ? ",? ?\\*?#{cc2}" : "$")))
         if pre[0].nil? or pre[0][0].nil?
           names = unique['Color Name'].split(',')
-          raise "List size doesn't match" unless color_codes.length == names.length
+          raise "List size doesn't match #{color_codes.inspect} #{names.inspect}" unless color_codes.length == names.length
           puts "Color Kludge 1: #{product_num}"
           color_name = names[color_codes.index(color_code)]
           color_codes.index(color_code)
@@ -29,27 +29,28 @@ class AshCityXLS < GenericImport
         
         raise "Unknown Color: #{color.inspect} of #{variant['ColorName']} / #{variant['ColorCode']}" unless color_name
         
-        unique['Size Name'].split(',').collect do |size|
-          unique.merge!('Product Code' => row['Product Code'] || "#{product_num}-#{color_code}-#{size}",
-                        'Color Code' => color_code,
-                        'Color Name' => color_name,
-                        'Size Code' => size,
-                        'Size Name' => size,
-                        'HImg' => "http://www.ashcity.com/ProductImages/Hi_res/#{product_num}_#{color_code}_H.jpg")
+        unique['Size Name'].split(',').collect do |size|          
+          unique.merge('Product Code' => row['Product Code'] || "#{product_num}-#{color_code}-#{size.strip}",
+                       'Color Code' => color_code,
+                       'Color Name' => color_name,
+                       'Size Code' => size.strip,
+                       'Size Name' => size.strip,
+                       'HImg' => "http://www.ashcity.com/uploads/libraries/products/highres/#{product_num.downcase}_#{color_code}_H.jpg")
         end
-      end
+      end.flatten
     end
   end
 
   def parse_products
-    common = %w(Style\ Name Style\ Des Style\ Fabric Category Brand Page)
-    unique = %w(Product\ Code Color\ Code Color\ Name Size\ Code Size\ Name HImg Weight Volume) + %w(1st 2nd 3rd).collect { |str| ["US ASI #{str}", "US NET #{str}"] }.flatten
+    common = %w(Style\ Name Style\ Des Style\ Fabric Category Brand Page HImg)
+    unique = %w(Product\ Code Color\ Code Color\ Name Size\ Code Size\ Name Weight Volume) + %w(1st 2nd 3rd).collect { |str| ["US ASI #{str}", "US NET #{str}"] }.flatten
     product_merge = ProductRecordMerge.new(unique, common)
 
     @src_files.each do |file|
       if file.include?(".csv")
         puts "Reading CSV: #{file}"
         CSV.foreach(file, :headers => :first_row) do |row|
+          puts "ROW: #{row['Color Name'].inspect}"
           process_row product_merge, row
         end
       else
@@ -65,9 +66,7 @@ class AshCityXLS < GenericImport
     product_merge.each do |style, unique, common|
       ProductDesc.apply(self) do |pd|
         pd.supplier_num = style
-        pd.supplier_categories = [[common['Category'], common['Brand']].compact]
-        pd.images = []
-        
+        pd.supplier_categories = [[common['Category'], common['Brand']].compact]       
         
         # Name
         pd.name = common['Style Name'].gsub(/<\/?p>/, '').gsub('&nbsp;', ' ').strip
@@ -108,6 +107,12 @@ class AshCityXLS < GenericImport
         
         pd.lead_time.normal_min = 5
         pd.lead_time.normal_max = 7
+
+#        if unique.length == 1
+          pd.images = [ImageNodeFetch.new(common['HImg'].split('/').last, common['HImg'])]
+#        else
+#          pd.images = []
+#        end
         
         pd.variants = unique.collect do |src|
           vd = VariantDesc.new(:supplier_num => src['Product Code'] || style,

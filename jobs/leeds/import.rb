@@ -142,22 +142,22 @@ class PolyXLS < GenericImport
           end
 #          pd.tags << 'Eco' if row['Category'] == 'EcoSmart'
           
-          if row['Carton Quantity'].is_a?(String)
+          if @supplier_name == 'Leeds' and row[['Carton Quantity', 'CartonPackQTY']].is_a?(String)
             # Kludge for bad data
             pd.package.merge_from_object(row,
-                                         { 'units' => ['Carton Actual Weight', 'Carton Weight'],
+                                         { 'units' => ['CartonWeight', 'Carton Weight'],
                                            'weight' => ['Carton Quantity', 'CartonPackQTY'], })
           else
             pd.package.merge_from_object(row,
                                          { 'units' => ['Carton Quantity', 'CartonPackQTY'],
-                                           'weight' => ['Carton Actual Weight', 'Carton Weight'] })
+                                           'weight' => ['CartonWeight', 'Carton Weight'] })
           end
 
           if row.header?('Carton Width') # Only in new format
             pd.package.merge_from_object(row,
-                                         { 'width' => 'Carton Width',
-                                           'length' => 'Carton Depth',
-                                           'height' => 'Carton Height' })
+                                         { 'width' => ['Carton Width', 'GIFTBOXED_WIDTH'],
+                                           'length' => ['Carton Depth', 'GIFTBOXED_LENGTH'],
+                                           'height' => ['Carton Height', 'GIFTBOXED_Height'] })
           end
           pd.description = row[%w(CatalogDescPackaging ItemDescription)].to_s.split(/[\r\n]+|(?:\. )\s*/).collect do |line|
             line.strip!
@@ -198,9 +198,9 @@ class PolyXLS < GenericImport
             pd.properties['dimension'] = parse_dimension(row['CatalogSize']) || row['CatalogSize'] unless row['CatalogSize'].blank?
           else
             dimension = {}
-            { 'Itemlength'=> 'length', 
-              'Itemwidth' => 'width',
-              'Itemheight' => 'height' }.each do |src, dst|
+            { ['Itemlength', 'ItemLength'] => 'length', 
+              ['Itemwidth', 'ItemWidth'] => 'width',
+              ['Itemheight', 'ItemHeight'] => 'height' }.each do |src, dst|
               num = row[src].to_s.gsub('\'','').to_f
               dimension[dst] = num unless num == 0.0
             end
@@ -411,6 +411,7 @@ class PolyXLS < GenericImport
 
     'PGxx' => ['Photo Transfer',1],
     'Deboss' => ['Deboss',1],
+    'Debossed' => ['Deboss',1],
     'Deboss Initials' => nil,
 
     'Laser Etching' => [['Laser Engrave', 'Laser Engrave - Level 1'], 1],

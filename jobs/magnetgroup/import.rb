@@ -22,7 +22,7 @@ class MagnetGroupXLS < GenericImport
     
     files = page.body.scan(/fil\(\d+,'.+?','.+?',\d+,\s'(.+?)',.+?\)/).flatten
 
-    xlss = files.collect { |f| /^Product Pricing Extract - (\d{2})(\d{2})(\d{2})\.xls$/ === f ? [f, Date.new(('20'+$3).to_i, $1.to_i, $2.to_i)] : nil }.compact
+    xlss = files.collect { |f| /Product Pricing Extract - (\d{2})-?(\d{2})-?(\d{2}).*\.xls$/ === f ? [f, Date.new(('20'+$3).to_i, $1.to_i, $2.to_i)] : nil }.compact
     xls = xlss.sort_by { |f, d| d }.last.first
 
     @src_file = File.join(JOBS_DATA_ROOT, xls)
@@ -83,12 +83,12 @@ class MagnetGroupXLS < GenericImport
         }
 
         # Tags
-        pd.tags = {
+        {
           'newProduct' => 'New',
           'priceBuster' => 'Special',
           'thinkGreen' => 'Eco',
           'closeout' => 'Closeout' }.collect do |col, tag|
-          common[col] == 'YES' ? tag : nil
+          pd.tags << tag if common[col] == 'YES'
         end.compact
 
         # Shipping
