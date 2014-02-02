@@ -115,6 +115,7 @@ class LogomarkXLS < GenericImport
           costs = {}
           costs.default = []
           @decorations.each { |line, h| costs[h[key]] += [line] if h[key] }
+          next if costs.empty?
           sorted = costs.to_a.sort_by { |h, l| l.length }
           if sorted.length == 1 or sorted[-1].last.length != sorted[-2].last.length
             default = sorted.pop.first.merge(:key => key)
@@ -165,7 +166,10 @@ class LogomarkXLS < GenericImport
       ws.each(1) do |row|
         next if row['SKU'].blank?
 #        raise "Unkown SKU: #{row['SKU'].inspect}" unless /^([A-Z]+\d*)([A-Z]*(?:-[\w-]+)?)$/ === row['SKU']
-        raise "Unknown SKU" unless supplier_num = model_product[row['SKU']]
+        unless supplier_num = model_product[row['SKU']]
+          warning 'Unknown SKU', row['SKU']
+          next
+        end
         begin
           product_merge.merge(supplier_num, row)
         rescue Exception => e

@@ -125,7 +125,7 @@ class CrownProdXLS < GenericImport
         pd.supplier_num = @supplier_num
         pd.name = row['Item Name']
         pd.description = (row['Product Description'] || '').gsub(".", ".\n").strip
-        pd.supplier_categories = [[row['Product Categories'].strip]]
+        pd.supplier_categories = [[row['Product Categories'] ? row['Product Categories'].strip : 'unknown']]
         pd.package.weight = row['Shipping Weight (lbs)'] && Float(row['Shipping Weight (lbs)'])
         pd.package.units = row['Shipping Quantity'] && row['Shipping Quantity'].to_i
 
@@ -224,19 +224,22 @@ class CrownProdXLS < GenericImport
         
         colors = row['Available Colors'] ? row['Available Colors'].split(/\s*,\s*/).collect { |c| c.split(' ').collect { |w| w.capitalize }.join(' ') }.uniq : ['']
         
-        image_list_path = WebFetch.new("http://www.crownprod.com/includes/productimages.php?browse&itemno=#{@supplier_num.gsub(/_CL$/, '')}").get_path
-        doc = Nokogiri::HTML(open(image_list_path))
-        images = doc.xpath("//td[@class='hires_download_file']/a").collect do |a|
-          href = a.attributes['href'].value
+        if image_list_path = WebFetch.new("http://www.crownprod.com/includes/productimages.php?browse&itemno=#{@supplier_num.gsub(/_CL$/, '')}").get_path
+          doc = Nokogiri::HTML(open(image_list_path))
+          images = doc.xpath("//td[@class='hires_download_file']/a").collect do |a|
+            href = a.attributes['href'].value
+            
+            unless /file=((?:(.+?)%5C)?(.+?(?:[+_](.+?))?)\.jpg)$/i === href
+              raise "Unknown href: #{href}"
+            end
+            desc = $4 || $3
           
-          unless /file=((?:(.+?)%5C)?(.+?(?:[+_](.+?))?)\.jpg)$/i === href
-            raise "Unknown href: #{href}"
+            [ImageNodeFetch.new($1, href, ($2 == 'Blanks') ? 'blank' : nil), desc.gsub(/\+|_/,' ').strip]
           end
-          desc = $4 || $3
-          
-          [ImageNodeFetch.new($1, href, ($2 == 'Blanks') ? 'blank' : nil), desc.gsub(/\+|_/,' ').strip]
+        else
+          images = []
         end
-        
+
         if images.empty?
           puts " Using default image: #{@supplier_num}"
           color_image_map = {}

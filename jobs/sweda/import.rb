@@ -12,7 +12,8 @@ class SwedaXML < GenericImport
 
   def parse_products
     unique_columns = %w(Sku ColorCode ColorDesc ColorSwatch VariantImage)
-    common_columns = %w(SizeCode SizeDesc AdditionalPrice GrossWeight ItemNo ProductName Description Specification Note RequestSample RelatedProducts TubeVideo SlideShow Thumbnail Image PdfFiles AdditionalImages MetaTitle MetaDesc MetaKeywords MetaPriority MetaPostDate ApplicationID ProductionTime ImprintArea VirtualLogo PackQty PackWeight ProductionMinTime ProductionMaxTime MaxOrder ApplicationName CATEGORY_NAME CloseOut BestSell NewArrive DisplayProduct IsSampleRequest Qty_Desc Qty_DisplayPoint1 Qty_Point1 Qty_Price1 Qty_Special1 Qty_DisplayPoint2 Qty_Point2 Qty_Price2 Qty_Special2 Qty_DisplayPoint3 Qty_Point3 Qty_Price3 Qty_Special3 Qty_DisplayPoint4 Qty_Point4 Qty_Price4 Qty_Special4 Qty_DisplayPoint5 Qty_Point5 Qty_Price5 Qty_Special5 Qty_DisplayPoint6 Qty_Point6 Qty_Price6 Qty_Special6 Qty_Col1Name Qty_Col1Price1 Qty_Col1Price2 Qty_Col1Price3 Qty_Col1Price4 Qty_Col1Price5 Qty_Col1Price6 Qty_Col2Name Qty_Col2Price1 Qty_Col2Price2 Qty_Col2Price3 Qty_Col2Price4 Qty_Col2Price5 Qty_Col2Price6 Qty_Col3Name Qty_Col3Price1 Qty_Col3Price2 Qty_Col3Price3 Qty_Col3Price4 Qty_Col3Price5 Qty_Col3Price6)
+    # SizeCode SizeDesc GrossWeight
+    common_columns = %w(AdditionalPrice ItemNo ProductName Description Specification Note RequestSample RelatedProducts TubeVideo SlideShow Thumbnail Image PdfFiles AdditionalImages MetaTitle MetaDesc MetaKeywords MetaPriority MetaPostDate ApplicationID ProductionTime ImprintArea VirtualLogo PackQty PackWeight ProductionMinTime ProductionMaxTime MaxOrder ApplicationName CATEGORY_NAME CloseOut BestSell NewArrive DisplayProduct IsSampleRequest Qty_Desc Qty_DisplayPoint1 Qty_Point1 Qty_Price1 Qty_Special1 Qty_DisplayPoint2 Qty_Point2 Qty_Price2 Qty_Special2 Qty_DisplayPoint3 Qty_Point3 Qty_Price3 Qty_Special3 Qty_DisplayPoint4 Qty_Point4 Qty_Price4 Qty_Special4 Qty_DisplayPoint5 Qty_Point5 Qty_Price5 Qty_Special5 Qty_DisplayPoint6 Qty_Point6 Qty_Price6 Qty_Special6 Qty_Col1Name Qty_Col1Price1 Qty_Col1Price2 Qty_Col1Price3 Qty_Col1Price4 Qty_Col1Price5 Qty_Col1Price6 Qty_Col2Name Qty_Col2Price1 Qty_Col2Price2 Qty_Col2Price3 Qty_Col2Price4 Qty_Col2Price5 Qty_Col2Price6 Qty_Col3Name Qty_Col3Price1 Qty_Col3Price2 Qty_Col3Price3 Qty_Col3Price4 Qty_Col3Price5 Qty_Col3Price6)
     product_merge = ProductRecordMerge.new(unique_columns, common_columns)
 
     CSV.foreach(@src_files.first, :headers => :first_row) do |row|
@@ -26,9 +27,8 @@ class SwedaXML < GenericImport
         pd.description = common['Description'].gsub('&nbsp;', ' ').split(/\s*[;\.!\n]\s*(?=[A-Z])/)
         pd.supplier_categories = common['CATEGORY_NAME'].split(";").collect { |s| s.split("\\").collect { |t| t.strip } }
 
-        pd.tags = []
-        pd.tags << 'Closeout' if pd.supplier_categories.find { |c| c.shift if c.first == 'CLEARANCE' }
-        pd.tags << 'New' if pd.supplier_categories.find { |c| c.include?('2012 New Items') }
+        pd.tags << 'Closeout' if pd.supplier_categories.find { |c| c.shift if c.first == 'Clearance' }
+        pd.tags << 'New' if pd.supplier_categories.find { |c| c.include?('2014 New Items') }
       
         if Integer(common['PackQty']) > 0 and Float(common['PackWeight']) > 0.0
           pd.package.units = common['PackQty']
@@ -74,17 +74,18 @@ class SwedaXML < GenericImport
             unless /^#{supplier_num}[-_]?(.*?)(?:-[15]{2,3}x)?\.jpg$/i === img
               puts "Unknown Image: #{supplier_num} #{img.inspect}"
               tail = img
+              next if img[0] == '.'
             else
               tail = $1
             end
             
             [ImageNodeFetch.new(img,
                                 "http://www.swedausa.com/Uploads/Products/#{path_sub}/#{img.gsub('[','%5B').gsub(']','%5D')}"), tail]
-          end
+          end.compact.uniq
         end
      
         colors = unique.collect { |u| u['ColorCode'] }
-        color_image_map, color_num_map = match_image_colors(images.uniq, colors, :prune_colors => true)
+        color_image_map, color_num_map = match_image_colors(images, colors, :prune_colors => true)
         pd.images = color_image_map[nil] || []
 
         pd.variants = unique.collect do |uniq|
