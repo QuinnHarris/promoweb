@@ -248,7 +248,6 @@ class LogomarkXLS < GenericImport
             next if qty.blank? or Integer(qty) < 1
             pd.pricing.add(qty, common["PricePoint#{i}Price"], common["PricePoint#{i}Code"])
           end
-          puts "PRICE: #{pd.pricing.inspect}"
           pd.pricing.maxqty
           unless common['LessThanMin1Qty'] == 0
             pd.pricing.ltm_if([PricingDesc.parse_money(common['LessThanMin1Charge']), Money.new(40.0)].max, common['LessThanMin1Qty'])

@@ -125,7 +125,11 @@ class CrownProdXLS < GenericImport
         pd.supplier_num = @supplier_num
         pd.name = row['Item Name']
         pd.description = (row['Product Description'] || '').gsub(".", ".\n").strip
-        pd.supplier_categories = [[row['Product Categories'] ? row['Product Categories'].strip : 'unknown']]
+        if row['Product Categories']
+          pd.supplier_categories = row['Product Categories'].split(',').collect { |s| [s.strip] }
+        else
+          pd.supplier_categories = [['unknown']]
+        end
         pd.package.weight = row['Shipping Weight (lbs)'] && Float(row['Shipping Weight (lbs)'])
         pd.package.units = row['Shipping Quantity'] && row['Shipping Quantity'].to_i
 
