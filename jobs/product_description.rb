@@ -369,6 +369,7 @@ class PricingDesc
 
     if price
       price = self.class.parse_money(price)
+      raise ValidateError.new("price must be above 0") unless price.to_i > 0
       last_price = @prices.last && @prices.last[:marginal]
       raise ValidateError.new("marginal price must be sequential", "#{@prices.last && @prices.last[:marginal]} < #{price} of #{@prices.inspect}") if last_price && last_price < price
       @prices << base.merge(:marginal => price) #unless last_price && last_price == price
