@@ -817,6 +817,7 @@ private
    sup('Logomark', cat('Computer Accessories') ),
    sup('Starline', cat('Business Essentials', 'Computer Accessories') ),
    sup('Bullet Line', cat('Technology', 'Accessories') ),
+   sup('Crown Products', cat('Techno Trends') ),
   ],[
      ['Apple Accessories',
       [match('name', /i(P(o|a)d)|(Phone)/),

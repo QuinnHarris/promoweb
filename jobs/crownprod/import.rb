@@ -109,6 +109,67 @@ class CrownProdXLS < GenericImport
 
     ws = ss.worksheet(0)
     ws.use_header
+
+
+    puts "Start Image Find"
+    file_name = cache_file("#{@supplier_name}_images")
+    image_hash = cache_exists(file_name) ? cache_read(file_name) : {}
+    begin
+      Net::HTTP.start('ecommerce.crownprod.com') do |http|
+        ws.each(1) do |row|
+          supplier_num = row['Item# (SKU)']
+          image_id = supplier_num.gsub(/_(CL|OS)$/, '')
+          next if image_hash[image_id] #and !image_hash[image_id].empty?
+          image_list = []
+          
+          if doc = WebFetch.new("http://www.crownprod.com/includes/productimages.php?browse&itemno=#{image_id}").get_doc
+            doc.search('a').each do |a|
+              href = a.attributes['href'].value
+              uri = URI.parse(href)
+              raise "Unknown host" if uri.host != 'ecommerce.crownprod.com'
+              head = http.head(uri.request_uri)
+              unless /^attachment; filename=(.+\.jpg)$/ === head['content-disposition']
+                raise "Unknown disposition: #{href} : #{head['content-disposition']}"
+              end
+              filename = $1
+              unless /^(?:(.+?)%5C)?(.+?(?:[+_](.+?))?)\.jpg$/ === filename
+                raise "Unknown file: #{filename}"
+              end
+              desc = $3 || $2
+              
+              unless (match = image_list.find_all { |n| n.first.id == filename }).empty?
+                unless /^(.+?)(?:_(\d))?\.jpg$/ === match.last.first.id
+                  raise "Unknown filesub: #{filename}"
+                end
+                filename = "#{$1}_#{($2 && ($2.to_i+1)) || 1}.jpg"
+              end
+              puts "  HEAD: #{uri.request_uri} => #{filename}"
+
+              image_list << [ImageNodeFetch.new(filename, href, ($1 == 'Blanks') ? 'blank' : nil), desc.gsub(/\+|_/,' ').strip]
+            end
+            image_hash[image_id] = image_list
+            next unless image_list.empty?
+          end
+          
+          if doc = WebFetch.new("http://www.crownprod.com/?p=viewitem&itemno=#{supplier_num}").get_doc
+            image_list = doc.search('div[@id="img_slide"]/img').collect do |n|
+              url = n.attributes['src'].value
+              unless /^image\.php\?sz=th&id=(\d+)$/ === url
+                raise "Unknown URL: #{url}"
+              end
+              id = $1
+              puts "  ID: #{id}"
+              [ImageNodeFetch.new(id, "http://www.crownprod.com/image.php?sz=xl&id=#{id}"), '']
+            end
+          end
+
+          image_hash[image_id] = image_list
+        end
+      end
+    ensure
+      cache_write(file_name, image_hash)
+    end
+
     ws.each(1) do |row|
       next unless @supplier_num = row['Item# (SKU)']
 
@@ -228,27 +289,14 @@ class CrownProdXLS < GenericImport
         
         colors = row['Available Colors'] ? row['Available Colors'].split(/\s*,\s*/).collect { |c| c.split(' ').collect { |w| w.capitalize }.join(' ') }.uniq : ['']
         
-        if image_list_path = WebFetch.new("http://www.crownprod.com/includes/productimages.php?browse&itemno=#{@supplier_num.gsub(/_CL$/, '')}").get_path
-          doc = Nokogiri::HTML(open(image_list_path))
-          images = doc.xpath("//td[@class='hires_download_file']/a").collect do |a|
-            href = a.attributes['href'].value
-            
-            unless /file=((?:(.+?)%5C)?(.+?(?:[+_](.+?))?)\.jpg)$/i === href
-              raise "Unknown href: #{href}"
-            end
-            desc = $4 || $3
-          
-            [ImageNodeFetch.new($1, href, ($2 == 'Blanks') ? 'blank' : nil), desc.gsub(/\+|_/,' ').strip]
-          end
-        else
-          images = []
-        end
 
-        if images.empty?
+        images = image_hash[@supplier_num.gsub(/_(CL|OS)$/, '')]
+        
+        if images.nil? or images.empty?
           puts " Using default image: #{@supplier_num}"
           color_image_map = {}
           pd.images = [ImageNodeFetch.new('default',
-                                          "http://www.crownprod.com/images/items/BRIGTEYE_CL_xl.jpg")]
+                                          "http://www.crownprod.com/image.php?sz=xl&itemno=#{@supplier_num}")]
         else
           color_image_map, color_num_map = match_image_colors(images, colors, :prune_colors => true)
           pd.images = color_image_map[nil] || []
