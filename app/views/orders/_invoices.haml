@@ -99,7 +99,11 @@
     - if invoice.is_a?(Invoice)
       %h3
         - if invoice.quickbooks_ref
-          Invoice (#{invoice.quickbooks_ref})
+          - if invoice.total_price.to_i >= 0
+            Invoice
+          - else 
+            Credit Memo
+          (#{invoice.quickbooks_ref})
         - else
           Quote
 
