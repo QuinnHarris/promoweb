@@ -228,6 +228,7 @@ class BitCoinChartsRate < BitCoinRate
   end
 
   def rate_USD_internal
+    return nil unless @hash and @hash['USD'] and @hash['USD']['24h']
     Money.new(Float(@hash['USD']['24h']))
   end
 end
@@ -238,6 +239,7 @@ class BitCoinAverageRate < BitCoinRate
   end
 
   def rate_USD_internal
+    return nil unless @hash and @hash['24h_avg'])
     Money.new(Float(@hash['24h_avg']))
   end
 end
