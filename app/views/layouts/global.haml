@@ -144,12 +144,6 @@
                   - for name, action, desc in StaticController.pages
                     = content_tag('li', link_to(name, { :controller => '/static', :action => action }, :rel => 'nofollow'), :class => (params[:controller] == 'static' and params[:action] == action) ? 'sel' : nil)
           #badges
-            - if !@user and Rails.env.production?
-              %div
-                :plain
-                  <a href="http://www.shopperapproved.com/certificates/www.mountainofpromos.com/" onclick="var nonwin=navigator.appName!='Microsoft Internet Explorer'?'yes':'no'; var certheight=screen.availHeight-90; window.open(this.href,'shopperapproved','location='+nonwin+',scrollbars=yes,width=620,height='+certheight+',menubar=no,toolbar=no'); return false;"><img src="https://c683207.ssl.cf2.rackcdn.com/3559-r.gif" style="border: 0" alt="" oncontextmenu="var d = new Date(); alert('Copying Prohibited by Law - This image and all included logos are copyrighted by shopperapproved \251 '+d.getFullYear()+'.'); return false;" /></a>
-
-      
             %div= link_to image_tag('BC_nBG_64px.png'), '/static/bitcoin'
             %div= image_tag('credit_cards.png')
           - if @user

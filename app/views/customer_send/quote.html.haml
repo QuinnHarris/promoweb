@@ -18,8 +18,6 @@
           - next unless task.uri
           - unless task == ReviewOrderTask
             = link_to task.waiting_name, task.uri.merge(uri_param)
-          - else
-            = link_to task.waiting_name, 'http://www.shopperapproved.com/surveys/full.php?id=3559'
 
     #note
       - main_waiting_task = @waiting_tasks.find { |t| t.depends_on.include?(@task) }
