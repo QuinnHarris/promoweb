@@ -137,7 +137,7 @@ public
   def self.find_by_id(id)
     root
     res = @@id_map[id.to_i]
-    raise "COULDN'T FIND: #{id}" unless res
+    raise ActiveRecord::RecordNotFound, "Couldn't find Category with id = #{id.to_i}" unless res
     res
   end
   
