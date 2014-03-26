@@ -202,5 +202,5 @@ class ShippingRate
   end
 end
 
-a = Socket.getaddrinfo('wwwcie.ups.com', "http", nil, :STREAM)
-Rails.logger.info("RESOLVER TEST: #{a.inspect}")
+#a = Socket.getaddrinfo('wwwcie.ups.com', "http", nil, :STREAM)
+#Rails.logger.info("RESOLVER TEST: #{a.inspect}")

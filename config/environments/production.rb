@@ -82,7 +82,7 @@ Promoweb::Application.config.middleware.use ExceptionNotification::Rack,
   :email => { 
     :email_prefix => "[Error] ",
     :sender_address => %{"Web Application Error" <error@mountainofpromos.com>},
-    :exception_recipients => %w{quinn@mountainofpromos.com}
+    :exception_recipients => %w{error@mountainofpromos.com}
   }
 
 SEND_EMAIL = "Mountain Express Promotions <sales@mountainofpromos.com>"
