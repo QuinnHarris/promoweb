@@ -17,6 +17,7 @@ class HighCaliberLine < GenericImport
     @image_list = cache_read(file_name) if cache_exists(file_name)
 
     begin
+      parse_file("2014 Master Excel List.xlsx")
       parse_file("HCL-US Master Excel Final on #{@date}.xls")
 #      parse_file("HCL-US Closeout Master Excel on #{@date}.xls", 'Closeout')
  #     parse_file("HCL-US Closeout Master Excel on #{@date}.xls", 'Closeout', 1)
@@ -49,40 +50,43 @@ class HighCaliberLine < GenericImport
     neoprene_color_list = name_list.zip(pms_list).collect { |n, p| [n, "#{n} (PMS #{p})"] }
 
     puts "Parsing: #{file} #{ws_num}"
-    ws = Spreadsheet.open(File.join(JOBS_DATA_ROOT, file)).worksheet(ws_num)
-    puts ws.use_header(1).inspect
-    ws.each(2) do |row|
-      if row['Description'].include?('Texas')
+    ws = RubyXL::Parser.parse(File.join(JOBS_DATA_ROOT, file)).worksheets[ws_num]
+    puts ws.use_header(0).inspect
+    (1..(ws.sheet_data.size)).each do |idx|
+      row = ws.sheet_data[idx]
+
+      if row['Item Descrition'].include?('Texas')
         puts "Excluding Product: #{row['Product Code']}"
         next
       end
 
       ProductDesc.apply(self) do |pd|
         pd.merge_from_object(row, {
-                               'supplier_num' => 'Product Code',
-                               'name' => 'Product Name' })
+                               'supplier_num' => 'Item# w/Photo',
+                               'name' => 'Item Name' })
              
         puts "Product: #{pd.supplier_num}"
         
         pd.name.gsub!(/\s+/, ' ')
       
-        if description = row['Description']
+        if description = row['Item Descrition']
           pd.description = description.gsub("\uFEFF", '').gsub(/\s+/,' ').gsub(/\s?\.\s/,"\n").gsub(/\s?•\s/,"\n").strip
         end
 
         # Categories
-        begin
-          pd.supplier_categories = [%w(Category Sub\ Category).collect do |catname|
-            str = row[catname]
-            str && str.strip.gsub('&amp;','&').gsub(/\s+/, ' ')
-          end.compact]
-        rescue Spreadsheet::Excel::Row::NoHeader
-          pd.supplier_categories = [[]]
-        end
+#        begin
+#          pd.supplier_categories = [%w(Category Sub\ Category).collect do |catname|
+#            str = row[catname]
+#            str && str.strip.gsub('&amp;','&').gsub(/\s+/, ' ')
+#          end.compact]
+#        rescue Spreadsheet::Excel::Row::NoHeader
+#          pd.supplier_categories = [[]]
+#        end
+        pd.supplier_categories = [['UNKOWN']]
 
-        pd.tags = [tags].flatten
+        pd.tags = TagsDesc.new(tags)
         laser_engrave = wow_product = nil
-        if highlight = row['Highlightimage']
+        if false #highlight = row['Highlightimage']
           highlight.split(/\s*,\s*/).each do |elem|
             case elem
             when 'New'
@@ -123,7 +127,7 @@ class HighCaliberLine < GenericImport
 
         # Decorations
         pd.decorations = overseas ? [] : [DecorationDesc.none]
-        if imprint_str = row['Imprint Size']
+        if imprint_str = row['Imprint Area']
           imprint_str.split(/,|(?:\s{2,3})/).each do |imprint_part|
             unless /^(?:(.+?):)?\s*(.+?)(?:(.+?)\))?$/ === imprint_part
               puts "Imprintt: #{imprint_str.inspect}"
@@ -148,32 +152,23 @@ class HighCaliberLine < GenericImport
         
       
         # Package Info
-        if weight = Float(row['Carton Weight lbs']) and weight != 0.0
+        if weight = Float(row['Carton Weight']) and weight != 0.0
           pd.package.weight = weight
         end
-        if units = Integer(row['Carton Weight Pcs']) and units != 0
+        if units = Integer(row['Carton Qty']) and units != 0
           pd.package.units = units
         end
         pd.package.merge_from_object(row, { 'height' => 'Height',
                                        'width' => 'Width',
-                                       'length' => 'Depth' } )
+                                       'length' => 'Length' } )
       
         
         # Price Info (common to all variants)
-        if ws.header_map['Minimum Qty']
-          #        qty = row["Minimum Qty"]
-          #        price_list =
-          #          [{ :minimum => Integer(qty.is_a?(String) ? qty.gsub(/[^0-9]/,'') : qty),
-          #             :marginal => Money.new(Float(row['Price Reduced'])),
-          #             :fixed => Money.new(0) }]
-          raise "Minimum Quantity"
-        else
-          (1..5).each do |num|
-            qty = row["Qty #{num}"]
+        (1..5).each do |num|
+          qty = (num == 1) ? row["Min. Qty"] : row["Qty#{num}"]
             next if qty.blank?
-            qty = qty.gsub(/[^0-9]+$/, '') if qty.is_a?(String)
-            pd.pricing.add(qty, row["Price #{num}"], 'R')
-          end
+          qty = qty.gsub(/[^0-9]+$/, '') if qty.is_a?(String)
+          pd.pricing.add(qty, row["Prc#{num}"], 'R')
         end
         
         if overseas
@@ -191,7 +186,7 @@ class HighCaliberLine < GenericImport
 
         # Leed Time
         begin
-          case production_time = row['Standard Service'].strip
+          case production_time = row['Standard Production Time'].strip
           when /(\d{1,2})(?:-(\d{1,2}))?\s*(Day|Week)/i
             mult = ($3.downcase == 'day') ? 1 : 5
             min, max = Integer($1)*mult, Integer($2 || $1)*mult
@@ -203,14 +198,14 @@ class HighCaliberLine < GenericImport
           end
           pd.lead_time.normal_min = min
           pd.lead_time.normal_max = max
-        rescue Spreadsheet::Excel::Row::NoHeader
+        rescue NoHeader
         end
       
-        if dimension = row['Size']
+        if dimension = row['Item Size']
           pd.properties['dimension'] = parse_dimension(dimension) || dimension.strip.gsub(/\(.+?\)/,'').gsub('&quot;','"')
         end
       
-        if color_str = row['Color Description']
+        if color_str = row['Item Color']
           color_str = color_str.gsub("\uFEFF", '').strip
           if /Standard Lanyard.+colors\.?(?:&lt;br&gt;)?(.*)/i === color_str
             pd.description += "\n#{$1}" unless $1.blank?

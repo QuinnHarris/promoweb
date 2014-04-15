@@ -111,6 +111,7 @@ class GemlineXML < GenericImport
             technique, limit = @@decoration_replace[technique]
           else
             warning 'UNKNOWN DECORATION', technique
+            next
           end
           
           decoration.elements.each do |location|
@@ -145,12 +146,17 @@ class GemlineXML < GenericImport
             vd.properties['swatch'] = ImageNodeFetch.new(swatch_node['name'].split('.').first, "#{swatch_node['path']}#{swatch_node['name']}")
           end
           
-          if image_node = item.at_xpath('images/zoomed')
+          image_node = item.at_xpath('images/zoomed')
+          image_node = item.at_xpath('images/enlarged') unless image_node
+          if image_node
             vd.images = [ImageNodeFetch.new(image_node['name'], "#{image_node['path']}#{image_node['name']}")]
             
-            item.at_xpath('images/alternate-images').elements.each do |alt|
-              if /zoomed(\d)/ === alt.name
-                vd.images << ImageNodeFetch.new("alts/#{alt['name']}", "#{alt['path']}#{alt['name']}".gsub('\\','/'))
+            puts item.inspect if pd.supplier_num == '2825'
+            item.at_xpath('images/alternate-images').try do |element|
+              element.children.each do |alt|
+                if /zoomed(\d)/ === alt.name
+                  vd.images << ImageNodeFetch.new("alts/#{alt['name']}", "#{alt['path']}#{alt['name']}".gsub('\\','/'))
+                end
               end
             end
             vd.images.uniq!

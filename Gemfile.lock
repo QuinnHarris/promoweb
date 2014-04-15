@@ -196,7 +196,11 @@ GEM
       rqrcode (>= 0.4.2)
     ruby-ole (1.2.11.7)
     ruby-prof (0.14.2)
+    rubyXL (2.4.3)
+      nokogiri (>= 1.4.4)
+      rubyzip (>= 1.0.0)
     rubyntlm (0.3.4)
+    rubyzip (1.1.0)
     sass (3.2.13)
     sass-rails (3.2.6)
       railties (~> 3.2.0)
@@ -296,6 +300,7 @@ DEPENDENCIES
   rghost
   rqrcode-rails3
   ruby-prof
+  rubyXL
   sass-rails
   savon
   scruffy

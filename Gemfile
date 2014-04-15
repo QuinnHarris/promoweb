@@ -83,6 +83,7 @@ gem 'wash_out'
 # Not needed for webserver
 gem 'mechanize' # DL for Gemline
 gem 'spreadsheet' # Spreadsheet for Leeds, Bullet
+gem 'rubyXL'
 #gem 'httpclient' # Auth for soap4r for Lanco
 gem 'savon'
 #gem 'rmagick'

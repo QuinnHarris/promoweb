@@ -30,10 +30,10 @@ def apply_decorations(supplier_name, include = nil)
 end
 
 # Spreadsheet Monkey Patch for access by header
-class Spreadsheet::Excel::Row
-  class NoHeader < StandardError
-  end
+class NoHeader < StandardError
+end
 
+class Spreadsheet::Excel::Row
   alias_method :old_access, :[]
   def [](idx, len = nil)
     if idx.is_a?(String) or idx.is_a?(Array)
@@ -54,44 +54,6 @@ class Spreadsheet::Excel::Row
     worksheet.header? name
   end
 end
-
-
-#class RubyXL::Worksheet
-#  attr_reader :header_map ,:sheet_row
-#  def use_header(idx = 0)
-#    @header_map = []
-#    @sheet_data[idx].each do |cell|
-#      next if cell.value.blank?
-#      cell = cell.value.strip.to_s
-#      if header_map.include?(cell)
-#        # "DUPLICATE HEADER: #{idx} #{cell}"
-#        (1..9).find do |i|
-#          cell = "#{cell} #{i}" if !header_map.include?("#{cell} #{i}")
-#        end
-#      end
-#      header_map.push(cell)
-#    end
-#    @header_map
-#  end
-  
-#  def rows
-#    use_header
-#    @sheet_row = @sheet_data.collect do |row|
-#      next if row[1].datatype.nil? 
-#      next if @header_map.include?(row[1].value)
-#      row_hash = {}
-#      row.each_with_index do |cell,index|
-#        row_hash[@header_map[index]] = cell.nil? || cell.datatype.blank? ? "" : cell.value
-#      end 
-#      row_hash
-#    end.compact
-#  end 
-#  
-#  def next_row(idx=1)
-#      @sheet_row[idx]
-#  end  
-#end
-
 
 class Spreadsheet::Excel::Worksheet
   attr_reader :header_map
@@ -119,6 +81,52 @@ class Spreadsheet::Excel::Worksheet
     headers.include? name
   end    
 end
+
+class RubyXL::Row
+  alias_method :old_access, :[]
+  def [](idx)
+    val = if idx.is_a?(String)
+      i = old_access(0).worksheet.header_map[idx]
+      raise NoHeader, idx unless i
+      old_access(i)
+    else
+      old_access(idx)
+    end
+    val && val.value
+  end
+
+  # Match CSV interface
+  def headers
+    worksheet.headers
+  end
+  def header?(name)
+    worksheet.header? name
+  end
+end
+
+
+class RubyXL::Worksheet
+  attr_reader :header_map
+  def use_header(idx = 0)
+    @header_map = {}
+    row = @sheet_data[idx]
+    (0..(row.size)).each do |idx|
+      next unless cell = row[idx]
+      next if cell.blank?
+      cell = cell.to_s.strip
+      if header_map[cell]
+        # "DUPLICATE HEADER: #{idx} #{cell}"
+        (1..9).find do |i|
+          cell = "#{cell} #{i}" if !header_map["#{cell} #{i}"]
+        end
+      end
+      header_map[cell] = idx
+    end
+    @header_map
+  end
+end
+
+
 
 
 # Utility Classes for Import
