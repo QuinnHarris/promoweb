@@ -5,7 +5,7 @@ end
 
 source 'http://rubygems.org'
 
-gem 'rails', '3.2.16'
+gem 'rails', '3.2.17'
 
 # Bundle edge Rails instead:
 # gem 'rails', :git => 'git://github.com/rails/rails.git'
@@ -83,7 +83,7 @@ gem 'wash_out'
 # Not needed for webserver
 gem 'mechanize' # DL for Gemline
 gem 'spreadsheet' # Spreadsheet for Leeds, Bullet
-gem 'rubyXL'
+#gem 'rubyXL'
 #gem 'httpclient' # Auth for soap4r for Lanco
 gem 'savon'
 #gem 'rmagick'

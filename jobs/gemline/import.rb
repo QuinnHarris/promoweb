@@ -138,12 +138,15 @@ class GemlineXML < GenericImport
         xml_items = product.xpath('items/item')
         pd.properties['material'] = xml_items.first && xml_items.first['fabric'] # Kludge to assume same material for all variants
         
+        has_swatch = nil
         pd.variants = xml_items.collect do |item|
           vd = VariantDesc.new(:supplier_num => item['style'])
-          vd.properties['color'] = item['color']
+          vd.properties['color'] = item['color'] || 'UNKNOWN'
+          puts "  Variant: #{vd.supplier_num} : #{item['color']}"
           
           if swatch_node = item.at_xpath('swatches/image')
             vd.properties['swatch'] = ImageNodeFetch.new(swatch_node['name'].split('.').first, "#{swatch_node['path']}#{swatch_node['name']}")
+            has_swatch = true
           end
           
           image_node = item.at_xpath('images/zoomed')
@@ -187,7 +190,14 @@ class GemlineXML < GenericImport
           
           vd
         end.compact
-      
+
+        # Kludge to remove swatch if one swatch is missing, only known to happen on product 2361
+        if has_swatch && pd.variants.find { |vd| !vd.properties.has_key?('swatch') }
+          warning 'REMOVED SWATCH'
+          pd.variants.each do |vd|
+            vd.properties.delete('swatch')
+          end
+        end
         
         # Apply uses in XML as category
         prod_categories ||= []
