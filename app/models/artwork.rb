@@ -25,6 +25,7 @@ class Artwork < ActiveRecord::Base
   def customer; group.customer; end
 
   has_attached_file :art, :url => "/customer/:prefix:uuid/:fullfilename", :path => "#{DATA_ROOT}:url", :whiny_thumbnails => false, :styles => { :thumb => { :geometry => "160x100", :format => :png } }, :processors => [:flexThumbnail]
+  do_not_validate_attachment_file_type :art
 
   after_post_process :clean_nil
   def clean_nil

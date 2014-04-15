@@ -82,49 +82,49 @@ class Spreadsheet::Excel::Worksheet
   end    
 end
 
-class RubyXL::Row
-  alias_method :old_access, :[]
-  def [](idx)
-    val = if idx.is_a?(String)
-      i = old_access(0).worksheet.header_map[idx]
-      raise NoHeader, idx unless i
-      old_access(i)
-    else
-      old_access(idx)
-    end
-    val && val.value
-  end
+# class RubyXL::Row
+#   alias_method :old_access, :[]
+#   def [](idx)
+#     val = if idx.is_a?(String)
+#       i = old_access(0).worksheet.header_map[idx]
+#       raise NoHeader, idx unless i
+#       old_access(i)
+#     else
+#       old_access(idx)
+#     end
+#     val && val.value
+#   end
 
-  # Match CSV interface
-  def headers
-    worksheet.headers
-  end
-  def header?(name)
-    worksheet.header? name
-  end
-end
+#   # Match CSV interface
+#   def headers
+#     worksheet.headers
+#   end
+#   def header?(name)
+#     worksheet.header? name
+#   end
+# end
 
 
-class RubyXL::Worksheet
-  attr_reader :header_map
-  def use_header(idx = 0)
-    @header_map = {}
-    row = @sheet_data[idx]
-    (0..(row.size)).each do |idx|
-      next unless cell = row[idx]
-      next if cell.blank?
-      cell = cell.to_s.strip
-      if header_map[cell]
-        # "DUPLICATE HEADER: #{idx} #{cell}"
-        (1..9).find do |i|
-          cell = "#{cell} #{i}" if !header_map["#{cell} #{i}"]
-        end
-      end
-      header_map[cell] = idx
-    end
-    @header_map
-  end
-end
+# class RubyXL::Worksheet
+#   attr_reader :header_map
+#   def use_header(idx = 0)
+#     @header_map = {}
+#     row = @sheet_data[idx]
+#     (0..(row.size)).each do |idx|
+#       next unless cell = row[idx]
+#       next if cell.blank?
+#       cell = cell.to_s.strip
+#       if header_map[cell]
+#         # "DUPLICATE HEADER: #{idx} #{cell}"
+#         (1..9).find do |i|
+#           cell = "#{cell} #{i}" if !header_map["#{cell} #{i}"]
+#         end
+#       end
+#       header_map[cell] = idx
+#     end
+#     @header_map
+#   end
+# end
 
 
 
@@ -516,7 +516,8 @@ class ProductApply
       # Swatch Property
       if img = vd.properties['swatch']
         if swatch_prop = variant_record.set_property('swatch', img.id, variant_log)
-          swatch_prop.image = img.get
+          i = img.get
+          swatch_prop.image = i
           swatch_prop.save!
         end
       end

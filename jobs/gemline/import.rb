@@ -142,7 +142,6 @@ class GemlineXML < GenericImport
         pd.variants = xml_items.collect do |item|
           vd = VariantDesc.new(:supplier_num => item['style'])
           vd.properties['color'] = item['color'] || 'UNKNOWN'
-          puts "  Variant: #{vd.supplier_num} : #{item['color']}"
           
           if swatch_node = item.at_xpath('swatches/image')
             vd.properties['swatch'] = ImageNodeFetch.new(swatch_node['name'].split('.').first, "#{swatch_node['path']}#{swatch_node['name']}")

@@ -17,6 +17,12 @@ class ProductImage < ActiveRecord::Base
   }, :convert_options => {
     :all => "-quality 85 -strip",
   }
+  validates_attachment_content_type :image, :content_type => ["image/jpg", "image/jpeg"]
+
+  # Always a JPEG
+  def image_content_type
+    'image/jpeg'
+  end
   
   def image_file_name; 'x.jpg'; end
   def image_file_name=(set); end;

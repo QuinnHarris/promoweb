@@ -99,6 +99,12 @@ class Property < ActiveRecord::Base
 
   has_attached_file :image, :url => "/data/property/:name_value.:extension", :path => "#{DATA_ROOT}:url", :styles => {
     :original => { :geometry => '72x36>', :format => 'png' } }, :default_style => :original, :convert_options => { :all => "-strip" }
+  validates_attachment_content_type :image, :content_type => ["image/png"]
+
+  # Always a PNG
+  def image_content_type
+    'image/png'
+  end
 
   def image_file_name; "x.png"; end
   def image_file_name=(set); end;
