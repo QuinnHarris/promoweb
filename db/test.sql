@@ -390,6 +390,7 @@ SELECT id, name FROM products WHERE NOT deleted AND id NOT IN (
 
 insert into decoration_techniques (name, parent_id, unit_name) values ('Laser Engrave - Level 1', 10, 'location');
 insert into decoration_techniques (name, parent_id, unit_name) values ('Laser Engrave - Level 2', 10, 'location');
+insert into decoration_techniques (name, parent_id, unit_name) values ('Laser Engrave - Level 3', 10, 'location');
 
 insert into decoration_techniques (name, unit_name) values ('PhotoGrafixx', 'location');
 insert into decoration_techniques (name, parent_id, unit_name) values ('PhotoGrafixx - Level 1', 145, 'location');
@@ -397,3 +398,7 @@ insert into decoration_techniques (name, parent_id, unit_name) values ('PhotoGra
 insert into decoration_techniques (name, parent_id, unit_name) values ('PhotoGrafixx - Level 4', 145, 'location');
 
 insert into decoration_techniques (name, unit_name) values ('Pen Print', 'colors');
+
+insert into decoration_techniques (name, unit_name) values ('Color Print', 'colors') RETURNING id;
+insert into decoration_techniques (name, parent_id, unit_name) values ('Color Print - Level 1', 178, 'colors');
+insert into decoration_techniques (name, parent_id, unit_name) values ('Color Print - Level 2', 178, 'colors');

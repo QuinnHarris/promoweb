@@ -22,7 +22,7 @@ class CategoryTransform
     # Remove parent categories after all rules to work correct with exclude
     remove_sub_dups(pd['categories'])
 
-    if true #Rails.env.production?
+    if Rails.env.production?
       pd.categories = [['Other']] if pd.categories.empty?
     else
       pd.categories += pd.categories.collect { |cat| ['YBySupplier', @supplier] + cat }
@@ -196,10 +196,31 @@ private
       [sup('Ash City',
            cat('Outerwear'),
            match('name', 'jacket') ) ],
-      %w(Windvests Windshirts Insulated\ Seam-Sealed Teflon Soft\ Shells Leather Insulated Seam-Sealed Reversible\ Jackets Reversible\ Vests Workwear).collect do |name|
+      %w(Windvests Insulated\ Seam-Sealed Teflon Leather Seam-Sealed Reversible\ Jackets Reversible\ Vests Workwear).collect do |name|
         [name, [sup('Ash City', match('name', name.gsub(/s$/,''), 1))]]
       end + 
       [
+       ['Lightweight Jackets',
+        [sup('Leeds', cat('Jackets', 'Lightweight') )
+        ],[
+           ['Lightweight Vests',
+            sup('Leeds', cat('Vests', 'Lightweight') ) ]
+          ] ],
+       ['Track Jackets',
+        [sup('Leeds', cat('Jackets', 'Track') ) ] ],
+       ['Soft Shells',
+        [sup('Ash City', match('name', 'soft shell', 1) ),
+         sup('Leeds', cat('Jackets', 'Insulated Softshells') )
+        ],[
+           ['Soft Shell Vests',
+            sup('Leeds', cat('Vests', 'Softshells') ) ]
+          ] ],
+       ['Insulated Jackets',
+        [sup('Ash City', match('name', 'insulated', 1) ),
+         sup('Leeds', cat('Jackets', 'Insulated') ) ] ],
+       ['Windshirts',
+        [sup('Ash City', match('name', 'windshirt', 1) ),
+         sup('Leeds', cat('Jackets', 'Wind Shirts') ) ] ],
        ['Performance Jackets',
         [sup('Ash City',
              all(match('name', 'jacket', 1),
@@ -207,79 +228,106 @@ private
        ['Techno series',
         [sup('Ash City',
              match('description', 'EZAWAY', 1) ) ] ],
+       ['3-in-1 Jackets',
+        [sup('Leeds', cat('Jackets', '3-in-1') ) ] ],
       ] ],
-     ['Soft Shell',
-      [sup('Ash City', cat('Soft Shells') ) ],
-      [
-       ['Performance Jackets',
-        [sup('Ash City',
-             all(match('name', 'jacket', 1),
-                 match(%w(name material), 'performance', 1) ) ) ] ],
-       ['Performance Vests',
-        [sup('Ash City',
-             all(match('name', 'vest', 1),
-                 match(%w(name material), 'performance', 1) ) ) ] ],
-      ] ],
-     
-     ['Fleece',
-      [sup('Ash City', cat('Fleece') ),
-       match('name', 'fleece')],
-      %w(Vests Microfleece Vintage).collect do |name|
-        [name, [sup('Ash City', match('name', name.gsub(/s$/,''), 1))]]
-      end + 
-      [
-       ['Microfleece',
-        [sup('Ash City',
-             match(%w(name material description), 'microfleece', 1) ) ] ],
-       ['Poly fleece',
-        [sup('Ash City',
-             match(%w(name material description), 'polyester', 1) ) ] ],
-       ['Interactive Fleece',
-        [sup('Ash City',
-             match('name', 'interactive', 1) ) ] ],
-       ['Cotton/Poly Fleece',
-        [sup('Ash City',
-             all(match(%w(name material description), 'cotton', 1),
-                 match(%w(name material description), 'polyester', 1) ) ) ] ],
-       ['Bonded Fleece',
-        [sup('Ash City',
-             match('name', 'bonded', 1) ) ] ],
-      ] ],
-     ['Knits',
-      [sup('Ash City',
-           match('name', 'polo') ) ],
-      %w(Jersey Pique Teflon Edry Textured Eperformance Jacquard Mercerized Interlock Micro\ pima).collect do |name|
-        [name, [sup('Ash City', match(%w(name material description), name, 1))]]
-      end + 
-      [
-      ] ],
-     ['Wovens',
-      [sup('Ash City',
-           cat('Wovens') ), ],
-      %w(Easy\ care Primalux Twill Teflon Stretch Cotton Denim Service Vintage Wrinkle\ Free Wrinkle\ Resistant).collect do |name|
-        [name, [sup('Ash City', match(%w(name material description), name, 1))]]
-      end + 
-      [
-       ['Silk blend',
-        [sup('Ash City',
-             match(%w(name material description), 'silk', 1) ) ] ],
-      ] ],
-     ['Active Wear',
-      [sup('Ash City', cat('Active Wear') ) ],
-      [
-      ] ],
-     ['Pants',
-      [match('name', 'pants', 1)]],
-     ['Safety',
-      [match('name', 'safety vest'),
-       sup('Ash City', cat('Safety') ),
-       sup('Starline', cat('Safety', 'Hi-Vis Apparel') ),
-       sup('High Caliber Line',
-           all(cat('Safety Items'),
-               match('name', %w(vest shirt)) ) ) ],
-      [
-      ] ],
-    ] ],
+      ['Soft Shell',
+       [sup('Ash City', cat('Soft Shells') ),
+        sup('Leeds', cat('Jackets', 'Softshells') ) ],
+       [
+        ['Performance Jackets',
+         [sup('Ash City',
+              all(match('name', 'jacket', 1),
+                  match(%w(name material), 'performance', 1) ) ) ] ],
+        ['Performance Vests',
+         [sup('Ash City',
+              all(match('name', 'vest', 1),
+                  match(%w(name material), 'performance', 1) ) ) ] ],
+       ] ],
+      
+      ['Fleece',
+       [sup('Ash City', cat('Fleece') ),
+        sup('Leeds', cat('Fleece & Knits', 'Fleece') ),
+        match('name', 'fleece')],
+       %w(Vests Microfleece Vintage).collect do |name|
+         [name, [sup('Ash City', match('name', name.gsub(/s$/,''), 1))]]
+       end + 
+       [
+        ['Vests',
+         [sup('Leeds', cat('Vests', 'Fleece') ) ]],
+        ['Microfleece',
+         [sup('Ash City',
+              match(%w(name material description), 'microfleece', 1) ) ] ],
+        ['Poly fleece',
+         [sup('Ash City',
+              match(%w(name material description), 'polyester', 1) ) ] ],
+        ['Interactive Fleece',
+         [sup('Ash City',
+              match('name', 'interactive', 1) ) ] ],
+        ['Cotton/Poly Fleece',
+         [sup('Ash City',
+              all(match(%w(name material description), 'cotton', 1),
+                  match(%w(name material description), 'polyester', 1) ) ) ] ],
+        ['Bonded Fleece',
+         [sup('Ash City',
+              match('name', 'bonded', 1) ),
+          sup('Leeds', cat('Fleece & Knits', 'Bonded') ) ] ],
+       ] ],
+      ['Knits',
+       [sup('Ash City',
+            match('name', 'polo') ) ],
+       %w(Jersey Pique Teflon Edry Textured Eperformance Jacquard Mercerized Interlock Micro\ pima).collect do |name|
+         [name, [sup('Ash City', match(%w(name material description), name, 1))]]
+       end + 
+       [['Active Knits',
+         [sup('Leeds', cat('Fleece & Knits', 'Active') ) ] ],
+        ['Short Sleeve Tee',
+          [sup('Leeds', cat('Fleece & Knits', 'Short Sleeve') ) ] ]
+       ] ],
+      ['Wovens',
+       [sup('Ash City',
+            cat('Wovens') ), ],
+       %w(Primalux Twill Teflon Stretch Cotton Denim Service Vintage Wrinkle\ Free Wrinkle\ Resistant).collect do |name|
+         [name, [sup('Ash City', match(%w(name material description), name, 1))]]
+       end + 
+       [
+        ['Easy Care Shirts',
+         [sup('Ash City', match(%w(name description), 'easy care', 1) ),
+          sup('Leeds', cat('Woven Shirts', 'EZ-Care') ) ] ],
+        ['Blended Yarns',
+         [sup('Leeds', cat('Woven Shirts', 'Blended Yarns') ) ] ],
+        ['Silk blend',
+         [sup('Ash City',
+              match(%w(name material description), 'silk', 1) ) ] ],
+       ] ],
+      ['Active Wear',
+       [sup('Ash City', cat('Active Wear') ) ],
+       [['Long Sleeve', sup('Leeds', cat('Active Wear', 'Long Sleeve') ) ],
+        ['Short Sleeve', sup('Leeds', cat('Active Wear', 'Short Sleeve') ) ],
+       ] ],
+      ['Pants',
+       [match('name', 'pants', 1)],
+       %w(Active Rain Track).collect do |name|
+         ["#{name} Pants", [sup('Leeds', cat('Pants', name)) ]]
+       end],
+      ['Polos', [], 
+       %w(Blended\ Yarns Cotton Webtech).collect do |name|
+         ["#{name} Polos", [sup('Leeds', cat('Polos', name)) ]]
+       end],
+      ['Sweaters', [], 
+       %w(Cardigans Full\ Zip Pull\ Overs).collect do |name|
+         ["#{name} Polos", [sup('Leeds', cat('Sweaters', name)) ]]
+       end],
+      ['Safety',
+       [match('name', 'safety vest'),
+        sup('Ash City', cat('Safety') ),
+        sup('Starline', cat('Safety', 'Hi-Vis Apparel') ),
+        sup('High Caliber Line',
+            all(cat('Safety Items'),
+                match('name', %w(vest shirt)) ) ) ],
+       [
+       ] ],
+     ] ],
  ['Awards',
   [
   ],[
@@ -292,8 +340,6 @@ private
      ['Awards & Plaques',
       [match('name', 'trophy'),
        sup('Norwood', cat('AWARD', 'AWARDS') ),
-       sup('Leeds',
-           cat('Awards', 'Awards') ),
        sup('Logomark',
            cat('Crystal Awards'),
            cat('Metal and Wood Awards') ),
@@ -308,7 +354,6 @@ private
          ['Crystal Awards',
           [sup('The Magnet Group', cat('Crystal', 'Optically Perfect Awards') ),
            sup('Logomark', cat('Crystal Awards') ),
-           sup('Leeds', cat('Awards', 'Crystal') ),
           ]],
          ['Dichroic Awards',
           [match(%w(name description), 'dichroic', 1),
@@ -457,7 +502,7 @@ private
      ['Backpacks',
       [match('name', %w(Backpack Daypack Sports\ Pack)),
        match('description', 'backpack', 1),
-       sup('Leeds', cat('Backpacks', 'Backpacks (Backpacks)')),
+       sup('Leeds', cat('Backpacks', 'Sport & Leisure Backpacks')),
        sup('Gemline',
            ['Sports', 'New'].collect do |name|
              cat('Backpacks', name)
@@ -477,9 +522,7 @@ private
           [match('name', 'cooler', 1)]],
          ['Computer Backpacks',
           [match('name', ['compu', 'laptop'], 1),
-           sup('Leeds',
-               cat('Backpacks', 'Compu-Backpacks'),
-               cat('Backpacks', 'Laptop Backpacks') ),
+           sup('Leeds', cat('Backpacks', 'Laptop Backpacks') ),
            sup('Gemline', cat('Backpacks', 'Computer') ),
           ]],
          ['Checkpoint Friendly Backpacks',
@@ -542,10 +585,7 @@ private
       ],[
          ['Computer Business Bags',
           [match('name', 'computer brief'),
-           sup('Leeds',
-               cat('Business Cases', 'Compu-Cases'),
-               cat('Business Cases', 'Compu-Messenger Bags (Business Cases)'),
-               cat('Business Cases', 'Laptop Cases & Messenger Bags') ),
+           sup('Leeds', cat('Business Cases', 'Laptop Cases & Messenger Bags') ),
            sup('Gemline',
                cat('Portfolios', 'Computer Cases') ) ]],
          ['Messenger & Saddle Bags',
@@ -553,7 +593,7 @@ private
            match('name', 'messenger bag'),
            sup('Leeds',
                cat('Business Cases', 'Briefs & Messengers'),
-               cat('Business Cases', 'Compu-Messenger Bags (Business Cases)') ),
+               cat('Business Cases', 'Messenger Bags') ),
            sup('Gemline',
                cat('Portfolios', 'Business'),
                cat('Portfolios', 'Messenger Bags') ),
@@ -612,7 +652,9 @@ private
             ]],
          ['Wheeled Duffel Bags',
           [match('name', 'wheeled'),
-           sup('Leeds', cat('Duffels', 'Wheeled') ),
+           sup('Leeds',
+               cat('Duffels', 'Wheeled'),
+               cat('Luggage & Golf', 'Wheeled Duffels')),
            sup('Gemline', cat('Duffels', 'Wheeled') ) ]]
         ]],
      ['Golf Bags',
@@ -715,7 +757,8 @@ private
           ] ],
          ['Womens Totes',
           [match('name', 'gloss', 1),
-           sup('Gemline', cat('Women`s', 'Totes'), cat('Totes', "Women's")) ]],
+           sup('Gemline', cat('Women`s', 'Totes'), cat('Totes', "Women's")),
+           sup('Leeds', cat('Totes', 'Womens') )]],
          ['Zippered Totes',
           [match(%w(name description), 'zipper', 1)]],
         ] ],
@@ -808,7 +851,10 @@ private
       [sup('Sweda', cat('Brands', 'blueLounge') ) ]],
      ['Mia',
       [sup('Sweda', cat('Brands', 'Mia') ) ]],
-
+     ['Puma',
+      [sup('Leeds',
+           cat('Puma', 'Jackets'),
+           cat('Puma', 'Polos') ) ]],
     ] ],
 
  ['Technology',
@@ -885,6 +931,7 @@ private
            sup('Prime Line', cat('BUILT', 'iPad Cases/Sleeves') ),
            sup('Bullet Line', cat('Technology', 'Media Stands & Cases') ),
            sup('Sweda', cat('Tech', 'Cases + Sleeves') ),
+           sup('Leeds', cat('Stationery', 'Tech Stationery') ),
           ]],
          ['Screen Stylus',
           [sup('Leeds', all(cat('Mobile Tech', 'Accessories'),
@@ -950,8 +997,7 @@ private
  ['Desktop Accessories',
   [sup('Leeds',
        cat('Desktop', 'Accessories'),
-       cat('Desktop', 'Desktop Essentials (Desktop)'),
-       cat('Desktop', 'Electronics & Clocks (Desktop)') ),
+       cat('Desktop', 'Electronics & Clocks') ),
    sup('Prime Line',
        cat('Office'),
        cat('Office', 'Desk Items')),
@@ -1364,7 +1410,7 @@ private
   ],[
      ['Acrylic Drinkware',
       [match(%w(name description material), 'acrylic', 1),
-       sup('Leeds', cat('Drinkware', 'Acrylic (Drinkware)'), cat('Drinkware', 'Acrylic') ),
+       sup('Leeds', cat('Drinkware', 'Acrylic') ),
       ]],
      ['Aluminum Bottles',
       [match(%w(name description material), 'aluminum', 1),
@@ -1494,7 +1540,6 @@ private
       [sup('Norwood', cat('DRINK', 'GLASS') ),
        sup('Starline', cat('Drinkware', 'Glassware') ),
        sup('ETS Express Inc', cat('glass') ),
-       sup('Leeds', cat('Drinkware', 'Glassware') ),
       ] ],
      ['Specialty Drinkware',
       [sup('Bullet Line', cat('Drinkware', 'Specialty Drinkware'))
@@ -1738,7 +1783,8 @@ private
      ['Decorations',
       [sup('Norwood', cat('HOUSEWARES', 'DECO') ) ]],
      ['Food Storage',
-      [sup('Norwood', cat('HOUSEWARES', 'FOOD') ),]],
+      [sup('Norwood', cat('HOUSEWARES', 'FOOD') ),
+       sup('Leeds', cat('Housewares', 'Food Storage') ) ]],
      ['Wine Collection',
       [match('name', 'wine'),
        sup('Leeds',
@@ -1751,6 +1797,7 @@ private
      ['Cheese Collection',
       [sup('Leeds',
            cat('Housewares', 'Wine & Cheese'),
+           cat('Housewares', 'Wine & Cheese Collection'),
            match('name', 'cheese') ),
        sup('Starline', cat('HomeStyles', 'Cheese') ) ] ],
      ['Kitchen',
@@ -1794,6 +1841,7 @@ private
    sup('Hit Promotional Products', cat('Amenities'), cat('Personal Care') ),
    sup('Logomark', cat('Health and Fitness') ),
    sup('Prime Line', cat('Health Wellness', 'Exercise | Pedometers') ),
+   sup('Leeds', cat('Personal Wellness', 'Exercise & Fitness Accessories') )
   ],[
      ['First Aid Kits',
       [match('name', 'first aid'),
@@ -1823,7 +1871,6 @@ private
      ['Pedometers',
       [match('name', ['pedometer', 'step-meter', 'step meter']),
        sup('Leeds',
-           cat('Health & Wellness', 'Pedometers'),
            cat('Personal Wellness', 'Pedometers & Sports Monitors'),
            all(cat('Outdoor Living', 'Excursion'),
                match('name', 'pedometer') ) ),
@@ -1834,8 +1881,7 @@ private
       ] ],
      ['Fitness Sets',
       [all(match('name', %w(set kit), 1),
-           match('name', %w(exercise fitness)) ),
-       sup('Leeds', cat('Health & Wellness', 'Personal Wellness & Fitness') ) ]],
+           match('name', %w(exercise fitness)) ) ]],
      ['Dental Products',
       [match('name', %w(floss toothbrush tooth\ brush toothpick))]],
      ['Pill Cases',
@@ -1917,6 +1963,10 @@ private
       ],[
          ['London Fog',
           [sup('Sweda', cat('Brands', 'London Fog') ) ]],
+         ['Folding Umbrellas',
+          [sup('Leeds', cat('Umbrellas', 'Folding') )]],
+         ['Fashion Umbrellas',
+          [sup('Leeds', cat('Umbrellas', 'Fashion') )]],
         ] ],
      ['Phone Holders',
       [match('name', ['phone holder', 'phone stand']),
@@ -2018,7 +2068,6 @@ private
           [match('name', 'light', 1),
            match('name', /LED.+?light.+?key/i),
            exclude(match('name', 'limelight')),
-           sup('Leeds', cat('Keychains Keylights & Carabiner', 'Keylights (Keychains, Keylights') ),
            sup('Bullet Line', cat('Lighting', 'Key-Lights') ),
            sup('The Magnet Group', cat('Innovations', 'Key Lights') ),
            sup('Starline', cat('Flashlights', 'LED Keylights') ),
@@ -2214,9 +2263,7 @@ private
     ] ],
 
  ['Tools',
-  [sup('Leeds',
-       cat('Tools & Lighters', 'Tools'),
-       cat('Tools & Lighters', 'Tools (Tools & Lighters)') ),
+  [sup('Leeds', cat('Tools & Lighters', 'Tools') ),
    sup('PrimLine', cat('Tools') ),
    sup('Norwood', cat('AUTO', 'TOOLS') ),
    sup('High Caliber Line', cat('Tools') ),
@@ -2606,7 +2653,6 @@ private
      ['Blankets',
       [match('name', 'blanket'),
        sup('Norwood', cat('OUTDOOR', 'BLANKETS') ),
-       sup('Leeds', cat('Blankets', 'Blanket (Blankets)') ),
        sup('Prime Line', cat('Blankets') ),
        sup('Logomark', cat('Blankets') ),
        sup('Sweda', cat('Outdoors', 'Blankets') ),

@@ -170,6 +170,15 @@ class ProductRecordMerge
     uhash
   end
 
+  def self.extract(name_list, unique, non_ortho = nil)
+    size = unique.size
+    result = unique.collect { |u| Array(name_list).collect { |n| u.delete(n) } }.uniq
+    result.flatten! unless name_list.is_a?(Array)
+    unique.uniq!
+    raise "Unexpected extract size: #{unique.size} #{size}" unless non_ortho || (unique.size * result.size == size)
+    result
+  end
+
   def each
     unique_hash.each do |id, uhash|
       chash = common_hash[id]
@@ -1269,6 +1278,7 @@ private
   end
 
   def match_image_colors(image_list, colors, options = {}, supplier_num = @supplier_num || @product_description.supplier_num)
+    image_list = image_list.dup
 #    if colors.length == 1
 #      return { colors.first => image_list.collect { |image, suffix| image } }
 #    end

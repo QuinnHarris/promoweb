@@ -5,37 +5,6 @@ class PolyXLS < GenericImport
     super name
   end
 
-  @@color_override = {
-    'SM-4050' => ['black with gold trim',
-                  'black with silver trim',
-                  'blue with gold trim',
-                  'blue with silver trim',
-                  'green with silver trim',
-                  'pearlescent with gold trim',
-                  'silver with silver trim',
-                  'wine red with silver trim'],
-    '2050-02' => ['Black',
-                  'Black and White',
-                  'Black/Red',
-                  'Black/Yellow',
-                  'Burgundy/White',
-                  'Green',
-                  'Green and White',
-                  'Navy',
-                  'Navy and White',
-                  'Navy/Yellow',
-                  'Orange and White',
-                  'Pink/White',
-                  'Purple and White',
-                  'Red',
-                  'Red and White',
-                  'Red/Gray',
-                  'Red/White/Blue',
-                  'Royal',
-                  'Royal and White',
-                  'Yellow and White']
-  }
-
   def parse_products
     @image_list = get_ftp_images(@image_url) do |path, file|
       if /^((?:\d+|[A-Z]{2})-\d+)([A-Z]*).*\.(?:(?:tif)|(?:jpg))$/i === file
@@ -48,7 +17,12 @@ class PolyXLS < GenericImport
           tag = 'decorated'
         end
         
-        [file, product, variant, tag]
+        next [file, product, variant, tag]
+      end
+
+      if /^((?:(?:PA)|(?:TM))\d{5})(\d*).*\.(?:(?:tif)|(?:jpg))$/ === file
+        product, variant = $1, $2
+        next [file, product, variant]
       end
     end
 
@@ -101,65 +75,41 @@ class PolyXLS < GenericImport
     end
     decoration_data.default = nil
 
+    qty_price_cols = %w(First Second Third Fourth Fifth).map do |name|
+      ["#{name}ColMinQty", "#{name}ColPriceUSD"]
+    end
+
+    common_cols = %w(ProductName ItemDescription ApparelItem GIFTBOXED_LENGTH GIFTBOXED_WIDTH GIFTBOXED_Height CartonWeight CartonPackQTY) + qty_price_cols.flatten
+    unique_cols = %w(NewItem Material ApparelSize ApparelGender Category SubCategory Color ItemLength ItemWidth ItemHeight ProductSKU)
 
     prod_files.each do |file|
       ws = Spreadsheet.open(file).worksheet(0)
       puts "Header: #{ws.use_header.inspect}"
-      ws.each(1) do |row|
-        next unless @supplier_num = row[%w(ItemNo ItemNumber)]
-        @supplier_num.strip!
 
+      product_merge = ProductRecordMerge.new(unique_cols, common_cols)
+      
+      ws.each(1) do |row|
+        next unless supplier_num = row['ItemNumber']
+        product_merge.merge(supplier_num.strip, row)
+      end
+
+      product_merge.each do |supplier_num, unique, common|
         ProductDesc.apply(self) do |pd|
-          pd.supplier_num = @supplier_num
-          pd.name = row[%w(ItemName ProductName)]
+          pd.supplier_num = @supplier_num = supplier_num
+
+          # Common Parts
+          pd.name = common['ProductName']
           pd.lead_time.normal_min = 3
           pd.lead_time.normal_max = 5
           pd.lead_time.rush = 1
-          pd.supplier_categories = [[row['Category'], row['SubCategory']]]
-          
-          if row.header?('Feature_1')
-            # new format
-            (1..5).collect { |i| row["Feature_#{i}"] }.compact.each do |feature|
-              case feature
-              when 'New.eps'
-                pd.tags << 'New'
-              when 'Made in the USA.eps'
-                pd.tags << 'MadeInUSA'
-              when 'Eco Friendly.eps'
-                pd.tags << 'Eco'
-              when 'Exclusive Design.eps'
-              when 'Blue Ink.eps'
-              when 'Black Ink.eps'
-              when 'iPad.eps'
-              when /^1\d Laptop\.eps/
-              when 'TSA Compliant.eps'
-              else
-                warning 'Unknown Feature', feature
-              end
-            end
-          else
-            pd.tags << 'New' if row['NewItem'] == 'NEW' if row.header?('NewItem')
-          end
-#          pd.tags << 'Eco' if row['Category'] == 'EcoSmart'
-          
-          if @supplier_name == 'Leeds' and row[['Carton Quantity', 'CartonPackQTY']].is_a?(String)
-            # Kludge for bad data
-            pd.package.merge_from_object(row,
-                                         { 'units' => ['CartonWeight', 'Carton Weight'],
-                                           'weight' => ['Carton Quantity', 'CartonPackQTY'], })
-          else
-            pd.package.merge_from_object(row,
-                                         { 'units' => ['Carton Quantity', 'CartonPackQTY'],
-                                           'weight' => ['CartonWeight', 'Carton Weight'] })
-          end
 
-          if row.header?('Carton Width') # Only in new format
-            pd.package.merge_from_object(row,
-                                         { 'width' => ['Carton Width', 'GIFTBOXED_WIDTH'],
-                                           'length' => ['Carton Depth', 'GIFTBOXED_LENGTH'],
-                                           'height' => ['Carton Height', 'GIFTBOXED_Height'] })
-          end
-          pd.description = row[%w(CatalogDescPackaging ItemDescription)].to_s.split(/[\r\n]+|(?:\. )\s*/).collect do |line|
+          pd.package.merge_from_object(common,
+                                       { 'units' => 'CartonPackQTY',
+                                         'weight' => 'CartonWeight',
+                                         'width' => 'GIFTBOXED_WIDTH',
+                                         'length' => 'GIFTBOXED_LENGTH',
+                                         'height' => 'GIFTBOXED_Height' })
+          pd.description = common['ItemDescription'].to_s.split(/[\r\n]+|(?:\. )\s*/).collect do |line|
             line.strip!
             next nil if line.empty?
             line.scan(/\(#(.+?)\)/).flatten.each do |num|
@@ -168,82 +118,104 @@ class PolyXLS < GenericImport
               unless line.sub!("#{product.name} (##{num})", "<a href='#{product.web_id}'>#{product.name}</a>")
                 line.sub!("(##{num})", "<a href='#{product.web_id}'>(M#{product.id})</a>")
               end
-          end.compact
+            end.compact
             #        line.sub!('www.leedsworldrefill.com', "<a href='http://www.leedsworldrefill.com/'>www.leedsworldrefill.com</a>")
             [??,?!,?.].include?(line[-1]) ? line : "#{line}." 
           end.compact
-          
-          if row.header?('PriceQtyCol1')
-            # new format
-            (1..5).each do |idx|
-              break if (qty = row["PriceQtyCol#{idx}"]).blank?
-              pd.pricing.add(qty, row["PriceUSCol#{idx}"])
-            end
-          else
-            %w(First Second Third Fourth Fifth).each do |name|
-              break if row["#{name}ColMinQty"].blank?
-              pd.pricing.add(row["#{name}ColMinQty"], row["#{name}ColPriceUSD"])
-            end
-          end
-          if pd.pricing.empty?
-            # No prices probably memory product
-            pd.pricing.add(25, 500.0)
+
+          qty_price_cols.each do |qty, price|
+            break if common[qty].blank?
+            pd.pricing.add(common[qty], common[price])
           end
           pd.pricing.eqp(0.4, true)
           pd.pricing.ltm_if(40.00, 4) # LTM of 4 unless clearance
           pd.pricing.maxqty
 
-          
-          if row.header?('CatalogSize')
-            pd.properties['dimension'] = parse_dimension(row['CatalogSize']) || row['CatalogSize'] unless row['CatalogSize'].blank?
-          else
-            dimension = {}
-            { ['Itemlength', 'ItemLength'] => 'length', 
-              ['Itemwidth', 'ItemWidth'] => 'width',
-              ['Itemheight', 'ItemHeight'] => 'height' }.each do |src, dst|
-              num = row[src].to_s.gsub('\'','').to_f
-              dimension[dst] = num unless num == 0.0
-            end
-            pd.properties['dimension'] = dimension
-          end
-          pd.properties['material'] = row['Material'].to_s
-
-          unless dec = decoration_data[@supplier_num]
+          unless dec = decoration_data[pd.supplier_num]
             warning 'No Decoration'
             dec = []
           end
           pd.decorations = [DecorationDesc.none] + dec
-                    
-          colors = row[%w(ColorList Color)].to_s.split(/\s*(?:(?:\,|(?:\sor\s)|(?:\sand\s)|\&)\s*)+/).uniq
-          colors = [''] if colors.empty?
-          colors = @@color_override[pd.supplier_num] if @@color_override.has_key?(pd.supplier_num)
-        
-          color_image_map, color_num_map = match_colors(colors, :prune_colors => @options[:prune_colors])
-          #      puts "ColorMap: #{pd.supplier_num} #{color_image_map.inspect} #{color_num_map.inspect}"
-          pd.images = color_image_map[nil] || []
-          
-          postfixes = Set.new
-          pd.variants = colors.collect do |color|
-            postfix = color_num_map[color] #[@@color_map[color.downcase]].flatten.first
-            unless postfix
-              postfix = @@color_map[color.downcase]
-              postfix = color.split(/ |\//).collect { |c| [@@color_map[c.downcase]].flatten.first }.join unless postfix
-              warning 'No Postfix', color
+
+          material_list = ProductRecordMerge.extract('Material', unique)
+          if material_list.length > 1
+            material_list.sort_by { |s| s.length }.reverse
+            warning "Multiple Materials Listed"
+          end
+          pd.properties['material'] = material_list.first
+
+          new_list = ProductRecordMerge.extract('NewItem', unique, true)
+          if new_list.find { |n| n == 'NEW' }
+            pd.tags << 'New'
+          else
+            pd.tags = TagsDesc.new
+          end
+
+          # Categories are always common but extract many from unique
+          pd.supplier_categories = ProductRecordMerge.extract(['Category', 'SubCategory'], unique)
+
+          images = @image_list[pd.supplier_num]
+
+          pd.variants = unique.collect do |src|
+            properties = {}
+
+            properties['dimension'] =
+              %w(length width height).each_with_object({}) do |name, hash|
+              num = src["Item#{name.capitalize}"].to_f
+              hash[name] = num unless num == 0.0
             end
 
-            # Prevend duplicate postfix
-            postfix += 'X' while postfixes.include?(postfix)
-            postfixes << postfix
+            if common['ApparelItem'] == 'Yes'
+              properties['size'] = src['ApparelSize']
+              properties['gender'] = src['ApparelGender']
+            end
 
-            VariantDesc.new(:supplier_num => "#{@supplier_num}#{postfix}",
-                            :properties => {
-                              'color' => color.strip.capitalize,
-                            },
-                            :images => color_image_map[color] || [])
-          end
-        end
-      end
-    end
+            # If Leeds
+            color = properties['color'] = src['Color']
+            var_images = images.find_all { |node, var| src['ProductSKU'].include?(pd.supplier_num + var) }
+            images -= var_images
+            
+            VariantDesc.new(:supplier_num => src['ProductSKU'],
+                            :properties => properties,
+                            :images => var_images.map(&:first))
+
+            # Else Bullet
+
+          #   # Bullet uses a color list, Leeds lists a color per line
+          #   colors = src['Color'].to_s.split(/\s*(?:(?:\,|(?:\sor\s)|(?:\sand\s)|\&)\s*)+/).uniq
+          #   colors = [''] if colors.empty?
+
+
+          #   color_image_map, color_num_map = match_colors(colors, :prune_colors => @options[:prune_colors])
+          # #puts "ColorMap: #{pd.supplier_num} #{color_image_map.inspect} #{color_num_map.inspect}"
+          # pd.images = color_image_map[nil] || []
+          
+          # postfixes = Set.new
+          # pd.variants = colors.collect do |color|
+          #   postfix = color_num_map[color] #[@@color_map[color.downcase]].flatten.first
+          #   unless postfix
+          #     postfix = @@color_map[color.downcase]
+          #     postfix = color.split(/ |\//).collect { |c| [@@color_map[c.downcase]].flatten.first }.join unless postfix
+          #     warning 'No Postfix', color
+          #   end
+
+          #   # Prevend duplicate postfix
+          #   postfix += 'X' while postfixes.include?(postfix)
+          #   postfixes << postfix
+
+          #   VariantDesc.new(:supplier_num => "#{@supplier_num}#{postfix}",
+          #                   :properties => {
+          #                     'color' => color.strip.capitalize,
+          #                   },
+          #                   :images => color_image_map[color] || [])
+          # end # pd.variants
+            
+          end.flatten
+
+          pd.images = images.map(&:first)
+        end # Apply
+      end # row
+    end # prod_files
   end
 
   cattr_reader :color_map
@@ -396,11 +368,11 @@ class PolyXLS < GenericImport
 
   # Decoration XLS file
   @@decoration_replace = {
-    'Silkscreen' => ['Screen Print',3],
-    'ColorPrint' => ['Screen Print',3],
-    'Drinkware' => ['Screen Print',3],
-    'Transfer' => ['Screen Print',3],
-    'Watch Printing' => ['Screen Print', 3],
+    'ColorPrint - Level 1' => [['Color Print', 'Color Print - Level 1'], 3],
+    'ColorPrint - Level 2' => [['Color Print', 'Color Print - Level 2'], 3],
+    'Silkscreen' => [['Screen Print', 'Screen Print - Level 2'],3],
+    'Drinkware' => [['Screen Print', 'Screen Print - Level 2'],3],
+    'Transfer' => [['Screen Print', 'Screen Print - Level 2'],3],
 
     'PhotoReal' => ['Photo Transfer',3],
  

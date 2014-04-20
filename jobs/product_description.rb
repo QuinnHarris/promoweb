@@ -168,7 +168,7 @@ module PropertyObject
             begin
               value = eval "#{type}(value)"
             rescue ArgumentError
-              raise PropertyError.new("Invalide Argument: #{value}", name)
+              raise PropertyError.new("Invalid Argument: #{value}", name)
             end
           end
           self.class.test_type(name, type, value, options)
