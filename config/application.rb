@@ -147,7 +147,7 @@ class Bitcoin::Client
   end
 end
 
-
+require 'open-uri'
 class BitCoinRate
   def initialize(file, url)
     @file = file
@@ -174,10 +174,9 @@ class BitCoinRate
     unless @mtime
       begin
         start = Time.now
-        Net::HTTP.start(@uri.host, @uri.port, nil, nil, nil, nil, :open_timeout => 2, :read_timeout => 2) do |http|
-          data = http.request_get(@uri.path).body
-          File.open(@file, 'w') { |f| f.write(data) }
-        end
+        data = @uri.open
+        raise "Can't Open BitCoinRate URI" unless data
+        File.open(@file, 'w') { |f| f.write(data) }
         Rails.logger.info("BitCoin Rate file fetched: #{@file} : #{@uri} : #{Time.now - start}")
         @mtime = File.mtime(@file)
       rescue 
@@ -235,7 +234,7 @@ end
 
 class BitCoinAverageRate < BitCoinRate
   def initialize(file)
-    super file, 'http://api.bitcoinaverage.com/ticker/global/USD/'
+    super file, 'https://api.bitcoinaverage.com/ticker/global/USD/'
   end
 
   def rate_USD_internal
