@@ -6,25 +6,28 @@
   %hr
 
 - total = @order.total_chargeable
-  
-%table.form#bcinfo
-  %tr
-    %th Dollars:
-    %td= total.to_perty
-  %tr
-    %th Rate:
-    %td #{(payment_transaction ? payment_transaction.rate : BCRate.rate_USD).to_perty} / BTC
-  %tr
-    %th Discount:
-    %td #{payment_transaction ? payment_transaction.discount : BCDiscount}%
-  %tr
-    %th Bitcoins:
-    %td
-      %strong= payment_transaction ? payment_transaction.chargeable : BCRate.bc_USD(total * (1.0 - BCDiscount/100.0))
-  - if payment_transaction
-    %th Expires:
-    %td
-      %span#countdown{ 'data-expire' => payment_transaction.expires.to_i }
+
+- if !payment_transaction and !BCRate.rate_USD
+  %p Bitcoin rate fetch error
+- else
+  %table.form#bcinfo
+    %tr
+      %th Dollars:
+      %td= total.to_perty
+    %tr
+      %th Rate:
+      %td #{(payment_transaction ? payment_transaction.rate : BCRate.rate_USD).to_perty} / BTC
+    %tr
+      %th Discount:
+      %td #{payment_transaction ? payment_transaction.discount : BCDiscount}%
+    %tr
+      %th Bitcoins:
+      %td
+        %strong= payment_transaction ? payment_transaction.chargeable : BCRate.bc_USD(total * (1.0 - BCDiscount/100.0))
+    - if payment_transaction
+      %th Expires:
+      %td
+        %span#countdown{ 'data-expire' => payment_transaction.expires.to_i }
 
 %div#bcmeta
   - if payment_transaction
