@@ -185,6 +185,7 @@ class BitCoinRate
         # Rescue errors on bitcoin website
         Rails.logger.error("Could not get bitcoin rate: #{@uri}")
         @mtime = Time.now - age/2 # Retry latter
+        return # Don't load file if error.
       end
     end
 
