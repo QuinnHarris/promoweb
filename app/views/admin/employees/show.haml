@@ -5,25 +5,27 @@
         = link_to "#{employee.name} : #{'%0.0f%' % (employee.commission * 100.0)}", :id => employee.id
         \: #{employee.orders.count(:include => :customer, :conditions => "orders.closed = false AND customers.person_name != ''")} Open Orders
 
+%hr
+
 %h1= "Commissions for #{@user.name}"
 
 %h2 Commission Payments
 = form_for @commission, :url => apply_commission_admin_employee_path(@user), :html => { :method => :put } do |comm|
-  %table
+  %table.grid
     %thead
       %td Date
       %td Payed
       %td Comment
     %tbody
-      %tr
+      %tr.dyn
         %td
-          %strong Pending
+          %strong= format_time(Time.now, false)
         %td.money
           $
-          = comm.text_field :payed, :value => @pending_pay, :size => 7
-        %td= comm.text_field :comment
-        %td
-          = submit_tag 'Apply'
+          = comm.text_field :payed, :value => @total_payable, :size => 7
+        %td= comm.text_field :comment, :value => @payable_comment
+        %td.null
+          = submit_tag 'Apply', :confirm => 'Apply Payment?'
       - for comm in @commissions
         %tr
           %td= format_time(comm.created_at, false)
@@ -35,7 +37,7 @@
     - if payed
       %hr
     %h2= name
-    %table
+    %table.grid
       %thead
         %td Order
         %td Date
@@ -68,10 +70,9 @@
               - unless payed or order.payed.zero?
                 (-#{order.payed.to_perty} = #{(order.payable - order.payed).to_perty})
       %tfoot
-        %td
-        %td Total
-        %td= total_price.to_perty
-        %td= total_cost.to_perty
-        %td= total_profit.to_perty
+        %td.money{ :colspan => 2 } Total:
+        %td.money= total_price.to_perty
+        %td.money= total_cost.to_perty
+        %td.money= total_profit.to_perty
         %td
         %td.money= total_payable.to_perty

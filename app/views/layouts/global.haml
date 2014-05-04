@@ -72,7 +72,7 @@
                   .tabs
                     %ul
                       - if allowed?('Orders')
-                        != li_to 'Commission', { :controller => '/admin/employees', :action => 'index' } do params[:controller].include?('employees') end
+                        != li_to 'Commission', admin_employees_path do params[:controller].include?('employees') end
                       - if allowed?(%w(Super Orders))
                         != li_to 'Access', {:controller => '/admin/access', :action => 'paths' }
                         != li_to 'Suppliers', {:controller => '/admin/suppliers', :action => 'index' } do params[:controller].include?('suppliers') end

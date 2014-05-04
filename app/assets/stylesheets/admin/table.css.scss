@@ -1,0 +1,17 @@
+table.grid {
+    border: medium solid black;
+    td { border-right: thin solid grey; padding: 0.1em 0.3em 0.1em 0.3em; }
+    thead td { text-align: center; padding: 0.2em; font-weight: bold;}
+    tbody td {
+	border-bottom: thin solid black;
+    }
+    td.null { border: none; }
+    td.money { text-align: right; }
+
+    tr.dyn { background-color: yellow; }
+
+    tfoot {
+	border-top: medium solid black;
+	td { font-weight: bold;}
+    }
+}

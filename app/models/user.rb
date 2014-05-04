@@ -7,7 +7,7 @@ class User < ActiveRecord::Base
   has_many :delegatables, :dependent => :destroy
   belongs_to :current_order, :class_name => 'Order', :foreign_key => 'current_order_id'
   has_many :orders
-  has_many :commissions
+  has_many :commissions, :order => 'id DESC'
   has_many :phones
 
   def email

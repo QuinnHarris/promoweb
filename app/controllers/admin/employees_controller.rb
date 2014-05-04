@@ -16,22 +16,19 @@ private
                                 :include => :tasks_active,
                                 :conditions => "closed AND NOT orders.settled AND order_tasks.type = 'CompleteOrderTask'")
 
-    @total_profit = @closed_orders.inject(Money.new(0)) do |m, o|
-      m += o.total_price_cache - o.total_cost_cache
-      m
+    @total_payable = @closed_orders.inject(Money.new(0)) do |m, o|
+      m + o.payable - o.payed
     end
 
-    @commissions = @user.commissions
-#    @total_settled = @commissions.inject(Money.new(0)) { |m, c| m += c.settled; m }
-    @total_payed = @commissions.inject(Money.new(0)) { |m, c| m += c.payed; m }
+    @payable_comment = (Time.now - 15.days).strftime("%B %Y")
 
-#    @pending_settle = @total_profit - @total_settled
-#    @pending_pay = (@pending_settle * (@user.commission || 0)).round_cents
+    @commissions = @user.commissions
   end
 
 public
   def index
-    redirect_to admin_employee_path(@user)
+    calculate
+    redirect_to admin_employee_path(@employees.first)
   end
 
   def show
@@ -56,7 +53,7 @@ public
       @user.commissions.create(:payed => pay,
                                :comment => params[:commission][:comment] || '')
 
-      @closed_orders.reverse.each do |order|
+      @closed_orders.sort_by {|o| o.payable }.each do |order|
         p = [order.payable - order.payed, pay].min
         pay -= p
         order.payed += p
