@@ -169,13 +169,15 @@ class BitCoinRate
       end
     end
 
-    data = nil
+    @hash = nil
 
     unless @mtime
       begin
         start = Time.now
         data = @uri.open
         raise "Can't Open BitCoinRate URI" unless data
+        data = data.read
+        @hash = ActiveSupport::JSON.decode(data)
         File.open(@file, 'w') { |f| f.write(data) }
         Rails.logger.info("BitCoin Rate file fetched: #{@file} : #{@uri} : #{Time.now - start}")
         @mtime = File.mtime(@file)
@@ -183,16 +185,14 @@ class BitCoinRate
         # Rescue errors on bitcoin website
         Rails.logger.error("Could not get bitcoin rate: #{@uri}")
         @mtime = Time.now - age/2 # Retry latter
+        return # Don't load file if error.
       end
     end
 
-    unless data
+    unless @hash
       Rails.logger.info("BitCoin Rate file reloaded: #{@mtime} : #{@file}")
-      f = File.open(@file)
-      data = f.read
+      @hash = File.open(@file) { |f| ActiveSupport::JSON.decode(f.read) }
     end
-
-    @hash = ActiveSupport::JSON.decode(data)
   end
 
   def age
