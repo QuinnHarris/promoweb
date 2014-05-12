@@ -202,7 +202,7 @@ xml.QBXML do
     end
 
 
-    @payment_transactions.each do |payment_transaction|
+    @payment_transactions.sort_by { |pt| pt.amount.abs.to_i }.each do |payment_transaction|
       charge = payment_transaction.amount.to_i > 0
       if charge or payment_transaction.method.is_a?(PaymentCreditCard)
         item(xml, payment_transaction, charge ? 'ReceivePayment': 'ARRefundCreditCard', 'TxnID') do |pt, new_item|
