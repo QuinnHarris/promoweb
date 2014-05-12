@@ -202,7 +202,7 @@ xml.QBXML do
     end
 
 
-    @payment_transactions.sort_by { |pt| pt.amount.abs.to_i }.each do |payment_transaction|
+    @payment_transactions.each do |payment_transaction|
       charge = payment_transaction.amount.to_i > 0
       if charge or payment_transaction.method.is_a?(PaymentCreditCard)
         item(xml, payment_transaction, charge ? 'ReceivePayment': 'ARRefundCreditCard', 'TxnID') do |pt, new_item|
@@ -236,7 +236,7 @@ xml.QBXML do
 	  if charge
             xml.IsAutoApply 1
 	  else
-	    pt.order.invoices.to_a.find_all { |i| i.total_price.to_i < 0 }.sort_by { |i| i.total_price.abs.to_i }.each do |invoice|
+	    pt.order.invoices.to_a.find_all { |i| i.total_price.to_i < 0 }.sort_by { |i| [i.total_price.abs == amount ? 0 : 1, i.total_price.abs.to_i] }.each do |invoice|
 	      xml.RefundAppliedToTxnAdd do
 	        xml.TxnID invoice.quickbooks_id
 		refund = [invoice.total_price.abs, amount].min
