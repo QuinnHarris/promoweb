@@ -242,8 +242,8 @@ xml.QBXML do
 		refund = [invoice.total_price.abs, amount].min
 		xml.RefundAmount refund.to_s
 		amount -= refund
-		break if amount.zero?
 	      end
+	      break if amount.zero?
 	    end
 	  end
         end
