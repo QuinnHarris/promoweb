@@ -17,10 +17,10 @@
   .admin
     The order has been Acknowledged so customer pricing can't be changed.
     = link_to 'UNLOCK', { :unlock => true }, { :confirm => 'Unlock this page to modify items even though the order has been acknowledged!!!' }
-- else !params[:override] and purchase_list.find { |p| p.locked(allowed?('Super')) }
+- elsif !params[:override] and @suppliers.to_a.find { |s, pl| pl.find { |p| p.locked(allowed?('Super')) } }
   .admin
-    The order has been received so bill pricing can't be changed.
-    = link_to 'OVERRIDE', { :override = true}, { :confirm => 'Unlock this page to modify items even though the order has been received!!!' }
+    The order bills have been reconciled so it can't be changed.
+    = link_to 'OVERRIDE', { :override => true}, { :confirm => 'Unlock this page to modify items even though the order bills have been reconciled!!!' }
 .invoice{ :id => "order-#{@order.id}" }
   - for supplier, purchase_list in @suppliers.to_a.sort_by { |s| s.first.id }
     .supplier

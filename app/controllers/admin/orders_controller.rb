@@ -741,7 +741,7 @@ class Admin::OrdersController < Admin::BaseController
 
 protected
   def order_locks
-    @unlock = params[:unlock] && permission?('Super')
+    @unlock = (params[:unlock] || params[:override]) && permission?('Super')
     @price_lock = @order.task_completed?(AcknowledgeOrderTask) && !@unlock
   end
 public
