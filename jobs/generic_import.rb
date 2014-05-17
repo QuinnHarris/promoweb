@@ -684,7 +684,7 @@ class GenericImport
     swatches = @product_list.collect { |pd| ([pd.properties['swatch']] +  pd.variants.collect { |pv| pv.properties['swatch'] }).compact }.flatten.uniq
     return if swatches.empty?
 
-    puts "Swatch DeDup START <<"
+    puts "Swatch DeDup START <"
 
     replace_images = find_duplicate_images(swatches)
 
@@ -696,7 +696,7 @@ class GenericImport
         pv.properties['swatch'] = replace_images[swatch] if replace_images.has_key?(swatch)
       end
     end
-    puts ">> Swatch DeDup STOP: #{swatches.size} #{replace_images.size}"
+    puts "> Swatch DeDup STOP: #{swatches.size} #{replace_images.size}"
   end
 
   def run_parse

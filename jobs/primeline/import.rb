@@ -106,7 +106,7 @@ class PrimeLineWeb < GenericImport
     image_paths = %w(BT LG LT PL).collect { |p| "product_imagesNoLogo/#{p}-BlankImages" }
     image_paths += %w(BuiltImages LeemanImages LogoTec PL-0-3000 PL-3001-6000 PL-6001-9999).collect { |p| "product_images/#{p}/300dpi" }
     @image_list = get_ftp_images('ftp.primeworld.com', image_paths) do |path, file|
-      (/^([A-Z]{2})(\d{3,4})(\w*)HIRES(\d?)\.{1,2}jpg$/i === file) && 
+      (/^([A-Z]{2})-?(\d{3,4})([\w-]*?)(?:HIRES)?(\d*)\.{1,2}jpg$/i === file) && 
         ["#{path}/#{file}", "#{$1}-#{"%04d" % $2.to_i}", $3, path.include?('BlankImages') ? 'blank' : nil]
     end
 
@@ -233,8 +233,8 @@ class PrimeLineWeb < GenericImport
       
       
       # Features
-      pd.description = doc.xpath("//img[@src='images/bulletArrow.gif']").collect do |img|
-        line = img.next_sibling.children.collect do |child|
+      pd.description = doc.xpath("//td[img/@src='images/bulletArrow.gif']/span").collect do |span|
+        line = span.children.collect do |child|
           next child.text.strip if child.text?
           case child.name
           when 'a'
@@ -280,9 +280,7 @@ class PrimeLineWeb < GenericImport
       if cat_node = doc.at_xpath("//span[@id='ctl00_content_ProductClasstext']")
         cat = cat_node.text.split('>').collect { |s| s.strip.capitalize }.flatten
         unless cat.empty? or categories.flatten.include?(cat)
-          puts "CAT: #{cat.inspect}"
           categories += [cat]
-          puts "CATS: #{categories.inspect}"
         end
       end
 
@@ -385,9 +383,9 @@ class PrimeLineWeb < GenericImport
       end
       raise ValidateError, 'No Colors' if color_list.empty?
 
-      
+#      puts "INPUT: #{@image_list[pd.supplier_num].inspect}"
       color_image_map, color_num_map = match_colors(color_list)
-      puts "ColorMAP: #{color_image_map.inspect}"
+#      puts "ColorMAP: #{color_image_map.inspect}"
       pd.images = color_image_map[nil] || []
 
       pd.variants = product_list.zip(color_list).collect do |prod, color|
