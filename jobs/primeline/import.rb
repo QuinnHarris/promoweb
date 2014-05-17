@@ -328,7 +328,7 @@ class PrimeLineWeb < GenericImport
         price_str = nil if price_str.empty?
  
 
-        rows = tr.children[0].xpath("table/tr/td/table/tr[td/font]")
+        rows = tr.children[1].xpath("table/tr/td/table/tr[td/font]")
         next unless rows and rows.length > 1
         
         minimums = rows.shift.xpath("//td[@align='right']/font/b").to_a.compact

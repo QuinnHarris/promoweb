@@ -175,7 +175,7 @@ class ProductRecordMerge
     result = unique.collect { |u| Array(name_list).collect { |n| u.delete(n) } }.uniq
     result.flatten! unless name_list.is_a?(Array)
     unique.uniq!
-    raise "Unexpected extract size: #{unique.size} #{size}" unless non_ortho || (unique.size * result.size == size)
+    raise ValidateError.new("Unexpected extract size", "#{unique.size} #{size}") unless non_ortho || (unique.size * result.size == size)
     result
   end
 
@@ -294,7 +294,7 @@ module WebFetchCommon
                         pbar.file_transfer_mode
                       end },
                     :progress_proc => lambda {|s|
-                      pbar.set s if pbar
+                      pbar.set [s, pbar.total].min if pbar
                     })
       return nil if f.length == 0
 
@@ -708,7 +708,7 @@ class GenericImport
     @product_hash = nil # Don't need hash anymore
     mid_time = Time.now
     puts "#{@supplier_record.name} parse stop at #{mid_time} for #{mid_time - init_time}s #{@product_list.length}"     
-    unless ARGV.include?('nopost')
+    unless @nopost or ARGV.include?('nopost')
       @product_list.delete_if do |pd|
         begin
           pd.validate_after
@@ -812,16 +812,22 @@ class GenericImport
       
       common_count = 0
       delete_id_list = []
+      notupdated_sup_list = []
       delete_sup_list = []
+      invalid_prod_nums = @invalid_prods.values.flatten
       current_id_list = @supplier_record.products.select([:id, :supplier_num]).collect do |p|
         if supplier_num_set.delete?(p.supplier_num)
           common_count += 1
-        elsif !(Rails.env.production? && @invalid_prods.values.flatten.index(p.supplier_num))
+        elsif invalid_prod_nums.include?(p.supplier_num)
+          notupdated_sup_list << p.supplier_num
+        else
           delete_id_list << p.id 
           delete_sup_list << p.supplier_num
         end
         p.id
       end
+
+      puts "Not Updated Products: #{notupdated_sup_list.join(', ')}"
 
       puts "Deleted Products: #{delete_sup_list.join(', ')}"
 
@@ -834,7 +840,7 @@ class GenericImport
         puts "  #{name}:#{'%5d' % count} (#{'%0.02f%' % (count * 100.0 / total)})"
       end
 
-      if (change_count * 10 > total) || (delete_id_list.length * 20 > total)
+      if (change_count * 10 > total) || (delete_id_list.length * 20 > total) || (notupdated_sup_list.length * 100 > total)
         if ARGV.include?('override')
           puts "Override excessive change"
         else

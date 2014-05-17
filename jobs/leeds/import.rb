@@ -2,12 +2,15 @@
 class PolyXLS < GenericImport
   def initialize(name, options = {})
     @options = options
+    @nopost = true
     super name
   end
 
+  SUPPLIER_NUM_A = /(?:\d+|[A-Z]{2})-\d+/
+  SUPPLIER_NUM_B = /(?:(?:PA)|(?:TM))\d{5}/
   def parse_products
     @image_list = get_ftp_images(@image_url) do |path, file|
-      if /^((?:\d+|[A-Z]{2})-\d+)([A-Z]*).*\.(?:(?:tif)|(?:jpg))$/i === file
+      if /^(#{SUPPLIER_NUM_A})([A-Z]*).*\.(?:(?:tif)|(?:jpg))$/i === file
         product, variant = $1, $2
         tag = nil
         case file
@@ -20,7 +23,7 @@ class PolyXLS < GenericImport
         next [file, product, variant, tag]
       end
 
-      if /^((?:(?:PA)|(?:TM))\d{5})(\d*).*\.(?:(?:tif)|(?:jpg))$/ === file
+      if /^(#{SUPPLIER_NUM_B})(\d*).*\.(?:(?:tif)|(?:jpg))$/ === file
         product, variant = $1, $2
         next [file, product, variant]
       end
@@ -51,7 +54,7 @@ class PolyXLS < GenericImport
       @supplier_num = row['ItemNumber'].to_s.strip
       next if @supplier_num.empty?
 
-      raise "Bad Item: #{@supplier_num}" unless /^((?:\d+|[A-Z]{2})-\d+)(\w*)/ =~ @supplier_num
+      raise "Bad Item: #{@supplier_num}" unless /^(#{SUPPLIER_NUM_A}|#{SUPPLIER_NUM_B})(\w*)/ =~ @supplier_num
       prefix = $1
 
       dd = DecorationDesc.new
@@ -79,8 +82,8 @@ class PolyXLS < GenericImport
       ["#{name}ColMinQty", "#{name}ColPriceUSD"]
     end
 
-    common_cols = %w(ProductName ItemDescription ApparelItem GIFTBOXED_LENGTH GIFTBOXED_WIDTH GIFTBOXED_Height CartonWeight CartonPackQTY) + qty_price_cols.flatten
-    unique_cols = %w(NewItem Material ApparelSize ApparelGender Category SubCategory Color ItemLength ItemWidth ItemHeight ProductSKU)
+    common_cols = %w(ProductName ItemDescription GIFTBOXED_LENGTH GIFTBOXED_WIDTH GIFTBOXED_Height CartonWeight CartonPackQTY) + qty_price_cols.flatten + (@common_cols_extra || [])
+    unique_cols = %w(NewItem Material Category SubCategory ItemLength ItemWidth ItemHeight) + (@unique_cols_extra || [])
 
     prod_files.each do |file|
       ws = Spreadsheet.open(file).worksheet(0)
@@ -154,65 +157,7 @@ class PolyXLS < GenericImport
           # Categories are always common but extract many from unique
           pd.supplier_categories = ProductRecordMerge.extract(['Category', 'SubCategory'], unique)
 
-          images = @image_list[pd.supplier_num]
-
-          pd.variants = unique.collect do |src|
-            properties = {}
-
-            properties['dimension'] =
-              %w(length width height).each_with_object({}) do |name, hash|
-              num = src["Item#{name.capitalize}"].to_f
-              hash[name] = num unless num == 0.0
-            end
-
-            if common['ApparelItem'] == 'Yes'
-              properties['size'] = src['ApparelSize']
-              properties['gender'] = src['ApparelGender']
-            end
-
-            # If Leeds
-            color = properties['color'] = src['Color']
-            var_images = images.find_all { |node, var| src['ProductSKU'].include?(pd.supplier_num + var) }
-            images -= var_images
-            
-            VariantDesc.new(:supplier_num => src['ProductSKU'],
-                            :properties => properties,
-                            :images => var_images.map(&:first))
-
-            # Else Bullet
-
-          #   # Bullet uses a color list, Leeds lists a color per line
-          #   colors = src['Color'].to_s.split(/\s*(?:(?:\,|(?:\sor\s)|(?:\sand\s)|\&)\s*)+/).uniq
-          #   colors = [''] if colors.empty?
-
-
-          #   color_image_map, color_num_map = match_colors(colors, :prune_colors => @options[:prune_colors])
-          # #puts "ColorMap: #{pd.supplier_num} #{color_image_map.inspect} #{color_num_map.inspect}"
-          # pd.images = color_image_map[nil] || []
-          
-          # postfixes = Set.new
-          # pd.variants = colors.collect do |color|
-          #   postfix = color_num_map[color] #[@@color_map[color.downcase]].flatten.first
-          #   unless postfix
-          #     postfix = @@color_map[color.downcase]
-          #     postfix = color.split(/ |\//).collect { |c| [@@color_map[c.downcase]].flatten.first }.join unless postfix
-          #     warning 'No Postfix', color
-          #   end
-
-          #   # Prevend duplicate postfix
-          #   postfix += 'X' while postfixes.include?(postfix)
-          #   postfixes << postfix
-
-          #   VariantDesc.new(:supplier_num => "#{@supplier_num}#{postfix}",
-          #                   :properties => {
-          #                     'color' => color.strip.capitalize,
-          #                   },
-          #                   :images => color_image_map[color] || [])
-          # end # pd.variants
-            
-          end.flatten
-
-          pd.images = images.map(&:first)
+          process_variants(pd, common, unique)
         end # Apply
       end # row
     end # prod_files
