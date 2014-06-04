@@ -38,11 +38,12 @@
           %th{ :colspan => 3 } #{order.tax_type} Sales Tax
           %td= order.tax_rate_s
           %td ???
-          %td.num{ :colspan => 3}
-            - if order.tax_type == 'nonprofit'
-              = link_to("Reset Sales Tax", tax_type_admin_order_path(order), method: :post, confirm: "Change Tax Type?")
-            - else
-              = link_to("No Tax, Non Profit", tax_type_admin_order_path(order, type: 'nonprofit'), method: :post, confirm: "Change Tax Type?")
+          - unless @price_lock
+            %td.num{ :colspan => 3}
+              - if order.tax_type == 'nonprofit'
+                = link_to("Reset Sales Tax", tax_type_admin_order_path(order), method: :post, confirm: "Change Tax Type?")
+              - else
+                = link_to("No Tax, Non Profit", tax_type_admin_order_path(order, type: 'nonprofit'), method: :post, confirm: "Change Tax Type?")
         %tr.money.num
           %th{ :colspan => 4 } Total:
           %td ???
