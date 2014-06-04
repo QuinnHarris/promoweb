@@ -977,7 +977,13 @@ public
 
     obj
   end
-  
+
+  def tax_type
+    @order.apply_sales_tax(params[:type] || false, params[:rate])
+    @order.save!
+
+    redirect_to :back
+  end
   
   def email
     require 'net/imap'

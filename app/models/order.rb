@@ -257,9 +257,9 @@ class Order < ActiveRecord::Base
     '%0.02f%' % (self.tax_rate * 100.0)
   end
   
-  def apply_sales_tax
-    unless tax_type
-      self.tax_type, self.tax_rate = customer.sales_tax
+  def apply_sales_tax(tt = nil, tr = nil)
+    unless tax_type and tt.nil?
+      self.tax_type, self.tax_rate = tt ? [tt, tr || 0.0] : customer.sales_tax
       logger.info("Apply: #{tax_type} #{tax_rate}")
     end
   end

@@ -203,6 +203,8 @@ Promoweb::Application.routes.draw do
         get 'autocomplete_order_item_entry_description'
         get 'autocomplete_order_item_decoration_description'
 
+        post 'tax_type'
+
         post 'duplicate'
         post 'item_duplicate'
         post 'restore'
