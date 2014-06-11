@@ -214,6 +214,7 @@ Promoweb::Application.routes.draw do
 
         put 'purchase_create'
         post 'purchase_mark'
+        delete 'purchase_delete'
 
         put 'invoice_create'
         delete 'invoice_destroy'

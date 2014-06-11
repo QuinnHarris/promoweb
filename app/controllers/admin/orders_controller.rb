@@ -697,6 +697,23 @@ class Admin::OrdersController < Admin::BaseController
     end
     redirect_to :action => :items
   end
+
+  def purchase_delete
+    Purchase.transaction do
+      purchase = Purchase.find(params[:purchase])
+      raise "Purchase has bill" if purchase.bill
+      raise "Purchase has entries" unless purchase.entries.empty?
+      purchase.items.each do |item|
+        raise "Item not part of order" unless item.order_id == @order.id
+        raise "Order Item Sent" if item.task_completed?(OrderSentItemTask)
+        item.purchase_id = nil
+        item.save!
+      end
+      purchase.purchase_order.delete
+      purchase.delete
+    end
+    redirect_to :action => :items
+  end
   
   def purchase_mark
     Purchase.transaction do
