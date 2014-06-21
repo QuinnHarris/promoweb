@@ -136,15 +136,16 @@ xml.QBXML do
       #xml.FOB
       #xml.ShipDate
       #xml.ShipMethodRef do
+      taxed = invoice.tax_type and (invoice.tax_type != 'nonprofit')
       xml.ItemSalesTaxRef do
         xml.ListID invoice.qb_sales_tax_id
-      end if invoice.tax_type and invoice.tax_type != 'nonprofi'
+      end if taxed
       xml.Memo "Order #{invoice.order.id}"
       #xml.CustomerMsgRef do
       xml.IsToBePrinted 0
       #xml.IsToBeEmailed
       xml.CustomerSalesTaxCodeRef do
-        xml.FullName invoice.tax_type ? 'Tax' : 'Non'
+        xml.FullName taxed ? 'Tax' : 'Non'
       end
       #xml.Other
       #xml.LinkToTxnIDList  
