@@ -136,7 +136,7 @@ xml.QBXML do
       #xml.FOB
       #xml.ShipDate
       #xml.ShipMethodRef do
-      taxed = invoice.tax_type and (invoice.tax_type != 'nonprofit')
+      taxed = (invoice.tax_type && (invoice.tax_type != 'nonprofit'))
       xml.ItemSalesTaxRef do
         xml.ListID invoice.qb_sales_tax_id
       end if taxed
