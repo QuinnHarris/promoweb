@@ -3,6 +3,10 @@ class Admin::SystemController < Admin::BaseController
     response.headers['Content-Disposition'] = 'attachment; filename=promoweb.qwc'
     render :layout => false, :format => :xml
   end
+
+  def blank
+    render :inline => ''
+  end
   
   def quickbooks_blocked
     @title = "Quickbooks"

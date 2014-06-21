@@ -12,8 +12,7 @@ class QbwcRouter < WashOut::Router
       if env['action_dispatch.request.request_parameters']
         env['HTTP_SOAPACTION'] = env['action_dispatch.request.request_parameters']['Envelope']['Body'].keys.last.dup
       else
-        @controller = @controller_name.constantize
-        return controller.action(:_invalid_action).call(env)
+        return Admin::SystemController.action(:blank).call(env)
       end
     end
 
