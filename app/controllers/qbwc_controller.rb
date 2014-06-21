@@ -9,7 +9,8 @@ class QbwcRouter < WashOut::Router
   # So we set the header in this before filter.
   def call(env)
     if env['HTTP_SOAPACTION'].blank? || env['HTTP_SOAPACTION'] == %Q("")
-      env['HTTP_SOAPACTION'] = env['action_dispatch.request.request_parameters']['Envelope']['Body'].keys.last.dup
+      envelope = env['action_dispatch.request.request_parameters']['Envelope']
+      env['HTTP_SOAPACTION'] = envelope['Body'].keys.last.dup if envelope
     end
     
     super env
