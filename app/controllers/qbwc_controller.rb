@@ -8,12 +8,12 @@ class QbwcRouter < WashOut::Router
   # HTTP_SOAPACTION set correctly in order to route the incoming SOAP request.
   # So we set the header in this before filter.
   def call(env)
-    if env['HTTP_SOAPACTION'].blank? || env['HTTP_SOAPACTION'] == %Q("")
+    if env['HTTP_SOAPACTION'].blank? || (env['HTTP_SOAPACTION'] == %Q(""))
       if env['action_dispatch.request.request_parameters']
         env['HTTP_SOAPACTION'] = env['action_dispatch.request.request_parameters']['Envelope']['Body'].keys.last.dup
       else
         @controller = @controller_name.constantize
-        return controller.action(:nosoap).call(env)
+        return controller.action(:_invalid_action).call(env)
       end
     end
 
