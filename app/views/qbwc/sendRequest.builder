@@ -149,7 +149,7 @@ xml.QBXML do
       end
       #xml.Other
       #xml.LinkToTxnIDList  
-      sub_items_invoice(xml, invoice.entries, new_item, qb_type, negate, invoice.tax_type)
+      sub_items_invoice(xml, invoice.entries, new_item, qb_type, negate, taxed)
       #xml.InvoiceLineGroupAdd do
       #xml.IncludeRetElementList
     end
