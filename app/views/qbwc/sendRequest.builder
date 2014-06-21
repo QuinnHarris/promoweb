@@ -138,7 +138,7 @@ xml.QBXML do
       #xml.ShipMethodRef do
       xml.ItemSalesTaxRef do
         xml.ListID invoice.qb_sales_tax_id
-      end if invoice.tax_type
+      end if invoice.tax_type and invoice.tax_type != 'nonprofi'
       xml.Memo "Order #{invoice.order.id}"
       #xml.CustomerMsgRef do
       xml.IsToBePrinted 0
