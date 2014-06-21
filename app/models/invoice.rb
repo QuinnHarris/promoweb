@@ -27,11 +27,11 @@ class Invoice < ActiveRecord::Base
   def qb_sales_tax_id
     case tax_type
     when 'Colorado'
-      '80000476-1300837712'
+      '800000EB-1394161930'
     when 'LaPlata'
-      '80000710-1311095766'
+      '80000202-1402359251'
     when 'Durango'
-      '80000711-1311096268'
+      '80000203-1402359296'
     else
       nil
     end

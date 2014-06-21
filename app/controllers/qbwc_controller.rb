@@ -9,12 +9,14 @@ class QbwcRouter < WashOut::Router
   # So we set the header in this before filter.
   def call(env)
     if env['HTTP_SOAPACTION'].blank? || env['HTTP_SOAPACTION'] == %Q("")
-      if parameters = env['action_dispatch.request.request_parameters']
-        envelope = parameters['Envelope']
-        env['HTTP_SOAPACTION'] = envelope['Body'].keys.last.dup if envelope
+      if env['action_dispatch.request.request_parameters']
+        env['HTTP_SOAPACTION'] = env['action_dispatch.request.request_parameters']['Envelope']['Body'].keys.last.dup
+      else
+        @controller = @controller_name.constantize
+        return controller.action(:nosoap).call(env)
       end
     end
-    
+
     super env
   end
 end
