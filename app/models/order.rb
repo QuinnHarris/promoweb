@@ -282,6 +282,7 @@ class Order < ActiveRecord::Base
   end
 
   def commission
+    return 1.0 if user.name == customer.person_name
     attributes['commission'] || user.commission
   end
 

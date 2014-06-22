@@ -402,3 +402,66 @@ insert into decoration_techniques (name, unit_name) values ('Pen Print', 'colors
 insert into decoration_techniques (name, unit_name) values ('Color Print', 'colors') RETURNING id;
 insert into decoration_techniques (name, parent_id, unit_name) values ('Color Print - Level 1', 178, 'colors');
 insert into decoration_techniques (name, parent_id, unit_name) values ('Color Print - Level 2', 178, 'colors');
+
+
+SELECT
+  "orders".*
+FROM "orders"
+WHERE "orders"."user_id" = 16 AND "orders"."id" IN (SELECT
+                                                      id
+                                                    FROM "order_tasks"
+                                                    WHERE
+                                                      "order_tasks"."type" IN
+                                                      ('CompleteOrderTask')) AND
+      (closed) AND (NOT settled)
+ORDER BY orders.id DESC;
+
+
+SELECT
+  "orders"."id"                          AS t0_r0,
+  "orders"."customer_id"                 AS t0_r1,
+  "orders"."delivery_date"               AS t0_r2,
+  "orders"."event_nature"                AS t0_r3,
+  "orders"."special"                     AS t0_r4,
+  "orders"."customer_notes"              AS t0_r5,
+  "orders"."our_notes"                   AS t0_r6,
+  "orders"."created_at"                  AS t0_r7,
+  "orders"."updated_at"                  AS t0_r8,
+  "orders"."process_order"               AS t0_r9,
+  "orders"."user_id"                     AS t0_r10,
+  "orders"."our_comments"                AS t0_r11,
+  "orders"."terms"                       AS t0_r12,
+  "orders"."rush"                        AS t0_r13,
+  "orders"."ship_method"                 AS t0_r14,
+  "orders"."fob"                         AS t0_r15,
+  "orders"."closed"                      AS t0_r16,
+  "orders"."quickbooks_id"               AS t0_r17,
+  "orders"."quickbooks_at"               AS t0_r18,
+  "orders"."quickbooks_sequence"         AS t0_r19,
+  "orders"."urgent_note"                 AS t0_r20,
+  "orders"."total_price_cache"           AS t0_r21,
+  "orders"."total_cost_cache"            AS t0_r22,
+  "orders"."commission"                  AS t0_r23,
+  "orders"."payed"                       AS t0_r24,
+  "orders"."settled"                     AS t0_r25,
+  "orders"."delivery_date_not_important" AS t0_r26,
+  "orders"."tax_rate"                    AS t0_r27,
+  "orders"."tax_type"                    AS t0_r28,
+  "orders"."purchase_order"              AS t0_r29,
+  "order_tasks"."id"                     AS t1_r0,
+  "order_tasks"."order_id"               AS t1_r1,
+  "order_tasks"."comment"                AS t1_r2,
+  "order_tasks"."created_at"             AS t1_r3,
+  "order_tasks"."updated_at"             AS t1_r4,
+  "order_tasks"."user_id"                AS t1_r5,
+  "order_tasks"."data"                   AS t1_r6,
+  "order_tasks"."type"                   AS t1_r7,
+  "order_tasks"."host"                   AS t1_r8,
+  "order_tasks"."active"                 AS t1_r9,
+  "order_tasks"."expected_at"            AS t1_r10
+FROM "orders"
+  LEFT OUTER JOIN "order_tasks"
+    ON "order_tasks"."order_id" = "orders"."id" AND order_tasks.active
+WHERE "orders"."user_id" = 16 AND
+      (closed AND NOT orders.settled AND order_tasks.type = 'CompleteOrderTask')
+ORDER BY orders.id DESC

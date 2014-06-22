@@ -141,7 +141,6 @@ xml.QBXML do
         xml.ListID invoice.qb_sales_tax_id
       end if taxed
       xml.Memo "Order #{invoice.order.id}"
-      #xml.CustomerMsgRef do
       xml.IsToBePrinted 0
       #xml.IsToBeEmailed
       xml.CustomerSalesTaxCodeRef do

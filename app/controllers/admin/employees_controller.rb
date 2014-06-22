@@ -12,9 +12,11 @@ private
       end
     end
 
-    @closed_orders = @user.orders.find(:all, :order => 'orders.id DESC',
-                                :include => :tasks_active,
-                                :conditions => "closed AND NOT orders.settled AND order_tasks.type = 'CompleteOrderTask'")
+    @closed_orders = @user.orders
+      .where("closed").where('NOT settled')
+      .where(:id => CompleteOrderTask.where('active').select(:order_id))
+      .includes(:customer) # To check if employee order
+      .order('orders.id DESC').all
 
     @total_payable = @closed_orders.inject(Money.new(0)) do |m, o|
       m + o.payable - o.payed
@@ -34,15 +36,22 @@ public
   def show
     @title = "Commissions"
     calculate
-    @acknowledged_orders = @user.orders.find(:all, :order => 'orders.id DESC',
-                                :include => :tasks_active,
-                                :conditions => "NOT orders.closed AND order_tasks.type = 'AcknowledgeOrderTask'")
+    @acknowledged_orders = @user.orders
+      .where('NOT orders.closed')
+      .where(:id => AcknowledgeOrderTask.where('active').select(:order_id))
+      .includes(:customer)
+      .order('orders.id DESC')
+
     @acknowledged_orders -= @closed_orders
 
-    @payed_orders = @user.orders.find(:all, :order => 'orders.id DESC',
-                                     :conditions => "settled AND orders.updated_at > NOW() - '3 months'::interval")
+    @payed_orders = @user.orders
+      .where("settled AND orders.updated_at > NOW() - '3 months'::interval")
+      .includes(:customer)
+      .order('orders.id DESC')
 
     @commission = Commission.new
+
+    logger.info("DONE")
   end
 
   def apply_commission

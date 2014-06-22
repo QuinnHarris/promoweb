@@ -3,7 +3,7 @@
     %ul
       %li
         = link_to "#{employee.name} : #{'%0.0f%' % (employee.commission * 100.0)}", :id => employee.id
-        \: #{employee.orders.count(:include => :customer, :conditions => "orders.closed = false AND customers.person_name != ''")} Open Orders
+        \: #{employee.orders.where('NOT closed').where(:customer_id => Customer.where("person_name != ''").select(:id)).count} Open Orders
 
 %hr
 
@@ -54,9 +54,7 @@
         - for order in orders
           %tr
             %td= link_to order.id, status_order_path(order)
-            %td
-              - unless order.tasks_active.empty?
-                = format_time(order.tasks_active.first.created_at, false)
+            %td= format_time(order.created_at, false)
             %td.money= order.total_price_cache.to_perty
             %td.money= order.total_cost_cache.to_perty
             - total_price += order.total_price_cache
