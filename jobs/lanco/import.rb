@@ -103,7 +103,7 @@ class LancoXLS < GenericImport
   def process_prices(product)
     pricing = PricingDesc.new
 
-    (1..6).each do |n|
+    (1..5).each do |n|
       minimum = Integer(product["Col#{n}MinQty"] || product["Col#{n}Min"])
       break if minimum == 0
       pricing.add(minimum, product["Col#{n}Price"])
@@ -224,7 +224,7 @@ class LancoXLS < GenericImport
         'isEcoFriendly' => 'Eco',
         }.each { |method, name| pd.tags << name if yes_list.include?(product[method]) }
         
-        pd.supplier_categories = [[product['Category'] || 'unkown', product['SubCategory'] || 'unknown']]
+        pd.supplier_categories = [[product['Category'] || 'unkown', product['Subcategory'] || 'unknown']]
         pd.package.unit_weight = product['shipping_info(wt/100)'].is_a?(String) ? (product['shipping_info(wt/100)'].to_f / 100.0) : nil
         
         # Lead Times
