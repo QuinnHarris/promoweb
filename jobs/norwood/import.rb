@@ -111,8 +111,9 @@ class NorwoodAll < GenericImport
 
     # Get Image List
     directory_list = %w(
-      2012_NPS3_Hi-Res_Images
+      NPS_Hi-Res_Images
       2014_HARDGOODS_NEW_PRODUCTS/HIGH\ RES
+      2014_Lifestyle_Hi_Res_Images
       2014_NORWOOD_HARDGOODS_Hi_Res_Images
       2015_Calendars_Hi_Res_Imprint_Images
       2015_Calendars_Hi_Res_Blank_Images ).collect { |p| "NORWOOD Product Images/#{p}" }
