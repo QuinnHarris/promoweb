@@ -78,7 +78,7 @@ class PaymentBitCoinAccept < BitCoinTransaction
   end  
 
   def comment
-    str = "#{coins} BTC @ #{rate}/BTC + #{discount}%"
+    str = "#{coins} BTC @ $#{rate}/BTC + #{discount}%"
     str += " [#{fudge.to_perty}]" if fudge
     if confirmations < 12
       str += " (#{confirmations} conf)"

@@ -593,7 +593,7 @@ class PaymentBitCoinReceive < PaymentBitCoin
       fudge = nil
 
       abs = (amount - needed).abs
-      if abs < Money.new(500) and abs.to_i * 200 < request.order.total_invoice_price.to_i
+      if abs < Money.new(5.00) and abs.to_i * 20 < request.order.total_invoice_price.to_i
         logger.info("Fudging BitCoin Accept: #{amount} #{needed}")
         fudge = needed - amount
         amount = needed
