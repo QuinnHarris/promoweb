@@ -9,7 +9,7 @@ class LinkRenderer < WillPaginate::ActionView::LinkRenderer
   end
 
   def add_current_page_param(url_params, page)
-    url_params[:path] = url_params[:path].split('/')[0...-1] + [page]
+    url_params[:path] = url_params[:path].split('/')[0...-1] + [page] if url_params[:path]
   end
 end
 

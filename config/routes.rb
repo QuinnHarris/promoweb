@@ -52,9 +52,9 @@ Promoweb::Application.routes.draw do
 
   # See how all your routes lay out with "rake routes"
 
-  match 'products/sitemap' => 'products#sitemap'
-  match 'products/rss' => 'products#rss'
-  match 'products/newrss' => 'products#newrss'
+  get 'products/sitemap' => 'products#sitemap'
+  get 'products/rss' => 'products#rss'
+  get 'products/newrss' => 'products#newrss'
   resources :products, :controller => 'admin::Products', :except => [:show] do
     member do
       get 'chart'
@@ -62,9 +62,9 @@ Promoweb::Application.routes.draw do
   end
   match 'products/admin/autocomplete_supplier_name' => 'admin::Products#autocomplete_supplier_name'
 
-  match 'products/:id(.:format)' => 'products#show'
-  match 'products/:id(.:format)/images' => 'products#images', :as => 'images_project'
-  match 'products/main/:iid' => redirect('/products/%{iid}')
+  get 'products/:id(.:format)' => 'products#show'
+  get 'products/:id(.:format)/images' => 'products#images', :as => 'images_project'
+  get 'products/main/:iid' => redirect('/products/%{iid}')
 
   match 'admin' => 'admin::Users#login', :via => :get, :as => 'admin_login'
   match 'admin' => 'admin::Users#auth', :via => :post
@@ -140,17 +140,17 @@ Promoweb::Application.routes.draw do
 
   root :to => 'categories#home'
 
-  match 'sitemaps' => 'general#sitemaps'
-  match 'sitemap.xml' => 'general#sitemaps'
-  match 'categories/sitemap' => 'categories#sitemap'
+  get 'sitemaps' => 'general#sitemaps'
+  get 'sitemap.xml' => 'general#sitemaps'
+  get 'categories/sitemap' => 'categories#sitemap'
 
-  match 'categories/map' => 'categories#map'
-  match 'categories/*path' => 'categories#main'
-  match 'categories' => 'categories#main'
+  get 'categories/map' => 'categories#map'
+  get 'categories/*path' => 'categories#main'
+  get 'categories' => 'categories#main'
 
-  match 'search' => 'search#index'
+  get 'search' => 'search#index'
 
-  match 'static/:action', :controller => 'static'
+  get 'static/:action', :controller => 'static'
 
   match 'order/:name' => 'orders#legacy_redirect'
   resources :orders, :only => [:index, :show] do
