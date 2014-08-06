@@ -78,12 +78,15 @@ ActionMailer::Base.smtp_settings = {
   :enable_starttls_auto => false
 }
 
+require "#{Rails.root}/lib/fail2ban_notifier.rb"
+
 Promoweb::Application.config.middleware.use ExceptionNotification::Rack,
   :email => { 
     :email_prefix => "[Error] ",
     :sender_address => %{"Web Application Error" <error@mountainofpromos.com>},
     :exception_recipients => %w{error@mountainofpromos.com}
-  }
+  },
+  :fail2ban => { }
 
 SEND_EMAIL = "Mountain Express Promotions <sales@mountainofpromos.com>"
 
