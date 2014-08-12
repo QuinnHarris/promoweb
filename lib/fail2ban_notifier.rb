@@ -13,7 +13,7 @@ class Fail2banNotifier
 
     # <ip> : <exception class> : <method> <path> -- <params>
     msg = "%s %s : %s : %s %s -- %s" % [
-      Time.current.to_s
+      Time.current.to_s,
       request.remote_ip,
       exception.class,
       request.request_method,
