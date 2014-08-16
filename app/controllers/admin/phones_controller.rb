@@ -18,7 +18,7 @@ class Admin::PhonesController < Admin::BaseController
       @user.save!
     end
 
-    @registrations = Registration.where(:reg_user => @user.login).all || []
+    @registrations = [] #Registration.where(:reg_user => @user.login).all || []
   end
 
   def create
