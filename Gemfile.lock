@@ -307,7 +307,7 @@ DEPENDENCIES
   rqrcode-rails3
   ruby-prof
   sass-rails
-  savon
+  savon (~> 2.5.1)
   scruffy
   silent-postgres
   spreadsheet
