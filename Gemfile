@@ -85,7 +85,7 @@ gem 'mechanize' # DL for Gemline
 gem 'spreadsheet' # Spreadsheet for Leeds, Bullet
 #gem 'rubyXL'
 #gem 'httpclient' # Auth for soap4r for Lanco
-gem 'savon'
+gem 'savon', '~> 2.5.1'
 #gem 'rmagick'
 
 gem 'bitcoin-client'
