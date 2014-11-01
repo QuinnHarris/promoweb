@@ -27,19 +27,10 @@ class GemlineXML < GenericImport
     puts "Starting Fetch"
     
     agent = Mechanize.new
-    page = agent.get('http://www.gemline.com/MyGemline/index.aspx')
+    page = agent.get('http://www.gemline.com/gemline/distributor-tools/downloads.aspx')
+   
     form = page.forms.first
-    form.fields.find { |f| f.name.include?('txtEmail') }.value = 'mtnexp'
-    form.fields.find { |f| f.name.include?('txtPassword') }.value = 'Robert1'
-    form.add_field!('ctl00$ContentPlaceHolder1$btnLogin.x','22')
-    form.add_field!('ctl00$ContentPlaceHolder1$btnLogin.y','14')
-    page = agent.submit(form)
-    
-    page = agent.get('http://www.gemline.com/MyGemline/distributor-tools/downloads.aspx')
-    
-    
-    form = page.forms.first
-    form.add_field!('__EVENTTARGET', 'ctl00$ContentPlaceHolder1$download1$lnkProductDataXML')
+    form.add_field!('__EVENTTARGET', 'ctl00$ContentPlaceHolder2$downloads_r$lnkProductDataXML')
     form.add_field!('__EVENTARGUMENT', '')
     page = agent.submit(form)
     
