@@ -100,6 +100,7 @@ xml.rss :version => '2.0', 'xmlns:g' => 'http://base.google.com/ns/1.0' do
           xml.tag!('g:brand', product.supplier.name)
           xml.tag!('g:mpn', product.supplier_num)
           
+	  xml.tag!('g:availability', 'in stock')
           xml.tag!('g:price', product.price_comp_cache)
           
 
