@@ -67,9 +67,11 @@ xml.rss :version => '2.0', 'xmlns:g' => 'http://base.google.com/ns/1.0' do
           xml.description description.encode('ASCII', :invalid => :replace, :undef => :replace, :replace => '')
           
           prop = product.properties_get
-          %w(color material size).each do |name|
-            xml.tag!("g:#{name}", prop[name].join(',').encode('ASCII', :invalid => :replace, :undef => :replace, :replace => '')) unless prop[name].blank?
+          %w(color size).each do |name|
+	    str = prop[name].blank? ? 'Unknown' : prop[name].join(',').encode('ASCII', :invalid => :replace, :undef => :replace, :replace => '')
+            xml.tag!("g:#{name}", str[0...100])
           end
+	  xml.tag!("g:material", prop['material'].join(',').encode('ASCII', :invalid => :replace, :undef => :replace, :replace => '')[0...200]) unless prop['material'].blank?
           if prop['dimension']
             dim = prop['dimension'].split(',').inject({}) do |hash, str|
               name, value = str.split(':')
@@ -98,7 +100,6 @@ xml.rss :version => '2.0', 'xmlns:g' => 'http://base.google.com/ns/1.0' do
           xml.tag!('g:brand', product.supplier.name)
           xml.tag!('g:mpn', product.supplier_num)
           
-          xml.tag!('g:availability', 'available for order')
           xml.tag!('g:price', product.price_comp_cache)
           
 
