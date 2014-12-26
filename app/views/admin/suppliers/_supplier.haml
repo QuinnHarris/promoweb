@@ -1,7 +1,8 @@
 %tr
-  %td!= (level-1).times.collect { '&nbsp;| ' }.join + (level != 0 ? '&nbsp;|- ' : '') + supplier['name']
-  %td= supplier.description
+  %td
+    = link_to(edit_admin_supplier_path(supplier)) do
+      != (level-1).times.collect { '&nbsp;| ' }.join + (level != 0 ? '&nbsp;|- ' : '') + supplier['name']
   %td= supplier.products.count
-  %td= link_to((@static ? 'View' : 'Edit'), edit_admin_supplier_path(supplier))
+  %td= 
 - if @suppliers[supplier.id]
   = render :partial => 'supplier', :collection => @suppliers[supplier.id], :locals => { :level => level+1 }
