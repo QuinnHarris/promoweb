@@ -1,11 +1,9 @@
 %h1 Suppliers
 = link_to "New Supplier", new_admin_supplier_path
-%table
+%table.grid
   %thead
     %tr
-      %td
       %td Name
       %td Products
-      %td ID
   %tbody
     = render :partial => 'supplier', :collection => @suppliers[nil], :locals => { :level => 0 }
