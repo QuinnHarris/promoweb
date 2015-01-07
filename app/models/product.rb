@@ -229,6 +229,7 @@ class PriceCollectionCompetition < PriceCollectionAll
     cost_last = cost_entries.reverse.find { |e| e.marginal }
 
     n1 = params[:n1] || supplier_minimums.first
+    raise "No n1" unless n1
     if params[:n2] and params[:n2] != n1
       n2 = params[:n2]
     else
@@ -473,18 +474,18 @@ class PriceCollectionCompetition < PriceCollectionAll
     technique = @product.decorations.collect { |d| d.technique }.uniq.sort.first
     dec_price_group = technique && technique.price_groups.find_by_supplier_id(@product.supplier_id, :include => :entries)
     limit = technique.decorations.find_all_by_product_id(@product.id).collect { |d| d.limit }.compact.max if technique
-    comp_cache = @price_sets.collect do |set|
-      price = set.price_at_competative
-
-      if price and dec_price_group
-        qty = set.breaks.first.minimum
-        dec_price = dec_price_group.pricing(1, limit, qty).price
-        price += dec_price.fixed + dec_price.marginal * qty
-      end
-
-      price
-    end.compact.min
-    @product.price_comp_cache = comp_cache && comp_cache.round_cents
+#    comp_cache = @price_sets.collect do |set|
+#      price = set.price_at_competative
+#
+#      if price and dec_price_group
+#        qty = set.breaks.first.minimum
+#        dec_price = dec_price_group.pricing(1, limit, qty).price
+#        price += dec_price.fixed + dec_price.marginal * qty
+#      end
+#
+#      price
+#    end.compact.min
+#    @product.price_comp_cache = comp_cache && comp_cache.round_cents
 
     @product.price_fullstring_cache = minimums.collect { |n| (min = price_range(n).min) ? "#{n}: #{min.to_perty}" : nil }.compact.join(', ')
     normal_minimum = @price_sets.collect do |set|
@@ -492,6 +493,7 @@ class PriceCollectionCompetition < PriceCollectionAll
     end.compact.min
     normal_price = price_range(normal_minimum).min
     @product.price_shortstring_cache = normal_price && "#{normal_minimum}: #{normal_price.to_perty}"[0...12]
+    @product.price_comp_cache = (normal_price * normal_minimum).round_cents if normal_price
 
     @product.save!
   end
