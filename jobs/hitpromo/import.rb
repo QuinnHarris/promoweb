@@ -145,13 +145,15 @@ class HitPromoCSV < GenericImport
 
 
         # Prices
-        price_string = unique.sort_by { |s| price_preference.index(s['postfix']) }.first
+        price_string = unique.sort_by { |s| price_preference.index(s['postfix']) || price_preference.length }.first
         (1..8).each do |i|
           qty = price_string["quantity#{i}"]
           break if qty.blank? or qty == '--'
           pd.pricing.add(qty, price_string["price#{i}"])
         end
-        pd.pricing.apply_code(price_string['discount_code'])
+        dc = price_string['discount_code']
+        dc = "6C" if dc == '-'
+        pd.pricing.apply_code(dc)
         unless pd.supplier_categories.flatten.include?('Ceramics') or
             common['embroidery_information']
           pd.pricing.ltm(40.0)

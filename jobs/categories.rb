@@ -163,9 +163,11 @@ private
   def data
 [
   ['Apparel',
-  [],[
+  [sup('Hit Promotional Products', cat('Headwear and Apparel') ),],
+  [
      ['Hats & Caps',
       [match('name', /(?:^| )hat(?:$| |\/)/),
+       match('name', %w(hat cap), 1),
        exclude(match('name', ['stress', 'keychain', 'hat clip'])),
        sup('High Caliber Line', cat('Headwear', 'Regular') ),
        sup('Norwood',
@@ -174,17 +176,17 @@ private
            match('name', 'cap'),
            all(cat('Team Wear'),
                match('name', 'cap'))),
-       sup('Hit Promotional Products', cat('Headwear') ),
        sup('Sweda',
            cat('Headwear'),
            cat('Sports + Health', 'Headwear') ),
        sup('Prime Line', cat('Headwear | Caps') ),
       ],[
          ['Visors',
-          [match('name', 'visor', 1),
+          [match('name', 'visor', 2),
            sup('Ash City', match('name', 'visor')) ] ],
          ['Knit Caps',
-          [match('name', 'knit', 1) ] ],
+          [match('name', 'knit', 1),
+           match('name', 'beanie', 2) ] ],
         ] ],
      ['Team Wear',
       [sup('Ash City', cat('Team Wear') ) ] ],
@@ -310,7 +312,8 @@ private
        %w(Active Rain Track).collect do |name|
          ["#{name} Pants", [sup('Leeds', cat('Pants', name)) ]]
        end],
-      ['Polos', [], 
+      ['Polos',
+       [match('name', 'polo', 1)],
        %w(Blended\ Yarns Cotton Webtech).collect do |name|
          ["#{name} Polos", [sup('Leeds', cat('Polos', name)) ]]
        end],
@@ -327,6 +330,8 @@ private
                 match('name', %w(vest shirt)) ) ) ],
        [
        ] ],
+      ['T-Shirt',
+       [match('name', %w(T-Shirt Tee), 1)]],
      ] ],
  ['Awards',
   [
@@ -499,6 +504,10 @@ private
    sup('Starline', cat('Bags', 'Business Travel') ),
    sup('Bullet Line', cat('Bags', 'Business Cases') ),
   ],[
+     ['Neoprene',
+      [match('name', 'neoprene', 1),
+       sup('Prime Line', cat('Bags', 'Neoprene') )
+      ]],
      ['Backpacks',
       [match('name', %w(Backpack Daypack Sports\ Pack)),
        match('description', 'backpack', 1),
@@ -571,9 +580,6 @@ private
            ['New'].collect do |name|
              cat('Portfolios', name)
            end),
-       sup('Prime Line',
-           all(cat('Bags', 'Computer Bags'),
-               match('name', 'brief') ) ),
        sup('Norwood', cat('BAG', 'BRIEFCASES') ),
        sup('Bullet Line',
            all(cat('Bags', 'Business Cases'),
@@ -602,9 +608,6 @@ private
          ['Leather Business Bags',
           [match('name', 'lthr', 1), # Why doesn't this work?
            match('material', 'leather', 1),
-           sup('Logomark',
-               all(cat('Leather Bags'),
-                   match('name', 'brief') ) ),
           ]],
          ['Recycled Business Bags',
           [match(%w(name description), 'recycle', 1) ]],
@@ -676,7 +679,6 @@ private
        dup('Bags', 'Portfolios & Business Bags', 'Checkpoint Friendly Portfolios') ] ],
      ['Leather Bags',
       [match('material', 'leather', 1),
-       sup('Logomark', cat('Leather Bags') )
       ]],
      ['Computer Bags',
       [match('name', ['computer case', 'computer bag', 'laptop bag', 'laptop case']),
@@ -859,12 +861,13 @@ private
 
  ['Technology',
   [match('name', 'Computer Accessory'),
-   sup('Prime Line', cat('Technology') ),
+   sup('Prime Line', cat('Tech-Mobile') ),
    sup('LogoIncluded', cat('Card Reader') ),
    sup('Logomark', cat('Computer Accessories') ),
    sup('Starline', cat('Business Essentials', 'Computer Accessories') ),
    sup('Bullet Line', cat('Technology', 'Accessories') ),
    sup('Crown Products', cat('Techno Trends') ),
+   sup('Hit Promotional Products', cat('Hitronics & Tech Accessories') ),
   ],[
      ['Apple Accessories',
       [match('name', /i(P(o|a)d)|(Phone)/),
@@ -890,7 +893,7 @@ private
                cat('TECHNOLOGY', 'OTHERTECH'), ) ),
        sup('LogoIncluded', cat('Mouse') ),
        sup('Sweda', cat('Tech', 'Mouse') ),
-       sup('Prime Line', all(match('name', 'mouse'), cat('Technology', 'USB Hubs | Mice') ) ),
+       sup('Prime Line', all(match('name', 'mouse'), cat('Tech-Mobile', 'USB Hubs|Mice') ) ),
       ]],
      ['Computer Keyboards / Keypads',
       [match('name', ['keyboard', 'keypad']),
@@ -950,7 +953,7 @@ private
        match('name', /usb.+hub/i),
        sup('LogoIncluded', cat('USB Hub')),
        sup('Sweda', cat('Tech', 'Hubs') ),
-       sup('Prime Line', all(match('name', 'hub'), cat('Technology', 'USB Hubs | Mice') ) ),
+       sup('Prime Line', all(match('name', 'hub'), cat('Tech-Mobile', 'USB Hubs|Mice') ) ),
       ]],
      ['USB Accessories',
       [all(match('name', 'usb'),
@@ -964,7 +967,7 @@ private
                match(%w(name description), 'USB'))) ]],
      ['USB Flash Drives',
       [match('name', %w(flash memory mb gb), 1),
-       sup('Prime Line', cat('Technology', 'USB Memory') ),
+       sup('Prime Line', cat('Tech-Mobile', 'USB Memory') ),
        sup('Logomark', cat('USB Drives') ),
        sup('LogoIncluded', cat('USB Drive') ),
        sup('Starline', cat('Business Essentials', 'Flash Drives') ),
@@ -1540,6 +1543,7 @@ private
       ]],
      ['Plastic Drinkware',
       [match(%w(name material), 'plastic', 1),
+       sup('Prime Line', cat('Drinkware', 'Sippers')),
        sup('ETS Express Inc', cat('plastic') ) ] ],
      ['Glassware',
       [sup('Norwood', cat('DRINK', 'GLASS') ),
@@ -1550,7 +1554,8 @@ private
       [sup('Bullet Line', cat('Drinkware', 'Specialty Drinkware'))
       ]],
      ['Stadium Cups',
-      [match('name', 'stadium cup'),
+      [match('name', ['stadium cup', 'party cup']),
+       sup('Prime Line', cat('Drinkware', 'Party Cups') ),
        sup('Lanco', cat('Drinkware & Coolers', 'Stadium Cups') ), ]],
     ] ],
  ['Food Gifts',
@@ -1718,7 +1723,8 @@ private
  ['Travel',
   [sup('Gemline', cat('Gifts', 'Travel') ),
    sup('High Caliber Line', cat('Travel') ),
-   sup('Crown Products', cat('Travel') )
+   sup('Crown Products', cat('Travel') ),
+   sup('Prime Line', cat('Travel'))
   ],[
      ['Luggage Tags',
       [match('name', 'luggage'),
@@ -1744,7 +1750,7 @@ private
            all(cat('Travel Gifts', 'Accessories'),
                match('name', 'charge'))),
        sup('LogoIncluded', cat('Solar Charger') ),
-       sup('Prime Line', cat('Technology', 'USB Chargers') ),
+       sup('Prime Line', cat('Tech-Mobile', 'Power Banks|Chargers') ),
        sup('Starline', cat('Electronics', 'Mobile/Solar Power Packs') ),
        sup('Lanco', cat('Technology', 'USB Chargers & Adapters') ),
        sup('Sweda', cat('Tech', 'Chargers + Adapters') ),
@@ -2270,7 +2276,7 @@ private
 
  ['Tools',
   [sup('Leeds', cat('Tools & Lighters', 'Tools') ),
-   sup('PrimLine', cat('Tools') ),
+   sup('Prime Line', cat('Tools') ),
    sup('Norwood', cat('AUTO', 'TOOLS') ),
    sup('High Caliber Line', cat('Tools') ),
    sup('Crown Products',
@@ -2300,7 +2306,7 @@ private
       [match('name', 'jar opener') ]],
 
      ['Flashlights',
-      [match('name', /(^|\s+)LED(\s+|$)/),
+      [match('name', [/(^|\s+)LED(\s+|$)/, /\s+Light$/]),
        match(%w(name description), %w(flashlight fingerlight)),
        sup('High Caliber Line', cat('Flashlights') ),
        sup('Lanco', cat('Tools & Home Technology', 'Flashlights') ),
@@ -2326,6 +2332,7 @@ private
           ] ],
          ['LED Flashlights',
           [match('name', /(^|\s+)L\.?E\.?D\.?(\s+|$)/, 1),
+           match('name', /(^|\s+)LED.+light(\s+|$)/i),
            sup('Starline',
                cat('Flashlights', 'LED Flashlights'),
                cat('Flashlights', 'CREE LED'))
@@ -2408,6 +2415,7 @@ private
     sup('Crown Products', cat('Writing Instruments') ),
     sup('Lanco', cat('Writing Instruments', 'unknown') ),
     sup('Sweda', cat('Writing Instruments') ),
+    sup('Prime Line', cat('Writing Instruments') ),
   ],[
      ['Highlighters',
       [match('name', 'highlighter', 1),

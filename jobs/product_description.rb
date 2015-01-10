@@ -351,7 +351,7 @@ class PricingDesc
     return Money.new(val) if val.is_a?(Float)
     raise PropertyError, "money type not recognized" unless val.is_a?(String)
     raise PropertyError, "money format unknown" unless /$?\d+(\,\d{3})*(\.\d{2})?/ === val
-    Money.new(Float(val.gsub(/^[$,]/, '')))
+    Money.new(Float(val.delete("$,")))
   end
 
   # Add price column

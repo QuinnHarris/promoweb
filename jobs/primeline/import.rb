@@ -276,6 +276,7 @@ class PrimeLineWeb < GenericImport
 
       pd.tags << tag if tag
 #      pd.tags << 'Special' if price_rows.size > 1
+      pd.tags << 'MadeInUSA' if categories.include?('MADE IN USA')
 
       if cat_node = doc.at_xpath("//span[@id='ctl00_content_ProductClasstext']")
         cat = cat_node.text.split('>').collect { |s| s.strip.capitalize }.flatten
