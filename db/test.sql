@@ -411,6 +411,7 @@ WHERE "orders"."user_id" = 16 AND "orders"."id" IN (SELECT
                                                       id
                                                     FROM "order_tasks"
                                                     WHERE
+						      orders.created_at > '2014-01-01' AND
                                                       "order_tasks"."type" IN
                                                       ('CompleteOrderTask')) AND
       (closed) AND (NOT settled)
@@ -465,3 +466,16 @@ FROM "orders"
 WHERE "orders"."user_id" = 16 AND
       (closed AND NOT orders.settled AND order_tasks.type = 'CompleteOrderTask')
 ORDER BY orders.id DESC
+
+
+
+/* most used suppliers */
+SELECT * FROM
+(SELECT suppliers.name, count(*) FROM suppliers
+  JOIN products ON products.supplier_id = suppliers.id
+  JOIN order_items ON order_items.product_id = products.id
+  JOIN orders ON orders.id = order_items.order_id
+  WHERE orders.closed AND orders.id IN (SELECT order_id FROM order_tasks WHERE type = 'CompleteOrderTask')
+    AND orders.created_at > '2014-01-01'
+  GROUP BY suppliers.name) AS t1
+  ORDER BY count;

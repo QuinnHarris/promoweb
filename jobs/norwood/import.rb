@@ -113,10 +113,12 @@ class NorwoodAll < GenericImport
     directory_list = %w(
       NPS_Hi-Res_Images
       2014_HARDGOODS_NEW_PRODUCTS/HIGH\ RES
-      2014_Lifestyle_Hi_Res_Images
       2014_NORWOOD_HARDGOODS_Hi_Res_Images
-      2015_Calendars_Hi_Res_Imprint_Images
-      2015_Calendars_Hi_Res_Blank_Images ).collect { |p| "NORWOOD Product Images/#{p}" }
+      2015\ HARDGOODS\ HIGH\ RES\ IMAGES
+      2015\ HARDGOODS\ NEW\ PRODUCTS/2015\ NEW\ PRODUCTS\ HIGH\ RES
+      2014_Lifestyle_Hi_Res_Images
+      2016_Calendars_Hi_Res_Imprint_Images
+      2016_Calendars_Hi_Res_Blank_Images ).collect { |p| "NORWOOD Product Images/#{p}" }
 
     #    @image_list = cache_marshal('Norwood_imagelist') do
     @image_list = get_ftp_images({ :server => 'library.norwood.com',

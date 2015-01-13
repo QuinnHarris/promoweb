@@ -176,9 +176,7 @@ private
            match('name', 'cap'),
            all(cat('Team Wear'),
                match('name', 'cap'))),
-       sup('Sweda',
-           cat('Headwear'),
-           cat('Sports + Health', 'Headwear') ),
+       sup('Sweda', cat('Hats') ),
        sup('Prime Line', cat('Headwear | Caps') ),
       ],[
          ['Visors',
@@ -868,6 +866,7 @@ private
    sup('Bullet Line', cat('Technology', 'Accessories') ),
    sup('Crown Products', cat('Techno Trends') ),
    sup('Hit Promotional Products', cat('Hitronics & Tech Accessories') ),
+   sup('Sweda', cat('Tech') ),
   ],[
      ['Apple Accessories',
       [match('name', /i(P(o|a)d)|(Phone)/),
@@ -1011,6 +1010,7 @@ private
    sup('Logomark', cat('Desk and Office Accessories') ),
    sup('Starline', cat('Business Essentials', 'Convention/Desktop') ),
    sup('Crown Products', cat('Office Accessories') ),
+   sup('Sweda', cat('Home + Office') ),
   ],[
      ['Calculators',
       [match('name', 'calculator'),
@@ -1036,6 +1036,7 @@ private
            cat('Watch Clocks') ),
        sup('Sweda',
            cat('Clocks', 'Desktop'),
+           cat('Time'),
            cat('Time', 'Clocks'),
            cat('Clocks', 'Travel Alarm') ),
        sup('The Magnet Group',
@@ -1724,7 +1725,8 @@ private
   [sup('Gemline', cat('Gifts', 'Travel') ),
    sup('High Caliber Line', cat('Travel') ),
    sup('Crown Products', cat('Travel') ),
-   sup('Prime Line', cat('Travel'))
+   sup('Prime Line', cat('Travel')),
+   sup('Sweda', cat('Outdoors', 'Travel Accessories') ),
   ],[
      ['Luggage Tags',
       [match('name', 'luggage'),

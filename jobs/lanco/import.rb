@@ -42,7 +42,7 @@ class LancoXLS < GenericImport
   def decorations(product)
     test_decorations(product)
 
-    sizes = [product['imprint_area']].uniq.collect do |string|
+    sizes = [product['ImprintArea']].uniq.collect do |string|
       next unless string
       string.split(/\s*[,;]\s*/).collect do |str|
         hash = {}
@@ -63,7 +63,7 @@ class LancoXLS < GenericImport
     end.flatten.compact
     sizes = [{}] if sizes.empty?
 
-    product['Order_info'].gsub('&nbsp;', ' ').scan(/(?:\n)?([\w\s]+)::?\s*\s*(.+?)(?:\r|$)/im).each do |name, str|
+    product['Order Info'].gsub('&nbsp;', ' ').scan(/(?:\n)?([\w\s]+)::?\s*\s*(.+?)(?:\r|$)/im).each do |name, str|
       matches = [/add $(\d{2,3})(?:\(\w\))? +per color,? up to (\d) colors/im,
                  /Set-? ?up +(?:charges?:?)? *(?:is )?\$ ?(\d{2,3})(?:\(\w\))?(?: per color,? up to +(\d) +colors)?/im,
                  /\$(\d{2,3})(?:\(\w\))? +per +color,? up to +(\d) +colors/im,
@@ -104,14 +104,16 @@ class LancoXLS < GenericImport
     pricing = PricingDesc.new
 
     (1..5).each do |n|
-      minimum = Integer(product["Col#{n}MinQty"] || product["Col#{n}Min"])
+      minimum = product["Col#{n}MinQty"] || product["Col#{n}Min"]
+      break unless minimum
+      minimum = Integer(minimum)
       break if minimum == 0
       pricing.add(minimum, product["Col#{n}Price"])
     end
-    pricing.apply_code(product['PriceCode'] || '5R')
+    pricing.apply_code(product['Price Code'] || '5R')
 #    pricing.eqp_costs
     pricing.maxqty #(pricing.prices.last[:minimum]*2)
-    pricing.ltm_if(24.00, product['absoluteMin'])
+    pricing.ltm_if(24.00, product['absolute min'])
     pricing
   end
 
@@ -181,7 +183,7 @@ class LancoXLS < GenericImport
       products.each do |product|
         next if @image_list[web_id = product['ProductID']] or web_id.nil?
         begin
-          doc = WebFetch.new(product['LinkToLanco']).get_doc
+          doc = WebFetch.new(product['Link To Lanco']).get_doc
           @image_list[web_id] = doc.search("a[@class='product_thumb_img']").collect do |node|
             url = node.attributes['href'].value
             ImageNodeFetch.new(url.split('/').last, url)
@@ -199,9 +201,10 @@ class LancoXLS < GenericImport
     products.each do |product|
       ProductDesc.apply(self) do |pd|
         pd.supplier_num = product['ProductID']
-        pd.name = convert_name(product['Alt_Prod_Name'].empty? ? product['Prod_Name'] : product['Alt_Prod_Name'])
+        puts pd.supplier_num
+        pd.name = convert_name(product['Alt Product Name'].blank? ? product['Product Name'] : product['Alt Product Name'])
         
-        description = product['Prod_Description'].gsub(/\.\s*/, ".\n").strip
+        description = product['Product Description'].gsub(/\.\s*/, ".\n").strip
         
         # Replace Lanco Product ID references to our product ids
         description.scan(/\w{2,3}\d{3,4}/).each do |num|
@@ -225,10 +228,10 @@ class LancoXLS < GenericImport
         }.each { |method, name| pd.tags << name if yes_list.include?(product[method]) }
         
         pd.supplier_categories = [[product['Category'] || 'unkown', product['Subcategory'] || 'unknown']]
-        pd.package.unit_weight = product['shipping_info(wt/100)'].is_a?(String) ? (product['shipping_info(wt/100)'].to_f / 100.0) : nil
+        pd.package.unit_weight = product['Ship Wt'].is_a?(String) ? (product['Ship Wt'].to_f / 100.0) : nil
         
         # Lead Times
-        raise "Unknown Lead: #{product['production_time'].inspect}" unless /(\d+)(?:-(\d+))? ((?:(?:Business )?Days)|(?:weeks))/i === product['production_time']
+        raise "Unknown Lead: #{product['production_time'].inspect}" unless /(\d+)(?:-(\d+))? ((?:(?:Business )?Days)|(?:weeks))/i === product['Production Time']
         multiplier = $3.include?('weeks') ? 7 : 1
         pd.lead_time.normal_min = $1.to_i * multiplier
         pd.lead_time.normal_max = ($2 || $1).to_i * multiplier
@@ -238,7 +241,7 @@ class LancoXLS < GenericImport
         # 2 - 3day, 1day
         # 3 - 3day
         pd.lead_time.rush, pd.lead_time.rush_charge =
-          case product['rush_svc_type'].to_i
+          case product['Rush Service Type'].to_i
           when 1,2
             [1, 1.25]
           when 3
@@ -264,7 +267,7 @@ class LancoXLS < GenericImport
         pd.decorations = decorations(product)
         
         # Match Colors to Images
-        colors = product['colors'].split(/,\s*/)
+        colors = (product['Colors'] || '').split(/,\s*/)
         color_image = {}
         colors.each do |color|
           images = image_list.find_all do |img|
@@ -284,7 +287,7 @@ class LancoXLS < GenericImport
         
         
         sub = sub_products[product['ProductID']]
-        common, parts = find_common_list(([product] + sub).collect { |p| p['Prod_Name'].gsub(/(?:w\/)|(?:with)/i,'') })
+        common, parts = find_common_list(([product] + sub).collect { |p| p['Product Name'].gsub(/(?:w\/)|(?:with)/i,'') })
         
         full_color = false
         if parts.length == 2 and parts[0].blank? and parts[1].include?('Full Color')
@@ -295,7 +298,7 @@ class LancoXLS < GenericImport
         pd.variants = ([product] + sub).zip(parts).collect do |prod, fill_name|
           pricing = process_prices(prod)
           properties = { 'material' => prod['Materials'] }
-          properties.merge!('dimension' => parse_dimension(prod['Prod_size1'])) if prod['Prod_size1']
+          properties.merge!('dimension' => parse_dimension(prod['Product Size'])) if prod['Product Size']
           properties.merge!('imprint' => fill_name) if full_color
           
           color_image.collect do |color, images|
