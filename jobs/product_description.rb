@@ -361,7 +361,7 @@ class PricingDesc
   # round - round calculated cost
   def add(qty, price, code_cost = nil, round = false)
     qty = parse_qty(qty)
-    raise PropertyError, "qty must be positive" unless qty > 0
+    raise PropertyError.new("qty must be positive", qty) unless qty > 0
     max = [@max_qty, @prices.last && @prices.last[:minimum] || 0, @costs.last && @costs.last[:minimum] || 0].max
     raise ValidateError.new("minimums must be sequential", "#{max} >= #{qty}") if max && max >= qty
 

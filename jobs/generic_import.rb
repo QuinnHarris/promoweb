@@ -269,11 +269,11 @@ module WebFetchCommon
     "#{@@cache_dir}#{path_tail}"
   end
 
-  def fetch?(time = nil)
-    if File.exists?(path)
+  def fetch?(time = nil, this_path = path)
+    if File.exists?(this_path)
       return false unless time
 
-      stat = File.stat(path)
+      stat = File.stat(this_path)
       if stat.file? and (stat.mtime > time)
         return false
       end
@@ -283,7 +283,10 @@ module WebFetchCommon
 
   def get_path(time = nil)
     return path unless fetch?(time)
-    
+    return nil unless fetch?(time, path+'.not')
+
+    FileUtils.mkdir_p(File.split(path).first)
+
     begin
       puts "Fetch: #{@uri} => #{path}"
       pbar = nil
@@ -298,8 +301,6 @@ module WebFetchCommon
                     })
       return nil if f.length == 0
 
-      FileUtils.mkdir_p(File.split(path).first)
-
       if f.respond_to?(:path)
         FileUtils.mv(f.path, path)
       elsif f.respond_to?(:save_as)
@@ -310,6 +311,7 @@ module WebFetchCommon
       puts
     rescue OpenURI::HTTPError, URI::InvalidURIError, Errno::ETIMEDOUT => e
       puts " * #{e.class} : #{@uri}"
+      FileUtils.touch(path+'.not')
       return nil
     end
 
@@ -1133,7 +1135,8 @@ private
     end
 
     if aspects[:diameter] 
-      if aspects.length != 1
+      if aspects.length != 1 and
+          !(aspects.length == 2 and !([:width, :height, :length] & aspects.keys).empty?)
         warning 'Parse Area', "Didn't Expect other aspects on diameter: #{string}"
         return
       end
