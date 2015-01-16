@@ -299,23 +299,27 @@ module WebFetchCommon
                     :progress_proc => lambda {|s|
                       pbar.set [s, pbar.total].min if pbar
                     })
-      return nil if f.length == 0
-
-      if f.respond_to?(:path)
-        FileUtils.mv(f.path, path)
-      elsif f.respond_to?(:save_as)
-        f.save_as path
+      puts "FETCH AFT"
+      unless f.length == 0
+        puts "FETCH +"
+        if f.respond_to?(:path)
+          FileUtils.mv(f.path, path)
+        elsif f.respond_to?(:save_as)
+          f.save_as path
+        else
+          File.open(path, "w:#{f.external_encoding}") { |file| file.write(f.read) }
+        end
+        puts
+        return path
       else
-        File.open(path, "w:#{f.external_encoding}") { |file| file.write(f.read) }
+        puts " * Zero : #{@uri}"
       end
-      puts
     rescue OpenURI::HTTPError, URI::InvalidURIError, Errno::ETIMEDOUT => e
       puts " * #{e.class} : #{@uri}"
-      FileUtils.touch(path+'.not')
-      return nil
     end
 
-    path
+    FileUtils.touch(path+'.not')
+    return nil
   end
 
   def get_doc
@@ -446,6 +450,8 @@ class ProductApply
 
     product_log.empty? ? nil : record
   end
+
+  def apply_brand(curr, prev);  ''; end
 
   %w(supplier_num name description data).each do |name|
     define_method "apply_#{name}" do |curr, prev|
@@ -811,13 +817,13 @@ class GenericImport
         end
       end
 
-      
+
       common_count = 0
       delete_id_list = []
       notupdated_sup_list = []
       delete_sup_list = []
       invalid_prod_nums = @invalid_prods.values.flatten
-      current_id_list = @supplier_record.products.select([:id, :supplier_num]).collect do |p|
+      ([@supplier_record] + @supplier_record.children).map { |r| r.products.select([:id, :supplier_num]) }.flatten.each do |p|
         if supplier_num_set.delete?(p.supplier_num)
           common_count += 1
         elsif invalid_prod_nums.include?(p.supplier_num)
@@ -826,7 +832,6 @@ class GenericImport
           delete_id_list << p.id 
           delete_sup_list << p.supplier_num
         end
-        p.id
       end
 
       puts "Not Updated Products: #{notupdated_sup_list.join(', ')}"
@@ -852,7 +857,13 @@ class GenericImport
 
       # Apply Updates
       update_pd_list.each do |pd|
-        pa = ProductApply.new(@supplier_record, pd, last_data[pd.supplier_num])
+        if pd.brand
+          record = @supplier_record.children.find_by_name(pd.brand)
+          record = @supplier_record.children.create(name: pd.brand) unless record
+        else
+          record = @supplier_record
+        end
+        pa = ProductApply.new(record, pd, last_data[pd.supplier_num])
         pa.apply
         last_data[pd.supplier_num] = pd
       end

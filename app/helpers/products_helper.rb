@@ -47,14 +47,14 @@ module ProductsHelper
     @minimums = @prices.minimums
     return if @minimums.empty?
     @minimums = [@minimums.first] + @minimums[-5..-2] if @minimums.length > 5
-    
-    if @minimums.length < 5
-      @minimums += @minimums[1..-1].zip(@minimums).collect do |cur, lst|
-        count = (((cur-1).to_f/lst.to_f) / 3.0).to_i + 1
-        (1...count).collect do |i|
-          lst + ((cur - lst) * i) / count
-        end
-      end.flatten[0...(5-@minimums.length)]    
+
+    modulus = 25
+    if @minimums.length < 5 and @minimums.length > 1
+      max = @minimums.pop # Assume this is the max
+      start = @minimums[-1]
+      fill = 5 - @minimums.length
+
+      @minimums += (1..fill).map { |i| ((start + ((max - start) / (fill + 1)) * i) / modulus).to_i * modulus }
       @minimums.sort!
     end
   end

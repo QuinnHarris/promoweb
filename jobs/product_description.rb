@@ -530,6 +530,7 @@ end
 class ProductDesc
   include PropertyObject
 
+  property :brand, String, :nil => true
   property :supplier_num, String do |s| s.strip end
   def error_id; "Product #{supplier_num}"; end
   property :name, String do |s|

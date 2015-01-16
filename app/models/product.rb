@@ -175,6 +175,7 @@ class PriceCollection
 
   def adjust_to_profit!
     mins = @price_sets.collect { |ps| ps.adjust_to_profit! }
+    mins = [mins.min, mins.max] # Ignore the minimum profits in the middle
     @minimums = (@minimums.find_all { |n| n >= mins.min } + mins).sort.uniq
   end
     

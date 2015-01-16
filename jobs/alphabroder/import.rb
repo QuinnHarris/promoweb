@@ -7,7 +7,7 @@ class AlphaBroder < GenericImport
     @src_directory = File.join(JOBS_DATA_ROOT, 'alphabroder')
     @src_file = File.join(JOBS_DATA_ROOT, @file_name)
 
-    super "Ash City Alphabroder"
+    super "Alphabroder"
   end
 
   def fetch_parse_notworking?
@@ -34,6 +34,7 @@ class AlphaBroder < GenericImport
     puts "Load Attributes"
     @style_attributes = {}
     CSV_foreach('style-attribute-values.csv') do |row|
+      next if row['Value'] == '0'
       style = (@style_attributes[row['Style Number']] ||= {})
       attr = (style[row['Size']] ||= {})
       name = row['Attribute'].split(' ').map { |s| s.capitalize }.join(' ')
@@ -74,25 +75,24 @@ class AlphaBroder < GenericImport
     puts "Main Loop"
     CSV_foreach('styles.csv') do |row|
       next if row['Category Code'] == 'EMB'
+      next if row['Mill Name'] == 'Gemline'
       ProductDesc.apply(self) do |pd|
         # - Company
         pd.supplier_num = row['Style Code']
-        puts pd.supplier_num
         pd.name = row['Description']
-        pd.description = row['Features']
-
+        pd.description = row['Features'].split(/\s*;\s*/)
         domain = row['Domain']
         image_path = row['ProdDetail Image']
         image_id = image_path.split('/').last
         #pd.images = images = [ImageNodeFetch.new(image_id, domain + image_path)]
-        images = []
+        pd.images = []
 
         # - Mill-Category
         # - Mill Code
         # - Category Code
         # - Item Count
 
-        pd.properties['brand'] = row['Mill Name']
+        pd.brand = row['Mill Name']
         pd.supplier_categories = [[row['Category Name']]]
         # Popularity
 
@@ -101,21 +101,34 @@ class AlphaBroder < GenericImport
           warning "Item Count Mismatch", "#{items.length} != rows['Item Count']"
         end
 
+        pd.tags = TagsDesc.new
         if features = @style_features[pd.supplier_num]
           if special_collections = features.delete('Special Collections')
             pd.supplier_categories << ['Collections', special_collections]
           end
+          if features.delete('Earth-Friendly') == 'Yes'
+            pd.tags << 'Eco'
+          end
           pd.properties.merge!(features) if features
         end
 
+        pd.lead_time.normal_min = 3
+        pd.lead_time.normal_max = 10
+
         attributes_by_color = @style_attributes[pd.supplier_num]
         attribute_keys = attributes_by_color.map { |s, a| a.keys }.flatten.uniq if attributes_by_color
+
+        pd.package.units = 1000000000
+        pd.package.unit_weight = 0
 
         pd.variants = items.map do |item|
           # - Company
           vd = VariantDesc.new(supplier_num: item['Item Number'])
           # - Description
           # - Features
+
+          pd.package.units = [Integer(item['Pack Qty']), pd.package.units].min
+          pd.package.unit_weight = [Float(item['Weight']), pd.package.unit_weight].max
 
           vd.pricing.add(1, item['Retail Price'], Float(item['Piece']))
           vd.pricing.add(12, nil, item['Dozen'])
@@ -124,13 +137,13 @@ class AlphaBroder < GenericImport
           #else
           #  vd.pricing.add(item['Pack Qty'], nil, item['Dozen'])
           #end
-
           vd.pricing.add(item['Case Qty'], nil, item['Case']) unless Integer(item['Pack Qty']) <= 12
+          vd.pricing.maxqty(500)
 
           vd.properties['size'] = item['Size Name']
           # - Size Category
           # - Size Code
-          vd.properties['color'] = item['Color Name']
+          vd.properties['color'] = item['Color Name'].split(/(\s+|\/)/).map { |c| c.capitalize }.join
           # - Hex Code
           # - Color Code
           # - Weight
