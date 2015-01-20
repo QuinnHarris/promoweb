@@ -236,7 +236,7 @@ class PriceCollectionCompetition < PriceCollectionAll
     n1 = supplier_minimums.first
     n1 = minimums.find { |m| m > n1 } if n1 == 1
     n1 = params[:n1] unless n1
-    raise "No n1" unless n1
+    raise "No n1: #{supplier_minimums.inspect} #{minimums.inspect}" unless n1
     if params[:n2] and params[:n2] != n1
       n2 = params[:n2]
     else
