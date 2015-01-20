@@ -81,6 +81,13 @@ private
     end
   end
 
+  def meta_category(property)
+    Proc.new do |record, match_category|
+      name = record[property]
+      [match_category + [name]] if name
+    end
+  end
+
   def always(exclude = nil)
     Proc.new do |record, match_category|
       if exclude
@@ -105,9 +112,9 @@ private
       end
 #      puts "Match #{match_category.inspect} : #{properties.inspect} : #{values.inspect}"
       match = properties.find do |property|
-        if record[property]
-          val = record[property]
-        else
+        val = record[property]
+        val = record.properties[property] unless val
+        unless val
           list = record.variants.collect { |v| v[property] || (v.properties[property]) }.compact.uniq
           next if list.empty?
           val = list.join(' ')
@@ -165,6 +172,24 @@ private
   ['Apparel',
   [sup('Hit Promotional Products', cat('Headwear and Apparel') ),],
   [
+      ['T-Shirts',
+       [match('name', %w(T-Shirt Tee), 1),
+        sup('Alphabroder', cat('T-Shirts'))
+
+       ], [
+           ['Youth', [match(['name', 'Age'], 'Youth', 1) ]],
+           ['Ladies', [match(['name', 'Gender'], 'Ladies', 1) ]],
+           ['Short Sleeve', [match(['name', 'Sleeve Length'], 'Short', 1) ]],
+           ['Long Sleeve', [match(['name', 'Sleeve Length'], 'Long', 1) ]],
+           ['V-Neck', [match(['name', 'Neckline'], 'V-Neck', 1) ]],
+           ['Tanks', [match(['name', 'Sleeve Style'], 'Tank', 1) ]],
+           ['Sleeveless', [match('Sleeve Style', 'Sleeveless', 1) ]],
+           ['Moisture Wicking', [match('Moisture Wicking', 'Yes', 1) ]],
+          ] + %w(3 4 5 6).map do |weight|
+            name = "#{weight} oz."
+            [name, [match(['name', 'Weight'], name, 1)]]
+          end
+      ],
      ['Hats & Caps',
       [match('name', /(?:^| )hat(?:$| |\/)/),
        match('name', %w(hat cap), 1),
@@ -172,6 +197,7 @@ private
        sup('High Caliber Line', cat('Headwear', 'Regular') ),
        sup('Norwood',
            cat('OUTDOOR', 'HEADWEAR') ),
+       sup('Alphabroder', cat('Headwear') ),
        sup('Ash City',
            match('name', 'cap'),
            all(cat('Team Wear'),
@@ -193,7 +219,8 @@ private
      ['ECO Collection',
       [sup('Ash City', cat('e.c.o Collection') ) ] ],
      ['Outerwear',
-      [sup('Ash City',
+      [sup('Alphabroder', cat('Outerwear') ),
+       sup('Ash City',
            cat('Outerwear'),
            match('name', 'jacket') ) ],
       %w(Windvests Insulated\ Seam-Sealed Teflon Leather Seam-Sealed Reversible\ Jackets Reversible\ Vests Workwear).collect do |name|
@@ -247,12 +274,17 @@ private
       
       ['Fleece',
        [sup('Ash City', cat('Fleece') ),
+        sup('Alphabroder', cat('Fleece') ),
         sup('Leeds', cat('Fleece & Knits', 'Fleece') ),
         match('name', 'fleece')],
        %w(Vests Microfleece Vintage).collect do |name|
          [name, [sup('Ash City', match('name', name.gsub(/s$/,''), 1))]]
        end + 
        [
+           ['Youth', [match(['name', 'Age'], 'Youth', 1) ]],
+           ['Ladies', [match(['name', 'Gender'], 'Ladies', 1) ]],
+           ['Crewneck', [match(['name', 'Type'], 'Crewneck', 1) ]],
+           
         ['Vests',
          [sup('Leeds', cat('Vests', 'Fleece') ) ]],
         ['Microfleece',
@@ -274,7 +306,8 @@ private
           sup('Leeds', cat('Fleece & Knits', 'Bonded') ) ] ],
        ] ],
       ['Knits',
-       [sup('Ash City',
+       [sup('Alphabroder', cat('Sport Shirts | Knits') ),
+        sup('Ash City',
             match('name', 'polo') ) ],
        %w(Jersey Pique Teflon Edry Textured Eperformance Jacquard Mercerized Interlock Micro\ pima).collect do |name|
          [name, [sup('Ash City', match(%w(name material description), name, 1))]]
@@ -285,7 +318,8 @@ private
           [sup('Leeds', cat('Fleece & Knits', 'Short Sleeve') ) ] ]
        ] ],
       ['Wovens',
-       [sup('Ash City',
+       [sup('Alphabroder', cat('Woven Shirts') ),
+        sup('Ash City',
             cat('Wovens') ), ],
        %w(Primalux Twill Teflon Stretch Cotton Denim Service Vintage Wrinkle\ Free Wrinkle\ Resistant).collect do |name|
          [name, [sup('Ash City', match(%w(name material description), name, 1))]]
@@ -306,10 +340,14 @@ private
         ['Short Sleeve', sup('Leeds', cat('Active Wear', 'Short Sleeve') ) ],
        ] ],
       ['Pants',
-       [match('name', 'pants', 1)],
+       [sup('Alphabroder', cat('Pants') ),
+        match('name', 'pants', 1)],
        %w(Active Rain Track).collect do |name|
          ["#{name} Pants", [sup('Leeds', cat('Pants', name)) ]]
        end],
+      ['Shorts',
+       [sup('Alphabroder', cat('Shorts') ),
+       ]],
       ['Polos',
        [match('name', 'polo', 1)],
        %w(Blended\ Yarns Cotton Webtech).collect do |name|
@@ -327,9 +365,9 @@ private
             all(cat('Safety Items'),
                 match('name', %w(vest shirt)) ) ) ],
        [
+      ['Infants & Toddlers',
+       [sup('Alphabroder', cat('Infants | Toddlers') ), ]]
        ] ],
-      ['T-Shirt',
-       [match('name', %w(T-Shirt Tee), 1)]],
      ] ],
  ['Awards',
   [
@@ -485,6 +523,7 @@ private
     ]],
  ['Bags',
   [sup('High Caliber Line', cat('Bags') ),
+   sup('Alphabroder', cat('Bags') ),
    sup('Ash City',
        all(cat('Accessories'),
            match('name', %w(bag pack portfolio tote brief)))),
@@ -814,7 +853,8 @@ private
     ] ],
 
  ['Brands',
-  [sup('Gemline', duplicate(['Brands'], 'supplier_categories'))
+  [sup('Gemline', duplicate(['Brands'], 'supplier_categories')),
+   sup('Alphabroder', meta_category('brand')),
   ],[
      ['Titleist®',
       [sup('Norwood', cat('GOLF', 'TITLEIST')) ]],
@@ -1242,7 +1282,7 @@ private
        sup('The Magnet Group', cat('Crystal', 'Paperweights and Crystal Boxes') )
       ]],
      ['Piggy Bank',
-      [match(%w(name description), /(pig(gy)?)|(coin) bank/i),
+      [match(%w(name description), /((pig(gy)?)|(coin)) bank/i),
        all(match('name', 'bank'), match(%w(name description), 'coin')),
        exclude(match('name', 'stress') ),
       ] ],
@@ -1671,7 +1711,7 @@ private
        match('description', ['electr', 'batteries', 'LCD'], 1)]],
      ['Outdoor Games',
       [match('name', ['ball'], 1),
-       match('name', ['flying disc', 'flyer', 'kite', 'football', 'rocket', 'boomerang', 'basketball', 'soccer']),
+       match('name', /((flying disc)|(flyer)|(kite)|(football)|(rocket)|(boomerang)|(basketball)|(soccer))$/i),
        exclude(match('name', %w(stress pen scripto))),
        exclude(sup('LogoIncluded', always)),
        sup('High Caliber Line',
@@ -1729,7 +1769,7 @@ private
    sup('Sweda', cat('Outdoors', 'Travel Accessories') ),
   ],[
      ['Luggage Tags',
-      [match('name', 'luggage'),
+      [match('name', 'luggage tag'),
        sup('Leeds', cat('Travel Gifts', 'Luggage Tags') ),
        sup('Lanco', cat('Health & Travel', 'Luggage Tags') ),
        sup('Logomark', cat('Luggage Tags') ),
@@ -1745,7 +1785,7 @@ private
        sup('Lanco', cat('Technology', 'Mobile Accessories') ),
       ] ],
      ['Phone Chargers',
-      [match('name', ['charger', 'charging']),
+      [match('name', /((charger)|(charging))$/i),
        sup('Leeds',
            cat('Mobile Tech', 'Power'),
            cat('Travel Gifts', 'Travel Adapters'),
@@ -2018,7 +2058,7 @@ private
       ] ],
      ['Badge Holders',
       [match('name', %w(badge ident)),
-       match('description', 'badge holder'),
+       #match('description', 'badge holder'),
        exclude(match('name', 'bag')),
        sup('Lanco', cat('Office Essentials', 'Badge Holders') ),
        sup('High Caliber Line',
@@ -2051,7 +2091,8 @@ private
        sup('The Magnet Group', cat('Innovations', 'Carabiners') )
       ]],
      ['Key Chains',
-      [match(%w(name description), ['key chain', 'keychain', 'key holder', 'key tag', 'key ring']),
+      [match('name', 'key ring'),
+       match(%w(name description), ['key chain', 'keychain', 'key holder', 'key tag']),
        sup('High Caliber Line',
            cat('Key Chains'),
            cat('Key Chains', 'Alcraft Key Chains')),
@@ -2099,9 +2140,9 @@ private
        sup('Logomark', cat('Money Clips') )
       ] ],
      ['Wristbands',
-      [match(%w(name description), [/wrist.*band/, 'bracelet']) ] ],
+      [match('name', [/wrist.*band/, 'bracelet']) ] ],
      ['Watches',
-      [match('name', 'watch'),
+      [match('name', /watch$/i),
        sup('Norwood', cat('TECHNOLOGY', 'WATCHES') ),
        sup('Logomark',
            cat('Classic Watches'),
@@ -2142,7 +2183,7 @@ private
      dup('Health & Personal Care', 'First Aid Kits'),
      dup('Health & Personal Care', 'Pedometers'),     
      ['Compasses',
-      [match('name', 'compass'),
+      [match('name', /compass$/i),
        sup('Leeds',
            all(cat('Outdoor Living', 'Excursion'),
                match('name', 'compass') ) ) ]],
@@ -2345,7 +2386,7 @@ private
           [sup('Starline', cat('Flashlights', 'Lanterns') ) ] ]
         ] ],
      ['Knives',
-      [match(%w(name description), %w(knive knife cutter)),
+      [match('name', %w(knive knife cutter)),
        exclude(match(%w(name description), /Cutter.+Buck/i)),
        sup('Lanco', cat('Tools & Home Technology', 'Knives') ),
        sup('Bullet Line', cat('Tools', 'Pocket Knives') ),
@@ -2407,7 +2448,7 @@ private
           [sup('Sweda', cat('Brands', 'Leatherman') ) ]],
         ] ],
      ['Locks',
-      [match('name', ' lock') ]],
+      [match('name', /\slock(\s|$)/i)]],
     ] ],
 
  ['Writing',
@@ -2444,7 +2485,7 @@ private
            match('supplier_num', /^MRP[GR]$/) ),
      ]],
      ['Pencils',
-      [match('name', 'pencil'),
+      [match('name', 'pencil', 1),
        sup('Gemline', cat('Writing Instruments', 'Pencils') ),
        sup('Bic Graphics',
            cat('Writing Instruments', 'Pencil'),

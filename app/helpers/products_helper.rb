@@ -46,16 +46,27 @@ module ProductsHelper
       
     @minimums = @prices.minimums
     return if @minimums.empty?
-    @minimums = [@minimums.first] + @minimums[-5..-2] if @minimums.length > 5
-
-    modulus = 25
-    if @minimums.length < 5 and @minimums.length > 1
-      max = @minimums.pop # Assume this is the max
-      start = @minimums[-1]
+    if @minimums.length > 5
+      @minimums = [@minimums.first] + @minimums[-5..-2]
+    elsif @minimums.length < 5
       fill = 5 - @minimums.length
+      if @prices.bounded? and @minimums.length > 1
+        modulus = 25
+        max = @minimums[-1] # Assume this is the max
+        start = @minimums[-2]
 
-      @minimums += (1..fill).map { |i| ((start + ((max - start) / (fill + 1)) * i) / modulus).to_i * modulus }
+        @minimums += (1..fill).map { |i| ((start + ((max - start) / (fill + 1)) * i) / modulus).to_i * modulus }
+      else
+        modulus = 50
+        max = [(@minimums[-1] / modulus).to_i,1].max * modulus
+        fill.times do
+          max *= 2
+          @minimums << max
+        end
+      end
       @minimums.sort!
     end
+
+    @minimums = @minimums.map { |m| ((m + 4) / 5) * 5 }
   end
 end

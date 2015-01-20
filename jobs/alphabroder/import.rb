@@ -80,7 +80,12 @@ class AlphaBroder < GenericImport
         # - Company
         pd.supplier_num = row['Style Code']
         pd.name = row['Description']
-        pd.description = row['Features'].split(/\s*;\s*/)
+
+        string_map = {
+            ';'      => "\n",
+            '&#244;' => '&ldquo;',
+            '&#245;' => '&rdquo;' }
+        pd.description = row['Features'].split(/(?:\s*(;)\s*)|(&#?[a-z0-9]+?;)/i).map { |s| string_map[s] || s }.join.strip
         domain = row['Domain']
         image_path = row['ProdDetail Image']
         image_id = image_path.split('/').last
@@ -138,7 +143,7 @@ class AlphaBroder < GenericImport
           #  vd.pricing.add(item['Pack Qty'], nil, item['Dozen'])
           #end
           vd.pricing.add(item['Case Qty'], nil, item['Case']) unless Integer(item['Pack Qty']) <= 12
-          vd.pricing.maxqty(500)
+          #vd.pricing.maxqty(500)
 
           vd.properties['size'] = item['Size Name']
           # - Size Category
@@ -198,7 +203,13 @@ class AlphaBroder < GenericImport
           vd
         end
 
-        pd.decorations = []
+        %w(Front Back).each do |location|
+          pd.decorations << DecorationDesc.new(technique: 'Screen Print',
+                                               limit: 6, location: location)
+
+          pd.decorations << DecorationDesc.new(technique: 'Embroidery',
+                                               limit: 15000, location: location)
+        end
       end
     end
   end

@@ -178,6 +178,10 @@ class PriceCollection
     mins = [mins.min, mins.max] # Ignore the minimum profits in the middle
     @minimums = (@minimums.find_all { |n| n >= mins.min } + mins).sort.uniq
   end
+
+  def bounded?
+    !!@price_sets.find { |s| s.breaks.last.marginal.nil? }
+  end
     
   attr_reader :cost_groups, :supplier_groups, :price_sets, :minimums, :supplier_minimums
   
@@ -229,7 +233,9 @@ class PriceCollectionCompetition < PriceCollectionAll
     cost_first = cost_entries.find { |e| e.marginal and e.fixed.to_i == 0 }
     cost_last = cost_entries.reverse.find { |e| e.marginal }
 
-    n1 = params[:n1] || supplier_minimums.first
+    n1 = supplier_minimums.first
+    n1 = minimums.find { |m| m > n1 } if n1 == 1
+    n1 = params[:n1] unless n1
     raise "No n1" unless n1
     if params[:n2] and params[:n2] != n1
       n2 = params[:n2]
@@ -240,6 +246,8 @@ class PriceCollectionCompetition < PriceCollectionAll
       end
       n2 *= 2 while n2 < 5*n1
     end
+
+    puts "N1: #{n1}  N2: #{n2}"
     
     if pmax1 or pmin1
       n0 = minimums.first || 0

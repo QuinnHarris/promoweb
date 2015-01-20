@@ -671,7 +671,9 @@ class GenericImport
   end
   
   def cache_write(file_name, res)
-    File.open(file_name,"w") { |f| Marshal.dump(res, f) }
+    # Use temporary file incase process is terminated during write
+    File.open(file_name+'.temp',"w") { |f| Marshal.dump(res, f) }
+    File.rename(file_name+'.temp', file_name)
   end
   
   # Only used in primeline
