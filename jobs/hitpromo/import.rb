@@ -11,7 +11,7 @@ class HitPromoCSV < GenericImport
   def initialize
     year = Time.now.year
     puts "Starting Fetch for #{year}"
-    @src_files = 
+    @src_files =
       ["http://www.hitpromo.net/fs/documents/hit_product_data_#{year}.csv",
        "http://outlet.hitpromo.net/fs/documents/hit_outlet_data_2013.csv"].collect do |url| # #{year}
       WebFetch.new(url).get_path(Time.now - 1.day)

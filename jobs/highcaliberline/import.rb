@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 
+require 'csv'
+
+# Supplier num fix: update products set supplier_num = regexp_replace(supplier_num, '-', '') where supplier_id = 57;
+
 class HighCaliberLine < GenericImport
-  def initialize(date)
-    @date = date
-    @domain = "www.highcaliberline.com"
-    @image_list = {}
+  def initialize
+    @src_urls = ['http://highcaliberline.com/script/product_data_download.php']
     super "High Caliber Line"
   end
 
@@ -12,65 +14,43 @@ class HighCaliberLine < GenericImport
     %w(186 021 Process\ Yellow 123 161 347 342 281 Process\ Blue Reflex\ Blue 320 266 225 195 428 430 White Black 877 872)
   end
 
+  def fetch_parse?
+    puts "FTP Images"
+    @image_list = get_ftp_images('highcaliberline.hostedftp.com',
+                                 ['~artwork/HCL_Image-Library'],
+                                 /^(?!.*psd$)/i) do |path, file|
+      next nil unless /^([a-z]{1,3}-?\d{1,4}[a-z]{0,4})(?:[_-](.+))?\.jpg$/i =~ file
+      supplier_num, desc = $1, $2
+      id = path.split('/').last + '/' + (desc || '')
+      [id, supplier_num.gsub('-', ''), desc && desc.split('_').first, id.downcase.include?('blank') ? 'blank' : nil]
+    end
+
+    super
+  end
+
   def parse_products
-    file_name = cache_file("#{@supplier_name}_Images")
-    @image_list = cache_read(file_name) if cache_exists(file_name)
-
-    begin
-      parse_file("2014 Master Excel List.xlsx")
-      parse_file("HCL-US Master Excel Final on #{@date}.xls")
-#      parse_file("HCL-US Closeout Master Excel on #{@date}.xls", 'Closeout')
- #     parse_file("HCL-US Closeout Master Excel on #{@date}.xls", 'Closeout', 1)
-    ensure
-      cache_write(file_name, @image_list)
-    end
-  end
-
-  @@image_path = "http://www.highcaliberline.com/Product%20Image/Zoom/900x900"
-  def get_images(product_id)
-    return @image_list[product_id] if @image_list.has_key?(product_id)
-    puts "Getting Image List for #{product_id}"
-    uri = URI.parse("#{@@image_path}/Logo/#{product_id}/")
-    begin
-      txt = uri.open.read
-      @image_list[product_id] = txt.scan(/<a href="([\w-]+\.jpg)">/).flatten
-    rescue
-      puts "Failed to get image #{product_id}"
-      @image_list[product_id] = []
-    end
-  end
-
-  def parse_file(file, tags = [], ws_num = 0)
     lanyard_color_list = %w(black brown burgundy forest\ green gray green light\ blue navy\ blue orange purple red reflex\ blue teal white yellow).collect do |name|
       [name.capitalize, name.capitalize, ImageNodeFile.new(name, File.join(JOBS_DATA_ROOT, 'HighCaliber-Lanyard-Swatches', "#{name}.jpg"))]
     end
 
     name_list = %w(Maroon Red Grey Orange Gold Yellow Teal Bright\ Pink Bright\ Green Pink Bright\ Orange Purple Green Deep\ Royal Royal Navy White Charcoal Black)
-    pms_list = %w(209 200 429 165 123 YELLOW 3165 812 802 RHODAMINE\ RED 804 VIOLET 3308 286 293 289 WHITE 432 PROCESS\ BLACK)
+    pms_list = %w(209 200 429 165 123 YELLOW 3165 812 802 RHOqDAMINE\ RED 804 VIOLET 3308 286 293 289 WHITE 432 PROCESS\ BLACK)
     neoprene_color_list = name_list.zip(pms_list).collect { |n, p| [n, "#{n} (PMS #{p})"] }
 
-    puts "Parsing: #{file} #{ws_num}"
-    ws = RubyXL::Parser.parse(File.join(JOBS_DATA_ROOT, file)).worksheets[ws_num]
-    puts ws.use_header(0).inspect
-    (1..(ws.sheet_data.size)).each do |idx|
-      row = ws.sheet_data[idx]
-
-      if row['Item Descrition'].include?('Texas')
-        puts "Excluding Product: #{row['Product Code']}"
-        next
-      end
-
+    puts "Parsing"
+    CSV.foreach(@src_files.first, encoding: "ISO-8859-1", :headers => :first_row) do |row|
+      next if row['Item Status'] == 'Disabled on Website'
       ProductDesc.apply(self) do |pd|
         pd.merge_from_object(row, {
-                               'supplier_num' => 'Item# w/Photo',
+                               'supplier_num' => 'HCL Item#',
                                'name' => 'Item Name' })
              
         puts "Product: #{pd.supplier_num}"
         
         pd.name.gsub!(/\s+/, ' ')
       
-        if description = row['Item Descrition']
-          pd.description = description.gsub("\uFEFF", '').gsub(/\s+/,' ').gsub(/\s?\.\s/,"\n").gsub(/\s?•\s/,"\n").strip
+        if description = row['Description']
+          pd.description = description.gsub(/\s*([.?!])\s+/, "\\1\n").strip
         end
 
         # Categories
@@ -84,7 +64,7 @@ class HighCaliberLine < GenericImport
 #        end
         pd.supplier_categories = [['UNKOWN']]
 
-        pd.tags = TagsDesc.new(tags)
+        pd.tags = TagsDesc.new
         laser_engrave = wow_product = nil
         if false #highlight = row['Highlightimage']
           highlight.split(/\s*,\s*/).each do |elem|
@@ -119,24 +99,23 @@ class HighCaliberLine < GenericImport
         end
 
 
-        # Image
-        image_list = ["Group/#{pd.supplier_num}.jpg"] +
-          get_images(pd.supplier_num).collect { |n| "Logo/#{pd.supplier_num}/#{n}" }
-        pd.images = image_list.collect { |img| ImageNodeFetch.new(img, "#{@@image_path}/#{img}") }      
-        
-
         # Decorations
         pd.decorations = overseas ? [] : [DecorationDesc.none]
-        if imprint_str = row['Imprint Area']
-          imprint_str.split(/,|(?:\s{2,3})/).each do |imprint_part|
-            unless /^(?:(.+?):)?\s*(.+?)(?:(.+?)\))?$/ === imprint_part
-              puts "Imprintt: #{imprint_str.inspect}"
-            end
+
+        no_ltm = false
+
+        if decoration_str = row['Decoration']
+          decoration_list = decoration_str.split(/,|(?:\s\s+)/)
+          loop do
+            imprint_part = decoration_list.first
+            break unless /^Imprint Area:(?:\s*\((.+)\):)?\s*(.+?)(?:\s*\((.+?)\))?$/ === imprint_part
+            decoration_list.shift
+
             location, qualify = $1, $3
-            imprint_area = $2 && parse_area($2)
+            imprint_area = $2 && parse_area($2.gsub("''", '"'))
             if imprint_area
               if imprint_area.include?(:length)
-                warning 'Imprint Area has Length', imprint_str
+                warning 'Imprint Area has Length', imprint_part
               else
                 imprint_area.delete(:left); imprint_area.delete(:right)
                 pd.decorations << DecorationDesc.new(:technique => 'Screen Print',
@@ -148,14 +127,18 @@ class HighCaliberLine < GenericImport
               end
             end
           end
+
+          no_ltm = decoration_list.find { |s| s.include?('minimum') }
+
+          #puts "Remain: #{decoration_list.inspect}"
         end
         
       
         # Package Info
-        if weight = Float(row['Carton Weight']) and weight != 0.0
+        if row['Carton Weight'] and (weight = Integer(row['Carton Weight'])) and weight != 0
           pd.package.weight = weight
         end
-        if units = Integer(row['Carton Qty']) and units != 0
+        if row['Carton Qty'] and (units = Integer(row['Carton Qty'])) and units != 0
           pd.package.units = units
         end
         pd.package.merge_from_object(row, { 'height' => 'Height',
@@ -165,19 +148,19 @@ class HighCaliberLine < GenericImport
         
         # Price Info (common to all variants)
         (1..5).each do |num|
-          qty = (num == 1) ? row["Min. Qty"] : row["Qty#{num}"]
+          qty = (num == 1) ? row["Item MOQ"] : row["Qty #{num}"]
             next if qty.blank?
           qty = qty.gsub(/[^0-9]+$/, '') if qty.is_a?(String)
-          pd.pricing.add(qty, row["Prc#{num}"], 'R')
+          pd.pricing.add(qty, row["Price #{num}"], 'R')
         end
         
         if overseas
           pd.pricing.costs.shift # Remove first column
         else
           pd.pricing.eqp_costs
-          pd.pricing.ltm(25.00)
+          pd.pricing.ltm(25.00) unless no_ltm
 
-          unless a_to_z_product or wow_product or tags.include?('Closeout')
+          unless a_to_z_product or wow_product #or tags.include?('Closeout')
             pd.pricing.costs.last[:marginal] *= 0.95
           end
         end
@@ -202,7 +185,7 @@ class HighCaliberLine < GenericImport
         end
       
         if dimension = row['Item Size']
-          pd.properties['dimension'] = parse_dimension(dimension) || dimension.strip.gsub(/\(.+?\)/,'').gsub('&quot;','"')
+          pd.properties['dimension'] = parse_dimension(dimension) || dimension.strip.gsub(/\s\s\s+/, '  ').gsub('&quot;','"')
         end
       
         if color_str = row['Item Color']
@@ -230,11 +213,19 @@ class HighCaliberLine < GenericImport
             color_list = [nil]
           end
         end
+
+        puts "Colors: #{color_list.inspect}"
+
+        color_image_map, color_num_map = match_colors(color_list.compact, :prune_colors => true)
+
+        puts "MAP: #{color_image_map.inspect}"
+
+        pd.images = color_image_map[nil] || []
         
-        pd.variants = color_list.uniq.collect do |id, name, swatch|
+        pd.variants = color_list.uniq.collect do |id|
           VariantDesc.new(:supplier_num => (pd.supplier_num + (id ? "-#{id}" : ''))[0..63],
-                          :images => [],
-                          :properties => { 'color' => name || id, 'swatch' => swatch })
+                          :images => (id && color_image_map[id]) || [],
+                          :properties => { 'color' => id })
         end
       end
     end

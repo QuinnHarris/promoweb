@@ -299,9 +299,7 @@ module WebFetchCommon
                     :progress_proc => lambda {|s|
                       pbar.set [s, pbar.total].min if pbar
                     })
-      puts "FETCH AFT"
       unless f.length == 0
-        puts "FETCH +"
         if f.respond_to?(:path)
           FileUtils.mv(f.path, path)
         elsif f.respond_to?(:save_as)
@@ -1041,7 +1039,7 @@ private
   end
 
   # g for gussetted in adbag?
-  @@component_regex = /#{@@number_regex}(?<aspect>wide|width|w|high|height|h|long|length|l|diameter|diam?\.?|square|sq\.?|d|depth|round)?/i
+  @@component_regex = /#{@@number_regex}(?<aspect>wide|width|w|high|height|h|long|length|l|t|tall|diameter|diam?\.?|square|sq\.?|d|depth|round)?/i
   def parse_dimension(string, pedantic = false)
     list = string.strip.split(/x/i).collect do |part|
       unless m = /^#{@@component_regex}$/.match(part.strip)
@@ -1080,7 +1078,12 @@ private
       end
     end
     aspects = parse_aspects([parts['l'], parts['r']].compact, string, pedantic)
-    aspects.merge!(other) if aspects
+    return unless aspects
+    if [:width, :height].find_all { |a| aspects[a] }.length == 1
+      warning 'Parse Area', "Only one wdith or height: #{aspects.inspect}"
+      return if pedantic
+    end
+    aspects.merge!(other)
     aspects
   end
 
@@ -1101,6 +1104,7 @@ private
                when /^w/i;       :width
                when /^h/i;       :height
                when /^l/i;       :length
+               when /^t/i;       :length
                when /^dia/i;     :diameter
                when /^round/i;   :diameter
                when /^d/i;       :depth
@@ -1237,7 +1241,7 @@ private
     FileUtils.rm(delete)
   end
 
-  # Used by Leeds, PrimeLine and Norwood
+  # Used by Leeds, PrimeLine and Norwood, and now Highcaliber
   def get_ftp_images(server, paths = nil, recursive = nil)
 #    cache_marshal("#{@supplier_record.name}_imagelist") do
     directory_file = cache_file("#{@supplier_record.name}_directorylist")
