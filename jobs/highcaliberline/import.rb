@@ -5,8 +5,13 @@ require 'csv'
 # Supplier num fix: update products set supplier_num = regexp_replace(supplier_num, '-', '') where supplier_id = 57;
 
 class HighCaliberLine < GenericImport
-  def initialize
-    @src_urls = ['http://highcaliberline.com/script/product_data_download.php']
+  def initialize(file)
+    if file
+      @src_files = [File.join(JOBS_DATA_ROOT, file)]
+    else
+      @src_urls = ['http://highcaliberline.com/script/product_data_download.php']
+    end
+
     super "High Caliber Line"
   end
 
@@ -132,26 +137,26 @@ class HighCaliberLine < GenericImport
 
           #puts "Remain: #{decoration_list.inspect}"
         end
-        
-      
+
         # Package Info
-        if row['Carton Weight'] and (weight = Integer(row['Carton Weight'])) and weight != 0
-          pd.package.weight = weight
+        { weight: 'Carton Weight',
+          units:  'Carton Qty',
+          height: 'Height',
+          width:  'Width',
+          length: 'Length' }.each do |attr, col|
+          if row[col] and row[col] != 'N/A' and Float(row[col]) != 0.0
+            pd.package.send("#{attr}=", row[col])
+          end
         end
-        if row['Carton Qty'] and (units = Integer(row['Carton Qty'])) and units != 0
-          pd.package.units = units
-        end
-        pd.package.merge_from_object(row, { 'height' => 'Height',
-                                       'width' => 'Width',
-                                       'length' => 'Length' } )
       
         
         # Price Info (common to all variants)
         (1..5).each do |num|
           qty = (num == 1) ? row["Item MOQ"] : row["Qty #{num}"]
-            next if qty.blank?
+          price = row["Price #{num}"]
           qty = qty.gsub(/[^0-9]+$/, '') if qty.is_a?(String)
-          pd.pricing.add(qty, row["Price #{num}"], 'R')
+          next if qty.blank? or price.blank?
+          pd.pricing.add(qty, price, 'R')
         end
         
         if overseas
@@ -214,12 +219,8 @@ class HighCaliberLine < GenericImport
           end
         end
 
-        puts "Colors: #{color_list.inspect}"
 
         color_image_map, color_num_map = match_colors(color_list.compact, :prune_colors => true)
-
-        puts "MAP: #{color_image_map.inspect}"
-
         pd.images = color_image_map[nil] || []
         
         pd.variants = color_list.uniq.collect do |id|

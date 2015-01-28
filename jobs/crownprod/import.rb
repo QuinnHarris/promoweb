@@ -121,8 +121,14 @@ class CrownProdXLS < GenericImport
           image_id = supplier_num.gsub(/_(CL|OS)$/, '')
           next if image_hash[image_id] #and !image_hash[image_id].empty?
           image_list = []
-          
-          if doc = WebFetch.new("http://www.crownprod.com/includes/productimages.php?browse&itemno=#{image_id}").get_doc
+
+          doc = nil
+          begin
+            doc = WebFetch.new("http://www.crownprod.com/includes/productimages.php?browse=HIGHRES&itemno=#{image_id}").get_doc
+          rescue
+            warning "Image Fetch Fail"
+          end
+          if doc
             doc.search('a').each do |a|
               href = a.attributes['href'].value
               uri = URI.parse(href)

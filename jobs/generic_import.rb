@@ -298,7 +298,8 @@ module WebFetchCommon
                       end },
                     :progress_proc => lambda {|s|
                       pbar.set [s, pbar.total].min if pbar
-                    })
+                    },
+                    'Accept-Encoding' => 'gzip') # Kludge to fix broken deflate
       unless f.length == 0
         if f.respond_to?(:path)
           FileUtils.mv(f.path, path)
