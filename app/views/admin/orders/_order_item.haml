@@ -53,7 +53,7 @@
                 = image_tag(item.active_images.first.image.url(:thumb), :alt => "#{item.product.name} Thumbnail")
 
           %dl.variants
-            - names = item.product.property_group_names
+            - names = item.product.property_group_names.find_all { |n| !n.downcase.include?('body')}
             %dt
               - reset_cycle
               - for name in names
