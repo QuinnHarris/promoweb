@@ -19,7 +19,7 @@ class HighCaliberLine < GenericImport
     %w(186 021 Process\ Yellow 123 161 347 342 281 Process\ Blue Reflex\ Blue 320 266 225 195 428 430 White Black 877 872)
   end
 
-  def fetch_parse?
+  def parse_products
     puts "FTP Images"
     @image_list = get_ftp_images('highcaliberline.hostedftp.com',
                                  ['~artwork/HCL_Image-Library'],
@@ -30,10 +30,6 @@ class HighCaliberLine < GenericImport
       [id, supplier_num.gsub('-', ''), desc && desc.split('_').first, id.downcase.include?('blank') ? 'blank' : nil]
     end
 
-    super
-  end
-
-  def parse_products
     lanyard_color_list = %w(black brown burgundy forest\ green gray green light\ blue navy\ blue orange purple red reflex\ blue teal white yellow).collect do |name|
       [name.capitalize, name.capitalize, ImageNodeFile.new(name, File.join(JOBS_DATA_ROOT, 'HighCaliber-Lanyard-Swatches', "#{name}.jpg"))]
     end
@@ -219,6 +215,16 @@ class HighCaliberLine < GenericImport
           end
         end
 
+        unless @image_list[pd.supplier_num]
+          db_id = Integer(row['Web Link'].split('/').last)
+          wf = WebFetch.new("http://highcaliberline.com/downloadimage/downloadimage/download/product_id/#{db_id}/")
+          path = wf.get_path
+          file = Zip::File.open(path)
+          @image_list[pd.supplier_num] = file.map do |e|
+            id = e.name.split('/').last
+            [ImageNodeZip.new(id, path, e.name), id]
+          end
+        end
 
         color_image_map, color_num_map = match_colors(color_list.compact, :prune_colors => true)
         pd.images = color_image_map[nil] || []

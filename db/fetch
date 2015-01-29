@@ -8,4 +8,4 @@ CREATE SCHEMA public;
 EOF
 
 pg_restore -d promoweb_development $file_name
-rm ../data/cache/jobs/*_database
+rm ../../promoweb-data/cache/jobs/*_database

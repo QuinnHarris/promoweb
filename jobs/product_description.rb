@@ -193,7 +193,7 @@ module PropertyObject
 end
 
 
-class ImageNodeFetch; end
+class ImageNode; end
 
 class DecorationDesc
   include PropertyObject
@@ -501,7 +501,7 @@ class VariantDesc
   property :supplier_num, String do |s| s.strip end
   def error_id; "Variant #{supplier_num}"; end
   property :properties, Hash
-  property :images, Array[ImageNodeFetch], :warn => true
+  property :images, Array[ImageNode], :warn => true
 
   property :pricing, PricingDesc, :no_check => true, :block => true
 
@@ -576,7 +576,7 @@ class ProductDesc
 
   property :categories, Array, :nil => true
 
-  property :images, Array[ImageNodeFetch], :warn => true
+  property :images, Array[ImageNode], :warn => true
 
   property :pricing, PricingDesc, :no_check => true, :block => true
 

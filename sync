@@ -1,1 +1,1 @@
-rsync -va --delete --rsh=ssh mountainofpromos.com:/var/www/mountainofpromos.com/customer mountainofpromos.com:/var/www/mountainofpromos.com/data data/
+rsync -va --delete --rsh=ssh mountainofpromos.com:/var/www/mountainofpromos.com/customer mountainofpromos.com:/var/www/mountainofpromos.com/data ../promoweb-data/

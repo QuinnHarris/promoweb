@@ -205,6 +205,28 @@ class ImageNode
   def inspect; id.inspect; end
 end
 
+class ImageNodeZip < ImageNode
+  def initialize(id, zip_file, zip_name, tag = nil)
+    super id, tag
+    @zip_file, @zip_name = zip_file, zip_name
+  end
+  attr_reader :zip_file, :zip_name
+
+  def get
+    temp = Tempfile.new(@zip_name.gsub('/', '-'))
+    File.unlink(temp.path) # Kludge to extract to Tempfile
+    file = Zip::File.open(@zip_file)
+    file.extract(@zip_name, temp.path)
+    temp.open
+    #file.get_input_stream(@zip_name)
+    temp
+  end
+
+  def inspect
+    "#{id}:#{zip_file}:#{zip_name}"
+  end
+end
+
 module FileCommon
   def filename
     File.basename(path)
@@ -360,6 +382,7 @@ def find_duplicate_images(images, id = nil)
   dup_hash = {}
   dup_hash.default = []
   images.each do |image|
+    return replace_images unless image.respond_to?(:size) # Kludge for ImageNodeZip
     unless size = image.size
       replace_images[image] = nil
       puts "  No Image: #{id.inspect}\n"

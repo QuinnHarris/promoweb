@@ -202,6 +202,7 @@ GEM
     ruby-ole (1.2.11.7)
     ruby-prof (0.15.1)
     rubyntlm (0.3.4)
+    rubyzip (1.1.6)
     sass (3.2.19)
     sass-rails (3.2.6)
       railties (~> 3.2.0)
@@ -268,6 +269,8 @@ GEM
     wicked_pdf (0.10.2)
       rails
     will_paginate (3.0.5)
+    zip-zip (0.3)
+      rubyzip (>= 1.0.0)
 
 PLATFORMS
   ruby
@@ -318,3 +321,4 @@ DEPENDENCIES
   wash_out
   wicked_pdf
   will_paginate
+  zip-zip

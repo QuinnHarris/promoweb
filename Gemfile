@@ -103,3 +103,4 @@ end
 # Only needed for product updates
 gem 'net-ftp-list'
 gem 'progressbar'
+gem 'zip-zip'
