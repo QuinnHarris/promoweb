@@ -227,11 +227,11 @@ class HighCaliberLine < GenericImport
         end
 
         color_image_map, color_num_map = match_colors(color_list.compact, :prune_colors => true)
-        pd.images = color_image_map[nil] || []
+        pd.images = (color_image_map[nil] || []).uniq
         
         pd.variants = color_list.uniq.collect do |id|
           VariantDesc.new(:supplier_num => (pd.supplier_num + (id ? "-#{id}" : ''))[0..63],
-                          :images => (id && color_image_map[id]) || [],
+                          :images => ((id && color_image_map[id]) || []).uniq,
                           :properties => { 'color' => id })
         end
       end
