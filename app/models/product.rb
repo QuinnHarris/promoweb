@@ -717,7 +717,7 @@ class Product < ActiveRecord::Base
        end.sort_by do |n, vars|
          next [] unless n.compact.first && v = n.compact.first.translate
          if order = @@variant_sort_order[n.compact.first.name]
-           res = order.index(v) || 100
+           res = [order.index(v) || 100]
          else
            res = v.split(/(\d+)/).collect do |s|
              next if s.empty?
