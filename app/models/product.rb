@@ -744,11 +744,11 @@ class Product < ActiveRecord::Base
   end
  
 #  put in Supplier get_product 
-#  def set_quickbooks
-#    # Prevent from being added to quickbooks until used by order_item
-#    self.quickbooks_id = 'BLOCKED' unless quickbooks_id
-#  end
-#  before_create :set_quickbooks
+  def set_quickbooks
+    # Prevent from being added to quickbooks until used by order_item
+    self.quickbooks_id = 'BLOCKED' unless quickbooks_id
+  end
+  before_create :set_quickbooks
 
   def delete
     # Remove from all categories
