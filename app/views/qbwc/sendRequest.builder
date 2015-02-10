@@ -175,6 +175,8 @@ xml.QBXML do
 
       xml.FOB "Yes" if purchase.order.rush  # Set as 'RUSH ORDER'
 
+      xml.TxnDate po.created_at.strftime("%Y-%m-%d")
+
       xml.Memo "Order #{purchase.order.id}, P: #{purchase.id}"
       xml.IsToBePrinted 1
       #xml.IsToBeEmailed
@@ -195,6 +197,8 @@ xml.QBXML do
       end
 
       xml.RefNumber((bill.quickbooks_ref.nil? or bill.quickbooks_ref.strip.empty?) ? purchase.purchase_order.quickbooks_ref : bill.quickbooks_ref)
+
+      xml.TxnDate bill.created_at.strftime("%Y-%m-%d")
 
       xml.Memo "Order #{purchase.order.id}, P: #{purchase.id}"
       
