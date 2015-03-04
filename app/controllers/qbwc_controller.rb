@@ -111,7 +111,7 @@ class QbwcController < ActionController::Base
   
   @@objects = [
     [Supplier, qb_condition(Supplier)],
-    [Product, qb_condition(Product) + " AND products.name != ''"],
+    [Product, qb_condition(Product) + " AND products.name != ''", nil, 50],
     [DecorationTechnique, '( quickbooks_at IS NULL AND quickbooks_id IS NULL AND parent_id IS NULL )'],
     [Customer, qb_condition(Customer) + " AND customers.person_name != ''", :orders],
     [Order, qb_condition(Order) + " AND customers.quickbooks_id IS NOT NULL", :customer],
