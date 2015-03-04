@@ -198,7 +198,7 @@ xml.QBXML do
 
       xml.TxnDate bill.created_at.strftime("%Y-%m-%d")
 
-      xml.RefNumber((bill.quickbooks_ref.nil? or bill.quickbooks_ref.strip.empty?) ? purchase.purchase_order.quickbooks_ref : bill.quickbooks_ref)[0...20]
+      xml.RefNumber(((bill.quickbooks_ref.nil? or bill.quickbooks_ref.strip.empty?) ? purchase.purchase_order.quickbooks_ref : bill.quickbooks_ref)[0...20])
 
       xml.Memo "Order #{purchase.order.id}, P: #{purchase.id}"
       
