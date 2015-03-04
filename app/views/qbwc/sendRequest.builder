@@ -166,6 +166,7 @@ xml.QBXML do
       xml.ShipToEntityRef do
         xml.ListID purchase.order.quickbooks_id
       end
+      xml.TxnDate po.created_at.strftime("%Y-%m-%d")
       xml.RefNumber po.quickbooks_ref if po.quickbooks_ref
       xml.DueDate purchase.order.delivery_date.strftime("%Y-%m-%d") if purchase.order.delivery_date
 
@@ -175,7 +176,6 @@ xml.QBXML do
 
       xml.FOB "Yes" if purchase.order.rush  # Set as 'RUSH ORDER'
 
-      xml.TxnDate po.created_at.strftime("%Y-%m-%d")
 
       xml.Memo "Order #{purchase.order.id}, P: #{purchase.id}"
       xml.IsToBePrinted 1
@@ -196,9 +196,9 @@ xml.QBXML do
         xml.FullName supplier.attributes['name'][0...41]
       end
 
-      xml.RefNumber((bill.quickbooks_ref.nil? or bill.quickbooks_ref.strip.empty?) ? purchase.purchase_order.quickbooks_ref : bill.quickbooks_ref)
-
       xml.TxnDate bill.created_at.strftime("%Y-%m-%d")
+
+      xml.RefNumber((bill.quickbooks_ref.nil? or bill.quickbooks_ref.strip.empty?) ? purchase.purchase_order.quickbooks_ref : bill.quickbooks_ref)
 
       xml.Memo "Order #{purchase.order.id}, P: #{purchase.id}"
       
