@@ -164,7 +164,7 @@ class GemlineXML < GenericImport
             last_max = max && max.to_i
             vd.pricing.add(min, price.text, price['code'], true)
           end
-          vd.pricing.eqp_costs  # We have end quantity pricing with this supplier
+          #vd.pricing.eqp_costs  # We have end quantity pricing with this supplier
           vd.pricing.ltm(60.00) # http://www.gemline.com/Gemline/services/index.aspx?id=140  $75(G) cost is $75*0.8=$60
           
           categories = parse_categories(item.at_xpath('categories'))
