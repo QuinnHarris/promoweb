@@ -689,8 +689,9 @@ class GenericImport
   
   def cache_read(file_name)
     print "Reading Cache from #{file_name}: "
-    File.open(file_name) { |f| Marshal.load(f) }
+    r = File.open(file_name) { |f| Marshal.load(f) }
     puts "DONE"
+    r
   end
   
   def cache_write(file_name, res)

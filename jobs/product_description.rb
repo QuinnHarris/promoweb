@@ -173,11 +173,6 @@ module PropertyObject
           end
           self.class.test_type(name, type, value, options)
         end
-        if value.is_a?(String)
-          value = value.freeze
-        elsif value.is_a?(Array)
-          value = value.map { |v| v.is_a?(String) ? v.freeze : v }
-        end
         instance_variable_set("@#{name}", value)
       end
 
