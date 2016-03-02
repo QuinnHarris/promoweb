@@ -479,3 +479,13 @@ SELECT * FROM
     AND orders.created_at > '2014-01-01'
   GROUP BY suppliers.name) AS t1
   ORDER BY count;
+
+
+
+
+SELECT EXTRACT(year from order_tasks.created_at) as year, EXTRACT(month from order_tasks.created_at) as month,
+  sum(total_price_cache) as price, sum(total_cost_cache) as cost
+FROM orders JOIN order_tasks ON orders.id = order_tasks.order_id
+WHERE order_tasks.type = 'CompleteOrderTask' and order_tasks.active
+GROUP BY EXTRACT(year from order_tasks.created_at), EXTRACT(month from order_tasks.created_at)
+ORDER BY EXTRACT(year from order_tasks.created_at), EXTRACT(month from order_tasks.created_at);
